@@ -1,16 +1,569 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EDM AUTO - Préparer mon RDV</title>
-    <meta
-      name="description"
-      content="EDM AUTO - spécialiste freinage et entretien courant. Préparez votre RDV et obtenez une estimation."
-    />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EDM AUTO - Préparer mon RDV</title>
+  <style>
+    :root {
+      font-family: Arial, sans-serif;
+      color: #101827;
+      background: #f3f5f8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body { margin: 0; }
+
+    header {
+      padding: 18px 28px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    main {
+      width: min(1050px, calc(100% - 28px));
+      margin: 24px auto;
+    }
+
+    section {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4.5rem);
+      line-height: 1;
+      margin: 10px 0 16px;
+      letter-spacing: -0.05em;
+    }
+
+    h2 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      margin: 0 0 12px;
+      letter-spacing: -0.04em;
+    }
+
+    h3 { margin: 8px 0; }
+
+    p {
+      color: #475467;
+      line-height: 1.55;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #edf4ff;
+      color: #1559c7;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    button, a.button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .primary {
+      background: #111827;
+      color: white;
+    }
+
+    .secondary {
+      background: #eef2f7;
+      color: #111827;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-weight: 800;
+    }
+
+    input {
+      padding: 13px 14px;
+      border: 1px solid #d0d5dd;
+      border-radius: 12px;
+      font: inherit;
+    }
+
+    .service {
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 16px;
+      margin: 12px 0;
+      background: #fbfcfe;
+    }
+
+    .service-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .service strong.price {
+      font-size: 1.25rem;
+      white-space: nowrap;
+    }
+
+    .explain {
+      background: #f3f6fb;
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: #344054;
+      margin-top: 8px;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+
+    .chips button {
+      border: 1px solid #d0d5dd;
+      background: white;
+      color: #111827;
+      border-radius: 999px;
+    }
+
+    .chips button.active {
+      background: #111827;
+      color: white;
+    }
+
+    .notice {
+      background: #fff8e7;
+      border: 1px solid #fedf89;
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 14px;
+      color: #344054;
+    }
+
+    .summary {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 8px;
+      background: #fbfcfe;
+    }
+
+    .summary div {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      border-radius: 12px;
+      gap: 12px;
+    }
+
+    .summary .total {
+      background: #111827;
+      color: white;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+      .service-top, .summary div { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">EDM AUTO</div>
+    <button class="secondary" onclick="showStep('home')">Accueil</button>
+  </header>
+
+  <main>
+    <section id="home">
+      <span class="badge">Spécialiste freinage & entretien courant</span>
+      <h1>Préparez votre RDV EDM AUTO</h1>
+      <p>
+        Vous achetez vos pièces, EDM AUTO vous aide à choisir les bonnes références
+        et réalise le montage. Obtenez une estimation avant validation.
+      </p>
+      <div class="actions">
+        <button class="primary" onclick="showStep('client')">Préparer mon RDV</button>
+        <button class="secondary" onclick="showStep('services')">Voir les services</button>
+      </div>
+    </section>
+
+    <section id="services" class="hidden">
+      <h2>Services EDM AUTO</h2>
+      <p>Ici, seuls les prix de main-d’œuvre sont affichés. Les prix des pièces apparaissent pendant la préparation du RDV.</p>
+      <div id="servicesList"></div>
+      <button class="secondary" onclick="showStep('home')">Retour</button>
+    </section>
+
+    <section id="client" class="hidden">
+      <h2>Vos informations</h2>
+      <div class="grid">
+        <label>Nom complet <input id="name" /></label>
+        <label>Téléphone <input id="phone" /></label>
+        <label>Email <input id="email" /></label>
+        <label>Immatriculation <input id="plate" oninput="this.value=this.value.toUpperCase()" /></label>
+        <label>Kilométrage <input id="mileage" /></label>
+      </div>
+
+      <h3>Véhicule</h3>
+      <div class="grid">
+        <label>Marque <input id="brand" /></label>
+        <label>Modèle <input id="model" /></label>
+        <label>Motorisation <input id="engine" /></label>
+        <label>Année <input id="year" /></label>
+        <label>Énergie <input id="energy" /></label>
+      </div>
+
+      <div class="actions">
+        <button class="secondary" onclick="showStep('home')">Retour</button>
+        <button class="primary" onclick="showStep('choose')">Continuer</button>
+      </div>
+    </section>
+
+    <section id="choose" class="hidden">
+      <h2>Choix des services</h2>
+      <p>Sélectionnez une intervention freinage. La vidange est proposée uniquement en annexe.</p>
+
+      <div id="chooseList"></div>
+
+      <div class="notice">
+        <strong>Catégorie de pièces souhaitée</strong>
+        <div class="chips">
+          <button id="grade-eco" onclick="setGrade('eco')">Éco</button>
+          <button id="grade-standard" class="active" onclick="setGrade('standard')">Standard</button>
+          <button id="grade-premium" onclick="setGrade('premium')">Premium</button>
+        </div>
+        <p id="gradeNote">Bon équilibre prix / qualité.</p>
+      </div>
+
+      <div id="oilBox" class="notice hidden">
+        <label>
+          <input type="checkbox" id="addOil" onchange="updateOilBox()" />
+          Ajouter une vidange en annexe
+        </label>
+        <div id="oilOptions" class="hidden">
+          <p>Huile garage possible selon compatibilité stock. Filtre à huile fourni ou réglé par le client.</p>
+          <div class="chips">
+            <button id="oil-garage" class="active" onclick="setOilMode('garage')">Huile garage</button>
+            <button id="oil-client" onclick="setOilMode('client')">Huile + filtre client</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="secondary" onclick="showStep('client')">Retour</button>
+        <button class="primary" onclick="showStep('summary'); calculate();">Voir l’estimation</button>
+      </div>
+    </section>
+
+    <section id="summary" class="hidden">
+      <h2>Estimation</h2>
+      <p>Estimation indicative. Les références pièces et le tarif final sont validés par EDM AUTO.</p>
+
+      <div class="summary">
+        <div><span>Main-d’œuvre EDM AUTO</span><strong id="sumLabor">0 €</strong></div>
+        <div><span>Pièces estimées</span><strong id="sumParts">0 € à 0 €</strong></div>
+        <div><span>Huile garage</span><strong id="sumOil">0 €</strong></div>
+        <div class="total"><span>Total estimé</span><strong id="sumTotal">0 € à 0 €</strong></div>
+      </div>
+
+      <div class="notice">
+        Cette version fonctionne en HTML simple. On pourra remettre React/API quand la base sera stable.
+      </div>
+
+      <div class="actions">
+        <button class="secondary" onclick="showStep('choose')">Retour</button>
+        <a id="mailLink" class="button primary" href="#">Envoyer ma demande à EDM AUTO</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const EDM_EMAIL = "edm28.contact@gmail.com";
+
+    const services = [
+      {
+        id: "controle",
+        name: "Contrôle visuel freinage",
+        labor: 29,
+        parts: [0, 0],
+        explain: "Contrôle visuel des plaquettes, disques et éléments visibles du freinage.",
+        needs: "Aucune pièce obligatoire."
+      },
+      {
+        id: "plaquettes_avant",
+        name: "Montage plaquettes avant",
+        labor: 69,
+        parts: [35, 55],
+        explain: "Pour remplacer les plaquettes avant si les disques sont encore en bon état.",
+        needs: "Jeu de plaquettes avant compatible."
+      },
+      {
+        id: "plaquettes_arriere",
+        name: "Montage plaquettes arrière",
+        labor: 69,
+        parts: [35, 55],
+        explain: "Pour remplacer les plaquettes arrière si les disques sont encore en bon état.",
+        needs: "Jeu de plaquettes arrière compatible."
+      },
+      {
+        id: "disques_plaquettes_avant",
+        name: "Montage disques + plaquettes avant",
+        labor: 109,
+        parts: [120, 155],
+        explain: "Pour remplacer les disques et les plaquettes à l’avant.",
+        needs: "Deux disques avant + plaquettes avant compatibles."
+      },
+      {
+        id: "disques_plaquettes_arriere",
+        name: "Montage disques + plaquettes arrière",
+        labor: 109,
+        parts: [115, 150],
+        explain: "Pour remplacer les disques et les plaquettes à l’arrière.",
+        needs: "Deux disques arrière + plaquettes arrière compatibles."
+      },
+      {
+        id: "freinage_complet",
+        name: "Montage disques + plaquettes avant et arrière",
+        labor: 199,
+        parts: [240, 330],
+        explain: "Pour un remplacement complet du freinage avant et arrière.",
+        needs: "Disques et plaquettes avant + arrière compatibles."
+      }
+    ];
+
+    const gradeMultipliers = {
+      eco: 0.9,
+      standard: 1,
+      premium: 1.18
+    };
+
+    const gradeNotes = {
+      eco: "Prix accessible, adapté aux petits budgets.",
+      standard: "Bon équilibre prix / qualité.",
+      premium: "Marques reconnues ou qualité supérieure."
+    };
+
+    let selected = [];
+    let grade = "standard";
+    let oilMode = "garage";
+
+    function euro(v) {
+      return Math.round(v) + " €";
+    }
+
+    function showStep(id) {
+      ["home", "services", "client", "choose", "summary"].forEach(step => {
+        document.getElementById(step).classList.add("hidden");
+      });
+      document.getElementById(id).classList.remove("hidden");
+      if (id === "choose") renderChoose();
+    }
+
+    function renderServices() {
+      const box = document.getElementById("servicesList");
+      box.innerHTML = services.map(s => `
+        <div class="service">
+          <div class="service-top">
+            <div>
+              <h3>${s.name}</h3>
+              <p>${s.explain}</p>
+              <p class="explain"><strong>À prévoir :</strong> ${s.needs}</p>
+            </div>
+            <strong class="price">${s.labor} €</strong>
+          </div>
+        </div>
+      `).join("") + `
+        <div class="service">
+          <div class="service-top">
+            <div>
+              <h3>Vidange moteur en annexe</h3>
+              <p>Service proposé uniquement en complément d’une intervention freinage.</p>
+              <p class="explain">Filtre à huile fourni ou réglé par le client.</p>
+            </div>
+            <strong class="price">69 €</strong>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderChoose() {
+      const box = document.getElementById("chooseList");
+      box.innerHTML = services.map(s => `
+        <div class="service">
+          <label>
+            <input type="checkbox" ${selected.includes(s.id) ? "checked" : ""} onchange="toggleService('${s.id}')" />
+            <strong>${s.name}</strong> — main-d’œuvre ${s.labor} €
+          </label>
+          <p>${s.explain}</p>
+          <p class="explain"><strong>À prévoir :</strong> ${s.needs}</p>
+        </div>
+      `).join("");
+      updateOilBox();
+    }
+
+    function toggleService(id) {
+      if (selected.includes(id)) {
+        selected = selected.filter(x => x !== id);
+      } else {
+        selected.push(id);
+      }
+      updateOilBox();
+    }
+
+    function setGrade(value) {
+      grade = value;
+      ["eco", "standard", "premium"].forEach(g => {
+        document.getElementById("grade-" + g).classList.toggle("active", g === value);
+      });
+      document.getElementById("gradeNote").textContent = gradeNotes[value];
+    }
+
+    function setOilMode(value) {
+      oilMode = value;
+      document.getElementById("oil-garage").classList.toggle("active", value === "garage");
+      document.getElementById("oil-client").classList.toggle("active", value === "client");
+    }
+
+    function updateOilBox() {
+      const hasRepair = selected.some(id => id !== "controle");
+      document.getElementById("oilBox").classList.toggle("hidden", !hasRepair);
+      const addOil = document.getElementById("addOil");
+      const oilOptions = document.getElementById("oilOptions");
+      if (addOil && oilOptions) {
+        oilOptions.classList.toggle("hidden", !addOil.checked);
+      }
+    }
+
+    function estimateOilCapacity() {
+      const text = (
+        document.getElementById("brand").value + " " +
+        document.getElementById("model").value + " " +
+        document.getElementById("engine").value + " " +
+        document.getElementById("energy").value
+      ).toLowerCase();
+
+      if (text.includes("2.0")) return 6;
+      if (text.includes("1.6") || text.includes("hdi") || text.includes("bluehdi")) return 5;
+      return 4;
+    }
+
+    function calculate() {
+      const multiplier = gradeMultipliers[grade];
+      let labor = 0;
+      let partsMin = 0;
+      let partsMax = 0;
+
+      selected.forEach(id => {
+        const s = services.find(x => x.id === id);
+        if (!s) return;
+        labor += s.labor;
+        partsMin += s.parts[0] * multiplier;
+        partsMax += s.parts[1] * multiplier;
+      });
+
+      const addOil = document.getElementById("addOil") && document.getElementById("addOil").checked;
+      let oil = 0;
+
+      if (addOil) {
+        labor += 69;
+        if (oilMode === "garage") {
+          oil = estimateOilCapacity() * 12;
+        }
+      }
+
+      document.getElementById("sumLabor").textContent = euro(labor);
+      document.getElementById("sumParts").textContent = euro(partsMin) + " à " + euro(partsMax);
+      document.getElementById("sumOil").textContent = euro(oil);
+      document.getElementById("sumTotal").textContent = euro(labor + partsMin + oil) + " à " + euro(labor + partsMax + oil);
+
+      buildMail(labor, partsMin, partsMax, oil);
+    }
+
+    function buildMail(labor, partsMin, partsMax, oil) {
+      const selectedNames = selected.map(id => {
+        const s = services.find(x => x.id === id);
+        return s ? "- " + s.name + " : " + s.labor + " €" : "";
+      }).join("\\n");
+
+      const body = `
+Nouvelle demande site EDM AUTO
+
+CLIENT
+Nom : ${document.getElementById("name").value}
+Téléphone : ${document.getElementById("phone").value}
+Email : ${document.getElementById("email").value}
+
+VÉHICULE
+Immatriculation : ${document.getElementById("plate").value}
+Kilométrage : ${document.getElementById("mileage").value}
+Marque : ${document.getElementById("brand").value}
+Modèle : ${document.getElementById("model").value}
+Motorisation : ${document.getElementById("engine").value}
+Année : ${document.getElementById("year").value}
+Énergie : ${document.getElementById("energy").value}
+
+SERVICES
+${selectedNames}
+
+Catégorie pièces : ${grade}
+
+ESTIMATION
+Main-d’œuvre : ${euro(labor)}
+Pièces : ${euro(partsMin)} à ${euro(partsMax)}
+Huile garage : ${euro(oil)}
+Total : ${euro(labor + partsMin + oil)} à ${euro(labor + partsMax + oil)}
+
+Note : estimation indicative à valider par EDM AUTO.
+`.trim();
+
+      document.getElementById("mailLink").href =
+        "mailto:" + EDM_EMAIL +
+        "?subject=" + encodeURIComponent("Nouvelle demande site EDM AUTO") +
+        "&body=" + encodeURIComponent(body);
+    }
+
+    renderServices();
+  </script>
+</body>
 </html>
