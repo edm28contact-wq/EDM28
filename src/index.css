@@ -1,1 +1,393 @@
+import { useMemo, useState } from 'react';
 
+const EDM_EMAIL = 'edm28.contact@gmail.com';
+
+const SERVICES = [
+  {
+    id: 'controle_freinage',
+    category: 'Freinage',
+    name: 'Contrôle visuel freinage',
+    labor: 29,
+    type: 'freinage',
+    partBase: { eco: [0, 0], standard: [0, 0], premium: [0, 0] },
+    explanation: 'Contrôle visuel des plaquettes, disques et état général du freinage avant intervention.',
+    needs: 'Aucune pièce obligatoire. Utile pour confirmer ce qui doit être commandé.'
+  },
+  {
+    id: 'plaquettes_avant',
+    category: 'Freinage',
+    name: 'Montage plaquettes avant',
+    labor: 69,
+    type: 'freinage',
+    partBase: { eco: [35, 50], standard: [50, 70], premium: [70, 95] },
+    explanation: 'À choisir si les plaquettes avant sont usées ou proches du témoin.',
+    needs: 'Jeu de plaquettes avant neuf et compatible avec le véhicule.'
+  },
+  {
+    id: 'plaquettes_arriere',
+    category: 'Freinage',
+    name: 'Montage plaquettes arrière',
+    labor: 69,
+    type: 'freinage',
+    partBase: { eco: [35, 50], standard: [50, 70], premium: [70, 95] },
+    explanation: 'À choisir si les plaquettes arrière sont usées ou si le freinage arrière doit être remis en état.',
+    needs: 'Jeu de plaquettes arrière neuf et compatible avec le véhicule.'
+  },
+  {
+    id: 'disques_plaquettes_avant',
+    category: 'Freinage',
+    name: 'Montage disques + plaquettes avant',
+    labor: 109,
+    type: 'freinage',
+    partBase: { eco: [105, 135], standard: [135, 170], premium: [170, 220] },
+    explanation: 'À choisir si les disques avant sont creusés, voilés, trop fins ou si les plaquettes doivent être remplacées avec les disques.',
+    needs: 'Deux disques avant et un jeu de plaquettes avant compatibles.'
+  },
+  {
+    id: 'disques_plaquettes_arriere',
+    category: 'Freinage',
+    name: 'Montage disques + plaquettes arrière',
+    labor: 109,
+    type: 'freinage',
+    partBase: { eco: [105, 135], standard: [135, 170], premium: [170, 220] },
+    explanation: 'À choisir si les disques arrière sont à remplacer avec les plaquettes arrière.',
+    needs: 'Deux disques arrière et un jeu de plaquettes arrière compatibles.'
+  },
+  {
+    id: 'freinage_complet',
+    category: 'Freinage',
+    name: 'Disques + plaquettes avant et arrière',
+    labor: 199,
+    type: 'freinage',
+    partBase: { eco: [230, 290], standard: [290, 360], premium: [360, 460] },
+    explanation: 'Remise en état complète du freinage avant et arrière.',
+    needs: 'Quatre disques et jeux de plaquettes avant/arrière compatibles.'
+  }
+];
+
+const OIL_STOCK = [
+  { norm: '5w30', label: '5W30 garage', pricePerLiter: 12 },
+  { norm: '5w40', label: '5W40 garage', pricePerLiter: 12 }
+];
+
+const defaultForm = {
+  name: '',
+  phone: '',
+  email: '',
+  plate: '',
+  mileage: '',
+  make: '',
+  model: '',
+  engine: '',
+  year: '',
+  fuel: '',
+  oilNorm: '',
+  oilCapacity: ''
+};
+
+function euro(value) {
+  return `${Math.round(Number(value || 0))} €`;
+}
+
+function normalize(value) {
+  return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+function getVehicleFactor(form) {
+  const text = normalize(`${form.make} ${form.model} ${form.engine} ${form.fuel}`);
+  if (text.includes('bmw') || text.includes('mercedes') || text.includes('audi') || text.includes('premium')) return 1.25;
+  if (text.includes('suv') || text.includes('3008') || text.includes('5008') || text.includes('kadjar') || text.includes('qashqai')) return 1.15;
+  if (text.includes('clio') || text.includes('208') || text.includes('c3') || text.includes('fiesta')) return 0.9;
+  return 1;
+}
+
+function App() {
+  const [step, setStep] = useState('home');
+  const [form, setForm] = useState(defaultForm);
+  const [selected, setSelected] = useState([]);
+  const [grade, setGrade] = useState('standard');
+  const [addOil, setAddOil] = useState(false);
+  const [oilMode, setOilMode] = useState('garage');
+  const [lookupStatus, setLookupStatus] = useState('');
+  const [aiEstimate, setAiEstimate] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const selectedServices = useMemo(() => SERVICES.filter(s => selected.includes(s.id)), [selected]);
+  const hasBrakeService = selectedServices.some(s => s.type === 'freinage');
+  const compatibleOil = useMemo(() => {
+    const norm = normalize(form.oilNorm);
+    return OIL_STOCK.find(item => norm.includes(item.norm));
+  }, [form.oilNorm]);
+
+  const estimate = useMemo(() => {
+    const factor = getVehicleFactor(form);
+    const labor = selectedServices.reduce((sum, service) => sum + service.labor, 0) + (addOil && hasBrakeService ? 69 : 0);
+    const parts = selectedServices.reduce((acc, service) => {
+      const range = service.partBase[grade] || [0, 0];
+      return [acc[0] + Math.round(range[0] * factor), acc[1] + Math.round(range[1] * factor)];
+    }, [0, 0]);
+
+    let oil = 0;
+    if (addOil && hasBrakeService && oilMode === 'garage' && compatibleOil) {
+      const liters = Number(String(form.oilCapacity || '').replace(',', '.')) || 5;
+      oil = Math.ceil(liters) * compatibleOil.pricePerLiter;
+    }
+
+    return {
+      labor,
+      partsMin: parts[0],
+      partsMax: parts[1],
+      oil,
+      totalMin: labor + parts[0] + oil,
+      totalMax: labor + parts[1] + oil
+    };
+  }, [selectedServices, grade, form, addOil, oilMode, compatibleOil, hasBrakeService]);
+
+  function updateForm(key, value) {
+    setForm(prev => ({ ...prev, [key]: value }));
+  }
+
+  function toggleService(id) {
+    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setAiEstimate(null);
+  }
+
+  async function lookupPlate() {
+    if (!form.plate.trim()) {
+      setLookupStatus('Entre une immatriculation avant de scanner.');
+      return;
+    }
+
+    setLookupStatus('Recherche du véhicule...');
+    try {
+      const response = await fetch(`/api/vehicle?plate=${encodeURIComponent(form.plate)}`);
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Véhicule non trouvé');
+      const v = data.vehicle || {};
+      setForm(prev => ({
+        ...prev,
+        make: v.make || prev.make,
+        model: v.model || prev.model,
+        engine: v.engine || prev.engine,
+        year: v.year || prev.year,
+        fuel: v.fuel || prev.fuel,
+        oilNorm: v.oilNorm || prev.oilNorm,
+        oilCapacity: v.oilCapacity || prev.oilCapacity
+      }));
+      setLookupStatus('Véhicule détecté. Vérifie les informations avant de continuer.');
+    } catch (error) {
+      setLookupStatus('Scan impossible. Tu peux remplir le véhicule manuellement.');
+    }
+  }
+
+  async function generateAiEstimate() {
+    setAiLoading(true);
+    setAiEstimate(null);
+    try {
+      const response = await fetch('/api/estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form, services: selectedServices, grade, addOil, oilMode, fallbackEstimate: estimate })
+      });
+      const data = await response.json();
+      setAiEstimate(data);
+    } catch (error) {
+      setAiEstimate({ success: false, source: 'local', explanation: 'Estimation locale utilisée car l’IA est indisponible.', estimate });
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  function createMailLink() {
+    const servicesText = selectedServices.map(s => `- ${s.name} (${s.labor} € MO)\n  Explication : ${s.explanation}\n  À prévoir : ${s.needs}`).join('\n');
+    const body = [
+      'Nouvelle demande site EDM AUTO',
+      '',
+      `Nom : ${form.name}`,
+      `Téléphone : ${form.phone}`,
+      `Email : ${form.email}`,
+      `Immatriculation : ${form.plate}`,
+      `Kilométrage : ${form.mileage}`,
+      '',
+      `Véhicule : ${form.make} ${form.model} ${form.engine}`,
+      `Année : ${form.year}`,
+      `Énergie : ${form.fuel}`,
+      `Huile indiquée : ${form.oilNorm || 'à vérifier'}`,
+      `Capacité huile : ${form.oilCapacity || 'à vérifier'}`,
+      '',
+      `Gamme pièces souhaitée : ${grade}`,
+      '',
+      'Services sélectionnés :',
+      servicesText || 'Aucun',
+      '',
+      addOil && hasBrakeService ? `Vidange annexe : Oui (${oilMode === 'garage' ? 'huile garage' : 'huile + filtre client'})` : 'Vidange annexe : Non',
+      '',
+      `Main-d’œuvre EDM AUTO : ${euro(estimate.labor)}`,
+      `Pièces estimées : ${euro(estimate.partsMin)} à ${euro(estimate.partsMax)}`,
+      `Huile garage : ${euro(estimate.oil)}`,
+      `Total estimé : ${euro(estimate.totalMin)} à ${euro(estimate.totalMax)}`,
+      '',
+      'Validation humaine EDM AUTO obligatoire avant confirmation du rendez-vous.'
+    ].join('\n');
+
+    return `mailto:${EDM_EMAIL}?subject=${encodeURIComponent(`Nouvelle demande site EDM AUTO - ${form.plate || 'véhicule'}`)}&body=${encodeURIComponent(body)}`;
+  }
+
+  return (
+    <main>
+      <header className="topbar">
+        <div className="brand">EDM AUTO</div>
+        <button className="ghost" onClick={() => setStep('services')}>Voir les services</button>
+      </header>
+
+      {step === 'home' && (
+        <section className="hero">
+          <p className="badge">Spécialiste freinage & entretien courant</p>
+          <h1>Préparez votre RDV auto simplement.</h1>
+          <p className="lead">Vous achetez vos pièces, EDM AUTO vous aide à choisir les bonnes références compatibles avec votre véhicule, puis réalise le montage. L’estimation reste indicative et sera validée avant rendez-vous.</p>
+          <div className="actions">
+            <button className="primary" onClick={() => setStep('client')}>Préparer mon RDV</button>
+            <button className="secondary" onClick={() => setStep('services')}>Voir les services</button>
+          </div>
+          <div className="cards">
+            <div><strong>Freinage</strong><span>Plaquettes, disques, contrôle.</span></div>
+            <div><strong>Vidange annexe</strong><span>Disponible seulement avec une prestation freinage.</span></div>
+            <div><strong>Validation EDM</strong><span>Aucun devis final automatique.</span></div>
+          </div>
+        </section>
+      )}
+
+      {step === 'services' && (
+        <section className="panel">
+          <h2>Services EDM AUTO</h2>
+          <p className="muted">Cette page affiche uniquement les prix de main-d’œuvre. L’estimation des pièces est calculée pendant la préparation du RDV selon le véhicule.</p>
+          <div className="service-list">
+            {SERVICES.map(service => (
+              <div className="service-row" key={service.id}>
+                <div>
+                  <span className="chip">{service.category}</span>
+                  <h3>{service.name}</h3>
+                  <p>{service.explanation}</p>
+                  <p className="explain mini"><strong>À prévoir :</strong> {service.needs}</p>
+                </div>
+                <strong>{euro(service.labor)}</strong>
+              </div>
+            ))}
+          </div>
+          <button className="primary" onClick={() => setStep('client')}>Préparer mon RDV</button>
+        </section>
+      )}
+
+      {step === 'client' && (
+        <section className="panel narrow">
+          <h2>Vos informations</h2>
+          <div className="grid">
+            <label>Nom complet<input value={form.name} onChange={e => updateForm('name', e.target.value)} /></label>
+            <label>Téléphone<input value={form.phone} onChange={e => updateForm('phone', e.target.value)} /></label>
+            <label>Email<input value={form.email} onChange={e => updateForm('email', e.target.value)} /></label>
+            <label>Kilométrage<input value={form.mileage} onChange={e => updateForm('mileage', e.target.value)} placeholder="ex : 125000 km" /></label>
+          </div>
+          <div className="actions"><button className="primary" onClick={() => setStep('vehicle')}>Continuer</button></div>
+        </section>
+      )}
+
+      {step === 'vehicle' && (
+        <section className="panel narrow">
+          <h2>Votre véhicule</h2>
+          <p className="muted">Scannez la plaque si possible. En cas d’échec, remplissez manuellement.</p>
+          <div className="grid">
+            <label>Immatriculation<input value={form.plate} onChange={e => updateForm('plate', e.target.value.toUpperCase())} placeholder="AA-123-BB" /></label>
+            <div className="lookup-box"><button className="secondary" onClick={lookupPlate}>Scanner la plaque</button></div>
+            <label>Marque<input value={form.make} onChange={e => updateForm('make', e.target.value)} /></label>
+            <label>Modèle<input value={form.model} onChange={e => updateForm('model', e.target.value)} /></label>
+            <label>Motorisation<input value={form.engine} onChange={e => updateForm('engine', e.target.value)} /></label>
+            <label>Année<input value={form.year} onChange={e => updateForm('year', e.target.value)} /></label>
+            <label>Énergie<input value={form.fuel} onChange={e => updateForm('fuel', e.target.value)} /></label>
+            <label>Huile recommandée<input value={form.oilNorm} onChange={e => updateForm('oilNorm', e.target.value)} placeholder="ex : 5W30" /></label>
+            <label>Capacité huile<input value={form.oilCapacity} onChange={e => updateForm('oilCapacity', e.target.value)} placeholder="ex : 5" /></label>
+          </div>
+          {lookupStatus && <p className="success">{lookupStatus}</p>}
+          <div className="actions"><button className="primary" onClick={() => setStep('choose')}>Choisir mes services</button></div>
+        </section>
+      )}
+
+      {step === 'choose' && (
+        <section className="panel">
+          <h2>Choix des services</h2>
+          <p className="muted">La vidange est proposée uniquement en annexe d’une intervention freinage.</p>
+          <div className="service-list">
+            {SERVICES.map(service => (
+              <button key={service.id} className={`select-card ${selected.includes(service.id) ? 'active' : ''}`} onClick={() => toggleService(service.id)}>
+                <span className="chip">{service.category}</span>
+                <h3>{service.name}</h3>
+                <p>Main-d’œuvre EDM AUTO : <strong>{euro(service.labor)}</strong></p>
+                <p className="explain"><strong>Explication :</strong> {service.explanation}<br /><strong>À prévoir :</strong> {service.needs}</p>
+              </button>
+            ))}
+          </div>
+
+          <div className="grade-box">
+            <h3>Catégorie de pièces souhaitée</h3>
+            <p className="muted">Le client achète les pièces. EDM AUTO vérifie la compatibilité avant validation.</p>
+            <div className="segmented">
+              {['eco', 'standard', 'premium'].map(item => <button key={item} className={grade === item ? 'active' : ''} onClick={() => setGrade(item)}>{item}</button>)}
+            </div>
+          </div>
+
+          {hasBrakeService && (
+            <div className="annexe">
+              <label className="check"><input type="checkbox" checked={addOil} onChange={e => setAddOil(e.target.checked)} /> Ajouter une vidange en annexe</label>
+              {addOil && (
+                <div className="oil-box">
+                  {compatibleOil ? (
+                    <>
+                      <p><strong>Huile garage compatible :</strong> {compatibleOil.label}</p>
+                      <label className="check"><input type="radio" checked={oilMode === 'garage'} onChange={() => setOilMode('garage')} /> Huile garage - forfait selon capacité</label>
+                      <label className="check"><input type="radio" checked={oilMode === 'client'} onChange={() => setOilMode('client')} /> Huile + filtre achetés à part par le client</label>
+                    </>
+                  ) : (
+                    <>
+                      <p><strong>Huile garage indisponible pour ce véhicule.</strong></p>
+                      <p className="muted">Le client devra prévoir huile et filtre adaptés, ou EDM AUTO validera la référence avant RDV.</p>
+                      <label className="check"><input type="radio" checked readOnly /> Huile + filtre client</label>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!hasBrakeService && <p className="notice">Sélectionnez au moins une prestation freinage pour accéder aux services annexes.</p>}
+          <div className="actions"><button className="primary" onClick={() => setStep('summary')}>Voir mon estimation</button></div>
+        </section>
+      )}
+
+      {step === 'summary' && (
+        <section className="panel narrow">
+          <h2>Estimation indicative</h2>
+          <p className="muted">Basée sur le véhicule, les services sélectionnés et la gamme choisie. Le devis final sera validé par EDM AUTO.</p>
+          <div className="summary">
+            <div><span>Main-d’œuvre EDM AUTO</span><strong>{euro(estimate.labor)}</strong></div>
+            <div><span>Pièces estimées client</span><strong>{euro(estimate.partsMin)} à {euro(estimate.partsMax)}</strong></div>
+            <div><span>Huile garage</span><strong>{euro(estimate.oil)}</strong></div>
+            <div className="total"><span>Total estimé</span><strong>{euro(estimate.totalMin)} à {euro(estimate.totalMax)}</strong></div>
+          </div>
+
+          <button className="secondary full" onClick={generateAiEstimate} disabled={aiLoading}>{aiLoading ? 'Estimation IA...' : 'Générer estimation IA'}</button>
+          {aiEstimate && (
+            <div className="notice">
+              <strong>Retour estimation :</strong>
+              <p>{aiEstimate.explanation || 'Estimation générée.'}</p>
+              <small>Source : {aiEstimate.source || 'fallback'}</small>
+            </div>
+          )}
+
+          <a className="primary link" href={createMailLink()}>Envoyer ma demande à EDM AUTO</a>
+          <button className="ghost full" onClick={() => setStep('choose')}>Modifier mes services</button>
+        </section>
+      )}
+    </main>
+  );
+}
+
+export default App;
