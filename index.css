@@ -1,107 +1,13 @@
-function cleanPlate(value) {
-  return String(value || '')
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '')
-}
-
-function normalizePlateForApi(value) {
-  const raw = cleanPlate(value)
-  if (/^[A-Z]{2}\d{3}[A-Z]{2}$/.test(raw)) {
-    return `${raw.slice(0, 2)}-${raw.slice(2, 5)}-${raw.slice(5)}`
-  }
-  return String(value || '').toUpperCase().trim()
-}
-
-function firstValue(obj, keys) {
-  for (const key of keys) {
-    const value = obj?.[key]
-    if (value !== undefined && value !== null && String(value).trim() !== '') return String(value).trim()
-  }
-  return ''
-}
-
-function flattenVehicle(data) {
-  const source = data?.data || data?.vehicle || data?.result || data || {}
-  const nested = source?.vehicule || source?.vehicle || source
-  const make = firstValue(nested, ['marque', 'make', 'brand', 'manufacturer'])
-  const model = firstValue(nested, ['modele', 'model', 'commercial_name', 'nom_modele'])
-  const version = firstValue(nested, ['version', 'variante', 'type_version', 'type_variante_version'])
-  const engine = firstValue(nested, ['motorisation', 'engine', 'code_moteur', 'engine_code', 'cylindree', 'cylindree_cm3'])
-  const energy = firstValue(nested, ['energie', 'energy', 'fuel', 'carburant'])
-  const year = firstValue(nested, ['annee', 'year', 'annee_modele']) || firstValue(nested, ['date_1er_circulation', 'date_premiere_circulation', 'first_registration_date']).slice(0, 4)
-  const vin = firstValue(nested, ['vin', 'numero_vin', 'num_serie'])
-  const cnit = firstValue(nested, ['cnit', 'type_mine', 'typeMine'])
-  const tecdocCarId = firstValue(nested, ['tecdoc_carid', 'tecdocCarId', 'tecdoc_id'])
-
-  return {
-    raw: data,
-    make,
-    model,
-    version,
-    makeModel: [make, model].filter(Boolean).join(' '),
-    engine: [engine, version].filter(Boolean).join(' - '),
-    year,
-    energy,
-    vin,
-    cnit,
-    tecdocCarId
-  }
-}
-
-export default async function handler(req, res) {
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    res.status(405).json({ error: 'Méthode non autorisée' })
-    return
-  }
-
-  const plate = req.method === 'GET' ? req.query?.plate : req.body?.plate
-  const normalizedPlate = normalizePlateForApi(plate)
-
-  if (!normalizedPlate) {
-    res.status(400).json({ error: 'Plaque manquante' })
-    return
-  }
-
-  const token = process.env.PLATE_API_TOKEN || 'TokenDemo2026B'
-  const country = process.env.PLATE_API_COUNTRY || 'FR'
-  const url = `https://api.apiplaqueimmatriculation.com/plaque?immatriculation=${encodeURIComponent(normalizedPlate)}&token=${encodeURIComponent(token)}&pays=${encodeURIComponent(country)}`
-
-  try {
-    const response = await fetch(url, { method: 'POST' })
-    const text = await response.text()
-
-    let data
-    try {
-      data = JSON.parse(text)
-    } catch (_) {
-      data = { rawText: text }
-    }
-
-    if (!response.ok) {
-      res.status(200).json({
-        success: false,
-        source: 'api-plaque-erreur',
-        plate: normalizedPlate,
-        error: `API plaque indisponible : ${response.status}`,
-        details: String(text || '').slice(0, 400)
-      })
-      return
-    }
-
-    const vehicle = flattenVehicle(data)
-
-    res.status(200).json({
-      success: true,
-      source: 'apiplaqueimmatriculation',
-      plate: normalizedPlate,
-      vehicle
-    })
-  } catch (error) {
-    res.status(200).json({
-      success: false,
-      source: 'api-plaque-exception',
-      plate: normalizedPlate,
-      error: error.message || 'Erreur API plaque'
-    })
-  }
-}
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EDM AUTO - Préparer mon RDV</title>
+    <meta name="description" content="EDM AUTO - spécialiste freinage et entretien courant. Préparez votre RDV et obtenez une estimation." />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
