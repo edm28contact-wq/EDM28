@@ -566,7 +566,7 @@ Note : estimation indicative à valider par EDM AUTO.
     renderServices();
     const EDM_BACKEND_URL = "https://script.google.com/macros/s/AKfycbz4aqWsmy0YXYyvmZyk0k9Pedp4fCiPz6zE9qra4eI077cHIw5lDQcgPsFQJ09ErHlb7g/exec";
 
-async function sendToBackend(event) {
+async function sendToBackend(button) {
   calculate();
 
   if (selected.length === 0) {
