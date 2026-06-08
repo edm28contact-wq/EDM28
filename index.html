@@ -564,6 +564,107 @@ Note : estimation indicative à valider par EDM AUTO.
     }
 
     renderServices();
+    const EDM_BACKEND_URL = "https://script.google.com/macros/s/AKfycbz4aqWsmy0YXYyvmZyk0k9Pedp4fCiPz6zE9qra4eI077cHIw5lDQcgPsFQJ09ErHlb7g/exec";
+
+async function sendToBackend(event) {
+  calculate();
+
+  if (selected.length === 0) {
+    alert("Veuillez sélectionner au moins un service.");
+    return;
+  }
+
+  const selectedServices = selected.map(id => {
+    const s = services.find(x => x.id === id);
+    return {
+      id: s.id,
+      name: s.name,
+      labor: s.labor,
+      partsMin: Math.round(s.parts[0] * gradeMultipliers[grade]),
+      partsMax: Math.round(s.parts[1] * gradeMultipliers[grade])
+    };
+  });
+
+  const addOil = document.getElementById("addOil") && document.getElementById("addOil").checked;
+  const oilCapacity = estimateOilCapacity();
+  const oilValue = addOil && oilMode === "garage" ? oilCapacity * 12 : 0;
+
+  let labor = 0;
+  let partsMin = 0;
+  let partsMax = 0;
+
+  selectedServices.forEach(s => {
+    labor += s.labor;
+    partsMin += s.partsMin;
+    partsMax += s.partsMax;
+  });
+
+  if (addOil) {
+    labor += 69;
+  }
+
+  const payload = {
+    client: {
+      name: document.getElementById("name").value,
+      phone: document.getElementById("phone").value,
+      email: document.getElementById("email").value,
+      plate: document.getElementById("plate").value,
+      consentementRgpd: "A_confirmer"
+    },
+    vehicle: {
+      plate: document.getElementById("plate").value,
+      brand: document.getElementById("brand").value,
+      model: document.getElementById("model").value,
+      engine: document.getElementById("engine").value,
+      year: document.getElementById("year").value,
+      energy: document.getElementById("energy").value,
+      mileage: document.getElementById("mileage").value,
+      source: "Site Vercel"
+    },
+    services: selectedServices,
+    grade: grade,
+    totals: {
+      labor: labor,
+      partsMin: partsMin,
+      partsMax: partsMax,
+      oil: oilValue,
+      totalMin: labor + partsMin + oilValue,
+      totalMax: labor + partsMax + oilValue
+    },
+    estimates: selectedServices.map(s => ({
+      idService: s.id,
+      nomPiece: s.name,
+      source1: "Estimation site EDM28",
+      prix1: s.partsMin,
+      source2: "Estimation site EDM28",
+      prix2: s.partsMax,
+      prixMin: s.partsMin,
+      prixMax: s.partsMax,
+      prixMedian: Math.round((s.partsMin + s.partsMax) / 2)
+    }))
+  };
+
+  const button = event.target;
+  button.disabled = true;
+  button.textContent = "Envoi en cours...";
+
+  try {
+    await fetch(EDM_BACKEND_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    alert("Votre demande a bien été envoyée à EDM AUTO. Elle sera vérifiée avant confirmation.");
+    button.textContent = "Demande envoyée";
+  } catch (error) {
+    alert("Erreur pendant l’envoi. Réessayez ou contactez EDM AUTO.");
+    button.disabled = false;
+    button.textContent = "Envoyer ma demande à EDM AUTO";
+  }
   </script>
 </body>
 </html>
