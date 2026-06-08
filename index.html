@@ -1,24 +1,25 @@
+```html
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EDM AUTO - Préparer mon RDV</title>
-  <style>
-    :root {
-      font-family: Arial, sans-serif;
-      color: #101827;
-      background: #f3f5f8;
-    }
 
+  <style>
     * { box-sizing: border-box; }
 
-    body { margin: 0; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f5f8;
+      color: #111827;
+    }
 
     header {
-      padding: 18px 28px;
       background: white;
       border-bottom: 1px solid #e5e7eb;
+      padding: 18px 28px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -30,37 +31,39 @@
     }
 
     main {
-      width: min(1050px, calc(100% - 28px));
+      width: min(1000px, calc(100% - 28px));
       margin: 24px auto;
     }
 
     section {
       background: white;
-      border: 1px solid #e5e7eb;
       border-radius: 24px;
       padding: 28px;
-      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+    }
+
+    .hidden {
+      display: none;
     }
 
     h1 {
-      font-size: clamp(2.2rem, 6vw, 4.5rem);
+      font-size: clamp(2.3rem, 7vw, 4.8rem);
       line-height: 1;
-      margin: 10px 0 16px;
+      margin: 12px 0;
       letter-spacing: -0.05em;
     }
 
     h2 {
-      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-size: clamp(1.8rem, 5vw, 3rem);
       margin: 0 0 12px;
       letter-spacing: -0.04em;
     }
 
-    h3 { margin: 8px 0; }
-
     p {
       color: #475467;
-      line-height: 1.55;
+      line-height: 1.6;
     }
 
     .badge {
@@ -70,24 +73,22 @@
       padding: 8px 12px;
       border-radius: 999px;
       font-weight: 800;
-      margin-bottom: 12px;
     }
 
     .actions {
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
-      margin-top: 18px;
+      gap: 10px;
+      margin-top: 20px;
     }
 
-    button, a.button {
+    button {
       border: 0;
       border-radius: 14px;
       padding: 12px 16px;
       font-weight: 800;
       cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
+      font-size: 1rem;
     }
 
     .primary {
@@ -109,62 +110,35 @@
 
     label {
       display: grid;
-      gap: 8px;
+      gap: 7px;
       font-weight: 800;
     }
 
-    input {
-      padding: 13px 14px;
-      border: 1px solid #d0d5dd;
+    input,
+    select {
+      width: 100%;
+      padding: 13px;
       border-radius: 12px;
+      border: 1px solid #d0d5dd;
       font: inherit;
     }
 
     .service {
       border: 1px solid #e5e7eb;
+      background: #fbfcfe;
       border-radius: 18px;
       padding: 16px;
       margin: 12px 0;
-      background: #fbfcfe;
     }
 
-    .service-top {
+    .service label {
       display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: flex-start;
+      align-items: center;
+      gap: 10px;
     }
 
-    .service strong.price {
-      font-size: 1.25rem;
-      white-space: nowrap;
-    }
-
-    .explain {
-      background: #f3f6fb;
-      border-radius: 14px;
-      padding: 10px 12px;
-      color: #344054;
-      margin-top: 8px;
-    }
-
-    .chips {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin: 12px 0;
-    }
-
-    .chips button {
-      border: 1px solid #d0d5dd;
-      background: white;
-      color: #111827;
-      border-radius: 999px;
-    }
-
-    .chips button.active {
-      background: #111827;
-      color: white;
+    .service input {
+      width: auto;
     }
 
     .notice {
@@ -173,17 +147,15 @@
       border-radius: 16px;
       padding: 14px;
       margin-top: 14px;
-      color: #344054;
     }
 
     .summary {
-      display: grid;
-      gap: 8px;
-      margin-top: 14px;
       border: 1px solid #e5e7eb;
       border-radius: 18px;
-      padding: 8px;
       background: #fbfcfe;
+      padding: 8px;
+      display: grid;
+      gap: 8px;
     }
 
     .summary div {
@@ -191,7 +163,6 @@
       justify-content: space-between;
       padding: 12px;
       border-radius: 12px;
-      gap: 12px;
     }
 
     .summary .total {
@@ -199,11 +170,15 @@
       color: white;
     }
 
-    .hidden { display: none; }
-
     @media (max-width: 760px) {
-      .grid { grid-template-columns: 1fr; }
-      .service-top, .summary div { flex-direction: column; }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary div {
+        flex-direction: column;
+        gap: 6px;
+      }
     }
   </style>
 </head>
@@ -211,7 +186,7 @@
 <body>
   <header>
     <div class="brand">EDM AUTO</div>
-    <button class="secondary" onclick="showStep('home')">Accueil</button>
+    <button class="secondary" id="btnAccueil">Accueil</button>
   </header>
 
   <main>
@@ -222,30 +197,36 @@
         Vous achetez vos pièces, EDM AUTO vous aide à choisir les bonnes références
         et réalise le montage. Obtenez une estimation avant validation.
       </p>
+
       <div class="actions">
-        <button class="primary" onclick="showStep('client')">Préparer mon RDV</button>
-        <button class="secondary" onclick="showStep('services')">Voir les services</button>
+        <button class="primary" id="btnPreparer">Préparer mon RDV</button>
+        <button class="secondary" id="btnServices">Voir les services</button>
       </div>
     </section>
 
-    <section id="services" class="hidden">
+    <section id="servicesPage" class="hidden">
       <h2>Services EDM AUTO</h2>
-      <p>Ici, seuls les prix de main-d’œuvre sont affichés. Les prix des pièces apparaissent pendant la préparation du RDV.</p>
+      <p>Prix de main-d’œuvre uniquement. Les pièces sont estimées pendant la préparation du RDV.</p>
       <div id="servicesList"></div>
-      <button class="secondary" onclick="showStep('home')">Retour</button>
+
+      <div class="actions">
+        <button class="secondary" data-go="home">Retour</button>
+      </div>
     </section>
 
-    <section id="client" class="hidden">
+    <section id="clientPage" class="hidden">
       <h2>Vos informations</h2>
+
       <div class="grid">
         <label>Nom complet <input id="name" /></label>
         <label>Téléphone <input id="phone" /></label>
         <label>Email <input id="email" /></label>
-        <label>Immatriculation <input id="plate" oninput="this.value=this.value.toUpperCase()" /></label>
+        <label>Immatriculation <input id="plate" /></label>
         <label>Kilométrage <input id="mileage" /></label>
       </div>
 
       <h3>Véhicule</h3>
+
       <div class="grid">
         <label>Marque <input id="brand" /></label>
         <label>Modèle <input id="model" /></label>
@@ -255,224 +236,207 @@
       </div>
 
       <div class="actions">
-        <button class="secondary" onclick="showStep('home')">Retour</button>
-        <button class="primary" onclick="showStep('choose')">Continuer</button>
+        <button class="secondary" data-go="home">Retour</button>
+        <button class="primary" id="btnContinuer">Continuer</button>
       </div>
     </section>
 
-    <section id="choose" class="hidden">
+    <section id="choosePage" class="hidden">
       <h2>Choix des services</h2>
       <p>Sélectionnez une intervention freinage. La vidange est proposée uniquement en annexe.</p>
 
       <div id="chooseList"></div>
 
       <div class="notice">
-        <strong>Catégorie de pièces souhaitée</strong>
-        <div class="chips">
-          <button id="grade-eco" onclick="setGrade('eco')">Éco</button>
-          <button id="grade-standard" class="active" onclick="setGrade('standard')">Standard</button>
-          <button id="grade-premium" onclick="setGrade('premium')">Premium</button>
-        </div>
-        <p id="gradeNote">Bon équilibre prix / qualité.</p>
+        <label>
+          Catégorie de pièces
+          <select id="grade">
+            <option value="eco">Éco</option>
+            <option value="standard" selected>Standard</option>
+            <option value="premium">Premium</option>
+          </select>
+        </label>
       </div>
 
       <div id="oilBox" class="notice hidden">
         <label>
-          <input type="checkbox" id="addOil" onchange="updateOilBox()" />
+          <input type="checkbox" id="addOil" />
           Ajouter une vidange en annexe
         </label>
-        <div id="oilOptions" class="hidden">
-          <p>Huile garage possible selon compatibilité stock. Filtre à huile fourni ou réglé par le client.</p>
-          <div class="chips">
-            <button id="oil-garage" class="active" onclick="setOilMode('garage')">Huile garage</button>
-            <button id="oil-client" onclick="setOilMode('client')">Huile + filtre client</button>
-          </div>
-        </div>
+
+        <label style="margin-top: 12px;">
+          Mode huile
+          <select id="oilMode">
+            <option value="garage">Huile garage si compatible</option>
+            <option value="client">Huile + filtre client</option>
+          </select>
+        </label>
       </div>
 
       <div class="actions">
-        <button class="secondary" onclick="showStep('client')">Retour</button>
-        <button class="primary" onclick="showStep('summary'); calculate();">Voir l’estimation</button>
+        <button class="secondary" data-go="clientPage">Retour</button>
+        <button class="primary" id="btnEstimation">Voir l’estimation</button>
       </div>
     </section>
 
-    <section id="summary" class="hidden">
+    <section id="summaryPage" class="hidden">
       <h2>Estimation</h2>
-      <p>Estimation indicative. Les références pièces et le tarif final sont validés par EDM AUTO.</p>
+      <p>Estimation indicative. EDM AUTO vérifie les références et confirme le tarif final.</p>
 
       <div class="summary">
-        <div><span>Main-d’œuvre EDM AUTO</span><strong id="sumLabor">0 €</strong></div>
+        <div><span>Main-d’œuvre</span><strong id="sumLabor">0 €</strong></div>
         <div><span>Pièces estimées</span><strong id="sumParts">0 € à 0 €</strong></div>
         <div><span>Huile garage</span><strong id="sumOil">0 €</strong></div>
         <div class="total"><span>Total estimé</span><strong id="sumTotal">0 € à 0 €</strong></div>
       </div>
 
-      <div class="notice">
-        Cette version fonctionne en HTML simple. On pourra remettre React/API quand la base sera stable.
-      </div>
-
       <div class="actions">
-        <button class="secondary" onclick="showStep('choose')">Retour</button>
-        <button class="primary" onclick="sendToBackend(this)">Envoyer ma demande à EDM AUTO</button>
+        <button class="secondary" data-go="choosePage">Retour</button>
+        <button class="primary" id="btnEnvoyer">Envoyer ma demande à EDM AUTO</button>
       </div>
     </section>
   </main>
 
   <script>
-    const EDM_EMAIL = "edm28.contact@gmail.com";
+    const EDM_BACKEND_URL = "https://script.google.com/macros/s/AKfycbz4aqWsmy0YXYyvmZyk0k9Pedp4fCiPz6zE9qra4eI077cHIw5lDQcgPsFQJ09ErHlb7g/exec";
 
     const services = [
       {
-        id: "controle",
+        id: "FR_CTRL",
         name: "Contrôle visuel freinage",
         labor: 29,
         parts: [0, 0],
-        explain: "Contrôle visuel des plaquettes, disques et éléments visibles du freinage.",
-        needs: "Aucune pièce obligatoire."
+        description: "Contrôle visuel des plaquettes, disques et éléments visibles."
       },
       {
-        id: "plaquettes_avant",
+        id: "FR_PLAQ_AV",
         name: "Montage plaquettes avant",
         labor: 69,
         parts: [35, 55],
-        explain: "Pour remplacer les plaquettes avant si les disques sont encore en bon état.",
-        needs: "Jeu de plaquettes avant compatible."
+        description: "Montage des plaquettes avant fournies par le client."
       },
       {
-        id: "plaquettes_arriere",
+        id: "FR_PLAQ_AR",
         name: "Montage plaquettes arrière",
         labor: 69,
         parts: [35, 55],
-        explain: "Pour remplacer les plaquettes arrière si les disques sont encore en bon état.",
-        needs: "Jeu de plaquettes arrière compatible."
+        description: "Montage des plaquettes arrière fournies par le client."
       },
       {
-        id: "disques_plaquettes_avant",
+        id: "FR_DISC_PLAQ_AV",
         name: "Montage disques + plaquettes avant",
         labor: 109,
         parts: [120, 155],
-        explain: "Pour remplacer les disques et les plaquettes à l’avant.",
-        needs: "Deux disques avant + plaquettes avant compatibles."
+        description: "Remplacement complet du train avant."
       },
       {
-        id: "disques_plaquettes_arriere",
+        id: "FR_DISC_PLAQ_AR",
         name: "Montage disques + plaquettes arrière",
         labor: 109,
         parts: [115, 150],
-        explain: "Pour remplacer les disques et les plaquettes à l’arrière.",
-        needs: "Deux disques arrière + plaquettes arrière compatibles."
+        description: "Remplacement complet du train arrière."
       },
       {
-        id: "freinage_complet",
+        id: "FR_COMPLET",
         name: "Montage disques + plaquettes avant et arrière",
         labor: 199,
         parts: [240, 330],
-        explain: "Pour un remplacement complet du freinage avant et arrière.",
-        needs: "Disques et plaquettes avant + arrière compatibles."
+        description: "Remplacement complet freinage avant et arrière."
       }
     ];
 
-    const gradeMultipliers = {
+    const multipliers = {
       eco: 0.9,
       standard: 1,
       premium: 1.18
     };
 
-    const gradeNotes = {
-      eco: "Prix accessible, adapté aux petits budgets.",
-      standard: "Bon équilibre prix / qualité.",
-      premium: "Marques reconnues ou qualité supérieure."
-    };
+    let lastTotals = null;
 
-    let selected = [];
-    let grade = "standard";
-    let oilMode = "garage";
-
-    function euro(v) {
-      return Math.round(v) + " €";
+    function euro(value) {
+      return Math.round(value) + " €";
     }
 
-    function showStep(id) {
-      ["home", "services", "client", "choose", "summary"].forEach(step => {
-        document.getElementById(step).classList.add("hidden");
+    function showPage(pageId) {
+      ["home", "servicesPage", "clientPage", "choosePage", "summaryPage"].forEach(function(id) {
+        document.getElementById(id).classList.add("hidden");
       });
-      document.getElementById(id).classList.remove("hidden");
-      if (id === "choose") renderChoose();
+
+      document.getElementById(pageId).classList.remove("hidden");
+
+      if (pageId === "choosePage") {
+        renderChoose();
+      }
     }
 
     function renderServices() {
       const box = document.getElementById("servicesList");
-      box.innerHTML = services.map(s => `
-        <div class="service">
-          <div class="service-top">
-            <div>
-              <h3>${s.name}</h3>
-              <p>${s.explain}</p>
-              <p class="explain"><strong>À prévoir :</strong> ${s.needs}</p>
-            </div>
-            <strong class="price">${s.labor} €</strong>
+
+      box.innerHTML = services.map(function(service) {
+        return `
+          <div class="service">
+            <h3>${service.name}</h3>
+            <p>${service.description}</p>
+            <strong>Main-d’œuvre : ${service.labor} €</strong>
           </div>
-        </div>
-      `).join("") + `
+        `;
+      }).join("") + `
         <div class="service">
-          <div class="service-top">
-            <div>
-              <h3>Vidange moteur en annexe</h3>
-              <p>Service proposé uniquement en complément d’une intervention freinage.</p>
-              <p class="explain">Filtre à huile fourni ou réglé par le client.</p>
-            </div>
-            <strong class="price">69 €</strong>
-          </div>
+          <h3>Vidange moteur en annexe</h3>
+          <p>Disponible uniquement avec une intervention freinage.</p>
+          <strong>Main-d’œuvre : 69 €</strong>
         </div>
       `;
     }
 
     function renderChoose() {
       const box = document.getElementById("chooseList");
-      box.innerHTML = services.map(s => `
-        <div class="service">
-          <label>
-            <input type="checkbox" ${selected.includes(s.id) ? "checked" : ""} onchange="toggleService('${s.id}')" />
-            <strong>${s.name}</strong> — main-d’œuvre ${s.labor} €
-          </label>
-          <p>${s.explain}</p>
-          <p class="explain"><strong>À prévoir :</strong> ${s.needs}</p>
-        </div>
-      `).join("");
-      updateOilBox();
-    }
 
-    function toggleService(id) {
-      if (selected.includes(id)) {
-        selected = selected.filter(x => x !== id);
-      } else {
-        selected.push(id);
-      }
-      updateOilBox();
-    }
+      box.innerHTML = services.map(function(service) {
+        return `
+          <div class="service">
+            <label>
+              <input type="checkbox" class="serviceCheck" value="${service.id}" />
+              <strong>${service.name} — ${service.labor} €</strong>
+            </label>
+            <p>${service.description}</p>
+          </div>
+        `;
+      }).join("");
 
-    function setGrade(value) {
-      grade = value;
-      ["eco", "standard", "premium"].forEach(g => {
-        document.getElementById("grade-" + g).classList.toggle("active", g === value);
+      document.querySelectorAll(".serviceCheck").forEach(function(check) {
+        check.addEventListener("change", updateOilVisibility);
       });
-      document.getElementById("gradeNote").textContent = gradeNotes[value];
+
+      updateOilVisibility();
     }
 
-    function setOilMode(value) {
-      oilMode = value;
-      document.getElementById("oil-garage").classList.toggle("active", value === "garage");
-      document.getElementById("oil-client").classList.toggle("active", value === "client");
+    function getSelectedServices() {
+      const grade = document.getElementById("grade").value;
+      const multiplier = multipliers[grade];
+
+      return Array.from(document.querySelectorAll(".serviceCheck:checked")).map(function(check) {
+        const service = services.find(function(s) {
+          return s.id === check.value;
+        });
+
+        return {
+          id: service.id,
+          name: service.name,
+          labor: service.labor,
+          partsMin: Math.round(service.parts[0] * multiplier),
+          partsMax: Math.round(service.parts[1] * multiplier)
+        };
+      });
     }
 
-    function updateOilBox() {
-      const hasRepair = selected.some(id => id !== "controle");
+    function updateOilVisibility() {
+      const selected = getSelectedServices();
+      const hasRepair = selected.some(function(service) {
+        return service.id !== "FR_CTRL";
+      });
+
       document.getElementById("oilBox").classList.toggle("hidden", !hasRepair);
-      const addOil = document.getElementById("addOil");
-      const oilOptions = document.getElementById("oilOptions");
-      if (addOil && oilOptions) {
-        oilOptions.classList.toggle("hidden", !addOil.checked);
-      }
     }
 
     function estimateOilCapacity() {
@@ -489,181 +453,169 @@
     }
 
     function calculate() {
-      const multiplier = gradeMultipliers[grade];
+      const selected = getSelectedServices();
+
+      if (selected.length === 0) {
+        alert("Veuillez sélectionner au moins un service.");
+        return null;
+      }
+
       let labor = 0;
       let partsMin = 0;
       let partsMax = 0;
 
-      selected.forEach(id => {
-        const s = services.find(x => x.id === id);
-        if (!s) return;
-        labor += s.labor;
-        partsMin += s.parts[0] * multiplier;
-        partsMax += s.parts[1] * multiplier;
+      selected.forEach(function(service) {
+        labor += service.labor;
+        partsMin += service.partsMin;
+        partsMax += service.partsMax;
       });
 
-      const addOil = document.getElementById("addOil") && document.getElementById("addOil").checked;
+      const addOil = document.getElementById("addOil").checked;
+      const oilMode = document.getElementById("oilMode").value;
       let oil = 0;
 
       if (addOil) {
         labor += 69;
+
         if (oilMode === "garage") {
           oil = estimateOilCapacity() * 12;
         }
       }
 
+      const totalMin = labor + partsMin + oil;
+      const totalMax = labor + partsMax + oil;
+
       document.getElementById("sumLabor").textContent = euro(labor);
       document.getElementById("sumParts").textContent = euro(partsMin) + " à " + euro(partsMax);
       document.getElementById("sumOil").textContent = euro(oil);
-      document.getElementById("sumTotal").textContent = euro(labor + partsMin + oil) + " à " + euro(labor + partsMax + oil);
+      document.getElementById("sumTotal").textContent = euro(totalMin) + " à " + euro(totalMax);
 
-      buildMail(labor, partsMin, partsMax, oil);
+      lastTotals = {
+        labor,
+        partsMin,
+        partsMax,
+        oil,
+        totalMin,
+        totalMax,
+        selected
+      };
+
+      return lastTotals;
     }
 
-    function buildMail(labor, partsMin, partsMax, oil) {
-      const selectedNames = selected.map(id => {
-        const s = services.find(x => x.id === id);
-        return s ? "- " + s.name + " : " + s.labor + " €" : "";
-      }).join("\\n");
+    async function sendToBackend() {
+      const totals = calculate();
 
-      const body = `
-Nouvelle demande site EDM AUTO
+      if (!totals) return;
 
-CLIENT
-Nom : ${document.getElementById("name").value}
-Téléphone : ${document.getElementById("phone").value}
-Email : ${document.getElementById("email").value}
+      const button = document.getElementById("btnEnvoyer");
+      button.disabled = true;
+      button.textContent = "Envoi en cours...";
 
-VÉHICULE
-Immatriculation : ${document.getElementById("plate").value}
-Kilométrage : ${document.getElementById("mileage").value}
-Marque : ${document.getElementById("brand").value}
-Modèle : ${document.getElementById("model").value}
-Motorisation : ${document.getElementById("engine").value}
-Année : ${document.getElementById("year").value}
-Énergie : ${document.getElementById("energy").value}
+      const payload = {
+        client: {
+          name: document.getElementById("name").value,
+          phone: document.getElementById("phone").value,
+          email: document.getElementById("email").value,
+          plate: document.getElementById("plate").value,
+          consentementRgpd: "A_confirmer"
+        },
+        vehicle: {
+          plate: document.getElementById("plate").value,
+          brand: document.getElementById("brand").value,
+          model: document.getElementById("model").value,
+          engine: document.getElementById("engine").value,
+          year: document.getElementById("year").value,
+          energy: document.getElementById("energy").value,
+          mileage: document.getElementById("mileage").value,
+          source: "Site Vercel"
+        },
+        services: totals.selected,
+        grade: document.getElementById("grade").value,
+        totals: {
+          labor: totals.labor,
+          partsMin: totals.partsMin,
+          partsMax: totals.partsMax,
+          oil: totals.oil,
+          totalMin: totals.totalMin,
+          totalMax: totals.totalMax
+        },
+        estimates: totals.selected.map(function(service) {
+          return {
+            idService: service.id,
+            nomPiece: service.name,
+            source1: "Estimation site EDM28",
+            prix1: service.partsMin,
+            source2: "Estimation site EDM28",
+            prix2: service.partsMax,
+            prixMin: service.partsMin,
+            prixMax: service.partsMax,
+            prixMedian: Math.round((service.partsMin + service.partsMax) / 2)
+          };
+        })
+      };
 
-SERVICES
-${selectedNames}
+      try {
+        await fetch(EDM_BACKEND_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload)
+        });
 
-Catégorie pièces : ${grade}
-
-ESTIMATION
-Main-d’œuvre : ${euro(labor)}
-Pièces : ${euro(partsMin)} à ${euro(partsMax)}
-Huile garage : ${euro(oil)}
-Total : ${euro(labor + partsMin + oil)} à ${euro(labor + partsMax + oil)}
-
-Note : estimation indicative à valider par EDM AUTO.
-`.trim();
-
-      document.getElementById("mailLink").href =
-        "mailto:" + EDM_EMAIL +
-        "?subject=" + encodeURIComponent("Nouvelle demande site EDM AUTO") +
-        "&body=" + encodeURIComponent(body);
+        alert("Demande envoyée à EDM AUTO. Elle sera vérifiée avant confirmation.");
+        button.textContent = "Demande envoyée";
+      } catch (error) {
+        alert("Erreur pendant l’envoi. Réessayez ou contactez EDM AUTO.");
+        button.disabled = false;
+        button.textContent = "Envoyer ma demande à EDM AUTO";
+      }
     }
 
-    renderServices();
-    const EDM_BACKEND_URL = "https://script.google.com/macros/s/AKfycbz4aqWsmy0YXYyvmZyk0k9Pedp4fCiPz6zE9qra4eI077cHIw5lDQcgPsFQJ09ErHlb7g/exec";
+    document.addEventListener("DOMContentLoaded", function() {
+      renderServices();
 
-async function sendToBackend(button) {
-  calculate();
+      document.getElementById("btnAccueil").addEventListener("click", function() {
+        showPage("home");
+      });
 
-  if (selected.length === 0) {
-    alert("Veuillez sélectionner au moins un service.");
-    return;
-  }
+      document.getElementById("btnPreparer").addEventListener("click", function() {
+        showPage("clientPage");
+      });
 
-  const selectedServices = selected.map(id => {
-    const s = services.find(x => x.id === id);
-    return {
-      id: s.id,
-      name: s.name,
-      labor: s.labor,
-      partsMin: Math.round(s.parts[0] * gradeMultipliers[grade]),
-      partsMax: Math.round(s.parts[1] * gradeMultipliers[grade])
-    };
-  });
+      document.getElementById("btnServices").addEventListener("click", function() {
+        showPage("servicesPage");
+      });
 
-  const addOil = document.getElementById("addOil") && document.getElementById("addOil").checked;
-  const oilCapacity = estimateOilCapacity();
-  const oilValue = addOil && oilMode === "garage" ? oilCapacity * 12 : 0;
+      document.getElementById("btnContinuer").addEventListener("click", function() {
+        showPage("choosePage");
+      });
 
-  let labor = 0;
-  let partsMin = 0;
-  let partsMax = 0;
+      document.getElementById("btnEstimation").addEventListener("click", function() {
+        const totals = calculate();
+        if (totals) {
+          showPage("summaryPage");
+        }
+      });
 
-  selectedServices.forEach(s => {
-    labor += s.labor;
-    partsMin += s.partsMin;
-    partsMax += s.partsMax;
-  });
+      document.getElementById("btnEnvoyer").addEventListener("click", sendToBackend);
 
-  if (addOil) {
-    labor += 69;
-  }
+      document.querySelectorAll("[data-go]").forEach(function(button) {
+        button.addEventListener("click", function() {
+          showPage(button.dataset.go);
+        });
+      });
 
-  const payload = {
-    client: {
-      name: document.getElementById("name").value,
-      phone: document.getElementById("phone").value,
-      email: document.getElementById("email").value,
-      plate: document.getElementById("plate").value,
-      consentementRgpd: "A_confirmer"
-    },
-    vehicle: {
-      plate: document.getElementById("plate").value,
-      brand: document.getElementById("brand").value,
-      model: document.getElementById("model").value,
-      engine: document.getElementById("engine").value,
-      year: document.getElementById("year").value,
-      energy: document.getElementById("energy").value,
-      mileage: document.getElementById("mileage").value,
-      source: "Site Vercel"
-    },
-    services: selectedServices,
-    grade: grade,
-    totals: {
-      labor: labor,
-      partsMin: partsMin,
-      partsMax: partsMax,
-      oil: oilValue,
-      totalMin: labor + partsMin + oilValue,
-      totalMax: labor + partsMax + oilValue
-    },
-    estimates: selectedServices.map(s => ({
-      idService: s.id,
-      nomPiece: s.name,
-      source1: "Estimation site EDM28",
-      prix1: s.partsMin,
-      source2: "Estimation site EDM28",
-      prix2: s.partsMax,
-      prixMin: s.partsMin,
-      prixMax: s.partsMax,
-      prixMedian: Math.round((s.partsMin + s.partsMax) / 2)
-    }))
-  };
+      document.getElementById("plate").addEventListener("input", function() {
+        this.value = this.value.toUpperCase();
+      });
 
-  button.disabled = true;
-  button.textContent = "Envoi en cours...";
-
-  try {
-    await fetch(EDM_BACKEND_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify(payload)
+      document.getElementById("grade").addEventListener("change", updateOilVisibility);
+      document.getElementById("addOil").addEventListener("change", updateOilVisibility);
     });
-
-    alert("Votre demande a bien été envoyée à EDM AUTO. Elle sera vérifiée avant confirmation.");
-    button.textContent = "Demande envoyée";
-  } catch (error) {
-    alert("Erreur pendant l’envoi. Réessayez ou contactez EDM AUTO.");
-    button.disabled = false;
-    button.textContent = "Envoyer ma demande à EDM AUTO";
-  }
   </script>
 </body>
 </html>
+```
