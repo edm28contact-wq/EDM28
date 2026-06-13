@@ -1,28 +1,52 @@
-```html
 <!doctype html>
+
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EDM AUTO - Préparer mon RDV</title>
+  <title>EDM AUTO - Mécano du Dimanche</title>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --dark: #111827;
+      --text: #111827;
+      --muted: #667085;
+      --line: #e5e7eb;
+      --bg: #f3f5f8;
+      --card: #ffffff;
+      --blue: #1559c7;
+      --blue-soft: #edf4ff;
+      --green: #027a48;
+      --green-soft: #ecfdf3;
+      --red: #b42318;
+      --red-soft: #fef3f2;
+      --yellow-soft: #fff8e7;
+      --yellow-line: #fedf89;
+      --shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+      --radius: 24px;
+    }
 
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f3f5f8;
-      color: #111827;
+      background: var(--bg);
+      color: var(--text);
     }
 
     header {
       background: white;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 18px 28px;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 20;
     }
 
     .brand {
@@ -30,26 +54,55 @@
       letter-spacing: 0.08em;
     }
 
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: calc(100vh - 62px);
+    }
+
+    aside {
+      background: #ffffff;
+      border-right: 1px solid var(--line);
+      padding: 18px;
+      position: sticky;
+      top: 62px;
+      height: calc(100vh - 62px);
+    }
+
+    .menu-btn {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 8px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid transparent;
+    }
+
+    .menu-btn.active {
+      background: var(--dark);
+      color: white;
+    }
+
     main {
-      width: min(1000px, calc(100% - 28px));
+      width: min(1100px, calc(100% - 28px));
       margin: 24px auto;
     }
 
     section {
       background: white;
-      border-radius: 24px;
+      border-radius: var(--radius);
       padding: 28px;
       margin-bottom: 18px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
     }
 
     .hidden {
-      display: none;
+      display: none !important;
     }
 
     h1 {
-      font-size: clamp(2.3rem, 7vw, 4.8rem);
+      font-size: clamp(2.5rem, 7vw, 5rem);
       line-height: 1;
       margin: 12px 0;
       letter-spacing: -0.05em;
@@ -61,18 +114,33 @@
       letter-spacing: -0.04em;
     }
 
+    h3 {
+      margin: 8px 0;
+    }
+
     p {
-      color: #475467;
+      color: var(--muted);
       line-height: 1.6;
     }
 
     .badge {
       display: inline-block;
-      background: #edf4ff;
-      color: #1559c7;
+      background: var(--blue-soft);
+      color: var(--blue);
       padding: 8px 12px;
       border-radius: 999px;
       font-weight: 800;
+      margin: 4px 6px 4px 0;
+    }
+
+    .badge-red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .badge-green {
+      background: var(--green-soft);
+      color: var(--green);
     }
 
     .actions {
@@ -91,19 +159,36 @@
       font-size: 1rem;
     }
 
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
     .primary {
-      background: #111827;
+      background: var(--dark);
       color: white;
     }
 
     .secondary {
       background: #eef2f7;
-      color: #111827;
+      color: var(--text);
+    }
+
+    .danger {
+      background: var(--red-soft);
+      color: var(--red);
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       margin-top: 16px;
     }
@@ -115,7 +200,8 @@
     }
 
     input,
-    select {
+    select,
+    textarea {
       width: 100%;
       padding: 13px;
       border-radius: 12px;
@@ -123,12 +209,28 @@
       font: inherit;
     }
 
-    .service {
-      border: 1px solid #e5e7eb;
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .service,
+    .vehicle-card,
+    .history-card,
+    .gallery-card,
+    .basket-card {
+      border: 1px solid var(--line);
       background: #fbfcfe;
       border-radius: 18px;
       padding: 16px;
       margin: 12px 0;
+    }
+
+    .service-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     .service label {
@@ -137,20 +239,61 @@
       gap: 10px;
     }
 
-    .service input {
+    .service input[type="checkbox"],
+    input[type="radio"] {
       width: auto;
     }
 
+    .price {
+      font-size: 1.3rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .old-price {
+      color: var(--muted);
+      text-decoration: line-through;
+      font-size: 0.95rem;
+      display: block;
+    }
+
+    .discount-price {
+      color: var(--red);
+      font-weight: 900;
+      display: block;
+    }
+
+    .more {
+      display: none;
+      border-top: 1px solid var(--line);
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+
+    .more.open {
+      display: block;
+    }
+
     .notice {
-      background: #fff8e7;
-      border: 1px solid #fedf89;
+      background: var(--yellow-soft);
+      border: 1px solid var(--yellow-line);
       border-radius: 16px;
       padding: 14px;
       margin-top: 14px;
     }
 
+    .notice-green {
+      background: var(--green-soft);
+      border-color: #abefc6;
+    }
+
+    .notice-red {
+      background: var(--red-soft);
+      border-color: #fecdca;
+    }
+
     .summary {
-      border: 1px solid #e5e7eb;
+      border: 1px solid var(--line);
       border-radius: 18px;
       background: #fbfcfe;
       padding: 8px;
@@ -161,461 +304,1164 @@
     .summary div {
       display: flex;
       justify-content: space-between;
+      gap: 12px;
       padding: 12px;
       border-radius: 12px;
     }
 
     .summary .total {
-      background: #111827;
+      background: var(--dark);
       color: white;
     }
 
-    @media (max-width: 760px) {
-      .grid {
+    .summary .saving {
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .hero-panel {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .hero-box {
+      background: #0f172a;
+      color: white;
+      border-radius: 24px;
+      padding: 22px;
+    }
+
+    .hero-box p {
+      color: #d0d5dd;
+    }
+
+    .account-pill {
+      background: #eef2f7;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .layout {
         grid-template-columns: 1fr;
       }
 
-      .summary div {
+      aside {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .menu-btn {
+        margin-bottom: 0;
+      }
+
+      .hero-panel,
+      .grid,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .summary div,
+      .service-top {
         flex-direction: column;
-        gap: 6px;
       }
     }
   </style>
+
 </head>
 
 <body>
   <header>
     <div class="brand">EDM AUTO</div>
-    <button class="secondary" id="btnAccueil">Accueil</button>
+    <div class="account-pill" id="accountStatus">Non connecté</div>
   </header>
 
-  <main>
-    <section id="home">
-      <span class="badge">Spécialiste freinage & entretien courant</span>
-      <h1>Préparez votre RDV EDM AUTO</h1>
+  <div class="layout">
+    <aside>
+      <button class="menu-btn active" data-page="home">Accueil</button>
+      <button class="menu-btn" data-page="rdvPage">Prendre RDV</button>
+      <button class="menu-btn" data-page="garagePage">Mon garage</button>
+      <button class="menu-btn" data-page="historyPage">Historique & entretien</button>
+      <button class="menu-btn" data-page="galleryPage">Galerie</button>
+      <button class="menu-btn" data-page="accountPage">Mon compte</button>
+      <button class="menu-btn" data-page="aboutPage">Qui sommes-nous</button>
+    </aside>
+
+```
+<main>
+  <section id="home">
+    <div class="hero-panel">
+      <div>
+        <span class="badge">Ouvert uniquement le dimanche</span>
+        <span class="badge badge-green">Freinage & train avant</span>
+        <h1>Mécano du Dimanche</h1>
+        <p>
+          Vous travaillez la semaine ? EDM AUTO prépare votre intervention avant le dimanche.
+          Vous achetez vos pièces, on vous aide à choisir les bonnes références, puis on monte proprement.
+        </p>
+        <div class="actions">
+          <button class="primary" data-page="rdvPage">Prendre RDV</button>
+          <button class="secondary" data-page="aboutPage">Voir le concept</button>
+        </div>
+      </div>
+
+      <div class="hero-box">
+        <h3>Le principe</h3>
+        <p>1. Vous renseignez vos infos et votre plaque.</p>
+        <p>2. Vous choisissez vos prestations et votre panier.</p>
+        <p>3. On confirme les références avant le montage.</p>
+        <p>4. Dépose/repart le dimanche.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="rdvPage" class="hidden">
+    <h2>Prendre RDV</h2>
+    <p>Avant d’accéder aux services, les informations obligatoires permettent d’éviter les erreurs de pièces.</p>
+
+    <div class="notice">
+      <strong>Mentions importantes</strong>
       <p>
-        Vous achetez vos pièces, EDM AUTO vous aide à choisir les bonnes références
-        et réalise le montage. Obtenez une estimation avant validation.
+        Les pièces sont achetées par le client. EDM AUTO peut aider à générer un panier de pièces,
+        mais la validation humaine reste obligatoire avant montage.
       </p>
+    </div>
 
-      <div class="actions">
-        <button class="primary" id="btnPreparer">Préparer mon RDV</button>
-        <button class="secondary" id="btnServices">Voir les services</button>
+    <div class="grid">
+      <label>Nom * <input id="lastName" autocomplete="family-name" /></label>
+      <label>Prénom * <input id="firstName" autocomplete="given-name" /></label>
+      <label>Téléphone * <input id="phone" autocomplete="tel" /></label>
+      <label>Email * <input id="email" autocomplete="email" /></label>
+      <label>Plaque immatriculation * <input id="plate" placeholder="AA-123-BC" /></label>
+      <label>Kilométrage <input id="mileage" placeholder="Ex : 145000" /></label>
+    </div>
+
+    <div class="actions">
+      <button class="secondary" id="btnDetectPlate">Détecter via la plaque</button>
+      <button class="secondary" id="btnUseSavedVehicle">Choisir un véhicule enregistré</button>
+    </div>
+
+    <h3>Véhicule</h3>
+    <div class="grid">
+      <label>Marque <input id="brand" /></label>
+      <label>Modèle <input id="model" /></label>
+      <label>Année <input id="year" /></label>
+      <label>Énergie <input id="energy" /></label>
+      <label>Motorisation / code moteur <input id="engine" /></label>
+      <label>VIN / type mine <input id="vinOrType" /></label>
+    </div>
+
+    <div class="notice notice-green hidden" id="vehicleDetectedBox">
+      Véhicule détecté. Vérifiez les informations avant de continuer.
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="btnAccessServices">Accéder aux services</button>
+    </div>
+
+    <div id="savedVehiclesBox" class="hidden"></div>
+  </section>
+
+  <section id="servicesPage" class="hidden">
+    <h2>Services & paniers</h2>
+    <p>
+      Sélectionnez une ou plusieurs prestations. Le combo applique automatiquement -30 %
+      sur la prestation mécanique éligible la moins chère. La purge est hors combo.
+    </p>
+
+    <div class="grid-3" id="basketCards"></div>
+
+    <div class="notice">
+      <label>
+        Panier choisi
+        <select id="basket">
+          <option value="ECO">ÉCO - montage simple</option>
+          <option value="STANDARD" selected>STANDARD - conseillé +15 €</option>
+          <option value="PREMIUM">PREMIUM - priorité +40 €</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="servicesList"></div>
+
+    <div class="notice">
+      <label>
+        <input type="checkbox" id="controlDiscount" />
+        Contrôle J-7 payé/utilisé : appliquer -10 % sur la main-d’œuvre
+      </label>
+    </div>
+
+    <div class="notice notice-red">
+      <label>
+        <input type="checkbox" id="refuseControl" />
+        Le client refuse le contrôle J-7 : décharge obligatoire + forfait immobilisation 40 € si pièces non montables
+      </label>
+    </div>
+
+    <div class="summary">
+      <div><span>Total main-d’œuvre avant remise</span><strong id="sumBefore">0 €</strong></div>
+      <div><span>Remise combo</span><strong id="sumCombo">0 €</strong></div>
+      <div><span>Supplément panier</span><strong id="sumBasket">0 €</strong></div>
+      <div><span>Remise contrôle J-7</span><strong id="sumControl">0 €</strong></div>
+      <div><span>Forfait immobilisation</span><strong id="sumPenalty">0 €</strong></div>
+      <div><span>Pièces estimées</span><strong id="sumParts">0 € à 0 €</strong></div>
+      <div class="saving"><span>Gain</span><strong id="sumSaving">0 €</strong></div>
+      <div class="total"><span>Total final main-d’œuvre</span><strong id="sumFinal">0 €</strong></div>
+    </div>
+
+    <div class="actions">
+      <button class="secondary" id="btnAiBasket">Créer paniers pièces IA</button>
+      <button class="primary" id="btnSendRequest">Envoyer la demande</button>
+    </div>
+  </section>
+
+  <section id="garagePage" class="hidden">
+    <h2>Mon garage</h2>
+    <p>Les véhicules renseignés depuis le site sont sauvegardés localement sur cet appareil.</p>
+    <div id="garageList"></div>
+  </section>
+
+  <section id="historyPage" class="hidden">
+    <h2>Historique & entretien</h2>
+    <p>Retrouvez les demandes envoyées depuis ce navigateur.</p>
+    <div id="historyList"></div>
+  </section>
+
+  <section id="galleryPage" class="hidden">
+    <h2>Galerie</h2>
+    <div class="grid-3">
+      <div class="gallery-card"><h3>Freinage</h3><p>Avant/après intervention freinage.</p></div>
+      <div class="gallery-card"><h3>Train avant</h3><p>Triangles, rotules, biellettes.</p></div>
+      <div class="gallery-card"><h3>Atelier</h3><p>Travail propre, transparent, sans blabla.</p></div>
+    </div>
+  </section>
+
+  <section id="accountPage" class="hidden">
+    <h2>Mon compte</h2>
+    <p>Connexion locale simple pour préparer le parcours. La vraie connexion serveur viendra ensuite.</p>
+
+    <div class="grid">
+      <label>Email <input id="loginEmail" /></label>
+      <label>Nom affiché <input id="displayName" /></label>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="btnSaveAccount">Créer / connecter mon compte</button>
+      <button class="secondary" id="btnLogout">Déconnexion</button>
+    </div>
+
+    <div class="notice">
+      <strong>Lien de parrainage</strong>
+      <p id="referralText">Connectez-vous pour générer votre lien.</p>
+      <button class="secondary" id="btnCopyReferral">Copier le lien</button>
+    </div>
+  </section>
+
+  <section id="aboutPage" class="hidden">
+    <h2>Qui sommes-nous ?</h2>
+    <p>
+      EDM AUTO est un projet de garage indépendant spécialisé dans le freinage et le train avant simple.
+      L’objectif : proposer un service clair, transparent et accessible le dimanche.
+    </p>
+
+    <div class="grid">
+      <div class="service">
+        <h3>Zéro classe sociale</h3>
+        <p>Même tarif de main-d’œuvre pour tout le monde, que la voiture soit ancienne, simple ou premium.</p>
       </div>
-    </section>
 
-    <section id="servicesPage" class="hidden">
-      <h2>Services EDM AUTO</h2>
-      <p>Prix de main-d’œuvre uniquement. Les pièces sont estimées pendant la préparation du RDV.</p>
-      <div id="servicesList"></div>
-
-      <div class="actions">
-        <button class="secondary" data-go="home">Retour</button>
-      </div>
-    </section>
-
-    <section id="clientPage" class="hidden">
-      <h2>Vos informations</h2>
-
-      <div class="grid">
-        <label>Nom complet <input id="name" /></label>
-        <label>Téléphone <input id="phone" /></label>
-        <label>Email <input id="email" /></label>
-        <label>Immatriculation <input id="plate" /></label>
-        <label>Kilométrage <input id="mileage" /></label>
+      <div class="service">
+        <h3>Pièces client</h3>
+        <p>Le client achète ses pièces. EDM AUTO aide à préparer les bonnes références et vérifie avant montage.</p>
       </div>
 
-      <h3>Véhicule</h3>
-
-      <div class="grid">
-        <label>Marque <input id="brand" /></label>
-        <label>Modèle <input id="model" /></label>
-        <label>Motorisation <input id="engine" /></label>
-        <label>Année <input id="year" /></label>
-        <label>Énergie <input id="energy" /></label>
+      <div class="service">
+        <h3>Dépose / repart</h3>
+        <p>Le dimanche, le client dépose son véhicule et le récupère après intervention. Pas de salle d’attente.</p>
       </div>
 
-      <div class="actions">
-        <button class="secondary" data-go="home">Retour</button>
-        <button class="primary" id="btnContinuer">Continuer</button>
+      <div class="service">
+        <h3>Travail propre</h3>
+        <p>Nettoyage des portées, serrage adapté, contrôle visuel, transparence sur ce qui est fait.</p>
       </div>
-    </section>
+    </div>
+  </section>
+</main>
+```
 
-    <section id="choosePage" class="hidden">
-      <h2>Choix des services</h2>
-      <p>Sélectionnez une intervention freinage. La vidange est proposée uniquement en annexe.</p>
-
-      <div id="chooseList"></div>
-
-      <div class="notice">
-        <label>
-          Catégorie de pièces
-          <select id="grade">
-            <option value="eco">Éco</option>
-            <option value="standard" selected>Standard</option>
-            <option value="premium">Premium</option>
-          </select>
-        </label>
-      </div>
-
-      <div id="oilBox" class="notice hidden">
-        <label>
-          <input type="checkbox" id="addOil" />
-          Ajouter une vidange en annexe
-        </label>
-
-        <label style="margin-top: 12px;">
-          Mode huile
-          <select id="oilMode">
-            <option value="garage">Huile garage si compatible</option>
-            <option value="client">Huile + filtre client</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="actions">
-        <button class="secondary" data-go="clientPage">Retour</button>
-        <button class="primary" id="btnEstimation">Voir l’estimation</button>
-      </div>
-    </section>
-
-    <section id="summaryPage" class="hidden">
-      <h2>Estimation</h2>
-      <p>Estimation indicative. EDM AUTO vérifie les références et confirme le tarif final.</p>
-
-      <div class="summary">
-        <div><span>Main-d’œuvre</span><strong id="sumLabor">0 €</strong></div>
-        <div><span>Pièces estimées</span><strong id="sumParts">0 € à 0 €</strong></div>
-        <div><span>Huile garage</span><strong id="sumOil">0 €</strong></div>
-        <div class="total"><span>Total estimé</span><strong id="sumTotal">0 € à 0 €</strong></div>
-      </div>
-
-      <div class="actions">
-        <button class="secondary" data-go="choosePage">Retour</button>
-        <button class="primary" id="btnEnvoyer">Envoyer ma demande à EDM AUTO</button>
-      </div>
-    </section>
-  </main>
+  </div>
 
   <script>
-    const EDM_BACKEND_URL = "https://script.google.com/macros/s/AKfycbz4aqWsmy0YXYyvmZyk0k9Pedp4fCiPz6zE9qra4eI077cHIw5lDQcgPsFQJ09ErHlb7g/exec";
+    const CONFIG = {
+      backendUrl: "https://script.google.com/macros/s/AKfycbz4aqWsmy0YXYyvmZyk0k9Pedp4fCiPz6zE9qra4eI077cHIw5lDQcgPsFQJ09ErHlb7g/exec",
+      backendMode: "legacy",
+      apiKey: "EDM28_CHANGE_MOI_EN_PROD"
+    };
 
-    const services = [
-      {
-        id: "FR_CTRL",
-        name: "Contrôle visuel freinage",
-        labor: 29,
-        parts: [0, 0],
-        description: "Contrôle visuel des plaquettes, disques et éléments visibles."
-      },
+    const SERVICES = [
       {
         id: "FR_PLAQ_AV",
-        name: "Montage plaquettes avant",
+        category: "Freinage",
+        name: "Plaquettes avant",
         labor: 69,
-        parts: [35, 55],
-        description: "Montage des plaquettes avant fournies par le client."
+        parts: [35, 65],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Remplacement des plaquettes de frein avant.",
+        more: "Utile quand les plaquettes sont usées, bruit métallique, voyant, ou freinage moins efficace."
       },
       {
         id: "FR_PLAQ_AR",
-        name: "Montage plaquettes arrière",
+        category: "Freinage",
+        name: "Plaquettes arrière",
         labor: 69,
-        parts: [35, 55],
-        description: "Montage des plaquettes arrière fournies par le client."
+        parts: [35, 65],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Remplacement des plaquettes de frein arrière.",
+        more: "Intervention nécessaire si usure arrière, bruit, déséquilibre ou entretien préventif."
+      },
+      {
+        id: "FR_PLAQ_AV_AR",
+        category: "Freinage",
+        name: "Plaquettes avant + arrière",
+        labor: 130,
+        parts: [70, 130],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Pack complet plaquettes avant et arrière.",
+        more: "Permet de remettre les plaquettes des deux trains à neuf avec un tarif groupé."
       },
       {
         id: "FR_DISC_PLAQ_AV",
-        name: "Montage disques + plaquettes avant",
-        labor: 109,
-        parts: [120, 155],
-        description: "Remplacement complet du train avant."
+        category: "Freinage",
+        name: "Disques + plaquettes avant",
+        labor: 99,
+        parts: [110, 180],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Remplacement complet du freinage avant.",
+        more: "À faire quand les disques sont creusés, voilés, trop fins ou changés avec les plaquettes."
       },
       {
         id: "FR_DISC_PLAQ_AR",
-        name: "Montage disques + plaquettes arrière",
-        labor: 109,
-        parts: [115, 150],
-        description: "Remplacement complet du train arrière."
+        category: "Freinage",
+        name: "Disques + plaquettes arrière",
+        labor: 99,
+        parts: [100, 170],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Remplacement complet du freinage arrière.",
+        more: "Utile si disques arrière usés, rouillés, voilés ou plaquettes arrivées en fin de vie."
       },
       {
-        id: "FR_COMPLET",
-        name: "Montage disques + plaquettes avant et arrière",
-        labor: 199,
-        parts: [240, 330],
-        description: "Remplacement complet freinage avant et arrière."
+        id: "FR_DISC_PLAQ_AV_AR",
+        category: "Freinage",
+        name: "Disques + plaquettes avant + arrière",
+        labor: 189,
+        parts: [220, 350],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Pack freinage complet avant et arrière.",
+        more: "Solution complète pour repartir sur un freinage sain sur les quatre roues."
+      },
+      {
+        id: "FR_PURGE",
+        category: "Freinage",
+        name: "Purge liquide de frein machine",
+        labor: 55,
+        parts: [10, 25],
+        eligibleCombo: false,
+        excludedCombo: true,
+        short: "Remplacement / purge du liquide de frein.",
+        more: "Le liquide de frein vieillit et absorbe l’humidité. La purge aide à garder une pédale ferme."
+      },
+      {
+        id: "SUS_TRIANGLES",
+        category: "Train avant",
+        name: "Triangles de suspension la paire",
+        labor: 120,
+        parts: [90, 220],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Remplacement des triangles gauche et droit.",
+        more: "À prévoir en cas de jeu, claquement, usure silentbloc ou rotule. Parallélisme conseillé après."
+      },
+      {
+        id: "DIR_BIELLETTES_ROTULES",
+        category: "Train avant",
+        name: "Biellettes / rotules de direction la paire",
+        labor: 70,
+        parts: [35, 90],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Remplacement de la direction côté train avant.",
+        more: "Utile en cas de jeu, vibration, flou dans la direction. Parallélisme conseillé après."
+      },
+      {
+        id: "STAB_BIELLETTES",
+        category: "Train avant",
+        name: "Biellettes barre stabilisatrice la paire",
+        labor: 50,
+        parts: [25, 70],
+        eligibleCombo: true,
+        excludedCombo: false,
+        short: "Remplacement des biellettes de barre stabilisatrice.",
+        more: "Souvent responsable de claquements sur petites bosses ou routes abîmées."
       }
     ];
 
-    const multipliers = {
-      eco: 0.9,
-      standard: 1,
-      premium: 1.18
+    const BASKETS = {
+      ECO: {
+        label: "ÉCO",
+        add: 0,
+        partsMultiplier: 0.9,
+        text: "Montage simple, pièces économiques compatibles."
+      },
+      STANDARD: {
+        label: "STANDARD",
+        add: 15,
+        partsMultiplier: 1,
+        text: "Conseillé : nettoyage renforcé, traitement anti-grippage, confort."
+      },
+      PREMIUM: {
+        label: "PREMIUM",
+        add: 40,
+        partsMultiplier: 1.18,
+        text: "Standard + contrôle J-7 offert lancement + priorité dimanche matin."
+      }
     };
 
+    let selectedVehicle = null;
     let lastTotals = null;
 
     function euro(value) {
-      return Math.round(value) + " €";
+      return Math.round(Number(value) * 100) / 100 + " €";
+    }
+
+    function getStorage(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function setStorage(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
     }
 
     function showPage(pageId) {
-      ["home", "servicesPage", "clientPage", "choosePage", "summaryPage"].forEach(function(id) {
-        document.getElementById(id).classList.add("hidden");
-      });
+      const pages = [
+        "home",
+        "rdvPage",
+        "servicesPage",
+        "garagePage",
+        "historyPage",
+        "galleryPage",
+        "accountPage",
+        "aboutPage"
+      ];
+
+      for (let i = 0; i < pages.length; i += 1) {
+        document.getElementById(pages[i]).classList.add("hidden");
+      }
 
       document.getElementById(pageId).classList.remove("hidden");
 
-      if (pageId === "choosePage") {
-        renderChoose();
+      const buttons = document.querySelectorAll(".menu-btn");
+
+      for (let j = 0; j < buttons.length; j += 1) {
+        buttons[j].classList.remove("active");
+
+        if (buttons[j].dataset.page === pageId) {
+          buttons[j].classList.add("active");
+        }
       }
+
+      if (pageId === "garagePage") {
+        renderGarage();
+      }
+
+      if (pageId === "historyPage") {
+        renderHistory();
+      }
+    }
+
+    function updateAccountStatus() {
+      const account = getStorage("edm_account", null);
+      const status = document.getElementById("accountStatus");
+
+      if (account && account.email) {
+        status.textContent = account.displayName || account.email;
+      } else {
+        status.textContent = "Non connecté";
+      }
+
+      renderReferral();
+    }
+
+    function renderReferral() {
+      const account = getStorage("edm_account", null);
+      const text = document.getElementById("referralText");
+
+      if (!text) {
+        return;
+      }
+
+      if (!account || !account.email) {
+        text.textContent = "Connectez-vous pour générer votre lien.";
+        return;
+      }
+
+      const code = makeReferralCode(account.email);
+      const link = window.location.origin + window.location.pathname + "?parrain=" + encodeURIComponent(code);
+
+      text.textContent = link;
+    }
+
+    function makeReferralCode(email) {
+      const clean = String(email || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "");
+
+      return "EDM-" + clean.slice(0, 8);
+    }
+
+    function renderBaskets() {
+      const box = document.getElementById("basketCards");
+      const keys = ["ECO", "STANDARD", "PREMIUM"];
+      let html = "";
+
+      for (let i = 0; i < keys.length; i += 1) {
+        const key = keys[i];
+        const basket = BASKETS[key];
+
+        html += `
+          <div class="basket-card">
+            <span class="badge ${key === "STANDARD" ? "badge-green" : ""}">${basket.label}</span>
+            <h3>${basket.add === 0 ? "+0 €" : "+" + basket.add + " €"}</h3>
+            <p>${basket.text}</p>
+          </div>
+        `;
+      }
+
+      box.innerHTML = html;
     }
 
     function renderServices() {
       const box = document.getElementById("servicesList");
+      let html = "";
 
-      box.innerHTML = services.map(function(service) {
-        return `
-          <div class="service">
-            <h3>${service.name}</h3>
-            <p>${service.description}</p>
-            <strong>Main-d’œuvre : ${service.labor} €</strong>
+      for (let i = 0; i < SERVICES.length; i += 1) {
+        const service = SERVICES[i];
+
+        html += `
+          <div class="service" data-id="${service.id}">
+            <div class="service-top">
+              <label>
+                <input type="checkbox" class="serviceCheck" value="${service.id}" />
+                <span>
+                  <strong>${service.name}</strong><br />
+                  <span class="small">${service.category} - ${service.short}</span>
+                </span>
+              </label>
+              <div class="price" id="price-${service.id}">
+                ${service.labor} €
+              </div>
+            </div>
+
+            <div>
+              ${service.eligibleCombo ? '<span class="badge badge-red">-30 % possible</span>' : '<span class="badge">Hors combo</span>'}
+              ${service.id === "FR_PURGE" ? '<span class="badge">Annexe</span>' : ''}
+            </div>
+
+            <div class="actions">
+              <button type="button" class="secondary moreBtn" data-more="${service.id}">
+                Voir plus
+              </button>
+            </div>
+
+            <div class="more" id="more-${service.id}">
+              <p>${service.more}</p>
+              <p><strong>Pièces estimées :</strong> <span id="parts-${service.id}"></span></p>
+            </div>
           </div>
         `;
-      }).join("") + `
-        <div class="service">
-          <h3>Vidange moteur en annexe</h3>
-          <p>Disponible uniquement avec une intervention freinage.</p>
-          <strong>Main-d’œuvre : 69 €</strong>
-        </div>
-      `;
-    }
+      }
 
-    function renderChoose() {
-      const box = document.getElementById("chooseList");
+      box.innerHTML = html;
 
-      box.innerHTML = services.map(function(service) {
-        return `
-          <div class="service">
-            <label>
-              <input type="checkbox" class="serviceCheck" value="${service.id}" />
-              <strong>${service.name} — ${service.labor} €</strong>
-            </label>
-            <p>${service.description}</p>
-          </div>
-        `;
-      }).join("");
+      const checks = document.querySelectorAll(".serviceCheck");
 
-      document.querySelectorAll(".serviceCheck").forEach(function(check) {
-        check.addEventListener("change", updateOilVisibility);
-      });
+      for (let j = 0; j < checks.length; j += 1) {
+        checks[j].addEventListener("change", calculateTotals);
+      }
 
-      updateOilVisibility();
+      const buttons = document.querySelectorAll(".moreBtn");
+
+      for (let k = 0; k < buttons.length; k += 1) {
+        buttons[k].addEventListener("click", function () {
+          const id = this.dataset.more;
+          document.getElementById("more-" + id).classList.toggle("open");
+        });
+      }
+
+      calculateTotals();
     }
 
     function getSelectedServices() {
-      const grade = document.getElementById("grade").value;
-      const multiplier = multipliers[grade];
+      const selected = [];
+      const checks = document.querySelectorAll(".serviceCheck:checked");
 
-      return Array.from(document.querySelectorAll(".serviceCheck:checked")).map(function(check) {
-        const service = services.find(function(s) {
-          return s.id === check.value;
-        });
+      for (let i = 0; i < checks.length; i += 1) {
+        const id = checks[i].value;
 
-        return {
-          id: service.id,
-          name: service.name,
-          labor: service.labor,
-          partsMin: Math.round(service.parts[0] * multiplier),
-          partsMax: Math.round(service.parts[1] * multiplier)
-        };
-      });
-    }
-
-    function updateOilVisibility() {
-      const selected = getSelectedServices();
-      const hasRepair = selected.some(function(service) {
-        return service.id !== "FR_CTRL";
-      });
-
-      document.getElementById("oilBox").classList.toggle("hidden", !hasRepair);
-    }
-
-    function estimateOilCapacity() {
-      const text = (
-        document.getElementById("brand").value + " " +
-        document.getElementById("model").value + " " +
-        document.getElementById("engine").value + " " +
-        document.getElementById("energy").value
-      ).toLowerCase();
-
-      if (text.includes("2.0")) return 6;
-      if (text.includes("1.6") || text.includes("hdi") || text.includes("bluehdi")) return 5;
-      return 4;
-    }
-
-    function calculate() {
-      const selected = getSelectedServices();
-
-      if (selected.length === 0) {
-        alert("Veuillez sélectionner au moins un service.");
-        return null;
-      }
-
-      let labor = 0;
-      let partsMin = 0;
-      let partsMax = 0;
-
-      selected.forEach(function(service) {
-        labor += service.labor;
-        partsMin += service.partsMin;
-        partsMax += service.partsMax;
-      });
-
-      const addOil = document.getElementById("addOil").checked;
-      const oilMode = document.getElementById("oilMode").value;
-      let oil = 0;
-
-      if (addOil) {
-        labor += 69;
-
-        if (oilMode === "garage") {
-          oil = estimateOilCapacity() * 12;
+        for (let j = 0; j < SERVICES.length; j += 1) {
+          if (SERVICES[j].id === id) {
+            selected.push(SERVICES[j]);
+          }
         }
       }
 
-      const totalMin = labor + partsMin + oil;
-      const totalMax = labor + partsMax + oil;
+      return selected;
+    }
 
-      document.getElementById("sumLabor").textContent = euro(labor);
+    function calculateTotals() {
+      const basketKey = document.getElementById("basket").value;
+      const basket = BASKETS[basketKey];
+      const selected = getSelectedServices();
+
+      let baseLabor = 0;
+      let partsMin = 0;
+      let partsMax = 0;
+      let eligible = [];
+
+      for (let i = 0; i < SERVICES.length; i += 1) {
+        const service = SERVICES[i];
+        const partsSpan = document.getElementById("parts-" + service.id);
+
+        const pMin = Math.round(service.parts[0] * basket.partsMultiplier);
+        const pMax = Math.round(service.parts[1] * basket.partsMultiplier);
+
+        if (partsSpan) {
+          partsSpan.textContent = euro(pMin) + " à " + euro(pMax);
+        }
+      }
+
+      for (let j = 0; j < selected.length; j += 1) {
+        const service = selected[j];
+
+        baseLabor += service.labor;
+        partsMin += Math.round(service.parts[0] * basket.partsMultiplier);
+        partsMax += Math.round(service.parts[1] * basket.partsMultiplier);
+
+        if (service.eligibleCombo === true && service.excludedCombo !== true) {
+          eligible.push(service);
+        }
+      }
+
+      let comboDiscount = 0;
+      let discountedId = "";
+
+      if (eligible.length >= 2) {
+        let cheapest = eligible[0];
+
+        for (let k = 1; k < eligible.length; k += 1) {
+          if (eligible[k].labor < cheapest.labor) {
+            cheapest = eligible[k];
+          }
+        }
+
+        discountedId = cheapest.id;
+        comboDiscount = Math.round(cheapest.labor * 0.30 * 100) / 100;
+      }
+
+      for (let a = 0; a < SERVICES.length; a += 1) {
+        const s = SERVICES[a];
+        const priceBox = document.getElementById("price-" + s.id);
+
+        if (!priceBox) {
+          continue;
+        }
+
+        if (s.id === discountedId) {
+          const newPrice = Math.round((s.labor - comboDiscount) * 100) / 100;
+          priceBox.innerHTML = `
+            <span class="old-price">${euro(s.labor)}</span>
+            <span class="discount-price">${euro(newPrice)} (-30 %)</span>
+          `;
+        } else if (s.eligibleCombo) {
+          priceBox.innerHTML = `${euro(s.labor)} <span class="badge badge-red">-30 % possible</span>`;
+        } else {
+          priceBox.innerHTML = `${euro(s.labor)}`;
+        }
+      }
+
+      const totalBefore = baseLabor + basket.add;
+      const afterCombo = totalBefore - comboDiscount;
+
+      const controlDiscountChecked = document.getElementById("controlDiscount").checked;
+      let controlDiscount = 0;
+
+      if (controlDiscountChecked) {
+        controlDiscount = Math.round(afterCombo * 0.10 * 100) / 100;
+      }
+
+      const refuseControl = document.getElementById("refuseControl").checked;
+      const penalty = refuseControl ? 40 : 0;
+
+      const finalLabor = Math.round((afterCombo - controlDiscount + penalty) * 100) / 100;
+      const saving = Math.round((comboDiscount + controlDiscount) * 100) / 100;
+
+      document.getElementById("sumBefore").textContent = euro(totalBefore);
+      document.getElementById("sumCombo").textContent = "- " + euro(comboDiscount);
+      document.getElementById("sumBasket").textContent = basket.add === 0 ? "0 €" : "+ " + euro(basket.add);
+      document.getElementById("sumControl").textContent = "- " + euro(controlDiscount);
+      document.getElementById("sumPenalty").textContent = penalty === 0 ? "0 €" : "+ " + euro(penalty);
       document.getElementById("sumParts").textContent = euro(partsMin) + " à " + euro(partsMax);
-      document.getElementById("sumOil").textContent = euro(oil);
-      document.getElementById("sumTotal").textContent = euro(totalMin) + " à " + euro(totalMax);
+      document.getElementById("sumSaving").textContent = "Vous économisez " + euro(saving);
+      document.getElementById("sumFinal").textContent = euro(finalLabor);
 
       lastTotals = {
-        labor,
-        partsMin,
-        partsMax,
-        oil,
-        totalMin,
-        totalMax,
-        selected
+        selected: selected,
+        basket: basketKey,
+        totalBefore: totalBefore,
+        comboDiscount: comboDiscount,
+        basketAdd: basket.add,
+        controlDiscount: controlDiscount,
+        penalty: penalty,
+        finalLabor: finalLabor,
+        partsMin: partsMin,
+        partsMax: partsMax
       };
 
       return lastTotals;
     }
 
-    async function sendToBackend() {
-      const totals = calculate();
+    function validateRequiredForm() {
+      const required = [
+        ["lastName", "Nom"],
+        ["firstName", "Prénom"],
+        ["phone", "Téléphone"],
+        ["email", "Email"],
+        ["plate", "Plaque"]
+      ];
 
-      if (!totals) return;
+      for (let i = 0; i < required.length; i += 1) {
+        const id = required[i][0];
+        const label = required[i][1];
+        const value = document.getElementById(id).value.trim();
 
-      const button = document.getElementById("btnEnvoyer");
-      button.disabled = true;
-      button.textContent = "Envoi en cours...";
+        if (!value) {
+          alert("Champ obligatoire : " + label);
+          return false;
+        }
+      }
 
-      const payload = {
-        client: {
-          name: document.getElementById("name").value,
-          phone: document.getElementById("phone").value,
-          email: document.getElementById("email").value,
-          plate: document.getElementById("plate").value,
-          consentementRgpd: "A_confirmer"
-        },
-        vehicle: {
-          plate: document.getElementById("plate").value,
-          brand: document.getElementById("brand").value,
-          model: document.getElementById("model").value,
-          engine: document.getElementById("engine").value,
-          year: document.getElementById("year").value,
-          energy: document.getElementById("energy").value,
-          mileage: document.getElementById("mileage").value,
-          source: "Site Vercel"
-        },
-        services: totals.selected,
-        grade: document.getElementById("grade").value,
-        totals: {
-          labor: totals.labor,
-          partsMin: totals.partsMin,
-          partsMax: totals.partsMax,
-          oil: totals.oil,
-          totalMin: totals.totalMin,
-          totalMax: totals.totalMax
-        },
-        estimates: totals.selected.map(function(service) {
-          return {
-            idService: service.id,
-            nomPiece: service.name,
-            source1: "Estimation site EDM28",
-            prix1: service.partsMin,
-            source2: "Estimation site EDM28",
-            prix2: service.partsMax,
-            prixMin: service.partsMin,
-            prixMax: service.partsMax,
-            prixMedian: Math.round((service.partsMin + service.partsMax) / 2)
-          };
-        })
+      return true;
+    }
+
+    function saveVehicleLocal() {
+      const vehicle = {
+        plate: document.getElementById("plate").value.trim().toUpperCase(),
+        brand: document.getElementById("brand").value.trim(),
+        model: document.getElementById("model").value.trim(),
+        year: document.getElementById("year").value.trim(),
+        energy: document.getElementById("energy").value.trim(),
+        engine: document.getElementById("engine").value.trim(),
+        vinOrType: document.getElementById("vinOrType").value.trim(),
+        mileage: document.getElementById("mileage").value.trim()
       };
 
-      try {
-        await fetch(EDM_BACKEND_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify(payload)
-        });
+      if (!vehicle.plate) {
+        return;
+      }
 
-        alert("Demande envoyée à EDM AUTO. Elle sera vérifiée avant confirmation.");
-        button.textContent = "Demande envoyée";
-      } catch (error) {
-        alert("Erreur pendant l’envoi. Réessayez ou contactez EDM AUTO.");
-        button.disabled = false;
-        button.textContent = "Envoyer ma demande à EDM AUTO";
+      const vehicles = getStorage("edm_vehicles", []);
+      let found = false;
+
+      for (let i = 0; i < vehicles.length; i += 1) {
+        if (vehicles[i].plate === vehicle.plate) {
+          vehicles[i] = vehicle;
+          found = true;
+        }
+      }
+
+      if (!found) {
+        vehicles.push(vehicle);
+      }
+
+      setStorage("edm_vehicles", vehicles);
+      selectedVehicle = vehicle;
+    }
+
+    function renderGarage() {
+      const box = document.getElementById("garageList");
+      const vehicles = getStorage("edm_vehicles", []);
+
+      if (vehicles.length === 0) {
+        box.innerHTML = "<p>Aucun véhicule enregistré pour le moment.</p>";
+        return;
+      }
+
+      let html = "";
+
+      for (let i = 0; i < vehicles.length; i += 1) {
+        const v = vehicles[i];
+
+        html += `
+          <div class="vehicle-card">
+            <h3>${v.plate}</h3>
+            <p>${v.brand || ""} ${v.model || ""} ${v.engine || ""}</p>
+            <p>${v.year || ""} - ${v.energy || ""}</p>
+            <button class="secondary useVehicleBtn" data-plate="${v.plate}">Utiliser ce véhicule</button>
+          </div>
+        `;
+      }
+
+      box.innerHTML = html;
+
+      const buttons = document.querySelectorAll(".useVehicleBtn");
+
+      for (let j = 0; j < buttons.length; j += 1) {
+        buttons[j].addEventListener("click", function () {
+          useSavedVehicle(this.dataset.plate);
+          showPage("rdvPage");
+        });
       }
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-      renderServices();
+    function useSavedVehicle(plate) {
+      const vehicles = getStorage("edm_vehicles", []);
 
-      document.getElementById("btnAccueil").addEventListener("click", function() {
-        showPage("home");
-      });
+      for (let i = 0; i < vehicles.length; i += 1) {
+        const v = vehicles[i];
 
-      document.getElementById("btnPreparer").addEventListener("click", function() {
-        showPage("clientPage");
-      });
+        if (v.plate === plate) {
+          document.getElementById("plate").value = v.plate || "";
+          document.getElementById("brand").value = v.brand || "";
+          document.getElementById("model").value = v.model || "";
+          document.getElementById("year").value = v.year || "";
+          document.getElementById("energy").value = v.energy || "";
+          document.getElementById("engine").value = v.engine || "";
+          document.getElementById("vinOrType").value = v.vinOrType || "";
+          document.getElementById("mileage").value = v.mileage || "";
+          selectedVehicle = v;
+          return;
+        }
+      }
+    }
 
-      document.getElementById("btnServices").addEventListener("click", function() {
+    function renderSavedVehicleChooser() {
+      const box = document.getElementById("savedVehiclesBox");
+      const vehicles = getStorage("edm_vehicles", []);
+
+      if (vehicles.length === 0) {
+        alert("Aucun véhicule enregistré.");
+        return;
+      }
+
+      let html = "<div class='notice'><strong>Choisir un véhicule</strong>";
+
+      for (let i = 0; i < vehicles.length; i += 1) {
+        const v = vehicles[i];
+
+        html += `
+          <div class="vehicle-card">
+            <strong>${v.plate}</strong>
+            <p>${v.brand || ""} ${v.model || ""}</p>
+            <button class="secondary chooseVehicleBtn" data-plate="${v.plate}">Sélectionner</button>
+          </div>
+        `;
+      }
+
+      html += "</div>";
+      box.innerHTML = html;
+      box.classList.remove("hidden");
+
+      const buttons = document.querySelectorAll(".chooseVehicleBtn");
+
+      for (let j = 0; j < buttons.length; j += 1) {
+        buttons[j].addEventListener("click", function () {
+          useSavedVehicle(this.dataset.plate);
+          box.classList.add("hidden");
+        });
+      }
+    }
+
+    function renderHistory() {
+      const box = document.getElementById("historyList");
+      const history = getStorage("edm_history", []);
+
+      if (history.length === 0) {
+        box.innerHTML = "<p>Aucune demande envoyée depuis ce navigateur.</p>";
+        return;
+      }
+
+      let html = "";
+
+      for (let i = history.length - 1; i >= 0; i -= 1) {
+        const h = history[i];
+
+        html += `
+          <div class="history-card">
+            <h3>${h.plate} - ${h.date}</h3>
+            <p>${h.services}</p>
+            <strong>${euro(h.total)}</strong>
+          </div>
+        `;
+      }
+
+      box.innerHTML = html;
+    }
+
+    async function detectVehicleByPlate() {
+      const plateInput = document.getElementById("plate");
+      const button = document.getElementById("btnDetectPlate");
+      const plate = plateInput.value.trim();
+
+      if (!plate) {
+        alert("Veuillez entrer une immatriculation.");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Recherche...";
+
+      try {
+        const response = await fetch("/api/plate?plate=" + encodeURIComponent(plate), {
+          method: "GET"
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          alert(result.error || "Véhicule introuvable.");
+          button.disabled = false;
+          button.textContent = "Détecter via la plaque";
+          return;
+        }
+
+        const vehicle = result.vehicle;
+
+        document.getElementById("plate").value = vehicle.plate || plate.toUpperCase();
+        document.getElementById("brand").value = vehicle.marque || "";
+        document.getElementById("model").value = vehicle.modele || "";
+        document.getElementById("year").value = vehicle.annee || "";
+        document.getElementById("energy").value = vehicle.energie || "";
+        document.getElementById("engine").value = vehicle.codeMoteur || vehicle.typeMine || vehicle.kType || "";
+        document.getElementById("vinOrType").value = vehicle.vin || vehicle.typeMine || "";
+
+        document.getElementById("vehicleDetectedBox").classList.remove("hidden");
+
+        button.textContent = "Véhicule détecté";
+
+      } catch (error) {
+        alert("Erreur pendant la détection plaque.");
+        button.disabled = false;
+        button.textContent = "Détecter via la plaque";
+      }
+    }
+
+    function buildAiBasket() {
+      const selected = getSelectedServices();
+
+      if (selected.length === 0) {
+        alert("Sélectionnez au moins une prestation.");
+        return;
+      }
+
+      const basket = document.getElementById("basket").value;
+      const vehicleText =
+        document.getElementById("brand").value + " " +
+        document.getElementById("model").value + " " +
+        document.getElementById("engine").value;
+
+      alert(
+        "IA panier à brancher côté backend.\n\n" +
+        "Véhicule : " + vehicleText + "\n" +
+        "Panier : " + basket + "\n" +
+        "Services : " + selected.map(function (s) { return s.name; }).join(", ")
+      );
+    }
+
+    async function sendRequest() {
+      const totals = calculateTotals();
+
+      if (!totals || totals.selected.length === 0) {
+        alert("Sélectionnez au moins une prestation.");
+        return;
+      }
+
+      const button = document.getElementById("btnSendRequest");
+      button.disabled = true;
+      button.textContent = "Envoi...";
+
+      saveVehicleLocal();
+
+      const payload = {
+        apiKey: CONFIG.apiKey,
+        action: "createOperation",
+        payload: {
+          ID_User: document.getElementById("email").value.trim(),
+          ID_Vehicle: document.getElementById("plate").value.trim().toUpperCase(),
+          Source_Demande: "SITE_VERCEL_V2",
+          Services_Selectionnes: totals.selected.map(function (s) { return s.id; }).join(" + "),
+          Panier_Choisi: totals.basket,
+          Main_Oeuvre_Estimee: totals.finalLabor,
+          Total_Min: totals.finalLabor,
+          Total_Max: totals.finalLabor,
+          Notes_EDM:
+            "Client: " +
+            document.getElementById("firstName").value +
+            " " +
+            document.getElementById("lastName").value +
+            " / Tel: " +
+            document.getElementById("phone").value +
+            " / Pieces estimees: " +
+            totals.partsMin +
+            "-" +
+            totals.partsMax +
+            " / Combo: " +
+            totals.comboDiscount +
+            " / Remise controle: " +
+            totals.controlDiscount
+        }
+      };
+
+      try {
+        if (CONFIG.backendMode === "legacy") {
+          await fetch(CONFIG.backendUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          const response = await fetch(CONFIG.backendUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            throw new Error("Erreur backend");
+          }
+        }
+
+        const history = getStorage("edm_history", []);
+
+        history.push({
+          date: new Date().toLocaleString("fr-FR"),
+          plate: document.getElementById("plate").value.trim().toUpperCase(),
+          services: totals.selected.map(function (s) { return s.name; }).join(", "),
+          total: totals.finalLabor
+        });
+
+        setStorage("edm_history", history);
+
+        alert("Demande envoyée à EDM AUTO. Elle sera vérifiée avant confirmation.");
+        button.textContent = "Demande envoyée";
+
+      } catch (error) {
+        alert("Erreur pendant l’envoi. Réessayez ou contactez EDM AUTO.");
+        button.disabled = false;
+        button.textContent = "Envoyer la demande";
+      }
+    }
+
+    function initEvents() {
+      const menuButtons = document.querySelectorAll("[data-page]");
+
+      for (let i = 0; i < menuButtons.length; i += 1) {
+        menuButtons[i].addEventListener("click", function () {
+          showPage(this.dataset.page);
+        });
+      }
+
+      document.getElementById("btnDetectPlate").addEventListener("click", detectVehicleByPlate);
+      document.getElementById("btnUseSavedVehicle").addEventListener("click", renderSavedVehicleChooser);
+
+      document.getElementById("btnAccessServices").addEventListener("click", function () {
+        if (!validateRequiredForm()) {
+          return;
+        }
+
+        saveVehicleLocal();
         showPage("servicesPage");
       });
 
-      document.getElementById("btnContinuer").addEventListener("click", function() {
-        showPage("choosePage");
-      });
+      document.getElementById("basket").addEventListener("change", calculateTotals);
+      document.getElementById("controlDiscount").addEventListener("change", calculateTotals);
+      document.getElementById("refuseControl").addEventListener("change", calculateTotals);
+      document.getElementById("btnAiBasket").addEventListener("click", buildAiBasket);
+      document.getElementById("btnSendRequest").addEventListener("click", sendRequest);
 
-      document.getElementById("btnEstimation").addEventListener("click", function() {
-        const totals = calculate();
-        if (totals) {
-          showPage("summaryPage");
+      document.getElementById("btnSaveAccount").addEventListener("click", function () {
+        const email = document.getElementById("loginEmail").value.trim();
+        const displayName = document.getElementById("displayName").value.trim();
+
+        if (!email) {
+          alert("Email obligatoire.");
+          return;
         }
+
+        setStorage("edm_account", {
+          email: email,
+          displayName: displayName || email
+        });
+
+        updateAccountStatus();
+        alert("Compte local enregistré.");
       });
 
-      document.getElementById("btnEnvoyer").addEventListener("click", sendToBackend);
+      document.getElementById("btnLogout").addEventListener("click", function () {
+        localStorage.removeItem("edm_account");
+        updateAccountStatus();
+      });
 
-      document.querySelectorAll("[data-go]").forEach(function(button) {
-        button.addEventListener("click", function() {
-          showPage(button.dataset.go);
+      document.getElementById("btnCopyReferral").addEventListener("click", function () {
+        const text = document.getElementById("referralText").textContent;
+
+        navigator.clipboard.writeText(text).then(function () {
+          alert("Lien copié.");
         });
       });
 
-      document.getElementById("plate").addEventListener("input", function() {
+      document.getElementById("plate").addEventListener("input", function () {
         this.value = this.value.toUpperCase();
       });
+    }
 
-      document.getElementById("grade").addEventListener("change", updateOilVisibility);
-      document.getElementById("addOil").addEventListener("change", updateOilVisibility);
+    document.addEventListener("DOMContentLoaded", function () {
+      renderBaskets();
+      renderServices();
+      initEvents();
+      updateAccountStatus();
+      calculateTotals();
     });
   </script>
+
 </body>
 </html>
-```
