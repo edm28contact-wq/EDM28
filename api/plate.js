@@ -36,14 +36,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const token = process.env.PLAQUE_API_TOKEN;
-
-    if (!token) {
-      return res.status(500).json({
-        success: false,
-        error: "Token API plaque manquant côté serveur."
-      });
-    }
+    const token = process.env.PLAQUE_API_TOKEN || "TokenDemo2026B";
 
     const apiUrl = new URL("https://api.apiplaqueimmatriculation.com/plaque");
     apiUrl.searchParams.set("immatriculation", cleanPlate);
@@ -125,8 +118,6 @@ export default async function handler(req, res) {
 
 function extractYear(value) {
   const text = String(value || "");
-
   const match = text.match(/\d{4}/);
-
   return match ? match[0] : "";
 }
