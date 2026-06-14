@@ -1,78 +1,21 @@
-// api/plate.js
+const v = data?.data || {};
+const tech = v.caracteristiques_techniques_vehicule || {};
+const immat = v.donnees_immatriculation_vehicule || {};
 
-export default async function handler(req, res) {
-  try {
-    const body = req.body || {};
-
-    const plate =
-      req.query.plate ||
-      req.query.immatriculation ||
-      body.plate ||
-      body.immatriculation ||
-      "";
-
-    const cleanPlate = String(plate)
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, "");
-
-    if (!cleanPlate) {
-      return res.status(400).json({
-        success: false,
-        error: "Immatriculation manquante."
-      });
-    }
-
-    const token = process.env.PLAQUE_API_TOKEN;
-
-    if (!token) {
-      return res.status(500).json({
-        success: false,
-        error: "Token API plaque manquant côté serveur."
-      });
-    }
-
-    const apiUrl = new URL("https://api.apiplaqueimmatriculation.com/plaque");
-    apiUrl.searchParams.set("immatriculation", cleanPlate);
-    apiUrl.searchParams.set("token", token);
-    apiUrl.searchParams.set("pays", "FR");
-
-    const apiResponse = await fetch(apiUrl.toString(), {
-      method: "POST"
-    });
-
-    const data = await apiResponse.json().catch(() => null);
-
-    if (!apiResponse.ok || !data) {
-      return res.status(502).json({
-        success: false,
-        error: "Erreur API plaque.",
-        status: apiResponse.status,
-        raw: data
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      vehicle: {
-        plaque: cleanPlate,
-        marque: data.marque || "",
-        modele: data.modele || "",
-        energie: data.energieNGC || data.energie || "",
-        vin: data.vin || "",
-        typeMine: data.type_mine || "",
-        kType: data.k_type || "",
-        tecdocCarId: data.tecdoc_carid || "",
-        tecdocManuId: data.tecdoc_manuid || "",
-        tecdocModelId: data.tecdoc_modelid || "",
-        codeMoteur: data.code_moteur || "",
-        datePremiereCirculation: data.date1erCir_fr || ""
-      },
-      raw: data
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message || "Erreur serveur."
-    });
+return res.status(200).json({
+  success: true,
+  vehicle: {
+    plaque: immat.numero_immatriculation || cleanPlate,
+    marque: tech.marque || "",
+    modele: tech.denomination_commerciale || "",
+    energie: tech.type_carburant?.label || tech.type_carburant?.code || "",
+    motorisation: tech.cylindree ? `${tech.cylindree} cm3` : "",
+    typeMine: tech.type_variante_version || "",
+    categorie: tech.categorie_vehicule?.code || "",
+    genre: tech.genre_national?.code || "",
+    co2: tech.taux_co2 || "",
+    normeEuro: tech.classe_environnementale?.code || "",
+    datePremiereImmatriculation: immat.date_premiere_immatriculation || "",
+    statutLocation: immat.statut_location?.label || ""
   }
-}
+});
