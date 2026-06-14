@@ -1,22 +1,8 @@
+// api/plate.js
+
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
   try {
-    let body = req.body || {};
-
-    if (typeof body === "string") {
-      try {
-        body = JSON.parse(body);
-      } catch (error) {
-        body = {};
-      }
-    }
+    const body = req.body || {};
 
     const plate =
       req.query.plate ||
@@ -36,7 +22,14 @@ export default async function handler(req, res) {
       });
     }
 
-    const token = process.env.PLAQUE_API_TOKEN || "TokenDemo2026B";
+    const token = process.env.PLAQUE_API_TOKEN;
+
+    if (!token) {
+      return res.status(500).json({
+        success: false,
+        error: "Token API plaque manquant côté serveur."
+      });
+    }
 
     const apiUrl = new URL("https://api.apiplaqueimmatriculation.com/plaque");
     apiUrl.searchParams.set("immatriculation", cleanPlate);
@@ -44,80 +37,42 @@ export default async function handler(req, res) {
     apiUrl.searchParams.set("pays", "FR");
 
     const apiResponse = await fetch(apiUrl.toString(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json"
-      }
+      method: "POST"
     });
 
-    const raw = await apiResponse.text();
+    const data = await apiResponse.json().catch(() => null);
 
-    let json;
-    try {
-      json = JSON.parse(raw);
-    } catch (error) {
+    if (!apiResponse.ok || !data) {
       return res.status(502).json({
         success: false,
-        error: "Réponse API plaque illisible.",
-        raw
-      });
-    }
-
-    if (!apiResponse.ok) {
-      return res.status(apiResponse.status).json({
-        success: false,
         error: "Erreur API plaque.",
-        details: json
+        status: apiResponse.status,
+        raw: data
       });
     }
-
-    const data = json.data || json;
-
-    if (data.erreur && String(data.erreur).trim() !== "") {
-      return res.status(404).json({
-        success: false,
-        error: String(data.erreur),
-        details: data
-      });
-    }
-
-    const vehicle = {
-      plate: data.immat || cleanPlate,
-      marque: data.marque || "",
-      modele: data.modele || "",
-      energie: data.energieNGC || "",
-      annee: extractYear(data.date1erCir_us || data.date1erCir_fr || ""),
-      datePremiereCirculation: data.date1erCir_fr || data.date1erCir_us || "",
-      vin: data.vin || "",
-      typeMine: data.type_mine || data.cnit || "",
-      kType: data.k_type || "",
-      tecdocCarId: data.tecdoc_carid || "",
-      tecdocManuId: data.tecdoc_manuid || "",
-      tecdocModelId: data.tecdoc_modelid || "",
-      codeMoteur: data.code_moteur || "",
-      puissanceFiscale: data.puisFisc || "",
-      puissanceReelle: data.puisFiscReel || "",
-      boite: data.boite_vitesse || "",
-      carrosserie: data.carrosserieCG || "",
-      couleur: data.couleur || ""
-    };
 
     return res.status(200).json({
       success: true,
-      vehicle,
-      source: "apiplaqueimmatriculation"
+      vehicle: {
+        plaque: cleanPlate,
+        marque: data.marque || "",
+        modele: data.modele || "",
+        energie: data.energieNGC || data.energie || "",
+        vin: data.vin || "",
+        typeMine: data.type_mine || "",
+        kType: data.k_type || "",
+        tecdocCarId: data.tecdoc_carid || "",
+        tecdocManuId: data.tecdoc_manuid || "",
+        tecdocModelId: data.tecdoc_modelid || "",
+        codeMoteur: data.code_moteur || "",
+        datePremiereCirculation: data.date1erCir_fr || ""
+      },
+      raw: data
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message || "Erreur serveur."
     });
   }
-}
-
-function extractYear(value) {
-  const text = String(value || "");
-  const match = text.match(/\d{4}/);
-  return match ? match[0] : "";
 }
