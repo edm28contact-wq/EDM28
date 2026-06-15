@@ -1,8 +1,7 @@
 {
   "name": "edm-auto-mecano-du-dimanche",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "build": "echo \"No build needed\"",
     "dev": "vercel dev"
