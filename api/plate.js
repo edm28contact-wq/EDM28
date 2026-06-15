@@ -1,168 +1,74 @@
-module.exports = async function handler(req, res) {
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
+const { sendJson, sendOptions, readJsonBody } = require("./_utils.cjs");
 
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
+function normalizePlate(input) {
+  return String(input || "")
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 12);
+}
+
+function formatFrenchPlate(cleanPlate) {
+  if (/^[A-Z]{2}\d{3}[A-Z]{2}$/.test(cleanPlate)) {
+    return `${cleanPlate.slice(0, 2)}-${cleanPlate.slice(2, 5)}-${cleanPlate.slice(5)}`;
+  }
+  return cleanPlate;
+}
+
+function getPlateType(cleanPlate) {
+  if (/^[A-Z]{2}\d{3}[A-Z]{2}$/.test(cleanPlate)) return "SIV";
+  if (/^\d{1,4}[A-Z]{1,3}\d{2,3}$/.test(cleanPlate)) return "Ancien format FNI probable";
+  if (/^W[A-Z0-9]{1,10}$/.test(cleanPlate)) return "Garage / provisoire probable";
+  if (/^WW[A-Z0-9]{1,10}$/.test(cleanPlate)) return "WW provisoire probable";
+  return "Format à vérifier";
+}
+
+module.exports = async function handler(req, res) {
+  if (req.method === "OPTIONS") return sendOptions(res);
+  if (!["GET", "POST"].includes(req.method)) {
+    return sendJson(res, 405, { success: false, error: "Méthode non autorisée." });
   }
 
   try {
-    const plateFromQuery =
-      req.query?.plate ||
-      req.query?.immatriculation ||
-      "";
-
-    const plateFromBody =
-      req.body?.plate ||
-      req.body?.immatriculation ||
-      "";
-
-    const rawPlate = String(plateFromQuery || plateFromBody || "")
-      .trim()
-      .toUpperCase();
-
-    const cleanPlate = rawPlate
-      .replace(/\s+/g, "")
-      .replace(/[^A-Z0-9-]/g, "");
+    const body = req.method === "POST" ? await readJsonBody(req) : {};
+    const rawPlate = req.query?.plate || req.query?.immatriculation || body.plate || body.immatriculation || "";
+    const cleanPlate = normalizePlate(rawPlate);
 
     if (!cleanPlate) {
-      return res.status(400).json({
-        success: false,
-        error: "Plaque d'immatriculation manquante."
-      });
+      return sendJson(res, 400, { success: false, error: "Immatriculation manquante." });
     }
 
-    const token = process.env.PLAQUE_API_TOKEN;
+    const formatted = formatFrenchPlate(cleanPlate);
+    const validFrenchPlate = /^[A-Z]{2}\d{3}[A-Z]{2}$/.test(cleanPlate) || /^\d{1,4}[A-Z]{1,3}\d{2,3}$/.test(cleanPlate);
 
-    if (!token) {
-      return res.status(500).json({
-        success: false,
-        error: "Variable Vercel PLAQUE_API_TOKEN manquante."
-      });
-    }
-
-    const apiUrl = new URL("https://api.apiplaqueimmatriculation.com/plaque");
-    apiUrl.searchParams.set("immatriculation", cleanPlate);
-    apiUrl.searchParams.set("token", token);
-    apiUrl.searchParams.set("pays", "FR");
-
-    const apiResponse = await fetch(apiUrl.toString(), {
-      method: "POST",
-      headers: {
-        "Accept": "application/json"
+    return sendJson(res, 200, {
+      success: true,
+      source: "gratuit_sans_base_siv",
+      manualRequired: true,
+      warning: "Mode gratuit : aucune base plaque officielle n'est interrogée. Le site valide seulement le format de plaque. Le client doit remplir marque, modèle, énergie, année et motorisation.",
+      vehicle: {
+        plaque: formatted,
+        plate: formatted,
+        plaqueNormalisee: cleanPlate,
+        plateNormalized: cleanPlate,
+        plateType: getPlateType(cleanPlate),
+        validFrenchPlate,
+        marque: "",
+        modele: "",
+        annee: "",
+        energie: "",
+        motorisation: "",
+        typeMine: "",
+        kType: "",
+        co2: "",
+        normeEuro: ""
       }
     });
-
-    const text = await apiResponse.text();
-
-    let apiData = null;
-    try {
-      apiData = JSON.parse(text);
-    } catch (error) {
-      return res.status(502).json({
-        success: false,
-        error: "L'API plaque n'a pas renvoyé du JSON.",
-        status: apiResponse.status,
-        preview: text.slice(0, 180)
-      });
-    }
-
-    if (!apiResponse.ok || apiData.code_erreur || apiData.message?.toLowerCase?.().includes("abonnement")) {
-      return res.status(apiResponse.status || 502).json({
-        success: false,
-        error: apiData.message || "Erreur API plaque.",
-        status: apiResponse.status,
-        code_erreur: apiData.code_erreur || null
-      });
-    }
-
-    const root = apiData.data || apiData;
-
-    const immat = root.donnees_immatriculation_vehicule || {};
-    const tech = root.caracteristiques_techniques_vehicule || {};
-
-    const datePremiereImmat =
-      immat.date_premiere_immatriculation ||
-      apiData.date1erCir_fr ||
-      apiData.date_premiere_immatriculation ||
-      "";
-
-    const annee =
-      datePremiereImmat && String(datePremiereImmat).length >= 4
-        ? String(datePremiereImmat).slice(0, 4)
-        : "";
-
-    const vehicle = {
-      plaque:
-        immat.numero_immatriculation ||
-        apiData.immatriculation ||
-        cleanPlate,
-
-      marque:
-        tech.marque ||
-        apiData.marque ||
-        "",
-
-      modele:
-        tech.denomination_commerciale ||
-        apiData.modele ||
-        apiData.modele_etude ||
-        "",
-
-      annee,
-
-      energie:
-        tech.type_carburant?.label ||
-        tech.type_carburant?.code ||
-        apiData.energieNGC ||
-        apiData.energie ||
-        "",
-
-      motorisation:
-        tech.cylindree
-          ? `${tech.cylindree} cm3`
-          : apiData.motorisation || "",
-
-      typeMine:
-        tech.type_variante_version ||
-        apiData.type_mine ||
-        "",
-
-      kType:
-        apiData.k_type ||
-        "",
-
-      vin:
-        apiData.vin ? "Disponible côté API, non affiché publiquement" : "",
-
-      categorie:
-        tech.categorie_vehicule?.code ||
-        "",
-
-      genre:
-        tech.genre_national?.code ||
-        "",
-
-      co2:
-        tech.taux_co2 ||
-        "",
-
-      normeEuro:
-        tech.classe_environnementale?.code ||
-        "",
-
-      datePremiereImmatriculation: datePremiereImmat
-    };
-
-    return res.status(200).json({
-      success: true,
-      vehicle
-    });
   } catch (error) {
-    return res.status(500).json({
+    return sendJson(res, 500, {
       success: false,
-      error: "Erreur serveur dans /api/plate.",
-      details: error.message || String(error)
+      error: error?.message || "Erreur serveur plaque gratuite."
     });
   }
 };
