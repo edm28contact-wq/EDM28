@@ -77,23 +77,22 @@ const BASKETS = {
   eco: {
     label: "ÉCO",
     subtitle: "Prix contenu",
-    brands: ["Ridex", "Stark", "Bolk", "marque compatible"],
+    brands: ["Ridex", "Stark", "Bolk"],
     advice:
-      "Panier budget. Le client ouvre les liens marchands et sélectionne les pièces avec son véhicule.",
+      "Panier budget. Le prix des pièces change, mais la main-d’œuvre reste identique.",
   },
   standard: {
     label: "STANDARD",
     subtitle: "Recommandé EDM AUTO",
     brands: ["Bosch", "TRW", "Valeo", "Febi", "Meyle"],
-    advice:
-      "Panier conseillé : bon équilibre prix / fiabilité pour la majorité des véhicules.",
+    advice: "Panier conseillé : bon équilibre prix / fiabilité.",
   },
   premium: {
     label: "PREMIUM",
     subtitle: "Qualité supérieure",
     brands: ["ATE", "Brembo", "Lemförder", "SKF", "Textar"],
     advice:
-      "Panier qualité supérieure pour freinage complet, véhicule lourd ou kilométrage élevé.",
+      "Panier qualité supérieure. Le prix des pièces augmente, pas la main-d’œuvre.",
   },
 };
 
@@ -123,26 +122,26 @@ function App() {
   });
 
   const [selectedServices, setSelectedServices] = useState([]);
-  const [selectedBasket, setSelectedBasket] = useState("standard");
+  const [selectedBasket, setSelectedBasket] = useState("eco");
   const [j7Accepted, setJ7Accepted] = useState(true);
   const [refuseControl, setRefuseControl] = useState(false);
+  const [notes, setNotes] = useState("");
   const [basketsCreated, setBasketsCreated] = useState(false);
-  const [aiBasketResult, setAiBasketResult] = useState(null);
   const [message, setMessage] = useState("");
 
   const selectedServiceObjects = useMemo(() => {
     return SERVICES.filter((service) => selectedServices.includes(service.id));
   }, [selectedServices]);
 
-  const currentTotal = useMemo(() => {
-    return calculateForBasket(selectedBasket);
-  }, [selectedBasket, selectedServiceObjects, j7Accepted, refuseControl]);
+  const estimate = useMemo(() => {
+    return calculateEstimate(selectedBasket);
+  }, [selectedServiceObjects, selectedBasket, j7Accepted, refuseControl]);
 
-  const basketTotals = useMemo(() => {
+  const allEstimates = useMemo(() => {
     return {
-      eco: calculateForBasket("eco"),
-      standard: calculateForBasket("standard"),
-      premium: calculateForBasket("premium"),
+      eco: calculateEstimate("eco"),
+      standard: calculateEstimate("standard"),
+      premium: calculateEstimate("premium"),
     };
   }, [selectedServiceObjects, j7Accepted, refuseControl]);
 
@@ -164,98 +163,60 @@ function App() {
     });
 
     setBasketsCreated(false);
-    setAiBasketResult(null);
+    setMessage("");
   }
 
-  function calculateForBasket(basketKey) {
-    const safeBasketKey = BASKETS[basketKey] ? basketKey : "standard";
+  function calculateEstimate(basketKey) {
+    const safeBasket = BASKETS[basketKey] ? basketKey : "eco";
 
     const laborBase = selectedServiceObjects.reduce((sum, service) => {
       return sum + service.labor;
     }, 0);
 
-    const partsMin = selectedServiceObjects.reduce((sum, service) => {
-      return sum + service.parts[safeBasketKey][0];
-    }, 0);
-
-    const partsMax = selectedServiceObjects.reduce((sum, service) => {
-      return sum + service.parts[safeBasketKey][1];
-    }, 0);
-
-    const eligible = selectedServiceObjects.filter(
+    const eligibleCombo = selectedServiceObjects.filter(
       (service) => service.id !== "purge_frein"
     );
 
     let comboSaving = 0;
 
-    if (eligible.length >= 2) {
-      const cheapest = [...eligible].sort((a, b) => a.labor - b.labor)[0];
+    if (eligibleCombo.length >= 2) {
+      const cheapest = [...eligibleCombo].sort((a, b) => a.labor - b.labor)[0];
       comboSaving = Math.round(cheapest.labor * 0.3 * 100) / 100;
     }
 
-    const afterCombo = laborBase - comboSaving;
-    const j7Saving = j7Accepted ? Math.round(afterCombo * 0.1 * 100) / 100 : 0;
+    const laborAfterCombo = Math.max(0, laborBase - comboSaving);
+
+    const j7Saving = j7Accepted
+      ? Math.round(laborAfterCombo * 0.1 * 100) / 100
+      : 0;
+
     const immobilisation = refuseControl ? 40 : 0;
-    const laborAfter = Math.max(0, afterCombo - j7Saving + immobilisation);
+
+    const laborAfterDiscounts = Math.max(
+      0,
+      laborAfterCombo - j7Saving + immobilisation
+    );
+
+    const partsMin = selectedServiceObjects.reduce((sum, service) => {
+      return sum + service.parts[safeBasket][0];
+    }, 0);
+
+    const partsMax = selectedServiceObjects.reduce((sum, service) => {
+      return sum + service.parts[safeBasket][1];
+    }, 0);
 
     return {
       laborBase,
       comboSaving,
       j7Saving,
       immobilisation,
-      laborAfter,
+      laborAfterDiscounts,
       partsMin,
       partsMax,
-      totalMin: laborAfter + partsMin,
-      totalMax: laborAfter + partsMax,
+      totalGlobalMin: laborAfterDiscounts + partsMin,
+      totalGlobalMax: laborAfterDiscounts + partsMax,
+      economy: comboSaving + j7Saving,
     };
-  }
-
-  function recommendBasket() {
-    const mileage = Number(vehicle.mileage || 0);
-    const year = Number(vehicle.year || 0);
-    const currentYear = new Date().getFullYear();
-    const age = year ? currentYear - year : 0;
-    const brand = vehicle.brand.toLowerCase();
-
-    const hasBigBrakeJob = selectedServiceObjects.some((service) =>
-      service.id.includes("disques")
-    );
-
-    const hasTrainAvant = selectedServiceObjects.some(
-      (service) => service.category === "Train avant"
-    );
-
-    const premiumBrand = [
-      "bmw",
-      "mercedes",
-      "audi",
-      "volvo",
-      "lexus",
-      "porsche",
-      "jaguar",
-      "land rover",
-    ].some((name) => brand.includes(name));
-
-    if (premiumBrand || mileage >= 180000 || hasBigBrakeJob || hasTrainAvant) {
-      return "premium";
-    }
-
-    if (age >= 12 && mileage >= 130000) {
-      return "standard";
-    }
-
-    return "standard";
-  }
-
-  function normalizeBasketKey(value) {
-    const key = String(value || "").toLowerCase();
-
-    if (BASKETS[key]) {
-      return key;
-    }
-
-    return recommendBasket();
   }
 
   function getNeededParts() {
@@ -303,8 +264,7 @@ function App() {
   }
 
   function buildSearchText(part, basketKey) {
-    const safeBasketKey = BASKETS[basketKey] ? basketKey : "standard";
-    const brands = BASKETS[safeBasketKey].brands.slice(0, 3).join(" ");
+    const brands = BASKETS[basketKey].brands.join(" ");
 
     return [
       part,
@@ -319,48 +279,23 @@ function App() {
       .join(" ");
   }
 
-  function getPartsForBasket(basketKey) {
-    const aiParts = aiBasketResult?.baskets?.[basketKey]?.parts;
-
-    if (Array.isArray(aiParts) && aiParts.length > 0) {
-      return aiParts.map((part) => {
-        const partName = part.name || part.part || "Pièce à chercher";
-
-        return {
-          name: partName,
-          url: part.url || getMerchantUrl(partName),
-          searchText: part.searchText || buildSearchText(partName, basketKey),
-        };
-      });
+  function createBaskets() {
+    if (selectedServiceObjects.length === 0) {
+      setMessage("Sélectionne au moins une prestation.");
+      return;
     }
 
-    return getNeededParts().map((part) => ({
-      name: part,
-      url: getMerchantUrl(part),
-      searchText: buildSearchText(part, basketKey),
-    }));
+    setBasketsCreated(true);
+    setMessage(
+      "Paniers créés. La main-d’œuvre reste fixe, seul le prix des pièces change selon ÉCO / STANDARD / PREMIUM."
+    );
   }
 
-  function getBasketDirectUrl(basketKey) {
-    const parts = getPartsForBasket(basketKey);
-
-    if (!parts.length) {
-      return "https://www.motointegrator.fr/";
-    }
-
-    if (parts.length === 1) {
-      return parts[0].url;
-    }
-
-    return "https://www.motointegrator.fr/";
-  }
-
-  function openBasketLinks(basketKey) {
-    const parts = getPartsForBasket(basketKey);
-    const urls = Array.from(new Set(parts.map((part) => part.url)));
+  function openAllLinks(basketKey) {
+    const urls = Array.from(new Set(getNeededParts().map(getMerchantUrl)));
 
     if (!urls.length) {
-      window.open("https://www.motointegrator.fr/", "_blank", "noreferrer");
+      setMessage("Aucune pièce à ouvrir.");
       return;
     }
 
@@ -370,174 +305,53 @@ function App() {
       }, index * 250);
     });
 
-    setMessage(
-      `Ouverture des liens du panier ${BASKETS[basketKey].label}. Si ton navigateur bloque les fenêtres, utilise les boutons bleus un par un.`
-    );
-  }
-
-  function buildLocalAiResult(recommended) {
-    const warnings = [
-      "Sélectionne le véhicule exact sur Motointegrator pour afficher les pièces compatibles.",
-      "Contrôle les options proposées par le site marchand : côté gauche/droit, diamètre des disques, témoin d'usure, système de freinage.",
-    ];
-
-    return {
-      success: true,
-      ai: false,
-      source: "local",
-      recommendation: {
-        basket: recommended,
-        title: `Panier ${BASKETS[recommended].label} recommandé`,
-        explanation:
-          "Recommandation locale EDM AUTO. L'IA serveur n'a pas répondu ou n'est pas encore configurée.",
-      },
-      warnings,
-      baskets: {
-        eco: {
-          label: "ÉCO",
-          description: BASKETS.eco.advice,
-          brands: BASKETS.eco.brands,
-          parts: getNeededParts().map((part) => ({
-            name: part,
-            url: getMerchantUrl(part),
-            searchText: buildSearchText(part, "eco"),
-          })),
-        },
-        standard: {
-          label: "STANDARD",
-          description: BASKETS.standard.advice,
-          brands: BASKETS.standard.brands,
-          parts: getNeededParts().map((part) => ({
-            name: part,
-            url: getMerchantUrl(part),
-            searchText: buildSearchText(part, "standard"),
-          })),
-        },
-        premium: {
-          label: "PREMIUM",
-          description: BASKETS.premium.advice,
-          brands: BASKETS.premium.brands,
-          parts: getNeededParts().map((part) => ({
-            name: part,
-            url: getMerchantUrl(part),
-            searchText: buildSearchText(part, "premium"),
-          })),
-        },
-      },
-    };
-  }
-
-  async function createBaskets() {
-    if (selectedServiceObjects.length === 0) {
-      setMessage("Sélectionne au moins une prestation avant de créer les paniers.");
-      return;
-    }
-
-    setMessage("Création des paniers IA en cours...");
-    setAiBasketResult(null);
-
-    try {
-      const response = await fetch("/api/ai-basket", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          client,
-          vehicle,
-          services: selectedServiceObjects,
-          selectedBasket,
-          j7Accepted,
-          refuseControl,
-        }),
-      });
-
-      const text = await response.text();
-
-      let result;
-
-      try {
-        result = JSON.parse(text);
-      } catch {
-        throw new Error("Réponse IA non JSON : " + text.slice(0, 120));
-      }
-
-      if (!result.success) {
-        throw new Error(
-          result.error || "Erreur pendant la création des paniers IA."
-        );
-      }
-
-      const recommended = normalizeBasketKey(result.recommendation?.basket);
-
-      setSelectedBasket(recommended);
-      setBasketsCreated(true);
-      setAiBasketResult(result);
-
-      setMessage(
-        result.ai
-          ? `Paniers créés par l'IA. Recommandation : ${BASKETS[recommended].label}.`
-          : `Paniers créés en secours local. Recommandation : ${BASKETS[recommended].label}.`
-      );
-    } catch (error) {
-      const recommended = recommendBasket();
-      const localResult = buildLocalAiResult(recommended);
-
-      setSelectedBasket(recommended);
-      setBasketsCreated(true);
-      setAiBasketResult(localResult);
-
-      setMessage(
-        "L'API IA n'a pas répondu, mais les paniers locaux sont créés. Erreur : " +
-          error.message
-      );
-    }
+    setMessage(`Ouverture des liens pièces du panier ${BASKETS[basketKey].label}.`);
   }
 
   async function copyText(text) {
     try {
       await navigator.clipboard.writeText(text);
-      setMessage("Recherche copiée. Colle-la dans Motointegrator.");
+      setMessage("Recherche copiée.");
     } catch {
-      setMessage("Copie impossible automatiquement. Sélectionne le texte à la main.");
+      setMessage("Copie impossible automatiquement.");
     }
   }
 
-  async function prepareRequest() {
+  async function sendRequest() {
     if (selectedServiceObjects.length === 0) {
       setMessage("Sélectionne au moins une prestation.");
       return;
     }
 
     if (!client.firstName || !client.lastName || !client.phone || !client.email) {
-      setMessage("Complète les informations client avant d'envoyer la demande.");
+      setMessage("Complète les informations client.");
       return;
     }
 
     if (!vehicle.plate || !vehicle.brand || !vehicle.model) {
-      setMessage("Complète au minimum la plaque, la marque et le modèle du véhicule.");
+      setMessage("Complète au minimum la plaque, la marque et le modèle.");
       return;
     }
 
     const request = {
       client,
       vehicle,
+      notes,
       services: selectedServiceObjects.map((service) => service.name),
       basket: selectedBasket,
-      totalMainOeuvre: currentTotal.laborAfter,
-      totalPiecesMin: currentTotal.partsMin,
-      totalPiecesMax: currentTotal.partsMax,
-      totalMin: currentTotal.totalMin,
-      totalMax: currentTotal.totalMax,
+      basketLabel: BASKETS[selectedBasket].label,
+      totalMainOeuvre: estimate.laborAfterDiscounts,
+      totalPiecesMin: estimate.partsMin,
+      totalPiecesMax: estimate.partsMax,
+      totalGlobalMin: estimate.totalGlobalMin,
+      totalGlobalMax: estimate.totalGlobalMax,
       j7Accepted,
       refuseControl,
-      aiBasketResult,
       createdAt: new Date().toISOString(),
     };
 
     localStorage.setItem("edm_auto_last_request", JSON.stringify(request));
-
-    setMessage("Envoi de la demande à EDM AUTO...");
+    setMessage("Envoi de la demande...");
 
     try {
       const response = await fetch("/api/submit-request", {
@@ -550,23 +364,23 @@ function App() {
 
       const text = await response.text();
 
-      let result;
+      let result = null;
 
       try {
         result = JSON.parse(text);
       } catch {
-        throw new Error("Réponse serveur non JSON : " + text.slice(0, 120));
+        throw new Error("Réponse serveur non JSON.");
       }
 
       if (!response.ok || !result.success) {
         setMessage(
           result.error ||
-            "La demande n'a pas été envoyée. Vérifie la configuration Vercel."
+            "Demande sauvegardée localement, mais pas envoyée au serveur."
         );
         return;
       }
 
-      setMessage("Demande envoyée à EDM AUTO. Elle sera vérifiée avant confirmation.");
+      setMessage("Demande envoyée à EDM AUTO.");
     } catch (error) {
       setMessage(
         "Demande sauvegardée localement, mais pas envoyée au serveur : " +
@@ -581,382 +395,395 @@ function App() {
         <p style={styles.badge}>EDM AUTO · Mécano du Dimanche</p>
         <h1 style={styles.title}>Préparer mon RDV</h1>
         <p style={styles.lead}>
-          Le client renseigne son véhicule, choisit les prestations, puis le site
-          crée les paniers pièces ÉCO / STANDARD / PREMIUM avec total main-d’œuvre
-          + pièces et liens marchands.
+          Choisis les prestations, sélectionne ÉCO / STANDARD / PREMIUM, puis le
+          site calcule le total global pièces + main-d’œuvre.
         </p>
       </section>
 
-      <section style={styles.card}>
-        <h2>1. Client</h2>
+      <div style={styles.layout}>
+        <div style={styles.left}>
+          <section style={styles.card}>
+            <h2>1. Client</h2>
 
-        <div style={styles.grid}>
-          <label style={styles.label}>
-            Prénom
-            <input
-              style={styles.input}
-              value={client.firstName}
-              onChange={(e) => updateClient("firstName", e.target.value)}
-            />
-          </label>
+            <div style={styles.grid}>
+              <label style={styles.label}>
+                Prénom
+                <input
+                  style={styles.input}
+                  value={client.firstName}
+                  onChange={(e) => updateClient("firstName", e.target.value)}
+                />
+              </label>
 
-          <label style={styles.label}>
-            Nom
-            <input
-              style={styles.input}
-              value={client.lastName}
-              onChange={(e) => updateClient("lastName", e.target.value)}
-            />
-          </label>
+              <label style={styles.label}>
+                Nom
+                <input
+                  style={styles.input}
+                  value={client.lastName}
+                  onChange={(e) => updateClient("lastName", e.target.value)}
+                />
+              </label>
 
-          <label style={styles.label}>
-            Téléphone
-            <input
-              style={styles.input}
-              value={client.phone}
-              onChange={(e) => updateClient("phone", e.target.value)}
-            />
-          </label>
+              <label style={styles.label}>
+                Téléphone
+                <input
+                  style={styles.input}
+                  value={client.phone}
+                  onChange={(e) => updateClient("phone", e.target.value)}
+                />
+              </label>
 
-          <label style={styles.label}>
-            Email
-            <input
-              style={styles.input}
-              type="email"
-              value={client.email}
-              onChange={(e) => updateClient("email", e.target.value)}
-            />
-          </label>
-        </div>
-      </section>
-
-      <section style={styles.card}>
-        <h2>2. Véhicule</h2>
-        <p style={styles.muted}>
-          API plaque en pause pour l’instant. Le client remplit les infos à la main.
-        </p>
-
-        <div style={styles.grid}>
-          <label style={styles.label}>
-            Plaque
-            <input
-              style={styles.input}
-              value={vehicle.plate}
-              onChange={(e) =>
-                updateVehicle("plate", e.target.value.toUpperCase())
-              }
-              placeholder="AA-123-BB"
-            />
-          </label>
-
-          <label style={styles.label}>
-            Marque
-            <input
-              style={styles.input}
-              value={vehicle.brand}
-              onChange={(e) => updateVehicle("brand", e.target.value)}
-              placeholder="Peugeot"
-            />
-          </label>
-
-          <label style={styles.label}>
-            Modèle
-            <input
-              style={styles.input}
-              value={vehicle.model}
-              onChange={(e) => updateVehicle("model", e.target.value)}
-              placeholder="308"
-            />
-          </label>
-
-          <label style={styles.label}>
-            Année
-            <input
-              style={styles.input}
-              value={vehicle.year}
-              onChange={(e) => updateVehicle("year", e.target.value)}
-              placeholder="2018"
-            />
-          </label>
-
-          <label style={styles.label}>
-            Énergie
-            <input
-              style={styles.input}
-              value={vehicle.energy}
-              onChange={(e) => updateVehicle("energy", e.target.value)}
-              placeholder="Diesel"
-            />
-          </label>
-
-          <label style={styles.label}>
-            Motorisation
-            <input
-              style={styles.input}
-              value={vehicle.engine}
-              onChange={(e) => updateVehicle("engine", e.target.value)}
-              placeholder="1.6 BlueHDi"
-            />
-          </label>
-
-          <label style={styles.label}>
-            Kilométrage
-            <input
-              style={styles.input}
-              value={vehicle.mileage}
-              onChange={(e) => updateVehicle("mileage", e.target.value)}
-              placeholder="145000"
-            />
-          </label>
-        </div>
-      </section>
-
-      <section style={styles.card}>
-        <h2>3. Prestations</h2>
-
-        <div style={styles.services}>
-          {SERVICES.map((service) => {
-            const checked = selectedServices.includes(service.id);
-
-            return (
-              <button
-                key={service.id}
-                type="button"
-                onClick={() => toggleService(service.id)}
-                style={{
-                  ...styles.serviceButton,
-                  borderColor: checked ? "#111827" : "#e5e7eb",
-                  background: checked ? "#f3f4f6" : "#ffffff",
-                }}
-              >
-                <span>
-                  <strong>{service.name}</strong>
-                  <br />
-                  <small>
-                    {service.category} · Main-d’œuvre {euro(service.labor)}
-                  </small>
-                </span>
-
-                <span>{checked ? "✓" : "+"}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={styles.checks}>
-          <label>
-            <input
-              type="checkbox"
-              checked={j7Accepted}
-              onChange={(e) => setJ7Accepted(e.target.checked)}
-            />{" "}
-            Contrôle J-7 accepté : remise 10 % sur main-d’œuvre
-          </label>
-
-          <label>
-            <input
-              type="checkbox"
-              checked={refuseControl}
-              onChange={(e) => setRefuseControl(e.target.checked)}
-            />{" "}
-            Refus contrôle J-7 : forfait immobilisation 40 €
-          </label>
-        </div>
-
-        <button type="button" style={styles.primaryButton} onClick={createBaskets}>
-          Créer les paniers pièces IA
-        </button>
-      </section>
-
-      <section style={styles.card}>
-        <h2>4. Résumé total</h2>
-
-        <div style={styles.summary}>
-          <div style={styles.summaryLine}>
-            <span>Main-d’œuvre avant remise</span>
-            <strong>{euro(currentTotal.laborBase)}</strong>
-          </div>
-
-          <div style={styles.summaryLine}>
-            <span>Avantage combo</span>
-            <strong>-{euro(currentTotal.comboSaving)}</strong>
-          </div>
-
-          <div style={styles.summaryLine}>
-            <span>Remise contrôle J-7</span>
-            <strong>-{euro(currentTotal.j7Saving)}</strong>
-          </div>
-
-          {currentTotal.immobilisation > 0 && (
-            <div style={styles.summaryLine}>
-              <span>Forfait immobilisation</span>
-              <strong>+{euro(currentTotal.immobilisation)}</strong>
+              <label style={styles.label}>
+                Email
+                <input
+                  style={styles.input}
+                  type="email"
+                  value={client.email}
+                  onChange={(e) => updateClient("email", e.target.value)}
+                />
+              </label>
             </div>
-          )}
+          </section>
 
-          <div style={styles.summaryLine}>
-            <span>Pièces estimées panier {BASKETS[selectedBasket].label}</span>
-            <strong>
-              {euro(currentTotal.partsMin)} à {euro(currentTotal.partsMax)}
-            </strong>
-          </div>
+          <section style={styles.card}>
+            <h2>2. Véhicule</h2>
 
-          <div style={styles.totalLine}>
-            <span>Total main-d’œuvre + pièces</span>
-            <strong>
-              {euro(currentTotal.totalMin)} à {euro(currentTotal.totalMax)}
-            </strong>
-          </div>
-        </div>
-      </section>
+            <div style={styles.grid}>
+              <label style={styles.label}>
+                Plaque
+                <input
+                  style={styles.input}
+                  value={vehicle.plate}
+                  onChange={(e) =>
+                    updateVehicle("plate", e.target.value.toUpperCase())
+                  }
+                  placeholder="AA-123-BB"
+                />
+              </label>
 
-      {basketsCreated && (
-        <section style={styles.card}>
-          <h2>5. Paniers pièces</h2>
+              <label style={styles.label}>
+                Marque
+                <input
+                  style={styles.input}
+                  value={vehicle.brand}
+                  onChange={(e) => updateVehicle("brand", e.target.value)}
+                  placeholder="Peugeot"
+                />
+              </label>
 
-          {aiBasketResult?.recommendation?.explanation && (
-            <div style={styles.aiBox}>
-              <strong>Analyse IA :</strong>
-              <br />
-              {aiBasketResult.recommendation.explanation}
+              <label style={styles.label}>
+                Modèle
+                <input
+                  style={styles.input}
+                  value={vehicle.model}
+                  onChange={(e) => updateVehicle("model", e.target.value)}
+                  placeholder="308"
+                />
+              </label>
+
+              <label style={styles.label}>
+                Année
+                <input
+                  style={styles.input}
+                  value={vehicle.year}
+                  onChange={(e) => updateVehicle("year", e.target.value)}
+                  placeholder="2018"
+                />
+              </label>
+
+              <label style={styles.label}>
+                Énergie
+                <input
+                  style={styles.input}
+                  value={vehicle.energy}
+                  onChange={(e) => updateVehicle("energy", e.target.value)}
+                  placeholder="Diesel"
+                />
+              </label>
+
+              <label style={styles.label}>
+                Motorisation
+                <input
+                  style={styles.input}
+                  value={vehicle.engine}
+                  onChange={(e) => updateVehicle("engine", e.target.value)}
+                  placeholder="1.6 BlueHDi"
+                />
+              </label>
+
+              <label style={styles.label}>
+                Kilométrage
+                <input
+                  style={styles.input}
+                  value={vehicle.mileage}
+                  onChange={(e) => updateVehicle("mileage", e.target.value)}
+                  placeholder="145000"
+                />
+              </label>
             </div>
-          )}
+          </section>
 
-          {Array.isArray(aiBasketResult?.warnings) &&
-            aiBasketResult.warnings.length > 0 && (
-              <div style={styles.warning}>
-                <strong>À faire sur le site marchand :</strong>
-                <ul>
-                  {aiBasketResult.warnings.map((warning, index) => (
-                    <li key={index}>{warning}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          <section style={styles.card}>
+            <h2>3. Prestations</h2>
 
-          <div style={styles.basketGrid}>
-            {Object.keys(BASKETS).map((basketKey) => {
-              const basket = BASKETS[basketKey];
-              const total = basketTotals[basketKey];
-              const recommended =
-                basketKey ===
-                normalizeBasketKey(
-                  aiBasketResult?.recommendation?.basket || recommendBasket()
+            <div style={styles.services}>
+              {SERVICES.map((service) => {
+                const checked = selectedServices.includes(service.id);
+
+                return (
+                  <button
+                    key={service.id}
+                    type="button"
+                    onClick={() => toggleService(service.id)}
+                    style={{
+                      ...styles.serviceButton,
+                      borderColor: checked ? "#111827" : "#d9dee8",
+                      background: checked ? "#eef2f7" : "#ffffff",
+                    }}
+                  >
+                    <span>
+                      <strong>{service.name}</strong>
+                      <br />
+                      <small>
+                        {service.category} · Main-d’œuvre {euro(service.labor)}
+                      </small>
+                    </span>
+
+                    <span style={styles.serviceCheck}>{checked ? "✓" : "+"}</span>
+                  </button>
                 );
-              const aiDescription =
-                aiBasketResult?.baskets?.[basketKey]?.description || basket.advice;
-              const aiBrands =
-                aiBasketResult?.baskets?.[basketKey]?.brands || basket.brands;
-              const parts = getPartsForBasket(basketKey);
+              })}
+            </div>
+          </section>
 
-              return (
-                <div
-                  key={basketKey}
-                  style={{
-                    ...styles.basketCard,
-                    borderColor:
-                      selectedBasket === basketKey ? "#111827" : "#e5e7eb",
-                  }}
-                >
-                  <h3>
-                    {basket.label} {recommended ? "⭐" : ""}
-                  </h3>
+          <section style={styles.card}>
+            <h2>4. Panier pièces</h2>
 
-                  <p style={styles.muted}>{basket.subtitle}</p>
+            <div style={styles.basketSelect}>
+              {Object.keys(BASKETS).map((basketKey) => {
+                const basket = BASKETS[basketKey];
+                const basketEstimate = allEstimates[basketKey];
+                const active = selectedBasket === basketKey;
 
-                  <p>
-                    <strong>Total estimé :</strong>
-                    <br />
-                    {euro(total.totalMin)} à {euro(total.totalMax)}
-                  </p>
-
-                  <p>
-                    <strong>Marques conseillées :</strong>
-                    <br />
-                    {Array.isArray(aiBrands) ? aiBrands.join(", ") : aiBrands}
-                  </p>
-
-                  <p style={styles.warning}>{aiDescription}</p>
-
+                return (
                   <button
+                    key={basketKey}
                     type="button"
-                    style={styles.secondaryButton}
                     onClick={() => setSelectedBasket(basketKey)}
+                    style={{
+                      ...styles.basketButton,
+                      background: active ? "#111827" : "#ffffff",
+                      color: active ? "#ffffff" : "#111827",
+                      borderColor: active ? "#111827" : "#d9dee8",
+                    }}
                   >
-                    Choisir ce panier
+                    <strong>{basket.label}</strong>
+                    <small>{basket.subtitle}</small>
+                    <span>
+                      Pièces : {euro(basketEstimate.partsMin)} à{" "}
+                      {euro(basketEstimate.partsMax)}
+                    </span>
                   </button>
+                );
+              })}
+            </div>
 
-                  <a
-                    href={getBasketDirectUrl(basketKey)}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={styles.basketDirectButton}
-                  >
-                    Ouvrir le panier {basket.label} sur Motointegrator
-                  </a>
+            <div style={styles.infoBox}>
+              <strong>{BASKETS[selectedBasket].label}</strong>
+              <p>{BASKETS[selectedBasket].advice}</p>
+              <p>
+                Marques conseillées : {BASKETS[selectedBasket].brands.join(", ")}
+              </p>
+            </div>
 
-                  <button
-                    type="button"
-                    style={styles.openAllButton}
-                    onClick={() => openBasketLinks(basketKey)}
-                  >
-                    Ouvrir tous les liens du panier {basket.label}
-                  </button>
+            <button type="button" style={styles.primaryButton} onClick={createBaskets}>
+              Créer / afficher les liens pièces
+            </button>
+          </section>
 
-                  <hr style={styles.hr} />
+          <section style={styles.card}>
+            <h2>5. Options de préparation</h2>
 
-                  <strong>Liens marchands directs :</strong>
+            <div style={styles.optionsGrid}>
+              <label style={styles.optionBox}>
+                <input
+                  type="checkbox"
+                  checked={j7Accepted}
+                  onChange={(e) => setJ7Accepted(e.target.checked)}
+                />
+                <span>
+                  <strong>Contrôle J-7 accepté</strong>
+                  <br />
+                  Préparation avant dimanche, remise contrôle appliquée si
+                  éligible.
+                </span>
+              </label>
 
-                  <div style={styles.merchantLinks}>
-                    {parts.map((part) => (
-                      <a
-                        key={`merchant-${basketKey}-${part.name}`}
-                        href={part.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={styles.merchantButton}
-                      >
-                        Voir {part.name} sur Motointegrator
-                      </a>
-                    ))}
-                  </div>
+              <label style={styles.optionBox}>
+                <input
+                  type="checkbox"
+                  checked={refuseControl}
+                  onChange={(e) => setRefuseControl(e.target.checked)}
+                />
+                <span>
+                  <strong>Refus contrôle J-7</strong>
+                  <br />
+                  Forfait immobilisation 40 € si mauvaises pièces.
+                </span>
+              </label>
+            </div>
 
-                  <hr style={styles.hr} />
+            <label style={styles.label}>
+              Notes client / symptômes
+              <textarea
+                style={styles.textarea}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Exemple : bruit au freinage, vibration, claquement train avant..."
+              />
+            </label>
+          </section>
 
-                  <strong>Recherches à copier :</strong>
+          {basketsCreated && (
+            <section style={styles.card}>
+              <h2>6. Liens pièces du panier {BASKETS[selectedBasket].label}</h2>
 
-                  {parts.map((part) => (
-                    <div
-                      key={`search-${basketKey}-${part.name}`}
-                      style={styles.searchBox}
+              <div style={styles.infoBoxGreen}>
+                <strong>Panier EDM AUTO</strong>
+                <p>
+                  Ouvre les liens, sélectionne le véhicule exact sur
+                  Motointegrator, puis ajoute les pièces compatibles au panier
+                  marchand.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                style={styles.blueButton}
+                onClick={() => openAllLinks(selectedBasket)}
+              >
+                Ouvrir tous les liens pièces
+              </button>
+
+              <div style={styles.linksGrid}>
+                {getNeededParts().map((part) => (
+                  <div key={part} style={styles.partCard}>
+                    <strong>{part}</strong>
+
+                    <a
+                      href={getMerchantUrl(part)}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={styles.linkButton}
                     >
-                      <p style={styles.searchText}>{part.searchText}</p>
+                      Voir sur Motointegrator
+                    </a>
 
+                    <div style={styles.searchBox}>
+                      <small>Recherche à copier :</small>
+                      <p>{buildSearchText(part, selectedBasket)}</p>
                       <button
                         type="button"
                         style={styles.smallButton}
-                        onClick={() => copyText(part.searchText)}
+                        onClick={() =>
+                          copyText(buildSearchText(part, selectedBasket))
+                        }
                       >
-                        Copier la recherche
+                        Copier
                       </button>
                     </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
-      <section style={styles.card}>
-        <h2>6. Demande RDV</h2>
+          <section style={styles.card}>
+            <h2>7. Envoyer la demande</h2>
 
-        <button type="button" style={styles.primaryButton} onClick={prepareRequest}>
-          Envoyer la demande client
-        </button>
+            <div style={styles.finalTotalBox}>
+              <div style={styles.finalTotalLine}>
+                <span>Main-d’œuvre après remises</span>
+                <strong>{euro(estimate.laborAfterDiscounts)}</strong>
+              </div>
 
-        {message && <div style={styles.message}>{message}</div>}
-      </section>
+              <div style={styles.finalTotalLine}>
+                <span>Pièces panier {BASKETS[selectedBasket].label}</span>
+                <strong>
+                  {euro(estimate.partsMin)} à {euro(estimate.partsMax)}
+                </strong>
+              </div>
+
+              <div style={styles.finalTotalMain}>
+                <span>TOTAL GLOBAL pièces + main-d’œuvre</span>
+                <strong>
+                  {euro(estimate.totalGlobalMin)} à {euro(estimate.totalGlobalMax)}
+                </strong>
+              </div>
+            </div>
+
+            <button type="button" style={styles.primaryButton} onClick={sendRequest}>
+              Envoyer la demande client
+            </button>
+
+            {message && <div style={styles.message}>{message}</div>}
+          </section>
+        </div>
+
+        <aside style={styles.right}>
+          <section style={styles.estimateCard}>
+            <h2>Estimation</h2>
+
+            <div style={styles.estimateLine}>
+              <span>Main-d’œuvre avant remise</span>
+              <strong>{euro(estimate.laborBase)}</strong>
+            </div>
+
+            <div style={styles.estimateLine}>
+              <span>Avantage combo</span>
+              <strong>-{euro(estimate.comboSaving)}</strong>
+            </div>
+
+            <div style={styles.estimateLine}>
+              <span>Contrôle J-7 / immobilisation</span>
+              <strong>
+                {estimate.immobilisation > 0
+                  ? `+${euro(estimate.immobilisation)}`
+                  : `-${euro(estimate.j7Saving)}`}
+              </strong>
+            </div>
+
+            <div style={styles.estimateLine}>
+              <span>Total main-d’œuvre après remises</span>
+              <strong>{euro(estimate.laborAfterDiscounts)}</strong>
+            </div>
+
+            <div style={styles.estimateLine}>
+              <span>Pièces estimées {BASKETS[selectedBasket].label}</span>
+              <strong>
+                {euro(estimate.partsMin)} à {euro(estimate.partsMax)}
+              </strong>
+            </div>
+
+            <div style={styles.savingLine}>
+              <span>Économie estimée</span>
+              <strong>{euro(estimate.economy)}</strong>
+            </div>
+
+            <div style={styles.blackTotal}>
+              <span>TOTAL pièces + main-d’œuvre</span>
+              <strong>
+                {euro(estimate.totalGlobalMin)} à {euro(estimate.totalGlobalMax)}
+              </strong>
+            </div>
+
+            <div style={styles.yellowBox}>
+              Les pièces restent à commander par le client. Le total noir
+              correspond bien à pièces + main-d’œuvre.
+            </div>
+          </section>
+        </aside>
+      </div>
     </main>
   );
 }
@@ -964,18 +791,18 @@ function App() {
 const styles = {
   page: {
     minHeight: "100vh",
-    padding: "28px",
-    background: "#f3f5f8",
-    fontFamily: "Arial, Helvetica, sans-serif",
+    background: "#f5f7fb",
     color: "#111827",
+    fontFamily: "Arial, Helvetica, sans-serif",
+    padding: "24px",
   },
   hero: {
     background: "#ffffff",
-    border: "1px solid #e5e7eb",
+    border: "1px solid #d9dee8",
     borderRadius: "24px",
-    padding: "32px",
+    padding: "28px",
     marginBottom: "18px",
-    boxShadow: "0 18px 55px rgba(15, 23, 42, 0.08)",
+    boxShadow: "0 16px 45px rgba(15, 23, 42, 0.06)",
   },
   badge: {
     display: "inline-block",
@@ -986,43 +813,62 @@ const styles = {
     fontWeight: 900,
   },
   title: {
-    fontSize: "48px",
+    fontSize: "44px",
     margin: "12px 0",
     letterSpacing: "-0.04em",
   },
   lead: {
-    color: "#667085",
-    fontSize: "18px",
+    color: "#556070",
+    fontSize: "17px",
     lineHeight: 1.55,
     maxWidth: "850px",
   },
+  layout: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) 390px",
+    gap: "16px",
+    alignItems: "start",
+  },
+  left: {
+    display: "grid",
+    gap: "16px",
+  },
+  right: {
+    position: "sticky",
+    top: "18px",
+  },
   card: {
     background: "#ffffff",
-    border: "1px solid #e5e7eb",
+    border: "1px solid #d9dee8",
     borderRadius: "22px",
-    padding: "24px",
-    marginBottom: "18px",
-    boxShadow: "0 18px 55px rgba(15, 23, 42, 0.06)",
+    padding: "22px",
+    boxShadow: "0 16px 45px rgba(15, 23, 42, 0.05)",
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
     gap: "14px",
   },
   label: {
     display: "grid",
     gap: "7px",
-    fontWeight: 800,
+    fontWeight: 900,
   },
   input: {
     padding: "13px",
-    borderRadius: "12px",
-    border: "1px solid #d0d5dd",
+    borderRadius: "13px",
+    border: "1px solid #cfd6e2",
     fontSize: "16px",
+    outline: "none",
   },
-  muted: {
-    color: "#667085",
-    lineHeight: 1.5,
+  textarea: {
+    minHeight: "92px",
+    padding: "13px",
+    borderRadius: "13px",
+    border: "1px solid #cfd6e2",
+    fontSize: "15px",
+    resize: "vertical",
+    outline: "none",
   },
   services: {
     display: "grid",
@@ -1030,7 +876,7 @@ const styles = {
   },
   serviceButton: {
     width: "100%",
-    border: "2px solid #e5e7eb",
+    border: "2px solid #d9dee8",
     borderRadius: "16px",
     padding: "14px",
     display: "flex",
@@ -1038,13 +884,60 @@ const styles = {
     alignItems: "center",
     textAlign: "left",
     cursor: "pointer",
-    fontSize: "16px",
+    fontSize: "15px",
   },
-  checks: {
+  serviceCheck: {
+    fontSize: "22px",
+    fontWeight: 900,
+  },
+  basketSelect: {
     display: "grid",
-    gap: "10px",
-    marginTop: "18px",
-    marginBottom: "18px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: "12px",
+    marginBottom: "14px",
+  },
+  basketButton: {
+    display: "grid",
+    gap: "6px",
+    border: "2px solid #d9dee8",
+    borderRadius: "16px",
+    padding: "14px",
+    cursor: "pointer",
+    textAlign: "left",
+  },
+  infoBox: {
+    background: "#f8fafc",
+    border: "1px solid #d9dee8",
+    borderRadius: "16px",
+    padding: "14px",
+    marginBottom: "14px",
+    color: "#334155",
+    lineHeight: 1.45,
+  },
+  infoBoxGreen: {
+    background: "#e9f9ef",
+    border: "1px solid #abefc6",
+    borderRadius: "16px",
+    padding: "14px",
+    color: "#05603a",
+    lineHeight: 1.45,
+    marginBottom: "14px",
+  },
+  optionsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: "12px",
+    marginBottom: "16px",
+  },
+  optionBox: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "flex-start",
+    border: "1px solid #d9dee8",
+    borderRadius: "16px",
+    padding: "14px",
+    background: "#ffffff",
+    lineHeight: 1.5,
   },
   primaryButton: {
     background: "#111827",
@@ -1056,14 +949,17 @@ const styles = {
     cursor: "pointer",
     fontSize: "16px",
   },
-  secondaryButton: {
-    background: "#eef2f7",
-    color: "#111827",
+  blueButton: {
+    width: "100%",
+    background: "#1559c7",
+    color: "#ffffff",
     border: 0,
-    borderRadius: "12px",
-    padding: "11px 14px",
+    borderRadius: "14px",
+    padding: "13px 18px",
     fontWeight: 900,
     cursor: "pointer",
+    fontSize: "16px",
+    marginBottom: "14px",
   },
   smallButton: {
     background: "#111827",
@@ -1074,92 +970,20 @@ const styles = {
     fontWeight: 800,
     cursor: "pointer",
   },
-  summary: {
+  linksGrid: {
     display: "grid",
-    gap: "8px",
-  },
-  summaryLine: {
-    display: "flex",
-    justifyContent: "space-between",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
     gap: "12px",
-    padding: "13px",
-    borderRadius: "12px",
-    background: "#f8fafc",
   },
-  totalLine: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "12px",
-    padding: "16px",
-    borderRadius: "14px",
-    background: "#111827",
-    color: "#ffffff",
-    fontSize: "18px",
-  },
-  basketGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: "14px",
-    marginTop: "16px",
-  },
-  basketCard: {
-    border: "2px solid #e5e7eb",
-    borderRadius: "18px",
-    padding: "18px",
+  partCard: {
+    border: "1px solid #d9dee8",
+    borderRadius: "16px",
+    padding: "14px",
     background: "#fbfcfe",
-  },
-  warning: {
-    background: "#fff8e7",
-    border: "1px solid #fedf89",
-    borderRadius: "12px",
-    padding: "10px",
-    color: "#7a4b00",
-    lineHeight: 1.45,
-    marginTop: "10px",
-  },
-  aiBox: {
-    background: "#edf4ff",
-    border: "1px solid #bfdbfe",
-    borderRadius: "12px",
-    padding: "12px",
-    color: "#1559c7",
-    lineHeight: 1.45,
-    marginBottom: "12px",
-  },
-  hr: {
-    border: 0,
-    borderTop: "1px solid #e5e7eb",
-    margin: "16px 0",
-  },
-  basketDirectButton: {
-    display: "block",
-    background: "#07803f",
-    color: "#ffffff",
-    textDecoration: "none",
-    borderRadius: "14px",
-    padding: "13px 14px",
-    fontWeight: 900,
-    textAlign: "center",
-    marginTop: "12px",
-    marginBottom: "10px",
-  },
-  openAllButton: {
-    width: "100%",
-    background: "#1559c7",
-    color: "#ffffff",
-    border: 0,
-    borderRadius: "14px",
-    padding: "13px 14px",
-    fontWeight: 900,
-    cursor: "pointer",
-    marginBottom: "12px",
-  },
-  merchantLinks: {
     display: "grid",
     gap: "10px",
-    marginTop: "12px",
   },
-  merchantButton: {
+  linkButton: {
     display: "block",
     background: "#1559c7",
     color: "#ffffff",
@@ -1171,15 +995,88 @@ const styles = {
   },
   searchBox: {
     background: "#ffffff",
-    border: "1px solid #e5e7eb",
+    border: "1px solid #d9dee8",
     borderRadius: "12px",
     padding: "10px",
-    marginTop: "10px",
+    lineHeight: 1.4,
   },
-  searchText: {
-    color: "#111827",
-    fontSize: "14px",
+  estimateCard: {
+    background: "#ffffff",
+    border: "1px solid #d9dee8",
+    borderRadius: "22px",
+    padding: "18px",
+    boxShadow: "0 16px 45px rgba(15, 23, 42, 0.06)",
+    display: "grid",
+    gap: "10px",
+  },
+  estimateLine: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+    background: "#ffffff",
+    border: "1px solid #d9dee8",
+    borderRadius: "14px",
+    padding: "13px",
+  },
+  savingLine: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+    background: "#e9f9ef",
+    border: "1px solid #abefc6",
+    color: "#067647",
+    borderRadius: "14px",
+    padding: "13px",
+  },
+  blackTotal: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+    background: "#111827",
+    color: "#ffffff",
+    borderRadius: "14px",
+    padding: "16px",
+    fontWeight: 900,
+  },
+  yellowBox: {
+    background: "#fff8e7",
+    border: "1px solid #fedf89",
+    color: "#7a4b00",
+    borderRadius: "14px",
+    padding: "13px",
     lineHeight: 1.45,
+  },
+  finalTotalBox: {
+    background: "#f8fafc",
+    border: "1px solid #d9dee8",
+    borderRadius: "18px",
+    padding: "14px",
+    marginBottom: "16px",
+    display: "grid",
+    gap: "10px",
+  },
+  finalTotalLine: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    padding: "12px",
+    borderRadius: "12px",
+    background: "#ffffff",
+    border: "1px solid #d9dee8",
+  },
+  finalTotalMain: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    padding: "16px",
+    borderRadius: "14px",
+    background: "#111827",
+    color: "#ffffff",
+    fontSize: "19px",
+    fontWeight: 900,
   },
   message: {
     marginTop: "14px",
