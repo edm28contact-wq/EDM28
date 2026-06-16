@@ -125,11 +125,24 @@ function App() {
   const [j7Accepted, setJ7Accepted] = useState(true);
   const [refuseControl, setRefuseControl] = useState(false);
   const [basketsCreated, setBasketsCreated] = useState(false);
+  const [aiBasketResult, setAiBasketResult] = useState(null);
   const [message, setMessage] = useState("");
 
   const selectedServiceObjects = useMemo(() => {
     return SERVICES.filter((service) => selectedServices.includes(service.id));
   }, [selectedServices]);
+
+  const currentTotal = useMemo(() => {
+    return calculateForBasket(selectedBasket);
+  }, [selectedBasket, selectedServiceObjects, j7Accepted, refuseControl]);
+
+  const basketTotals = useMemo(() => {
+    return {
+      eco: calculateForBasket("eco"),
+      standard: calculateForBasket("standard"),
+      premium: calculateForBasket("premium"),
+    };
+  }, [selectedServiceObjects, j7Accepted, refuseControl]);
 
   function updateClient(field, value) {
     setClient((prev) => ({ ...prev, [field]: value }));
@@ -144,9 +157,12 @@ function App() {
       if (prev.includes(serviceId)) {
         return prev.filter((id) => id !== serviceId);
       }
+
       return [...prev, serviceId];
     });
+
     setBasketsCreated(false);
+    setAiBasketResult(null);
   }
 
   function calculateForBasket(basketKey) {
@@ -191,18 +207,6 @@ function App() {
     };
   }
 
-  const currentTotal = useMemo(() => {
-    return calculateForBasket(selectedBasket);
-  }, [selectedBasket, selectedServiceObjects, j7Accepted, refuseControl]);
-
-  const basketTotals = useMemo(() => {
-    return {
-      eco: calculateForBasket("eco"),
-      standard: calculateForBasket("standard"),
-      premium: calculateForBasket("premium"),
-    };
-  }, [selectedServiceObjects, j7Accepted, refuseControl]);
-
   function recommendBasket() {
     const mileage = Number(vehicle.mileage || 0);
     const year = Number(vehicle.year || 0);
@@ -240,21 +244,6 @@ function App() {
     return "standard";
   }
 
-  function createBaskets() {
-    if (selectedServiceObjects.length === 0) {
-      setMessage("Sélectionne au moins une prestation avant de créer les paniers.");
-      return;
-    }
-
-    const recommended = recommendBasket();
-
-    setSelectedBasket(recommended);
-    setBasketsCreated(true);
-    setMessage(
-      `Paniers créés. Recommandation EDM AUTO : ${BASKETS[recommended].label}.`
-    );
-  }
-
   function getNeededParts() {
     const parts = [];
 
@@ -267,6 +256,37 @@ function App() {
     });
 
     return parts;
+  }
+
+  function getMerchantUrl(part) {
+    const p = String(part || "").toLowerCase();
+
+    if (p.includes("plaquette")) {
+      return "https://www.motointegrator.fr/produits/plaquettes-de-frein-1140102/";
+    }
+
+    if (p.includes("disque")) {
+      return "https://www.motointegrator.fr/produits/disques-de-frein-1140103/";
+    }
+
+    if (p.includes("liquide de frein") || p.includes("dot")) {
+      return "https://www.motointegrator.fr/produits/liquides-de-frein-304/";
+    }
+
+    if (
+      p.includes("triangle") ||
+      p.includes("bras de suspension") ||
+      p.includes("biellette") ||
+      p.includes("suspension")
+    ) {
+      return "https://www.motointegrator.fr/produits/suspension-115/";
+    }
+
+    if (p.includes("rotule") || p.includes("direction")) {
+      return "https://www.motointegrator.fr/produits/direction-117/";
+    }
+
+    return "https://www.motointegrator.fr/";
   }
 
   function buildSearchText(part, basketKey) {
@@ -285,6 +305,141 @@ function App() {
       .join(" ");
   }
 
+  function getPartsForBasket(basketKey) {
+    const aiParts = aiBasketResult?.baskets?.[basketKey]?.parts;
+
+    if (Array.isArray(aiParts) && aiParts.length > 0) {
+      return aiParts.map((part) => ({
+        name: part.name || part.part || "Pièce à vérifier",
+        url: part.url || getMerchantUrl(part.name || part.part || ""),
+        searchText:
+          part.searchText ||
+          buildSearchText(part.name || part.part || "pièce auto", basketKey),
+      }));
+    }
+
+    return getNeededParts().map((part) => ({
+      name: part,
+      url: getMerchantUrl(part),
+      searchText: buildSearchText(part, basketKey),
+    }));
+  }
+
+  function buildLocalAiResult(recommended) {
+    return {
+      success: true,
+      ai: false,
+      source: "local",
+      recommendation: {
+        basket: recommended,
+        title: `Panier ${BASKETS[recommended].label} recommandé`,
+        explanation:
+          "Recommandation locale EDM AUTO. L'IA serveur n'a pas répondu ou n'est pas encore configurée.",
+      },
+      warnings: [
+        "Validation EDM AUTO obligatoire avant achat.",
+        "Vérifier VIN, type mine, diamètre des disques, côté gauche/droit, système de freinage et témoin d'usure.",
+      ],
+      baskets: {
+        eco: {
+          label: "ÉCO",
+          description: BASKETS.eco.advice,
+          brands: BASKETS.eco.brands,
+          parts: getNeededParts().map((part) => ({
+            name: part,
+            url: getMerchantUrl(part),
+            searchText: buildSearchText(part, "eco"),
+          })),
+        },
+        standard: {
+          label: "STANDARD",
+          description: BASKETS.standard.advice,
+          brands: BASKETS.standard.brands,
+          parts: getNeededParts().map((part) => ({
+            name: part,
+            url: getMerchantUrl(part),
+            searchText: buildSearchText(part, "standard"),
+          })),
+        },
+        premium: {
+          label: "PREMIUM",
+          description: BASKETS.premium.advice,
+          brands: BASKETS.premium.brands,
+          parts: getNeededParts().map((part) => ({
+            name: part,
+            url: getMerchantUrl(part),
+            searchText: buildSearchText(part, "premium"),
+          })),
+        },
+      },
+    };
+  }
+
+  async function createBaskets() {
+    if (selectedServiceObjects.length === 0) {
+      setMessage("Sélectionne au moins une prestation avant de créer les paniers.");
+      return;
+    }
+
+    setMessage("Création des paniers IA en cours...");
+    setAiBasketResult(null);
+
+    try {
+      const response = await fetch("/api/ai-basket", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          client,
+          vehicle,
+          services: selectedServiceObjects,
+          selectedBasket,
+          j7Accepted,
+          refuseControl,
+        }),
+      });
+
+      const text = await response.text();
+
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error("Réponse IA non JSON : " + text.slice(0, 120));
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || "Erreur pendant la création des paniers IA.");
+      }
+
+      const recommended = result.recommendation?.basket || recommendBasket();
+
+      setSelectedBasket(recommended);
+      setBasketsCreated(true);
+      setAiBasketResult(result);
+
+      setMessage(
+        result.ai
+          ? `Paniers créés par l'IA. Recommandation : ${BASKETS[recommended].label}.`
+          : `Paniers créés en secours local. Recommandation : ${BASKETS[recommended].label}.`
+      );
+    } catch (error) {
+      const recommended = recommendBasket();
+      const localResult = buildLocalAiResult(recommended);
+
+      setSelectedBasket(recommended);
+      setBasketsCreated(true);
+      setAiBasketResult(localResult);
+
+      setMessage(
+        "L'API IA n'a pas répondu, mais les paniers locaux sont créés. Erreur : " +
+          error.message
+      );
+    }
+  }
+
   async function copyText(text) {
     try {
       await navigator.clipboard.writeText(text);
@@ -294,9 +449,19 @@ function App() {
     }
   }
 
-  function prepareRequest() {
+  async function prepareRequest() {
     if (selectedServiceObjects.length === 0) {
       setMessage("Sélectionne au moins une prestation.");
+      return;
+    }
+
+    if (!client.firstName || !client.lastName || !client.phone || !client.email) {
+      setMessage("Complète les informations client avant d'envoyer la demande.");
+      return;
+    }
+
+    if (!vehicle.plate || !vehicle.brand || !vehicle.model) {
+      setMessage("Complète au minimum la plaque, la marque et le modèle du véhicule.");
       return;
     }
 
@@ -310,14 +475,50 @@ function App() {
       totalPiecesMax: currentTotal.partsMax,
       totalMin: currentTotal.totalMin,
       totalMax: currentTotal.totalMax,
+      j7Accepted,
+      refuseControl,
+      aiBasketResult,
       createdAt: new Date().toISOString(),
     };
 
     localStorage.setItem("edm_auto_last_request", JSON.stringify(request));
 
-    setMessage(
-      "Demande préparée localement. Prochaine étape : branchement Google Sheets."
-    );
+    setMessage("Envoi de la demande à EDM AUTO...");
+
+    try {
+      const response = await fetch("/api/submit-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request),
+      });
+
+      const text = await response.text();
+
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error("Réponse serveur non JSON : " + text.slice(0, 120));
+      }
+
+      if (!response.ok || !result.success) {
+        setMessage(
+          result.error ||
+            "La demande n'a pas été envoyée. Vérifie la configuration Vercel."
+        );
+        return;
+      }
+
+      setMessage("Demande envoyée à EDM AUTO. Elle sera vérifiée avant confirmation.");
+    } catch (error) {
+      setMessage(
+        "Demande sauvegardée localement, mais pas envoyée au serveur : " +
+          error.message
+      );
+    }
   }
 
   return (
@@ -328,7 +529,7 @@ function App() {
         <p style={styles.lead}>
           Le client renseigne son véhicule, choisit les prestations, puis le site
           crée les paniers pièces ÉCO / STANDARD / PREMIUM avec total
-          main-d’œuvre + pièces.
+          main-d’œuvre + pièces et liens marchands.
         </p>
       </section>
 
@@ -509,7 +710,7 @@ function App() {
         </div>
 
         <button type="button" style={styles.primaryButton} onClick={createBaskets}>
-          Créer les paniers pièces
+          Créer les paniers pièces IA
         </button>
       </section>
 
@@ -559,11 +760,36 @@ function App() {
         <section style={styles.card}>
           <h2>5. Paniers pièces</h2>
 
+          {aiBasketResult?.recommendation?.explanation && (
+            <div style={styles.aiBox}>
+              <strong>Analyse IA :</strong>
+              <br />
+              {aiBasketResult.recommendation.explanation}
+            </div>
+          )}
+
+          {Array.isArray(aiBasketResult?.warnings) &&
+            aiBasketResult.warnings.length > 0 && (
+              <div style={styles.warning}>
+                <strong>À vérifier avant achat :</strong>
+                <ul>
+                  {aiBasketResult.warnings.map((warning, index) => (
+                    <li key={index}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
           <div style={styles.basketGrid}>
             {Object.keys(BASKETS).map((basketKey) => {
               const basket = BASKETS[basketKey];
               const total = basketTotals[basketKey];
               const recommended = basketKey === recommendBasket();
+              const aiDescription =
+                aiBasketResult?.baskets?.[basketKey]?.description || basket.advice;
+              const aiBrands =
+                aiBasketResult?.baskets?.[basketKey]?.brands || basket.brands;
+              const parts = getPartsForBasket(basketKey);
 
               return (
                 <div
@@ -589,10 +815,10 @@ function App() {
                   <p>
                     <strong>Marques conseillées :</strong>
                     <br />
-                    {basket.brands.join(", ")}
+                    {Array.isArray(aiBrands) ? aiBrands.join(", ") : aiBrands}
                   </p>
 
-                  <p style={styles.warning}>{basket.advice}</p>
+                  <p style={styles.warning}>{aiDescription}</p>
 
                   <button
                     type="button"
@@ -604,34 +830,42 @@ function App() {
 
                   <hr style={styles.hr} />
 
-                  <strong>Recherches pièces :</strong>
+                  <strong>Liens marchands directs :</strong>
 
-                  {getNeededParts().map((part) => {
-                    const searchText = buildSearchText(part, basketKey);
+                  <div style={styles.merchantLinks}>
+                    {parts.map((part) => (
+                      <a
+                        key={`merchant-${basketKey}-${part.name}`}
+                        href={part.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={styles.merchantButton}
+                      >
+                        Voir {part.name} sur Motointegrator
+                      </a>
+                    ))}
+                  </div>
 
-                    return (
-                      <div key={`${basketKey}-${part}`} style={styles.searchBox}>
-                        <p style={styles.searchText}>{searchText}</p>
+                  <hr style={styles.hr} />
 
-                        <button
-                          type="button"
-                          style={styles.smallButton}
-                          onClick={() => copyText(searchText)}
-                        >
-                          Copier la recherche
-                        </button>
-                      </div>
-                    );
-                  })}
+                  <strong>Recherches à copier :</strong>
 
-                  <a
-                    href="https://www.motointegrator.fr/"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={styles.link}
-                  >
-                    Ouvrir Motointegrator
-                  </a>
+                  {parts.map((part) => (
+                    <div
+                      key={`search-${basketKey}-${part.name}`}
+                      style={styles.searchBox}
+                    >
+                      <p style={styles.searchText}>{part.searchText}</p>
+
+                      <button
+                        type="button"
+                        style={styles.smallButton}
+                        onClick={() => copyText(part.searchText)}
+                      >
+                        Copier la recherche
+                      </button>
+                    </div>
+                  ))}
                 </div>
               );
             })}
@@ -643,7 +877,7 @@ function App() {
         <h2>6. Demande RDV</h2>
 
         <button type="button" style={styles.primaryButton} onClick={prepareRequest}>
-          Préparer la demande client
+          Envoyer la demande client
         </button>
 
         {message && <div style={styles.message}>{message}</div>}
@@ -791,6 +1025,7 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
     gap: "14px",
+    marginTop: "16px",
   },
   basketCard: {
     border: "2px solid #e5e7eb",
@@ -805,11 +1040,36 @@ const styles = {
     padding: "10px",
     color: "#7a4b00",
     lineHeight: 1.45,
+    marginTop: "10px",
+  },
+  aiBox: {
+    background: "#edf4ff",
+    border: "1px solid #bfdbfe",
+    borderRadius: "12px",
+    padding: "12px",
+    color: "#1559c7",
+    lineHeight: 1.45,
+    marginBottom: "12px",
   },
   hr: {
     border: 0,
     borderTop: "1px solid #e5e7eb",
     margin: "16px 0",
+  },
+  merchantLinks: {
+    display: "grid",
+    gap: "10px",
+    marginTop: "12px",
+  },
+  merchantButton: {
+    display: "block",
+    background: "#1559c7",
+    color: "#ffffff",
+    textDecoration: "none",
+    borderRadius: "12px",
+    padding: "11px 13px",
+    fontWeight: 900,
+    textAlign: "center",
   },
   searchBox: {
     background: "#ffffff",
@@ -822,12 +1082,6 @@ const styles = {
     color: "#111827",
     fontSize: "14px",
     lineHeight: 1.45,
-  },
-  link: {
-    display: "inline-block",
-    marginTop: "12px",
-    color: "#1559c7",
-    fontWeight: 900,
   },
   message: {
     marginTop: "14px",
