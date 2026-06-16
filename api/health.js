@@ -1,16 +1,11 @@
-const { sendJson, sendOptions } = require("./_utils.cjs");
+export default function handler(req, res) {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
 
-module.exports = async function handler(req, res) {
-  if (req.method === "OPTIONS") return sendOptions(res);
-  return sendJson(res, 200, {
+  return res.status(200).json({
     success: true,
     app: "EDM AUTO",
     api: "health",
     time: new Date().toISOString(),
-    env: {
-      plaqueTokenConfigured: Boolean(process.env.PLAQUE_API_TOKEN),
-      openAiConfigured: Boolean(process.env.OPENAI_API_KEY),
-      edmBackendConfigured: Boolean(process.env.EDM28_BACKEND_URL)
-    }
   });
-};
+}
