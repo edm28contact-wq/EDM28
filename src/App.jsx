@@ -78,20 +78,22 @@ const BASKETS = {
     label: "ÉCO",
     subtitle: "Prix contenu",
     brands: ["Ridex", "Stark", "Bolk", "marque compatible"],
-    advice: "Pour budget serré. Validation EDM AUTO obligatoire avant commande.",
+    advice:
+      "Panier budget. Le client ouvre les liens marchands et sélectionne les pièces avec son véhicule.",
   },
   standard: {
     label: "STANDARD",
     subtitle: "Recommandé EDM AUTO",
     brands: ["Bosch", "TRW", "Valeo", "Febi", "Meyle"],
-    advice: "Meilleur équilibre prix / fiabilité pour la majorité des véhicules.",
+    advice:
+      "Panier conseillé : bon équilibre prix / fiabilité pour la majorité des véhicules.",
   },
   premium: {
     label: "PREMIUM",
     subtitle: "Qualité supérieure",
     brands: ["ATE", "Brembo", "Lemförder", "SKF", "Textar"],
     advice:
-      "Conseillé pour freinage complet, gros kilométrage, véhicule lourd ou premium.",
+      "Panier qualité supérieure pour freinage complet, véhicule lourd ou kilométrage élevé.",
   },
 };
 
@@ -166,16 +168,18 @@ function App() {
   }
 
   function calculateForBasket(basketKey) {
+    const safeBasketKey = BASKETS[basketKey] ? basketKey : "standard";
+
     const laborBase = selectedServiceObjects.reduce((sum, service) => {
       return sum + service.labor;
     }, 0);
 
     const partsMin = selectedServiceObjects.reduce((sum, service) => {
-      return sum + service.parts[basketKey][0];
+      return sum + service.parts[safeBasketKey][0];
     }, 0);
 
     const partsMax = selectedServiceObjects.reduce((sum, service) => {
-      return sum + service.parts[basketKey][1];
+      return sum + service.parts[safeBasketKey][1];
     }, 0);
 
     const eligible = selectedServiceObjects.filter(
@@ -244,6 +248,16 @@ function App() {
     return "standard";
   }
 
+  function normalizeBasketKey(value) {
+    const key = String(value || "").toLowerCase();
+
+    if (BASKETS[key]) {
+      return key;
+    }
+
+    return recommendBasket();
+  }
+
   function getNeededParts() {
     const parts = [];
 
@@ -273,13 +287,12 @@ function App() {
       return "https://www.motointegrator.fr/produits/liquides-de-frein-304/";
     }
 
-    if (
-      p.includes("triangle") ||
-      p.includes("bras de suspension") ||
-      p.includes("biellette") ||
-      p.includes("suspension")
-    ) {
-      return "https://www.motointegrator.fr/produits/suspension-115/";
+    if (p.includes("triangle") || p.includes("bras de suspension")) {
+      return "https://www.motointegrator.fr/produits/bras-de-suspension-11502/";
+    }
+
+    if (p.includes("biellette") || p.includes("stabilisatrice")) {
+      return "https://www.motointegrator.fr/produits/biellettes-antiroulis-11514/";
     }
 
     if (p.includes("rotule") || p.includes("direction")) {
@@ -290,7 +303,8 @@ function App() {
   }
 
   function buildSearchText(part, basketKey) {
-    const brands = BASKETS[basketKey].brands.slice(0, 3).join(" ");
+    const safeBasketKey = BASKETS[basketKey] ? basketKey : "standard";
+    const brands = BASKETS[safeBasketKey].brands.slice(0, 3).join(" ");
 
     return [
       part,
@@ -309,13 +323,15 @@ function App() {
     const aiParts = aiBasketResult?.baskets?.[basketKey]?.parts;
 
     if (Array.isArray(aiParts) && aiParts.length > 0) {
-      return aiParts.map((part) => ({
-        name: part.name || part.part || "Pièce à vérifier",
-        url: part.url || getMerchantUrl(part.name || part.part || ""),
-        searchText:
-          part.searchText ||
-          buildSearchText(part.name || part.part || "pièce auto", basketKey),
-      }));
+      return aiParts.map((part) => {
+        const partName = part.name || part.part || "Pièce à chercher";
+
+        return {
+          name: partName,
+          url: part.url || getMerchantUrl(partName),
+          searchText: part.searchText || buildSearchText(partName, basketKey),
+        };
+      });
     }
 
     return getNeededParts().map((part) => ({
@@ -325,7 +341,46 @@ function App() {
     }));
   }
 
+  function getBasketDirectUrl(basketKey) {
+    const parts = getPartsForBasket(basketKey);
+
+    if (!parts.length) {
+      return "https://www.motointegrator.fr/";
+    }
+
+    if (parts.length === 1) {
+      return parts[0].url;
+    }
+
+    return "https://www.motointegrator.fr/";
+  }
+
+  function openBasketLinks(basketKey) {
+    const parts = getPartsForBasket(basketKey);
+    const urls = Array.from(new Set(parts.map((part) => part.url)));
+
+    if (!urls.length) {
+      window.open("https://www.motointegrator.fr/", "_blank", "noreferrer");
+      return;
+    }
+
+    urls.forEach((url, index) => {
+      setTimeout(() => {
+        window.open(url, "_blank", "noreferrer");
+      }, index * 250);
+    });
+
+    setMessage(
+      `Ouverture des liens du panier ${BASKETS[basketKey].label}. Si ton navigateur bloque les fenêtres, utilise les boutons bleus un par un.`
+    );
+  }
+
   function buildLocalAiResult(recommended) {
+    const warnings = [
+      "Sélectionne le véhicule exact sur Motointegrator pour afficher les pièces compatibles.",
+      "Contrôle les options proposées par le site marchand : côté gauche/droit, diamètre des disques, témoin d'usure, système de freinage.",
+    ];
+
     return {
       success: true,
       ai: false,
@@ -336,10 +391,7 @@ function App() {
         explanation:
           "Recommandation locale EDM AUTO. L'IA serveur n'a pas répondu ou n'est pas encore configurée.",
       },
-      warnings: [
-        "Validation EDM AUTO obligatoire avant achat.",
-        "Vérifier VIN, type mine, diamètre des disques, côté gauche/droit, système de freinage et témoin d'usure.",
-      ],
+      warnings,
       baskets: {
         eco: {
           label: "ÉCO",
@@ -411,10 +463,12 @@ function App() {
       }
 
       if (!result.success) {
-        throw new Error(result.error || "Erreur pendant la création des paniers IA.");
+        throw new Error(
+          result.error || "Erreur pendant la création des paniers IA."
+        );
       }
 
-      const recommended = result.recommendation?.basket || recommendBasket();
+      const recommended = normalizeBasketKey(result.recommendation?.basket);
 
       setSelectedBasket(recommended);
       setBasketsCreated(true);
@@ -528,8 +582,8 @@ function App() {
         <h1 style={styles.title}>Préparer mon RDV</h1>
         <p style={styles.lead}>
           Le client renseigne son véhicule, choisit les prestations, puis le site
-          crée les paniers pièces ÉCO / STANDARD / PREMIUM avec total
-          main-d’œuvre + pièces et liens marchands.
+          crée les paniers pièces ÉCO / STANDARD / PREMIUM avec total main-d’œuvre
+          + pièces et liens marchands.
         </p>
       </section>
 
@@ -771,7 +825,7 @@ function App() {
           {Array.isArray(aiBasketResult?.warnings) &&
             aiBasketResult.warnings.length > 0 && (
               <div style={styles.warning}>
-                <strong>À vérifier avant achat :</strong>
+                <strong>À faire sur le site marchand :</strong>
                 <ul>
                   {aiBasketResult.warnings.map((warning, index) => (
                     <li key={index}>{warning}</li>
@@ -784,7 +838,11 @@ function App() {
             {Object.keys(BASKETS).map((basketKey) => {
               const basket = BASKETS[basketKey];
               const total = basketTotals[basketKey];
-              const recommended = basketKey === recommendBasket();
+              const recommended =
+                basketKey ===
+                normalizeBasketKey(
+                  aiBasketResult?.recommendation?.basket || recommendBasket()
+                );
               const aiDescription =
                 aiBasketResult?.baskets?.[basketKey]?.description || basket.advice;
               const aiBrands =
@@ -826,6 +884,23 @@ function App() {
                     onClick={() => setSelectedBasket(basketKey)}
                   >
                     Choisir ce panier
+                  </button>
+
+                  <a
+                    href={getBasketDirectUrl(basketKey)}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={styles.basketDirectButton}
+                  >
+                    Ouvrir le panier {basket.label} sur Motointegrator
+                  </a>
+
+                  <button
+                    type="button"
+                    style={styles.openAllButton}
+                    onClick={() => openBasketLinks(basketKey)}
+                  >
+                    Ouvrir tous les liens du panier {basket.label}
                   </button>
 
                   <hr style={styles.hr} />
@@ -1055,6 +1130,29 @@ const styles = {
     border: 0,
     borderTop: "1px solid #e5e7eb",
     margin: "16px 0",
+  },
+  basketDirectButton: {
+    display: "block",
+    background: "#07803f",
+    color: "#ffffff",
+    textDecoration: "none",
+    borderRadius: "14px",
+    padding: "13px 14px",
+    fontWeight: 900,
+    textAlign: "center",
+    marginTop: "12px",
+    marginBottom: "10px",
+  },
+  openAllButton: {
+    width: "100%",
+    background: "#1559c7",
+    color: "#ffffff",
+    border: 0,
+    borderRadius: "14px",
+    padding: "13px 14px",
+    fontWeight: 900,
+    cursor: "pointer",
+    marginBottom: "12px",
   },
   merchantLinks: {
     display: "grid",
