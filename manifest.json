@@ -1,0 +1,21 @@
+{
+  "name": "EDM AUTO - Mécano du Dimanche",
+  "short_name": "EDM AUTO",
+  "description": "Demande de RDV mécanique, paniers de pièces et suivi client EDM AUTO.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f7fb",
+  "theme_color": "#111827",
+  "categories": ["business", "automotive", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
