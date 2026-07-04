@@ -33,6 +33,18 @@ function pickBasket(body) {
   return body.selectedBasket || body.basket || body.panier || "standard";
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+}
+
+function euro(value) {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount)) {
+    return "0,00 EUR";
+  }
+  return `${amount.toFixed(2).replace(".", ",")} EUR`;
+}
+
 function normalizeTotals(body) {
   const totals = body.totals || {};
 
@@ -46,7 +58,65 @@ function normalizeTotals(body) {
     partsMin: Number(totals.partsMin || body.totalPiecesMin || 0),
     partsMax: Number(totals.partsMax || body.totalPiecesMax || 0),
     totalBefore: Number(totals.totalBefore || body.totalMin || 0),
+    totalAllMin: Number(totals.totalAllMin || 0),
+    totalAllMax: Number(totals.totalAllMax || 0),
   };
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
+function buildServicesHtml(services) {
+  if (!Array.isArray(services) || !services.length) {
+    return "<li>Aucune prestation</li>";
+  }
+
+  return services
+    .map((service) => `<li><strong>${escapeHtml(service.name || service.id || "Prestation")}</strong>${service.category ? ` — ${escapeHtml(service.category)}` : ""}</li>`)
+    .join("");
+}
+
+function buildServicesText(services) {
+  if (!Array.isArray(services) || !services.length) {
+    return "- Aucune prestation";
+  }
+
+  return services
+    .map((service) => `- ${service.name || service.id || "Prestation"}${service.category ? ` (${service.category})` : ""}`)
+    .join("\n");
+}
+
+async function sendWithResend({ apiKey, fromEmail, toEmail, replyTo, subject, html, text }) {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: [toEmail],
+      reply_to: replyTo || undefined,
+      subject,
+      html,
+      text,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.message || data?.error || `Resend HTTP ${response.status}`);
+  }
+
+  return data;
 }
 
 export default async function handler(req, res) {
@@ -73,32 +143,18 @@ export default async function handler(req, res) {
 
   try {
     const body = await readJsonBody(req);
-
-    const appsScriptUrl =
-      process.env.APPS_SCRIPT_WEBAPP_URL ||
-      process.env.EDM28_BACKEND_URL ||
-      "";
-
-    const apiKey = process.env.APPS_SCRIPT_API_KEY || process.env.EDM28_API_KEY || "";
     const basket = pickBasket(body);
     const totals = normalizeTotals(body);
 
     const normalizedRequest = {
       source: "SITE_EDM_AUTO_V3",
       createdAt: new Date().toISOString(),
-
       client: {
         firstName: body.client?.firstName || "",
         lastName: body.client?.lastName || "",
         phone: body.client?.phone || "",
         email: body.client?.email || "",
-
-        Prenom: body.client?.firstName || "",
-        Nom: body.client?.lastName || "",
-        Telephone: body.client?.phone || "",
-        Email: body.client?.email || "",
       },
-
       vehicle: {
         plate: body.vehicle?.plate || "",
         plateNormalized: body.vehicle?.plateNormalized || "",
@@ -106,25 +162,12 @@ export default async function handler(req, res) {
         model: body.vehicle?.model || "",
         year: body.vehicle?.year || "",
         energy: body.vehicle?.energy || "",
-        engine: body.vehicle?.engine || "",
-        emissions: body.vehicle?.emissions || "",
         mileage: body.vehicle?.mileage || "",
-
-        Plaque: body.vehicle?.plate || "",
-        Marque: body.vehicle?.brand || "",
-        Modele: body.vehicle?.model || "",
-        Annee: body.vehicle?.year || "",
-        Energie: body.vehicle?.energy || "",
-        Motorisation: body.vehicle?.engine || "",
-        Kilometrage: body.vehicle?.mileage || "",
       },
-
-      services: body.services || [],
-      panier: basket,
+      services: Array.isArray(body.services) ? body.services : [],
       basket,
       selectedBasket: basket,
       notes: body.notes || "",
-
       totals: {
         laborBase: totals.laborBase,
         basketExtra: totals.basketExtra,
@@ -134,17 +177,11 @@ export default async function handler(req, res) {
         laborAfter: totals.laborAfter,
         partsMin: totals.partsMin,
         partsMax: totals.partsMax,
+        totalAllMin: totals.totalAllMin,
+        totalAllMax: totals.totalAllMax,
       },
-
-      totalMainOeuvre: totals.laborAfter,
-      totalPiecesMin: totals.partsMin,
-      totalPiecesMax: totals.partsMax,
-
       j7Accepted: Boolean(body.j7Accepted),
       refuseControl: Boolean(body.refuseControl),
-      aiRecommendation: body.aiRecommendation || null,
-      aiBasketResult: body.aiBasketResult || body.aiRecommendation || null,
-
       status: "Nouveau",
       note: "Demande envoyée depuis le site EDM AUTO.",
     };
@@ -153,7 +190,13 @@ export default async function handler(req, res) {
       return res.status(400).json({
         success: false,
         error: "Informations client incomplètes.",
-        received: normalizedRequest,
+      });
+    }
+
+    if (!isValidEmail(normalizedRequest.client.email)) {
+      return res.status(400).json({
+        success: false,
+        error: "Adresse email client invalide.",
       });
     }
 
@@ -161,67 +204,147 @@ export default async function handler(req, res) {
       return res.status(400).json({
         success: false,
         error: "Plaque véhicule manquante.",
-        received: normalizedRequest,
       });
     }
 
-    if (!Array.isArray(normalizedRequest.services) || !normalizedRequest.services.length) {
+    if (!normalizedRequest.services.length) {
       return res.status(400).json({
         success: false,
         error: "Aucune prestation sélectionnée.",
-        received: normalizedRequest,
       });
     }
 
-    if (!appsScriptUrl) {
+    const resendApiKey = process.env.RESEND_API_KEY || "";
+    const resendFromEmail = process.env.RESEND_FROM_EMAIL || "";
+    const resendToEmail = process.env.RESEND_TO_EMAIL || "";
+
+    if (!resendApiKey || !resendFromEmail || !resendToEmail) {
       return res.status(200).json({
         success: false,
         configured: false,
-        error: "Variable Vercel APPS_SCRIPT_WEBAPP_URL manquante.",
-        received: normalizedRequest,
+        error: "Variables Vercel RESEND_API_KEY, RESEND_FROM_EMAIL ou RESEND_TO_EMAIL manquantes.",
       });
     }
 
-    const headers = {
-      "Content-Type": "text/plain;charset=utf-8",
-    };
+    const subject = `Nouvelle demande EDM AUTO - ${normalizedRequest.client.lastName} ${normalizedRequest.client.firstName} - ${normalizedRequest.vehicle.plate}`;
+    const servicesHtml = buildServicesHtml(normalizedRequest.services);
+    const servicesText = buildServicesText(normalizedRequest.services);
+    const totalRange = normalizedRequest.totals.totalAllMin && normalizedRequest.totals.totalAllMax
+      ? `${euro(normalizedRequest.totals.totalAllMin)} à ${euro(normalizedRequest.totals.totalAllMax)}`
+      : euro(normalizedRequest.totals.laborAfter);
 
-    if (apiKey) {
-      headers["x-api-key"] = apiKey;
-    }
+    const html = `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
+        <h2>Nouvelle demande EDM AUTO</h2>
+        <p>Une nouvelle demande a été envoyée depuis le site.</p>
 
-    const response = await fetch(appsScriptUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(normalizedRequest),
+        <h3>Client</h3>
+        <ul>
+          <li><strong>Nom :</strong> ${escapeHtml(normalizedRequest.client.lastName)}</li>
+          <li><strong>Prénom :</strong> ${escapeHtml(normalizedRequest.client.firstName)}</li>
+          <li><strong>Téléphone :</strong> ${escapeHtml(normalizedRequest.client.phone)}</li>
+          <li><strong>Email :</strong> ${escapeHtml(normalizedRequest.client.email)}</li>
+        </ul>
+
+        <h3>Véhicule</h3>
+        <ul>
+          <li><strong>Plaque :</strong> ${escapeHtml(normalizedRequest.vehicle.plate)}</li>
+          <li><strong>Marque :</strong> ${escapeHtml(normalizedRequest.vehicle.brand)}</li>
+          <li><strong>Modèle :</strong> ${escapeHtml(normalizedRequest.vehicle.model)}</li>
+          <li><strong>Année :</strong> ${escapeHtml(normalizedRequest.vehicle.year)}</li>
+          <li><strong>Énergie :</strong> ${escapeHtml(normalizedRequest.vehicle.energy)}</li>
+          <li><strong>Kilométrage :</strong> ${escapeHtml(normalizedRequest.vehicle.mileage)}</li>
+        </ul>
+
+        <h3>Prestations</h3>
+        <ul>${servicesHtml}</ul>
+
+        <h3>Panier</h3>
+        <p><strong>${escapeHtml(String(normalizedRequest.selectedBasket || "standard").toUpperCase())}</strong></p>
+
+        <h3>Contrôle préalable</h3>
+        <ul>
+          <li><strong>Contrôle ajouté :</strong> ${normalizedRequest.j7Accepted ? "Oui" : "Non"}</li>
+          <li><strong>Contrôle refusé :</strong> ${normalizedRequest.refuseControl ? "Oui" : "Non"}</li>
+        </ul>
+
+        <h3>Estimation</h3>
+        <ul>
+          <li><strong>Main d’œuvre estimée :</strong> ${escapeHtml(euro(normalizedRequest.totals.laborBase))}</li>
+          <li><strong>Remise combo :</strong> ${escapeHtml(euro(normalizedRequest.totals.comboSaving))}</li>
+          <li><strong>Contrôle préalable :</strong> ${escapeHtml(euro(normalizedRequest.totals.j7Saving))}</li>
+          <li><strong>Pièces estimées :</strong> ${escapeHtml(euro(normalizedRequest.totals.partsMin))} à ${escapeHtml(euro(normalizedRequest.totals.partsMax))}</li>
+          <li><strong>Total estimé tout compris :</strong> ${escapeHtml(totalRange)}</li>
+        </ul>
+
+        <h3>Notes client</h3>
+        <p>${escapeHtml(normalizedRequest.notes || "Aucune note")}</p>
+
+        <hr>
+        <p style="font-size:12px;color:#6b7280">Demande reçue le ${escapeHtml(normalizedRequest.createdAt)}</p>
+      </div>
+    `;
+
+    const text = [
+      "Nouvelle demande EDM AUTO",
+      "",
+      "CLIENT",
+      `Nom : ${normalizedRequest.client.lastName}`,
+      `Prénom : ${normalizedRequest.client.firstName}`,
+      `Téléphone : ${normalizedRequest.client.phone}`,
+      `Email : ${normalizedRequest.client.email}`,
+      "",
+      "VÉHICULE",
+      `Plaque : ${normalizedRequest.vehicle.plate}`,
+      `Marque : ${normalizedRequest.vehicle.brand}`,
+      `Modèle : ${normalizedRequest.vehicle.model}`,
+      `Année : ${normalizedRequest.vehicle.year}`,
+      `Énergie : ${normalizedRequest.vehicle.energy}`,
+      `Kilométrage : ${normalizedRequest.vehicle.mileage}`,
+      "",
+      "PRESTATIONS",
+      servicesText,
+      "",
+      `PANIER : ${String(normalizedRequest.selectedBasket || "standard").toUpperCase()}`,
+      "",
+      "CONTRÔLE PRÉALABLE",
+      `Contrôle ajouté : ${normalizedRequest.j7Accepted ? "Oui" : "Non"}`,
+      `Contrôle refusé : ${normalizedRequest.refuseControl ? "Oui" : "Non"}`,
+      "",
+      "ESTIMATION",
+      `Main d’œuvre estimée : ${euro(normalizedRequest.totals.laborBase)}`,
+      `Remise combo : ${euro(normalizedRequest.totals.comboSaving)}`,
+      `Contrôle préalable : ${euro(normalizedRequest.totals.j7Saving)}`,
+      `Pièces estimées : ${euro(normalizedRequest.totals.partsMin)} à ${euro(normalizedRequest.totals.partsMax)}`,
+      `Total estimé tout compris : ${totalRange}`,
+      "",
+      "NOTES CLIENT",
+      normalizedRequest.notes || "Aucune note",
+      "",
+      `Reçue le : ${normalizedRequest.createdAt}`,
+    ].join("\n");
+
+    const resendResult = await sendWithResend({
+      apiKey: resendApiKey,
+      fromEmail: resendFromEmail,
+      toEmail: resendToEmail,
+      replyTo: normalizedRequest.client.email,
+      subject,
+      html,
+      text,
     });
-
-    const text = await response.text();
-
-    let appsScriptResult = null;
-
-    try {
-      appsScriptResult = JSON.parse(text);
-    } catch {
-      appsScriptResult = {
-        raw: text.slice(0, 500),
-      };
-    }
-
-    if (!response.ok) {
-      return res.status(502).json({
-        success: false,
-        error: "Apps Script a refusé la demande.",
-        status: response.status,
-        appsScriptResult,
-      });
-    }
 
     return res.status(200).json({
       success: true,
       message: "Demande envoyée à EDM AUTO.",
-      appsScriptResult,
-      sent: normalizedRequest,
+      emailProvider: "resend",
+      resendResult,
+      sent: {
+        client: normalizedRequest.client,
+        vehicle: normalizedRequest.vehicle,
+        basket: normalizedRequest.selectedBasket,
+        servicesCount: normalizedRequest.services.length,
+      },
     });
   } catch (error) {
     return res.status(500).json({
