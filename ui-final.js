@@ -176,6 +176,142 @@
     });
   }
 
+  function patchNavigationAndAccountPage() {
+    const nav = qs(".nav");
+    if (nav && !nav.querySelector('[data-page="account"]')) {
+      const button = document.createElement("button");
+      button.dataset.page = "account";
+      button.textContent = "👤 Mon compte";
+      nav.insertBefore(button, nav.querySelector('[data-page="garage"]') || null);
+      button.addEventListener("click", () => {
+        if (typeof showPage === "function") showPage("account");
+      });
+    }
+
+    if (!document.getElementById("account")) {
+      const main = qs("main.main");
+      const section = document.createElement("section");
+      section.id = "account";
+      section.className = "page";
+      section.innerHTML = `
+        <div class="panel">
+          <div class="section-title">
+            <div>
+              <h2>Mon compte</h2>
+              <p>Retrouvez ici les informations liées à votre compte client.</p>
+            </div>
+          </div>
+          <div id="accountPageContent"></div>
+        </div>
+      `;
+      main.appendChild(section);
+    }
+  }
+
+  async function deleteCurrentAccount() {
+    if (!window.state?.user?.id) {
+      if (typeof toast === "function") toast("Aucun compte connecté.");
+      return;
+    }
+
+    const confirmed = window.confirm("Voulez-vous vraiment supprimer votre compte ? Cette action est définitive.");
+    if (!confirmed) return;
+
+    try {
+      const { data } = await supabaseClient.auth.getSession();
+      const accessToken = data?.session?.access_token;
+      if (!accessToken) throw new Error("Session introuvable.");
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({})
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Suppression du compte indisponible pour le moment.");
+      }
+
+      await supabaseClient.auth.signOut();
+      window.state = { user: null, vehicles: [], requests: [] };
+      if (typeof saveState === "function") saveState();
+      renderAccountPage();
+      if (typeof toast === "function") toast("Compte supprimé.");
+      if (typeof showPage === "function") showPage("home");
+    } catch (error) {
+      const box = qs("#accountDeleteStatus");
+      if (box) {
+        box.innerHTML = `<div class="errorbox"><strong>Suppression impossible.</strong><br>${escapeHtml(error.message || "Réessaie plus tard.")}</div>`;
+      }
+      if (typeof toast === "function") toast("Suppression du compte indisponible.");
+    }
+  }
+
+  function renderAccountPage() {
+    const container = document.getElementById("accountPageContent");
+    if (!container) return;
+
+    if (!window.state?.user?.id) {
+      container.innerHTML = `
+        <div class="empty">
+          Connectez-vous pour consulter votre compte client.
+        </div>
+      `;
+      return;
+    }
+
+    const user = window.state.user;
+    container.innerHTML = `
+      <div class="grid">
+        <div class="card">
+          <h3>Informations du compte</h3>
+          <div class="summary" style="margin-top:14px">
+            <div class="summary-line"><span>Nom</span><strong>${escapeHtml(user.lastName || "-")}</strong></div>
+            <div class="summary-line"><span>Prénom</span><strong>${escapeHtml(user.firstName || "-")}</strong></div>
+            <div class="summary-line"><span>Téléphone</span><strong>${escapeHtml(user.phone || "-")}</strong></div>
+            <div class="summary-line"><span>Email</span><strong>${escapeHtml(user.email || "-")}</strong></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Actions sur le compte</h3>
+          <p style="margin-top:12px">Vous pouvez vous déconnecter ou demander la suppression définitive de votre compte.</p>
+          <div class="btn-row">
+            <button class="btn btn-secondary" id="accountSignOutBtn" type="button">Se déconnecter</button>
+            <button class="btn btn-danger" id="accountDeleteBtn" type="button">Supprimer mon compte</button>
+          </div>
+          <div id="accountDeleteStatus" style="margin-top:12px"></div>
+        </div>
+      </div>
+    `;
+
+    qs("#accountSignOutBtn")?.addEventListener("click", async () => {
+      if (typeof signOutFromSupabase === "function") {
+        await signOutFromSupabase();
+      } else {
+        await supabaseClient.auth.signOut();
+      }
+      renderAccountPage();
+      if (typeof showPage === "function") showPage("home");
+    });
+
+    qs("#accountDeleteBtn")?.addEventListener("click", deleteCurrentAccount);
+  }
+
+  function wrapAccountUiRefresh() {
+    if (typeof window.updateAccountUi !== "function") return;
+    const base = window.updateAccountUi;
+    window.updateAccountUi = function () {
+      base();
+      lockClientFieldsIfConnected();
+      renderAccountPage();
+    };
+  }
+
   function overrideValidationAndTotals() {
     const baseValidate = window.validateBeforeServices;
     window.validateBeforeServices = function () {
@@ -297,6 +433,8 @@
     patchBasketSection();
     patchPreparationBlock();
     patchSummaryLabels();
+    patchNavigationAndAccountPage();
+    wrapAccountUiRefresh();
     overrideValidationAndTotals();
     patchSubmitMessage();
     syncControlCheckboxes();
@@ -304,6 +442,7 @@
     if (typeof renderServices === "function") renderServices();
     if (typeof updateSummary === "function") updateSummary();
     lockClientFieldsIfConnected();
+    renderAccountPage();
   }
 
   document.addEventListener("DOMContentLoaded", init);
