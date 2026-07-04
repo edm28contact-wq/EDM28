@@ -621,7 +621,6 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      bootstrapSupabaseAuth();
       updateAccountUi();
       renderSavedVehicles();
     }
@@ -883,24 +882,6 @@
       }
     }
 
-    function saveAccount(showToast = true) {
-      const client = getClient();
-      if (!client.email && !client.phone) { toast("Email ou téléphone obligatoire pour enregistrer le compte."); return false; }
-      state.user = client;
-      saveState();
-      if (showToast) toast("Compte enregistré localement.");
-      return true;
-    }
-
-    function loadLocalAccount() {
-      if (!state.user) { toast("Aucun compte local enregistré."); return; }
-      $("lastName").value = state.user.lastName || "";
-      $("firstName").value = state.user.firstName || "";
-      $("phone").value = state.user.phone || "";
-      $("email").value = state.user.email || "";
-      toast("Compte local chargé.");
-    }
-
     function saveVehicle(showToast = true) {
       const vehicle = getVehicle();
       if (!vehicle.plateNormalized) { if (showToast) toast("Plaque obligatoire."); return false; }
@@ -935,7 +916,7 @@
       const vehicle = getVehicle();
       if (!client.lastName || !client.firstName || !client.phone || !client.email) { toast("Complète nom, prénom, téléphone et email."); return false; }
       if (!vehicle.plateNormalized) { toast("Entre une plaque véhicule."); return false; }
-      state.user = client;
+      state.user = { ...(state.user || {}), ...client };
       saveVehicle(false);
       saveState();
       return true;
@@ -1200,6 +1181,7 @@
       $("plate").addEventListener("blur", (e) => { e.target.value = formatPlate(e.target.value); });
       document.querySelectorAll("[data-filter]").forEach((btn) => btn.addEventListener("click", () => { serviceFilter = btn.dataset.filter; renderServices(); }));
       document.querySelector("[data-select-pack='freinage']").addEventListener("click", selectFreinagePack);
+      bootstrapSupabaseAuth();
       updateAccountUi();
       renderSavedVehicles();
       renderServices();
@@ -1207,7 +1189,7 @@
       updateSummary();
     });
   </script>
-
+  <script src="/ui-final.js"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
