@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="EDM AUTO - Mécano du Dimanche : freinage, train avant, paniers de pièces et rendez-vous préparés." />
-  <title>EDM AUTO - Mécano du Dimanche</title>
+  <meta name="description" content="EDM AUTO - Demande mécanique simple, estimation claire et reprise manuelle." />
+  <title>EDM AUTO</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#111827">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -14,7 +14,6 @@
   <meta name="apple-mobile-web-app-title" content="EDM AUTO">
   <style>
     :root {
-      color-scheme: light;
       --bg: #f5f7fb;
       --surface: #ffffff;
       --surface-2: #f9fafb;
@@ -22,7 +21,6 @@
       --muted: #667085;
       --border: #e4e7ec;
       --brand: #111827;
-      --brand-2: #0f3b82;
       --blue: #155eef;
       --blue-soft: #eff6ff;
       --green: #067647;
@@ -31,9 +29,7 @@
       --orange-soft: #fffaeb;
       --red: #b42318;
       --red-soft: #fef3f2;
-      --purple: #6941c6;
-      --purple-soft: #f4f3ff;
-      --shadow: 0 24px 70px rgba(16, 24, 40, .10);
+      --shadow: 0 24px 70px rgba(16,24,40,.10);
       --radius-xl: 30px;
       --radius-lg: 22px;
       --radius-md: 16px;
@@ -46,19 +42,19 @@
       margin: 0;
       min-height: 100vh;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
       background:
         radial-gradient(circle at 18% 0%, rgba(21, 94, 239, .16), transparent 32rem),
-        radial-gradient(circle at 100% 20%, rgba(105, 65, 198, .12), transparent 28rem),
+        radial-gradient(circle at 100% 20%, rgba(16, 24, 40, .08), transparent 28rem),
         var(--bg);
-      color: var(--ink);
     }
 
     button, input, select, textarea { font: inherit; }
     button { border: 0; cursor: pointer; }
-    button:disabled { opacity: .58; cursor: not-allowed; }
-    a { color: inherit; }
-    p { color: var(--muted); line-height: 1.65; }
-    strong { color: var(--ink); }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    p { color: var(--muted); line-height: 1.6; }
+    h1, h2, h3 { margin: 0; letter-spacing: -.04em; }
+
     .app-shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); }
 
     .sidebar {
@@ -67,25 +63,33 @@
       height: 100vh;
       padding: 24px;
       color: white;
-      background:
-        linear-gradient(180deg, rgba(17,24,39,.97), rgba(11,18,32,.99)),
-        radial-gradient(circle at top, rgba(21,94,239,.35), transparent 20rem);
+      background: linear-gradient(180deg, rgba(17,24,39,.97), rgba(11,18,32,.99));
       overflow: auto;
-      z-index: 30;
+      z-index: 20;
     }
+
     .brand-block { display: grid; gap: 10px; margin-bottom: 26px; }
     .brand-mark {
-      width: 48px; height: 48px; border-radius: 18px;
-      display: grid; place-items: center;
-      background: #fff; color: #111827; font-weight: 1000;
+      width: 48px;
+      height: 48px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      color: #111827;
+      font-weight: 1000;
       box-shadow: 0 16px 35px rgba(0,0,0,.22);
     }
+
     .brand-name { font-weight: 1000; letter-spacing: .08em; font-size: 1.08rem; }
     .brand-sub { color: #cbd5e1; font-size: .95rem; line-height: 1.45; }
+
     .nav { display: grid; gap: 8px; }
     .nav button {
       width: 100%;
-      display: flex; align-items: center; gap: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       text-align: left;
       padding: 12px 14px;
       border-radius: 16px;
@@ -94,7 +98,12 @@
       border: 1px solid transparent;
       font-weight: 800;
     }
-    .nav button:hover, .nav button.active { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.14); color: white; }
+    .nav button:hover, .nav button.active {
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.14);
+      color: white;
+    }
+
     .sidebar-card {
       margin-top: 22px;
       border: 1px solid rgba(255,255,255,.14);
@@ -107,10 +116,22 @@
     }
     .sidebar-card b { color: white; }
 
-    .main { width: 100%; max-width: 1220px; padding: 24px 24px 70px; margin: 0 auto; min-width: 0; }
+    .main {
+      width: 100%;
+      max-width: 1220px;
+      padding: 24px 24px 70px;
+      margin: 0 auto;
+      min-width: 0;
+    }
+
     .topbar {
-      position: sticky; top: 14px; z-index: 20;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      position: sticky;
+      top: 14px;
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       background: rgba(255,255,255,.84);
       backdrop-filter: blur(16px);
       border: 1px solid rgba(228,231,236,.9);
@@ -119,11 +140,23 @@
       box-shadow: 0 16px 45px rgba(16,24,40,.08);
       margin-bottom: 18px;
     }
-    .topbar-title { display: flex; align-items: center; gap: 10px; font-weight: 1000; }
+
+    .topbar-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 1000;
+    }
+
     .mobile-menu { display: none; }
+
     .page { display: none; animation: fadeIn .16s ease; }
     .page.active { display: block; }
-    @keyframes fadeIn { from { opacity: .5; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    @keyframes fadeIn {
+      from { opacity: .55; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     .panel {
       background: var(--surface);
@@ -133,29 +166,43 @@
       padding: clamp(18px, 3vw, 30px);
       margin-bottom: 18px;
     }
+
     .hero {
-      min-height: 600px;
+      min-height: 560px;
       display: grid;
       align-items: center;
       overflow: hidden;
-      background:
-        linear-gradient(135deg, rgba(17,24,39,.98), rgba(15,59,130,.92)),
-        radial-gradient(circle at 100% 0%, rgba(255,255,255,.22), transparent 28rem);
+      background: linear-gradient(135deg, rgba(17,24,39,.98), rgba(15,59,130,.92));
       color: white;
     }
-    .hero p, .hero .muted { color: #dbe4f0; }
-    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr); gap: 28px; align-items: center; }
-    .eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 8px 12px; border-radius: 999px;
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16);
-      font-weight: 900; color: white; margin-bottom: 16px;
+    .hero p { color: #dbe4f0; }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+      gap: 28px;
+      align-items: center;
     }
-    h1, h2, h3 { letter-spacing: -.045em; margin: 0; }
-    h1 { font-size: clamp(2.8rem, 7vw, 6.4rem); line-height: .9; max-width: 900px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.16);
+      font-weight: 900;
+      color: white;
+      margin-bottom: 16px;
+    }
+
+    h1 { font-size: clamp(2.8rem, 7vw, 5.8rem); line-height: .92; max-width: 900px; }
     h2 { font-size: clamp(2rem, 4.2vw, 3.5rem); line-height: .96; margin-bottom: 12px; }
     h3 { font-size: 1.18rem; line-height: 1.1; }
+
     .lead { max-width: 780px; font-size: 1.12rem; }
+
     .hero-card {
       background: rgba(255,255,255,.12);
       border: 1px solid rgba(255,255,255,.16);
@@ -163,20 +210,49 @@
       padding: 20px;
       backdrop-filter: blur(12px);
     }
-    .hero-stat { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 14px; border-radius: 18px; background: rgba(255,255,255,.10); margin: 10px 0; }
-    .hero-stat span { width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; background: white; color: #111827; font-weight: 1000; }
-    .hero-stat p { margin: 4px 0 0; font-size: .92rem; }
 
-    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .hero-stat {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.10);
+      margin: 10px 0;
+    }
+
+    .hero-stat span {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: white;
+      color: #111827;
+      font-weight: 1000;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
     .btn {
       min-height: 46px;
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       padding: 12px 16px;
       border-radius: 15px;
       font-weight: 1000;
       transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
     }
     .btn:hover { transform: translateY(-1px); }
+
     .btn-primary { color: white; background: var(--brand); box-shadow: 0 14px 30px rgba(17,24,39,.18); }
     .btn-blue { color: white; background: var(--blue); box-shadow: 0 14px 30px rgba(21,94,239,.18); }
     .btn-secondary { color: var(--ink); background: #eef2f7; }
@@ -185,29 +261,67 @@
     .btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--border); }
     .hero .btn-secondary { background: white; color: #111827; }
 
-    .stepper { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin: 18px 0; }
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 10px;
+      margin: 18px 0;
+    }
+
     .step {
-      border: 1px solid var(--border); border-radius: 18px; padding: 12px;
-      background: var(--surface-2); color: var(--muted); font-weight: 900;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-weight: 900;
     }
     .step.done { background: var(--green-soft); color: var(--green); border-color: #abefc6; }
     .step.current { background: var(--blue-soft); color: var(--blue); border-color: #b2ddff; }
 
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+
     .card {
       background: var(--surface-2);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 18px;
     }
+
     .card + .card { margin-top: 14px; }
-    .section-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
     .section-title p { margin: 8px 0 0; }
 
-    label { display: grid; gap: 7px; font-weight: 900; color: var(--ink); }
-    .field-hint { font-weight: 600; color: var(--muted); font-size: .84rem; }
+    label {
+      display: grid;
+      gap: 7px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .field-hint {
+      font-weight: 600;
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
     input, select, textarea {
       width: 100%;
       min-height: 48px;
@@ -218,8 +332,16 @@
       padding: 12px 13px;
       outline: none;
     }
-    input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(21,94,239,.12); }
-    textarea { min-height: 94px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(21,94,239,.12);
+    }
+
+    textarea {
+      min-height: 94px;
+      resize: vertical;
+    }
 
     .notice, .okbox, .errorbox, .infobox {
       border-radius: 18px;
@@ -227,14 +349,19 @@
       margin-top: 14px;
       line-height: 1.55;
     }
+
     .notice { background: var(--orange-soft); border: 1px solid #fedf89; color: #7a4b00; }
     .okbox { background: var(--green-soft); border: 1px solid #abefc6; color: var(--green); }
     .errorbox { background: var(--red-soft); border: 1px solid #fecdca; color: var(--red); }
     .infobox { background: var(--blue-soft); border: 1px solid #b2ddff; color: #124b8f; }
+
     .small { font-size: .9rem; color: var(--muted); }
     .hidden { display: none !important; }
+
     .pill {
-      display: inline-flex; align-items: center; gap: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       border-radius: 999px;
       padding: 6px 10px;
       background: #eef2f7;
@@ -243,74 +370,209 @@
       font-weight: 900;
       white-space: nowrap;
     }
+
     .pill.blue { background: var(--blue-soft); color: var(--blue); }
     .pill.green { background: var(--green-soft); color: var(--green); }
     .pill.orange { background: var(--orange-soft); color: var(--orange); }
-    .pill.purple { background: var(--purple-soft); color: var(--purple); }
     .pill.red { background: var(--red-soft); color: var(--red); }
 
-    .vehicle-result { display: none; margin-top: 14px; }
-    .vehicle-result.show { display: block; }
-    .kv { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
-    .kv div { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 12px; }
-    .kv span { display: block; color: var(--muted); font-size: .8rem; font-weight: 800; margin-bottom: 4px; }
-    .kv strong { display: block; overflow-wrap: anywhere; }
+    .service-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
 
-    .service-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-    .service-card { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: start; padding: 16px; border: 1px solid var(--border); border-radius: 20px; background: white; margin: 10px 0; }
-    .service-card input { width: 20px; height: 20px; min-height: 0; margin-top: 4px; }
-    .service-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
-    .service-price { text-align: right; font-weight: 1000; font-size: 1.2rem; white-space: nowrap; }
-    .old-price { color: #98a2b3; text-decoration: line-through; font-size: .95rem; margin-right: 4px; }
-    .service-details { display: none; grid-column: 2 / -1; margin-top: -6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 16px; padding: 12px; }
+    .service-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: start;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: white;
+      margin: 10px 0;
+    }
+
+    .service-card input {
+      width: 20px;
+      height: 20px;
+      min-height: 0;
+      margin-top: 4px;
+    }
+
+    .service-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .service-price {
+      text-align: right;
+      font-weight: 1000;
+      font-size: 1.05rem;
+      white-space: nowrap;
+    }
+
+    .old-price {
+      color: #98a2b3;
+      text-decoration: line-through;
+      font-size: .95rem;
+      margin-right: 4px;
+    }
+
+    .service-details {
+      display: none;
+      grid-column: 2 / -1;
+      margin-top: -6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+    }
     .service-details.show { display: block; }
-    .link-button { padding: 0; background: transparent; color: var(--blue); font-weight: 900; }
 
-    .basket-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; margin-top: 14px; }
+    .link-button {
+      padding: 0;
+      background: transparent;
+      color: var(--blue);
+      font-weight: 900;
+    }
+
+    .basket-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
     .basket-card {
       border: 2px solid var(--border);
       background: white;
       border-radius: 24px;
       padding: 18px;
       cursor: pointer;
-      min-height: 270px;
+      min-height: 250px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       transition: border-color .12s ease, transform .12s ease, background .12s ease;
     }
+
     .basket-card:hover { transform: translateY(-2px); }
     .basket-card.selected { border-color: var(--blue); background: var(--blue-soft); }
-    .basket-card.recommended { border-color: var(--green); box-shadow: 0 16px 40px rgba(6,118,71,.12); }
-    .basket-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-    .basket-title { font-size: 1.3rem; font-weight: 1000; letter-spacing: -.04em; }
+
+    .basket-title {
+      font-size: 1.3rem;
+      font-weight: 1000;
+      letter-spacing: -.04em;
+    }
+
     .basket-price { font-weight: 1000; }
-    .basket-ai { margin-top: auto; padding-top: 10px; border-top: 1px dashed rgba(102,112,133,.35); }
-    .basket-ai ul { margin: 8px 0 0 18px; padding: 0; color: var(--muted); }
 
-    .ai-panel { display: none; margin-top: 14px; }
-    .ai-panel.show { display: block; }
-    .ai-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
-    .ai-notes { display: grid; gap: 10px; margin-top: 12px; }
-    .ai-note { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 12px; }
+    .basket-ai {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(102,112,133,.35);
+    }
 
-    .summary-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 14px; align-items: start; }
-    .summary { display: grid; gap: 8px; }
-    .summary-line { display: flex; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 15px; background: white; border: 1px solid var(--border); }
-    .summary-line.total { background: var(--brand); color: white; border-color: var(--brand); }
-    .summary-line.total strong, .summary-line.total span { color: white; }
-    .summary-line.saving { background: var(--green-soft); color: var(--green); border-color: #abefc6; }
-    .summary-line.saving strong, .summary-line.saving span { color: var(--green); }
-    .check-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-    .check-card { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: 18px; padding: 12px; background: white; }
-    .check-card input { width: 20px; height: 20px; min-height: 0; margin-top: 2px; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 14px;
+      align-items: start;
+    }
 
-    .table { width: 100%; border-collapse: collapse; }
-    .table th, .table td { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
-    .table th { color: #475467; font-size: .88rem; }
-    .empty { border: 1px dashed #cbd5e1; border-radius: 20px; padding: 20px; text-align: center; color: var(--muted); background: #fbfcfe; }
+    .summary {
+      display: grid;
+      gap: 8px;
+    }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 15px;
+      background: white;
+      border: 1px solid var(--border);
+    }
+
+    .summary-line.total {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    .summary-line.total strong,
+    .summary-line.total span { color: white; }
+
+    .summary-line.saving {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #abefc6;
+    }
+
+    .summary-line.saving strong,
+    .summary-line.saving span { color: var(--green); }
+
+    .check-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .check-card {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      background: white;
+    }
+
+    .check-card input {
+      width: 20px;
+      height: 20px;
+      min-height: 0;
+      margin-top: 2px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th, .table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .table th {
+      color: #475467;
+      font-size: .88rem;
+    }
+
+    .empty {
+      border: 1px dashed #cbd5e1;
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      color: var(--muted);
+      background: #fbfcfe;
+    }
+
     .toast {
-      position: fixed; right: 18px; bottom: 18px; z-index: 100;
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 100;
       display: none;
       max-width: 380px;
       padding: 14px 16px;
@@ -320,15 +582,22 @@
       box-shadow: 0 18px 50px rgba(0,0,0,.25);
       font-weight: 800;
     }
+
     .toast.show { display: block; }
 
     @media (max-width: 980px) {
       .app-shell { grid-template-columns: 1fr; }
-      .sidebar { position: fixed; transform: translateX(-110%); transition: transform .18s ease; width: 292px; max-width: calc(100vw - 28px); }
+      .sidebar {
+        position: fixed;
+        transform: translateX(-110%);
+        transition: transform .18s ease;
+        width: 292px;
+        max-width: calc(100vw - 28px);
+      }
       .sidebar.open { transform: translateX(0); }
       .mobile-menu { display: inline-flex; }
       .main { padding: 14px 14px 70px; }
-      .hero-grid, .grid, .grid-3, .grid-4, .stepper, .kv, .basket-row, .summary-grid, .check-row { grid-template-columns: 1fr; }
+      .hero-grid, .grid, .grid-3, .stepper, .basket-row, .summary-grid, .check-row { grid-template-columns: 1fr; }
       .hero { min-height: auto; }
       .service-card { grid-template-columns: auto 1fr; }
       .service-price { grid-column: 2; text-align: left; }
@@ -344,18 +613,21 @@
         <div class="brand-mark">EDM</div>
         <div>
           <div class="brand-name">EDM AUTO</div>
-          <div class="brand-sub">Mécano du Dimanche<br>Freinage · Train avant · Paniers IA</div>
+          <div class="brand-sub">Mécano du Dimanche<br>Demande simple · estimation · reprise manuelle</div>
         </div>
       </div>
+
       <nav class="nav" aria-label="Navigation principale">
         <button class="active" data-page="home">🏁 Accueil</button>
         <button data-page="appointment">🗓️ Prendre RDV</button>
+        <button data-page="account">👤 Mon compte</button>
         <button data-page="garage">🚗 Mon garage</button>
         <button data-page="history">🧾 Historique</button>
         <button data-page="about">ℹ️ Qui sommes-nous</button>
       </nav>
-      <div class="sidebar-card" id="accountChip"><b>Non connecté</b><br>Votre garage reste enregistré localement sur cet appareil.</div>
-      <div class="sidebar-card"><b>Confidentialité plaque</b><br>La route API filtre les données titulaire. Le site ne garde que les informations véhicule utiles.</div>
+
+      <div class="sidebar-card" id="accountChip"><b>Non connecté</b><br>Connectez-vous pour retrouver votre garage et vos demandes.</div>
+      <div class="sidebar-card"><b>Fonctionnement actuel</b><br>Le site prépare votre demande et votre estimation. La validation finale reste faite manuellement par EDM AUTO.</div>
     </aside>
 
     <main class="main">
@@ -369,18 +641,18 @@
         <div class="panel hero">
           <div class="hero-grid">
             <div>
-              <div class="eyebrow">Dimanche · pièces client · contrôle J-7</div>
-              <h1>Votre RDV mécanique préparé avant même d’arriver.</h1>
-              <p class="lead">Saisissez votre plaque, choisissez les prestations, laissez l’IA préparer les paniers ÉCO / STANDARD / PREMIUM selon le véhicule, puis EDM AUTO valide humainement avant confirmation.</p>
+              <div class="eyebrow">Demande simple · estimation claire · reprise manuelle</div>
+              <h1>Préparez votre demande mécanique en quelques minutes.</h1>
+              <p class="lead">Créez votre compte, renseignez votre véhicule, sélectionnez les prestations souhaitées, consultez une estimation, puis transmettez votre demande à EDM AUTO pour reprise manuelle.</p>
               <div class="btn-row">
                 <button class="btn btn-secondary" data-jump="appointment" type="button">Commencer ma demande</button>
                 <button class="btn btn-ghost" data-jump="about" type="button" style="color:white;border-color:rgba(255,255,255,.25)">Voir le principe</button>
               </div>
             </div>
             <div class="hero-card">
-              <div class="hero-stat"><span>1</span><div><b>Plaque</b><p>Recherche véhicule via API côté serveur, sans exposer le token.</p></div></div>
-              <div class="hero-stat"><span>2</span><div><b>Paniers IA</b><p>Recommandation selon marque, modèle, énergie, âge, kilométrage et prestations.</p></div></div>
-              <div class="hero-stat"><span>3</span><div><b>Validation EDM</b><p>Contrôle humain et J-7 pour limiter les erreurs de références.</p></div></div>
+              <div class="hero-stat"><span>1</span><div><b>Compte</b><p>Créez votre compte pour retrouver vos véhicules et vos demandes.</p></div></div>
+              <div class="hero-stat"><span>2</span><div><b>Estimation</b><p>Consultez plusieurs niveaux de panier selon votre besoin et votre budget.</p></div></div>
+              <div class="hero-stat"><span>3</span><div><b>Validation EDM</b><p>Chaque demande est ensuite revue manuellement avant confirmation.</p></div></div>
             </div>
           </div>
         </div>
@@ -391,13 +663,13 @@
           <div class="section-title">
             <div>
               <h2>Prendre RDV</h2>
-              <p>Un parcours clair : client, véhicule, prestations, panier IA, envoi à EDM AUTO.</p>
+              <p>Un parcours simple : compte, véhicule, prestations, estimation, puis transmission de votre demande.</p>
             </div>
-            <span class="pill blue">Site V3 propre</span>
+            <span class="pill blue">Version actuelle</span>
           </div>
 
           <div class="stepper" id="stepper">
-            <div class="step current" data-step="1">1 · Client</div>
+            <div class="step current" data-step="1">1 · Compte</div>
             <div class="step" data-step="2">2 · Véhicule</div>
             <div class="step" data-step="3">3 · Services</div>
             <div class="step" data-step="4">4 · Envoi</div>
@@ -406,22 +678,20 @@
           <div class="card" id="clientCard">
             <div class="section-title">
               <div>
-                <h3>1. Informations client</h3>
-                <p>Obligatoire pour que la demande soit retrouvable dans la base EDM28.</p>
+                <h3>1. Compte client</h3>
+                <p>Créez votre compte ou connectez-vous avant de pouvoir transmettre une demande.</p>
               </div>
-              <button class="btn btn-secondary" id="btnLoadLocal" type="button">Charger le compte local</button>
             </div>
             <div class="grid">
-              <label>Nom <input id="lastName" autocomplete="family-name" placeholder="Dupont" required></label>
-              <label>Prénom <input id="firstName" autocomplete="given-name" placeholder="Jean" required></label>
-              <label>Téléphone <input id="phone" autocomplete="tel" placeholder="06..." required></label>
-              <label>Email <input id="email" type="email" autocomplete="email" placeholder="client@email.fr" required></label>
+              <label>Nom <input id="lastName" autocomplete="family-name" placeholder="Dupont"></label>
+              <label>Prénom <input id="firstName" autocomplete="given-name" placeholder="Jean"></label>
+              <label>Téléphone <input id="phone" autocomplete="tel" placeholder="06..."></label>
+              <label>Email <input id="email" type="email" autocomplete="email" placeholder="client@email.fr"></label>
               <label>Mot de passe <input id="password" type="password" placeholder="Minimum 6 caractères"></label>
             </div>
             <div class="btn-row">
               <button class="btn btn-primary" id="btnSignUp" type="button">Créer mon compte</button>
               <button class="btn btn-secondary" id="btnSignIn" type="button">Se connecter</button>
-              <button class="btn btn-secondary" id="btnLoadLocal" type="button">Charger le compte local</button>
               <button class="btn btn-ghost" id="btnSignOut" type="button">Se déconnecter</button>
             </div>
             <div id="authStatus" class="small" style="margin-top:10px"></div>
@@ -431,9 +701,9 @@
             <div class="section-title">
               <div>
                 <h3>2. Véhicule</h3>
-                <p>La plaque préremplit les champs véhicule. Les données personnelles du titulaire ne sont jamais affichées.</p>
+                <p>Renseignez manuellement les informations utiles de votre véhicule pour préparer votre demande.</p>
               </div>
-              <span class="pill green">API plaque serveur</span>
+              <span class="pill blue">Saisie manuelle</span>
             </div>
 
             <div id="savedVehicleWrap" class="hidden" style="margin-bottom:14px">
@@ -443,25 +713,17 @@
             </div>
 
             <div class="grid">
-              <label>Plaque d’immatriculation <input id="plate" placeholder="AA-123-BC" autocomplete="off" required></label>
+              <label>Plaque d’immatriculation <input id="plate" placeholder="AA-123-BC" autocomplete="off"></label>
               <label>Kilométrage <input id="mileage" inputmode="numeric" placeholder="145000"></label>
               <label>Marque <input id="brand" placeholder="PEUGEOT"></label>
               <label>Modèle <input id="model" placeholder="308"></label>
               <label>Année <input id="year" inputmode="numeric" placeholder="2020"></label>
               <label>Énergie <input id="energy" placeholder="Essence"></label>
-              <label>Motorisation / type mine <input id="engine" placeholder="1.6 / TVV / code moteur"></label>
-              <label>CO₂ / norme <input id="emissions" placeholder="120 g/km · Euro 6"></label>
             </div>
 
             <div class="btn-row">
-              <button class="btn btn-blue" id="btnDetectPlate" type="button">Détecter via plaque</button>
               <button class="btn btn-secondary" id="btnSaveVehicle" type="button">Enregistrer dans mon garage</button>
               <button class="btn btn-primary" id="btnAccessServices" type="button">Accéder aux services</button>
-            </div>
-            <div id="plateStatus" class="small" style="margin-top:10px"></div>
-
-            <div class="vehicle-result" id="vehicleResult">
-              <div class="kv" id="vehicleFacts"></div>
             </div>
           </div>
 
@@ -470,16 +732,20 @@
               <div class="section-title">
                 <div>
                   <h3>3. Services</h3>
-                  <p>Freinage et train avant, avec avantage combo si plusieurs prestations éligibles sont regroupées.</p>
+                  <p>Choisissez les prestations souhaitées pour obtenir une estimation plus claire de votre demande.</p>
                 </div>
-                <span class="pill orange">Combo -30%</span>
               </div>
+
               <div class="service-toolbar">
                 <button class="btn btn-secondary" type="button" data-filter="all">Tous</button>
                 <button class="btn btn-secondary" type="button" data-filter="Freinage">Freinage</button>
                 <button class="btn btn-secondary" type="button" data-filter="Train avant">Train avant</button>
                 <button class="btn btn-secondary" type="button" data-select-pack="freinage">Pack freinage complet</button>
+                <button class="btn btn-ghost" id="comboExplainBtn" type="button">Combo -30% ?</button>
               </div>
+
+              <div id="comboExplainBox" class="infobox hidden">Lorsque plusieurs prestations compatibles sont réalisées ensemble sur la même intervention, une remise de 30% peut être appliquée sur la prestation éligible la moins chère.</div>
+
               <div id="serviceList"></div>
             </div>
 
@@ -487,47 +753,52 @@
               <div class="section-title">
                 <div>
                   <h3>4. Paniers de pièces</h3>
-                  <p>L’IA recommande un panier selon le véhicule et les prestations. EDM AUTO valide ensuite les références.</p>
+                  <p>Choisissez le niveau de panier qui correspond le mieux à votre budget et à la qualité de pièces souhaitée.</p>
                 </div>
-                <button class="btn btn-blue" id="btnAiBasket" type="button">Générer les paniers IA</button>
               </div>
               <div class="basket-row" id="basketList"></div>
-              <div id="aiPanel" class="ai-panel">
-                <div class="infobox">
-                  <div class="ai-header">
-                    <strong id="aiTitle">Analyse IA</strong>
-                    <span class="pill purple" id="aiSource">IA</span>
-                  </div>
-                  <p id="aiSummary" style="margin-bottom:0"></p>
-                </div>
-                <div class="ai-notes" id="aiNotes"></div>
-              </div>
             </div>
 
             <div class="summary-grid">
               <div class="card">
-                <h3>Options de préparation</h3>
+                <h3>Contrôle préalable avant réparation</h3>
                 <div class="check-row">
-                  <label class="check-card"><input type="checkbox" id="j7Accepted" checked><span><b>Contrôle J-7 accepté</b><span class="field-hint">Préparation avant dimanche, remise contrôle appliquée si éligible.</span></span></label>
-                  <label class="check-card"><input type="checkbox" id="refuseControl"><span><b>Refus contrôle J-7</b><span class="field-hint">Forfait immobilisation 40 € si mauvaises pièces.</span></span></label>
+                  <label class="check-card">
+                    <input type="checkbox" id="j7Accepted" checked>
+                    <span>
+                      <b>Je souhaite ajouter le contrôle général du véhicule avant réparation : 30 €</b>
+                      <span class="field-hint">Un contrôle général du véhicule peut être effectué avant la réparation pour un montant de 30 €. Ce contrôle permet de mieux préparer l’intervention et de limiter les erreurs ou imprévus avant la réparation.</span>
+                    </span>
+                  </label>
+
+                  <label class="check-card">
+                    <input type="checkbox" id="refuseControl">
+                    <span>
+                      <b>Je refuse le contrôle préalable</b>
+                      <span class="field-hint">En cas de refus du contrôle préalable, la préparation de l’intervention se fera sur la base des informations transmises avant le rendez-vous. Si le panier de pièces a été préparé par EDM AUTO et qu’une erreur de compatibilité provient de notre sélection, EDM AUTO en assumera la responsabilité. Si le client apporte lui-même ses pièces et que celles-ci s’avèrent incompatibles, 70 % de la main-d’œuvre prévue sera facturée.</span>
+                    </span>
+                  </label>
                 </div>
+
                 <label style="margin-top:14px">Notes client / symptômes
                   <textarea id="clientNotes" placeholder="Exemple : bruit au freinage, vibration, claquement train avant..."></textarea>
                 </label>
               </div>
+
               <div class="card">
                 <h3>Estimation</h3>
                 <div class="summary" id="summaryBox">
-                  <div class="summary-line"><span>Main-d’œuvre avant remise</span><strong id="laborBefore">0 €</strong></div>
-                  <div class="summary-line"><span>Avantage combo</span><strong id="comboSaving">0 €</strong></div>
-                  <div class="summary-line"><span>Supplément panier</span><strong id="basketExtra">0 €</strong></div>
-                  <div class="summary-line"><span>Contrôle J-7 / immobilisation</span><strong id="j7Saving">0 €</strong></div>
+                  <div class="summary-line"><span>Main-d’œuvre estimée</span><strong id="laborBefore">0 €</strong></div>
+                  <div class="summary-line"><span>Remise combo</span><strong id="comboSaving">0 €</strong></div>
+                  <div class="summary-line"><span>Contrôle préalable</span><strong id="j7Saving">0 €</strong></div>
                   <div class="summary-line"><span>Pièces estimées</span><strong id="partsTotal">0 € à 0 €</strong></div>
-                  <div class="summary-line saving"><span>Économie estimée</span><strong id="totalSaving">0 €</strong></div>
-                  <div class="summary-line total"><span>Total main-d’œuvre</span><strong id="laborAfter">0 €</strong></div>
+                  <div class="summary-line saving"><span>Économie combo</span><strong id="totalSaving">0 €</strong></div>
+                  <div class="summary-line total"><span>Total estimé tout compris</span><strong id="laborAfter">0 €</strong></div>
                 </div>
-                <div class="notice">Les pièces restent à commander par le client. Le panier aide à choisir la gamme, pas une référence définitive.</div>
-                <button class="btn btn-success" id="btnSubmit" type="button" style="width:100%;margin-top:14px">Envoyer ma demande</button>
+
+                <div class="notice">Cette estimation est donnée à titre indicatif. Elle aide à préparer la demande, mais la validation finale des pièces et du montant reste faite manuellement.</div>
+
+                <button class="btn btn-success" id="btnSubmit" type="button" style="width:100%;margin-top:14px">Envoyer ma demande pour étude</button>
                 <div id="submitStatus"></div>
               </div>
             </div>
@@ -535,10 +806,22 @@
         </div>
       </section>
 
+      <section id="account" class="page">
+        <div class="panel">
+          <div class="section-title">
+            <div>
+              <h2>Mon compte</h2>
+              <p>Retrouvez ici les informations liées à votre compte client.</p>
+            </div>
+          </div>
+          <div id="accountPageContent"></div>
+        </div>
+      </section>
+
       <section id="garage" class="page">
         <div class="panel">
           <div class="section-title">
-            <div><h2>Mon garage</h2><p>Véhicules enregistrés localement sur cet appareil.</p></div>
+            <div><h2>Mon garage</h2><p>Retrouvez ici les véhicules enregistrés sur votre compte.</p></div>
             <button class="btn btn-primary" data-jump="appointment" type="button">Ajouter un véhicule</button>
           </div>
           <div id="garageList"></div>
@@ -548,7 +831,7 @@
       <section id="history" class="page">
         <div class="panel">
           <h2>Historique</h2>
-          <p>Historique local des demandes envoyées depuis ce navigateur. Le carnet complet viendra de Google Sheets / EDM28.</p>
+          <p>Retrouvez ici l’historique de vos demandes.</p>
           <div id="historyList"></div>
         </div>
       </section>
@@ -556,13 +839,13 @@
       <section id="about" class="page">
         <div class="panel">
           <h2>Qui sommes-nous ?</h2>
-          <p class="lead">EDM AUTO est pensé pour les personnes qui travaillent toute la semaine : demande préparée en ligne, contrôle J-7, RDV le dimanche, validation humaine avant montage.</p>
+          <p class="lead">EDM AUTO vous permet de préparer simplement votre demande mécanique en ligne avant reprise manuelle. L’objectif est de vous faire gagner du temps et de clarifier les prestations souhaitées avant validation.</p>
           <div class="grid-3" style="margin-top:18px">
-            <div class="card"><span class="pill green">Transparent</span><h3 style="margin-top:12px">Tarifs lisibles</h3><p>Même prix pour tous, estimation visible, remise combo calculée.</p></div>
-            <div class="card"><span class="pill blue">Pièces client</span><h3 style="margin-top:12px">Paniers guidés</h3><p>Le client garde le choix des pièces, EDM aide à limiter les erreurs.</p></div>
-            <div class="card"><span class="pill orange">Dimanche</span><h3 style="margin-top:12px">Dépose / repart</h3><p>Atelier privé sur créneau, pas une salle d’attente classique.</p></div>
+            <div class="card"><span class="pill green">Clair</span><h3 style="margin-top:12px">Demande lisible</h3><p>Vous renseignez votre besoin et obtenez une estimation simple à comprendre.</p></div>
+            <div class="card"><span class="pill blue">Pratique</span><h3 style="margin-top:12px">Préparation rapide</h3><p>Le site vous aide à préparer votre demande avant reprise par EDM AUTO.</p></div>
+            <div class="card"><span class="pill orange">Humain</span><h3 style="margin-top:12px">Validation manuelle</h3><p>Chaque demande est vérifiée manuellement avant confirmation finale.</p></div>
           </div>
-          <div class="notice">Le contrôle J-7 est recommandé pour vérifier visuellement le véhicule et les références avant le RDV. En cas de refus et de mauvaises pièces, une décharge et un forfait immobilisation peuvent s’appliquer.</div>
+          <div class="notice">Chaque demande est reprise manuellement par EDM AUTO après étude du véhicule, des prestations souhaitées et du panier sélectionné.</div>
         </div>
       </section>
     </main>
@@ -573,13 +856,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const ENDPOINTS = Object.freeze({
-      plate: "/api/plate",
-      aiBasket: "/api/ai-basket",
       submit: "/api/submit-request"
     });
 
-    const STORAGE_KEY = "edm_auto_site_v3";
-
+    const STORAGE_KEY = "edm_auto_site_v4";
     const SUPABASE_URL = "https://ojjbnwpkfvzjfukgqddz.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_pB4h3KASp9MHM6upvCAcCA_b_9vKHiX";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -598,15 +878,14 @@
     ];
 
     const BASKETS = {
-      eco: { label: "ÉCO", extra: 0, desc: "Budget contenu, pièces compatibles, montage sérieux." },
-      standard: { label: "STANDARD", extra: 15, desc: "Recommandé EDM : équilibre prix, fiabilité, préparation propre." },
-      premium: { label: "PREMIUM", extra: 40, desc: "Confort, marques supérieures, véhicules récents ou usage intensif." }
+      eco: { label: "ÉCO", desc: "Pièces compatibles / adaptables / premier prix." },
+      standard: { label: "STANDARD", desc: "Pièces milieu de gamme, bon équilibre prix / qualité." },
+      premium: { label: "PREMIUM", desc: "Pièces haut de gamme, qualité et durabilité renforcées." }
     };
 
     let state = loadState();
     let selectedBasket = "standard";
     let serviceFilter = "all";
-    let aiRecommendation = null;
 
     const $ = (id) => document.getElementById(id);
     const money = (value) => Number(value || 0).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
@@ -622,6 +901,9 @@
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       updateAccountUi();
+      renderGarage();
+      renderHistory();
+      renderAccountPage();
       renderSavedVehicles();
     }
 
@@ -662,6 +944,7 @@
       $("sidebar").classList.remove("open");
       if (pageId === "garage") renderGarage();
       if (pageId === "history") renderHistory();
+      if (pageId === "account") renderAccountPage();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -673,6 +956,12 @@
       });
     }
 
+    function setAuthStatus(message, isError = false) {
+      const box = $("authStatus");
+      if (!box) return;
+      box.innerHTML = `<span style="color:${isError ? "var(--red)" : "var(--green)"};font-weight:900">${escapeHtml(message)}</span>`;
+    }
+
     function updateAccountUi() {
       const chip = $("accountChip");
       if (state.user?.email || state.user?.phone) {
@@ -680,16 +969,38 @@
       } else {
         chip.innerHTML = "<b>Non connecté</b><br>Connectez-vous pour retrouver votre garage et vos demandes.";
       }
-    }
 
-    function setAuthStatus(message, isError = false) {
-      const box = $("authStatus");
-      if (!box) return;
-      box.innerHTML = `<span style="color:${isError ? "var(--red)" : "var(--green)"};font-weight:900">${escapeHtml(message)}</span>`;
+      const connected = Boolean(state.user?.id);
+      ["firstName", "lastName", "phone", "email"].forEach((id) => {
+        const input = $(id);
+        if (!input) return;
+        input.readOnly = connected;
+      });
     }
 
     function getPassword() {
       return $("password")?.value.trim() || "";
+    }
+
+    function getClient() {
+      return {
+        lastName: $("lastName").value.trim(),
+        firstName: $("firstName").value.trim(),
+        phone: $("phone").value.trim(),
+        email: $("email").value.trim()
+      };
+    }
+
+    function getVehicle() {
+      return {
+        plate: formatPlate($("plate").value.trim()),
+        plateNormalized: cleanPlate($("plate").value),
+        brand: $("brand").value.trim(),
+        model: $("model").value.trim(),
+        year: $("year").value.trim(),
+        energy: $("energy").value.trim(),
+        mileage: $("mileage").value.trim()
+      };
     }
 
     async function signUpWithSupabase() {
@@ -726,8 +1037,33 @@
       if (data.user) {
         state.user = { ...client, id: data.user.id };
         saveState();
-        setAuthStatus("Compte créé. Vérifie ton email si une confirmation est demandée.");
+        setAuthStatus("Compte créé. Connecte-toi si nécessaire.");
       }
+    }
+
+    async function hydrateUserFromSupabase(user) {
+      if (!user) return;
+
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      state.user = {
+        id: user.id,
+        firstName: profile?.first_name || user.user_metadata?.first_name || "",
+        lastName: profile?.last_name || user.user_metadata?.last_name || "",
+        phone: profile?.phone || user.user_metadata?.phone || "",
+        email: user.email || ""
+      };
+
+      $("firstName").value = state.user.firstName || "";
+      $("lastName").value = state.user.lastName || "";
+      $("phone").value = state.user.phone || "";
+      $("email").value = state.user.email || "";
+
+      saveState();
     }
 
     async function signInWithSupabase() {
@@ -759,37 +1095,47 @@
         setAuthStatus(error.message, true);
         return;
       }
-
       state.user = null;
       saveState();
-      updateAccountUi();
       setAuthStatus("Déconnecté.");
+      showPage("home");
     }
 
-    async function hydrateUserFromSupabase(user) {
-      if (!user) return;
+    async function deleteCurrentAccount() {
+      if (!state.user?.id) {
+        toast("Aucun compte connecté.");
+        return;
+      }
 
-      const { data: profile } = await supabaseClient
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      const confirmed = window.confirm("Voulez-vous vraiment supprimer votre compte ? Cette action est définitive.");
+      if (!confirmed) return;
 
-      state.user = {
-        id: user.id,
-        firstName: profile?.first_name || user.user_metadata?.first_name || "",
-        lastName: profile?.last_name || user.user_metadata?.last_name || "",
-        phone: profile?.phone || user.user_metadata?.phone || "",
-        email: user.email || ""
-      };
+      try {
+        const { data } = await supabaseClient.auth.getSession();
+        const accessToken = data?.session?.access_token;
+        if (!accessToken) throw new Error("Session introuvable.");
 
-      $("firstName").value = state.user.firstName || "";
-      $("lastName").value = state.user.lastName || "";
-      $("phone").value = state.user.phone || "";
-      $("email").value = state.user.email || "";
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: SUPABASE_ANON_KEY,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({})
+        });
 
-      saveState();
-      updateAccountUi();
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) throw new Error(result.error || "Suppression indisponible.");
+
+        await supabaseClient.auth.signOut();
+        state = { user: null, vehicles: [], requests: [] };
+        saveState();
+        showPage("home");
+        toast("Compte supprimé.");
+      } catch (error) {
+        $("accountDeleteStatus").innerHTML = `<div class="errorbox"><strong>Suppression impossible.</strong><br>${escapeHtml(error.message || "Réessaie plus tard.")}</div>`;
+      }
     }
 
     async function bootstrapSupabaseAuth() {
@@ -805,131 +1151,16 @@
         } else {
           state.user = null;
           saveState();
-          updateAccountUi();
         }
       });
     }
 
-    function getClient() {
-      return {
-        lastName: $("lastName").value.trim(),
-        firstName: $("firstName").value.trim(),
-        phone: $("phone").value.trim(),
-        email: $("email").value.trim()
-      };
-    }
-
-    function getVehicle() {
-      return {
-        plate: formatPlate($("plate").value.trim()),
-        plateNormalized: cleanPlate($("plate").value),
-        brand: $("brand").value.trim(),
-        model: $("model").value.trim(),
-        year: $("year").value.trim(),
-        energy: $("energy").value.trim(),
-        engine: $("engine").value.trim(),
-        emissions: $("emissions").value.trim(),
-        mileage: $("mileage").value.trim()
-      };
-    }
-
-    function fillVehicle(vehicle) {
-      $("plate").value = vehicle.plate || vehicle.plaque || $("plate").value.toUpperCase();
-      $("brand").value = vehicle.marque || vehicle.brand || "";
-      $("model").value = vehicle.modele || vehicle.model || "";
-      $("year").value = vehicle.annee || vehicle.year || "";
-      $("energy").value = vehicle.energie || vehicle.energy || "";
-      $("engine").value = vehicle.codeMoteur || vehicle.motorisation || vehicle.typeMine || vehicle.kType || vehicle.engine || "";
-      const emissions = [vehicle.co2 ? `${vehicle.co2} g/km` : "", vehicle.normeEuro || ""].filter(Boolean).join(" · ");
-      $("emissions").value = emissions || vehicle.emissions || "";
-      renderVehicleFacts(vehicle);
-    }
-
-    function renderVehicleFacts(vehicle) {
-      const facts = [
-        ["Plaque", vehicle.plaque || vehicle.plate],
-        ["Marque", vehicle.marque || vehicle.brand],
-        ["Modèle", vehicle.modele || vehicle.model],
-        ["Énergie", vehicle.energie || vehicle.energy],
-        ["Année", vehicle.annee || vehicle.year],
-        ["Type mine", vehicle.typeMine || vehicle.engine],
-        ["CO₂", vehicle.co2 ? `${vehicle.co2} g/km` : ""],
-        ["Norme", vehicle.normeEuro || ""]
-      ];
-      $("vehicleFacts").innerHTML = facts.map(([label, value]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || "-")}</strong></div>`).join("");
-      $("vehicleResult").classList.add("show");
-    }
-
-    async function detectPlate() {
-      const plate = $("plate").value.trim();
-      if (!plate) { toast("Entre une plaque d’immatriculation."); return; }
-      const btn = $("btnDetectPlate");
-      const status = $("plateStatus");
-      setButtonBusy(btn, true, "Recherche...");
-      status.innerHTML = "Recherche véhicule via API plaque...";
-      try {
-        const response = await fetch(`${ENDPOINTS.plate}?plate=${encodeURIComponent(plate)}`);
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error || "Véhicule introuvable.");
-        fillVehicle(result.vehicle || {});
-        status.innerHTML = `<span style="color:var(--green);font-weight:900">Véhicule détecté. Les données titulaire sont filtrées côté serveur.</span>`;
-        saveVehicle(false);
-        updateStepper(2);
-      } catch (error) {
-        status.innerHTML = `<span style="color:var(--red);font-weight:900">${escapeHtml(error.message || "Erreur API plaque.")}</span>`;
-      } finally {
-        setButtonBusy(btn, false);
-      }
-    }
-
-    function saveVehicle(showToast = true) {
-      const vehicle = getVehicle();
-      if (!vehicle.plateNormalized) { if (showToast) toast("Plaque obligatoire."); return false; }
-      state.vehicles = (state.vehicles || []).filter((v) => cleanPlate(v.plate) !== vehicle.plateNormalized);
-      state.vehicles.unshift(vehicle);
-      state.vehicles = state.vehicles.slice(0, 12);
-      saveState();
-      if (showToast) toast("Véhicule enregistré dans le garage.");
-      return true;
-    }
-
-    function renderSavedVehicles() {
-      const select = $("savedVehicleSelect");
-      const wrap = $("savedVehicleWrap");
-      const vehicles = state.vehicles || [];
-      if (!vehicles.length) { wrap.classList.add("hidden"); return; }
-      wrap.classList.remove("hidden");
-      select.innerHTML = `<option value="">Choisir un véhicule enregistré</option>` + vehicles.map((vehicle) => `<option value="${escapeHtml(cleanPlate(vehicle.plate))}">${escapeHtml(vehicle.plate)} · ${escapeHtml(vehicle.brand || "")} ${escapeHtml(vehicle.model || "")}</option>`).join("");
-    }
-
-    function loadSelectedVehicle() {
-      const key = $("savedVehicleSelect").value;
-      const vehicle = (state.vehicles || []).find((v) => cleanPlate(v.plate) === key);
-      if (!vehicle) return;
-      fillVehicle(vehicle);
-      $("mileage").value = vehicle.mileage || "";
-      toast("Véhicule chargé.");
-    }
-
-    function validateBeforeServices() {
-      const client = getClient();
-      const vehicle = getVehicle();
-      if (!client.lastName || !client.firstName || !client.phone || !client.email) { toast("Complète nom, prénom, téléphone et email."); return false; }
-      if (!vehicle.plateNormalized) { toast("Entre une plaque véhicule."); return false; }
-      state.user = { ...(state.user || {}), ...client };
-      saveVehicle(false);
-      saveState();
-      return true;
-    }
-
-    function accessServices() {
-      if (!validateBeforeServices()) return;
-      $("servicesArea").classList.remove("hidden");
-      renderServices();
-      renderBaskets();
-      updateSummary();
-      updateStepper(3);
-      $("servicesArea").scrollIntoView({ behavior: "smooth", block: "start" });
+    function sumPartsForBasket(key) {
+      return getSelectedServices().reduce((acc, service) => {
+        acc.min += Number(service.parts[key]?.[0] || 0);
+        acc.max += Number(service.parts[key]?.[1] || 0);
+        return acc;
+      }, { min: 0, max: 0 });
     }
 
     function getSelectedServiceIds() {
@@ -943,7 +1174,10 @@
 
     function calculateTotals(showAlert = false) {
       const selected = getSelectedServices();
-      if (showAlert && !selected.length) { toast("Sélectionne au moins une prestation."); return null; }
+      if (showAlert && !selected.length) {
+        toast("Sélectionne au moins une prestation.");
+        return null;
+      }
 
       let laborBase = 0;
       let partsMin = 0;
@@ -958,32 +1192,41 @@
       });
 
       let comboSaving = 0;
-      let discountServiceId = "";
       if (eligible.length >= 2) {
         const cheapest = [...eligible].sort((a, b) => a.labor - b.labor)[0];
         comboSaving = Math.round(cheapest.labor * 0.30 * 100) / 100;
-        discountServiceId = cheapest.id;
       }
 
-      const basketExtra = BASKETS[selectedBasket].extra;
-      const totalBefore = laborBase + basketExtra;
-      const afterCombo = totalBefore - comboSaving;
-      const j7Saving = $("j7Accepted")?.checked ? Math.round(afterCombo * 0.10 * 100) / 100 : 0;
-      const immobilisation = $("refuseControl")?.checked ? 40 : 0;
-      const laborAfter = Math.round((afterCombo - j7Saving + immobilisation) * 100) / 100;
+      const controlFee = $("j7Accepted").checked ? 30 : 0;
+      const laborAfter = Math.round((laborBase - comboSaving + controlFee) * 100) / 100;
+      const totalAllMin = Math.round((laborAfter + partsMin) * 100) / 100;
+      const totalAllMax = Math.round((laborAfter + partsMax) * 100) / 100;
 
-      return { selected, laborBase, partsMin, partsMax, basketExtra, totalBefore, comboSaving, discountServiceId, j7Saving, immobilisation, laborAfter };
+      return {
+        selected,
+        laborBase,
+        partsMin,
+        partsMax,
+        comboSaving,
+        j7Saving: controlFee,
+        laborAfter,
+        totalAllMin,
+        totalAllMax,
+        basketExtra: 0,
+        immobilisation: 0,
+        totalBefore: laborBase
+      };
     }
 
     function renderServices() {
       const list = $("serviceList");
       const currentIds = new Set(getSelectedServiceIds());
       const visible = SERVICES.filter((service) => serviceFilter === "all" || service.category === serviceFilter);
-      const totals = calculateTotals(false) || { discountServiceId: "" };
+      const totals = calculateTotals(false) || { comboSaving: 0 };
+
       list.innerHTML = visible.map((service) => {
         const checked = currentIds.has(service.id);
-        const discounted = totals.discountServiceId === service.id;
-        const price = discounted ? service.labor - totals.comboSaving : service.labor;
+        const price = service.labor;
         return `<div class="service-card">
           <input class="service-check" type="checkbox" value="${escapeHtml(service.id)}" ${checked ? "checked" : ""}>
           <div>
@@ -993,11 +1236,10 @@
               <span class="pill blue">${escapeHtml(service.category)}</span>
               <span class="pill">${escapeHtml(service.type)}</span>
               ${service.eligible && !service.excluded ? `<span class="pill green">Combo possible</span>` : `<span class="pill orange">Hors combo</span>`}
-              ${discounted ? `<span class="pill red">-30% appliqué</span>` : ""}
             </div>
             <button class="link-button" type="button" data-more="${escapeHtml(service.id)}">Voir le détail</button>
           </div>
-          <div class="service-price">${discounted ? `<span class="old-price">${money(service.labor)}</span>` : ""}${money(price)}</div>
+          <div class="service-price">${money(price)}</div>
           <div class="service-details" id="details-${escapeHtml(service.id)}">
             <strong>À quoi ça sert ?</strong><p>${escapeHtml(service.detail)}</p>
             <p class="small">Pièces estimées panier ${BASKETS[selectedBasket].label} : ${money(service.parts[selectedBasket][0])} à ${money(service.parts[selectedBasket][1])}</p>
@@ -1005,28 +1247,27 @@
         </div>`;
       }).join("");
 
-      document.querySelectorAll(".service-check").forEach((input) => input.addEventListener("change", () => { aiRecommendation = null; renderServices(); renderBaskets(); updateSummary(); renderAiPanel(); }));
-      document.querySelectorAll("[data-more]").forEach((button) => button.addEventListener("click", () => $(`details-${button.dataset.more}`)?.classList.toggle("show")));
+      document.querySelectorAll(".service-check").forEach((input) => input.addEventListener("change", () => {
+        renderServices();
+        renderBaskets();
+        updateSummary();
+      }));
+
+      document.querySelectorAll("[data-more]").forEach((button) => button.addEventListener("click", () => {
+        document.getElementById(`details-${button.dataset.more}`)?.classList.toggle("show");
+      }));
+
       updateSummary();
     }
 
     function renderBaskets() {
       const box = $("basketList");
       box.innerHTML = Object.entries(BASKETS).map(([key, basket]) => {
-        const ai = aiRecommendation?.baskets?.[key];
-        const recommended = aiRecommendation?.recommendedBasket === key;
         const totalsForBasket = sumPartsForBasket(key);
-        return `<article class="basket-card ${selectedBasket === key ? "selected" : ""} ${recommended ? "recommended" : ""}" data-basket="${key}">
-          <div class="basket-top">
-            <div><div class="basket-title">${basket.label}</div><p>${escapeHtml(basket.desc)}</p></div>
-            <span class="pill ${recommended ? "green" : "blue"}">${recommended ? "IA recommande" : "+" + money(basket.extra)}</span>
-          </div>
-          <div class="basket-price">Pièces : ${money(ai?.estimatedPartsMin ?? totalsForBasket.min)} à ${money(ai?.estimatedPartsMax ?? totalsForBasket.max)}</div>
-          <p class="small">${escapeHtml(ai?.why || "Choisissez ce panier selon budget, durée de vie attendue et usage du véhicule.")}</p>
-          <div class="basket-ai">
-            <strong>${escapeHtml(ai?.position || (selectedBasket === key ? "Sélectionné" : "Disponible"))}</strong>
-            ${ai?.pros?.length ? `<ul>${ai.pros.slice(0, 3).map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>` : ""}
-          </div>
+        return `<article class="basket-card ${selectedBasket === key ? "selected" : ""}" data-basket="${key}">
+          <div><div class="basket-title">${basket.label}</div><p>${escapeHtml(basket.desc)}</p></div>
+          <div class="basket-price">Pièces estimées : ${money(totalsForBasket.min)} à ${money(totalsForBasket.max)}</div>
+          <div class="basket-ai"><strong>${selectedBasket === key ? "Sélectionné" : "Disponible"}</strong></div>
         </article>`;
       }).join("");
 
@@ -1038,76 +1279,104 @@
       }));
     }
 
-    function sumPartsForBasket(key) {
-      return getSelectedServices().reduce((acc, service) => {
-        acc.min += Number(service.parts[key]?.[0] || 0);
-        acc.max += Number(service.parts[key]?.[1] || 0);
-        return acc;
-      }, { min: 0, max: 0 });
-    }
-
     function updateSummary() {
-      const totals = calculateTotals(false) || { totalBefore: 0, comboSaving: 0, basketExtra: 0, j7Saving: 0, partsMin: 0, partsMax: 0, laborAfter: 0, immobilisation: 0 };
-      $("laborBefore").textContent = money(totals.totalBefore || 0);
+      const totals = calculateTotals(false) || { laborBase: 0, comboSaving: 0, j7Saving: 0, partsMin: 0, partsMax: 0, totalAllMin: 0, totalAllMax: 0 };
+      $("laborBefore").textContent = money(totals.laborBase || 0);
       $("comboSaving").textContent = `-${money(totals.comboSaving || 0)}`;
-      $("basketExtra").textContent = `+${money(totals.basketExtra || 0)}`;
-      $("j7Saving").textContent = `${totals.j7Saving ? "-" + money(totals.j7Saving) : money(0)}${totals.immobilisation ? " / +" + money(totals.immobilisation) : ""}`;
+      $("j7Saving").textContent = money(totals.j7Saving || 0);
       $("partsTotal").textContent = `${money(totals.partsMin || 0)} à ${money(totals.partsMax || 0)}`;
-      $("totalSaving").textContent = money((totals.comboSaving || 0) + (totals.j7Saving || 0));
-      $("laborAfter").textContent = money(totals.laborAfter || 0);
+      $("totalSaving").textContent = money(totals.comboSaving || 0);
+      $("laborAfter").textContent = `${money(totals.totalAllMin || 0)} à ${money(totals.totalAllMax || 0)}`;
     }
 
-    async function generateAiBaskets() {
-      const selected = getSelectedServices();
-      if (!selected.length) { toast("Sélectionne au moins une prestation avant l’IA."); return; }
-      const btn = $("btnAiBasket");
-      setButtonBusy(btn, true, "IA en cours...");
-      try {
-        const response = await postJson(ENDPOINTS.aiBasket, {
-          vehicle: getVehicle(),
-          services: selected,
-          selectedBasket,
-          basketPrices: BASKETS,
-          notes: $("clientNotes").value.trim()
-        });
-        if (!response.success) throw new Error(response.error || "IA indisponible.");
-        aiRecommendation = response.recommendation;
-        selectedBasket = aiRecommendation.recommendedBasket || selectedBasket;
-        renderBaskets();
-        renderServices();
-        renderAiPanel(response.source || "openai", response.warning || "");
-        updateSummary();
-        toast("Paniers IA générés.");
-      } catch (error) {
-        $("aiPanel").classList.add("show");
-        $("aiSummary").textContent = error.message || "Impossible de générer les paniers IA.";
-      } finally {
-        setButtonBusy(btn, false);
+    function saveVehicle(showToast = true) {
+      const vehicle = getVehicle();
+      if (!vehicle.plateNormalized) {
+        if (showToast) toast("Plaque obligatoire.");
+        return false;
       }
+
+      state.vehicles = (state.vehicles || []).filter((v) => cleanPlate(v.plate) !== vehicle.plateNormalized);
+      state.vehicles.unshift(vehicle);
+      state.vehicles = state.vehicles.slice(0, 12);
+      saveState();
+
+      if (showToast) toast("Véhicule enregistré dans le garage.");
+      return true;
     }
 
-    function renderAiPanel(source = "", warning = "") {
-      const panel = $("aiPanel");
-      if (!aiRecommendation) { panel.classList.remove("show"); return; }
-      panel.classList.add("show");
-      const label = BASKETS[aiRecommendation.recommendedBasket]?.label || aiRecommendation.recommendedBasket || "STANDARD";
-      $("aiTitle").textContent = `Analyse IA : panier ${label} conseillé`;
-      $("aiSource").textContent = source === "openai" ? "OpenAI" : "Règles locales";
-      $("aiSummary").textContent = `${aiRecommendation.vehicleSummary || "Analyse véhicule"}. ${aiRecommendation.safetyNotice || "Validation humaine EDM obligatoire."}${warning ? " " + warning : ""}`;
-      const notes = aiRecommendation.serviceNotes || [];
-      $("aiNotes").innerHTML = notes.length ? notes.map((note) => `<div class="ai-note"><span class="pill ${note.riskLevel === "élevé" ? "orange" : "blue"}">${escapeHtml(note.riskLevel)}</span><strong> ${escapeHtml(note.serviceId)}</strong><p>${escapeHtml(note.advice)}</p><p class="small">À vérifier : ${escapeHtml((note.partsToVerify || []).join(", "))}</p></div>`).join("") : "";
+    function renderSavedVehicles() {
+      const select = $("savedVehicleSelect");
+      const wrap = $("savedVehicleWrap");
+      if (!select || !wrap) return;
+
+      const vehicles = state.vehicles || [];
+      if (!vehicles.length) {
+        wrap.classList.add("hidden");
+        return;
+      }
+
+      wrap.classList.remove("hidden");
+      select.innerHTML = `<option value="">Choisir un véhicule enregistré</option>` + vehicles.map((vehicle) => `<option value="${escapeHtml(cleanPlate(vehicle.plate))}">${escapeHtml(vehicle.plate)} · ${escapeHtml(vehicle.brand || "")} ${escapeHtml(vehicle.model || "")}</option>`).join("");
+    }
+
+    function loadSelectedVehicle() {
+      const key = $("savedVehicleSelect").value;
+      const vehicle = (state.vehicles || []).find((v) => cleanPlate(v.plate) === key);
+      if (!vehicle) return;
+      $("plate").value = vehicle.plate || "";
+      $("brand").value = vehicle.brand || "";
+      $("model").value = vehicle.model || "";
+      $("year").value = vehicle.year || "";
+      $("energy").value = vehicle.energy || "";
+      $("mileage").value = vehicle.mileage || "";
+      toast("Véhicule chargé.");
+    }
+
+    function validateBeforeServices() {
+      if (!state.user?.id) {
+        setAuthStatus("Créez un compte ou connectez-vous avant de pouvoir continuer.", true);
+        toast("Connexion obligatoire avant de prendre RDV.");
+        return false;
+      }
+
+      const vehicle = getVehicle();
+      if (!vehicle.plateNormalized) {
+        toast("Entre une plaque véhicule.");
+        return false;
+      }
+
+      saveVehicle(false);
+      return true;
+    }
+
+    function accessServices() {
+      if (!validateBeforeServices()) return;
+      $("servicesArea").classList.remove("hidden");
+      renderServices();
+      renderBaskets();
+      updateSummary();
+      updateStepper(3);
+      $("servicesArea").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     async function submitRequest() {
       const totals = calculateTotals(true);
       if (!totals) return;
       if (!validateBeforeServices()) return;
+
       const btn = $("btnSubmit");
       setButtonBusy(btn, true, "Envoi...");
       $("submitStatus").innerHTML = `<div class="notice">Envoi vers EDM AUTO...</div>`;
+
       try {
         const payload = {
-          client: getClient(),
+          client: {
+            firstName: state.user.firstName,
+            lastName: state.user.lastName,
+            phone: state.user.phone,
+            email: state.user.email,
+          },
           vehicle: getVehicle(),
           services: totals.selected,
           selectedBasket,
@@ -1115,10 +1384,10 @@
           refuseControl: $("refuseControl").checked,
           notes: $("clientNotes").value.trim(),
           totals,
-          aiRecommendation
         };
-        const result = await postJson(ENDPOINTS.submit, payload);
-        state.requests = state.requests || [];
+
+        await postJson(ENDPOINTS.submit, payload);
+
         state.requests.unshift({
           id: `REQ-${Date.now()}`,
           date: new Date().toISOString(),
@@ -1126,16 +1395,18 @@
           vehicle: `${payload.vehicle.brand} ${payload.vehicle.model}`.trim(),
           services: totals.selected.map((s) => s.name).join(" + "),
           basket: BASKETS[selectedBasket].label,
-          total: totals.laborAfter,
+          total: `${money(totals.totalAllMin)} à ${money(totals.totalAllMax)}`,
           status: "Envoyée"
         });
+
         state.requests = state.requests.slice(0, 20);
         saveState();
         updateStepper(4);
-        $("submitStatus").innerHTML = `<div class="okbox"><strong>Demande envoyée.</strong><br>EDM AUTO va vérifier la demande, les pièces et le créneau avant confirmation.</div>`;
+
+        $("submitStatus").innerHTML = `<div class="okbox"><strong>Demande transmise.</strong><br>EDM AUTO reviendra vers vous après étude de votre véhicule et des prestations demandées.</div>`;
         toast("Demande envoyée à EDM AUTO.");
       } catch (error) {
-        $("submitStatus").innerHTML = `<div class="errorbox"><strong>Erreur d’envoi.</strong><br>${escapeHtml(error.message || "Vérifie la configuration Vercel / Apps Script.")}</div>`;
+        $("submitStatus").innerHTML = `<div class="errorbox"><strong>Erreur d’envoi.</strong><br>${escapeHtml(error.message || "Réessaie plus tard.")}</div>`;
       } finally {
         setButtonBusy(btn, false);
       }
@@ -1143,19 +1414,62 @@
 
     function renderGarage() {
       const vehicles = state.vehicles || [];
-      if (!vehicles.length) { $("garageList").innerHTML = `<div class="empty">Aucun véhicule enregistré.</div>`; return; }
-      $("garageList").innerHTML = `<div class="grid-3">${vehicles.map((v) => `<div class="card"><span class="pill blue">${escapeHtml(v.plate)}</span><h3 style="margin-top:12px">${escapeHtml(`${v.brand || ""} ${v.model || ""}`.trim() || "Véhicule")}</h3><p>${escapeHtml(v.energy || "-")} · ${escapeHtml(v.year || "-")} · ${escapeHtml(v.mileage || "-")} km</p><p class="small">Motorisation : ${escapeHtml(v.engine || "-")}</p></div>`).join("")}</div>`;
+      if (!vehicles.length) {
+        $("garageList").innerHTML = `<div class="empty">Aucun véhicule enregistré.</div>`;
+        return;
+      }
+
+      $("garageList").innerHTML = `<div class="grid-3">${vehicles.map((v) => `<div class="card"><span class="pill blue">${escapeHtml(v.plate)}</span><h3 style="margin-top:12px">${escapeHtml(`${v.brand || ""} ${v.model || ""}`.trim() || "Véhicule")}</h3><p>${escapeHtml(v.energy || "-")} · ${escapeHtml(v.year || "-")} · ${escapeHtml(v.mileage || "-")} km</p></div>`).join("")}</div>`;
     }
 
     function renderHistory() {
       const requests = state.requests || [];
-      if (!requests.length) { $("historyList").innerHTML = `<div class="empty">Aucune demande locale pour le moment.</div>`; return; }
-      $("historyList").innerHTML = `<table class="table"><thead><tr><th>Date</th><th>Véhicule</th><th>Prestations</th><th>Panier</th><th>Total MO</th><th>Statut</th></tr></thead><tbody>${requests.map((r) => `<tr><td>${new Date(r.date).toLocaleString("fr-FR")}</td><td><strong>${escapeHtml(r.plate)}</strong><br>${escapeHtml(r.vehicle || "")}</td><td>${escapeHtml(r.services)}</td><td>${escapeHtml(r.basket)}</td><td>${money(r.total)}</td><td><span class="pill green">${escapeHtml(r.status)}</span></td></tr>`).join("")}</tbody></table>`;
+      if (!requests.length) {
+        $("historyList").innerHTML = `<div class="empty">Aucune demande pour le moment.</div>`;
+        return;
+      }
+
+      $("historyList").innerHTML = `<table class="table"><thead><tr><th>Date</th><th>Véhicule</th><th>Prestations</th><th>Panier</th><th>Total</th><th>Statut</th></tr></thead><tbody>${requests.map((r) => `<tr><td>${new Date(r.date).toLocaleString("fr-FR")}</td><td><strong>${escapeHtml(r.plate)}</strong><br>${escapeHtml(r.vehicle || "")}</td><td>${escapeHtml(r.services)}</td><td>${escapeHtml(r.basket)}</td><td>${escapeHtml(r.total)}</td><td><span class="pill green">${escapeHtml(r.status)}</span></td></tr>`).join("")}</tbody></table>`;
+    }
+
+    function renderAccountPage() {
+      const container = $("accountPageContent");
+      if (!state.user?.id) {
+        container.innerHTML = `<div class="empty">Connectez-vous pour consulter votre compte client.</div>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="grid">
+          <div class="card">
+            <h3>Informations du compte</h3>
+            <div class="summary" style="margin-top:14px">
+              <div class="summary-line"><span>Nom</span><strong>${escapeHtml(state.user.lastName || "-")}</strong></div>
+              <div class="summary-line"><span>Prénom</span><strong>${escapeHtml(state.user.firstName || "-")}</strong></div>
+              <div class="summary-line"><span>Téléphone</span><strong>${escapeHtml(state.user.phone || "-")}</strong></div>
+              <div class="summary-line"><span>Email</span><strong>${escapeHtml(state.user.email || "-")}</strong></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Actions sur le compte</h3>
+            <p style="margin-top:12px">Vous pouvez vous déconnecter ou demander la suppression définitive de votre compte.</p>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="accountSignOutBtn" type="button">Se déconnecter</button>
+              <button class="btn btn-danger" id="accountDeleteBtn" type="button">Supprimer mon compte</button>
+            </div>
+            <div id="accountDeleteStatus" style="margin-top:12px"></div>
+          </div>
+        </div>
+      `;
+
+      $("accountSignOutBtn").addEventListener("click", signOutFromSupabase);
+      $("accountDeleteBtn").addEventListener("click", deleteCurrentAccount);
     }
 
     function selectFreinagePack() {
-      document.querySelectorAll(".service-check").forEach((input) => { input.checked = input.value === "FR_DISC_PLAQ_AV_AR" || input.value === "FR_PURGE"; });
-      aiRecommendation = null;
+      document.querySelectorAll(".service-check").forEach((input) => {
+        input.checked = input.value === "FR_DISC_PLAQ_AV_AR" || input.value === "FR_PURGE";
+      });
       renderServices();
       renderBaskets();
       updateSummary();
@@ -1165,31 +1479,50 @@
       document.querySelectorAll("[data-page]").forEach((btn) => btn.addEventListener("click", () => showPage(btn.dataset.page)));
       document.querySelectorAll("[data-jump]").forEach((btn) => btn.addEventListener("click", () => showPage(btn.dataset.jump)));
       $("openMenu").addEventListener("click", () => $("sidebar").classList.add("open"));
-      $("btnSignUp")?.addEventListener("click", signUpWithSupabase);
-      $("btnSignIn")?.addEventListener("click", signInWithSupabase);
-      $("btnSignOut")?.addEventListener("click", signOutFromSupabase);
-      $("btnLoadLocal").addEventListener("click", loadLocalAccount);
-      $("btnDetectPlate").addEventListener("click", detectPlate);
+
+      $("btnSignUp").addEventListener("click", signUpWithSupabase);
+      $("btnSignIn").addEventListener("click", signInWithSupabase);
+      $("btnSignOut").addEventListener("click", signOutFromSupabase);
+
       $("btnSaveVehicle").addEventListener("click", () => saveVehicle(true));
       $("btnAccessServices").addEventListener("click", accessServices);
       $("savedVehicleSelect").addEventListener("change", loadSelectedVehicle);
-      $("btnAiBasket").addEventListener("click", generateAiBaskets);
       $("btnSubmit").addEventListener("click", submitRequest);
-      $("j7Accepted").addEventListener("change", updateSummary);
-      $("refuseControl").addEventListener("change", updateSummary);
+
+      $("comboExplainBtn").addEventListener("click", () => $("comboExplainBox").classList.toggle("hidden"));
+
+      $("j7Accepted").addEventListener("change", () => {
+        if ($("j7Accepted").checked) $("refuseControl").checked = false;
+        updateSummary();
+      });
+
+      $("refuseControl").addEventListener("change", () => {
+        if ($("refuseControl").checked) $("j7Accepted").checked = false;
+        updateSummary();
+      });
+
       $("plate").addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
       $("plate").addEventListener("blur", (e) => { e.target.value = formatPlate(e.target.value); });
-      document.querySelectorAll("[data-filter]").forEach((btn) => btn.addEventListener("click", () => { serviceFilter = btn.dataset.filter; renderServices(); }));
+
+      document.querySelectorAll("[data-filter]").forEach((btn) => btn.addEventListener("click", () => {
+        serviceFilter = btn.dataset.filter;
+        renderServices();
+      }));
+
       document.querySelector("[data-select-pack='freinage']").addEventListener("click", selectFreinagePack);
+
       bootstrapSupabaseAuth();
       updateAccountUi();
+      renderGarage();
+      renderHistory();
+      renderAccountPage();
       renderSavedVehicles();
       renderServices();
       renderBaskets();
       updateSummary();
     });
   </script>
-  <script src="/ui-final.js"></script>
+
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
