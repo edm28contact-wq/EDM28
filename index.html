@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="EDM AUTO - Mécano du Dimanche : freinage, train avant, paniers de pièces et rendez-vous préparés." />
   <title>EDM AUTO - Mécano du Dimanche</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EDM AUTO">
   <style>
     :root {
       color-scheme: light;
@@ -1060,6 +1067,19 @@
       renderBaskets();
       updateSummary();
     });
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          await navigator.serviceWorker.register("/sw.js");
+          console.log("EDM28 PWA active");
+        } catch (error) {
+          console.error("PWA registration failed", error);
+        }
+      });
+    }
   </script>
 </body>
 </html>
