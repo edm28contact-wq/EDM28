@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-const INDEX_URL = new URL('../index.html', import.meta.url);
+const INDEX_PATH = join(process.cwd(), 'index.html');
 
 export default function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -9,7 +10,7 @@ export default function handler(req, res) {
   }
 
   try {
-    let html = readFileSync(INDEX_URL, 'utf8');
+    let html = readFileSync(INDEX_PATH, 'utf8');
     const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var script=document.createElement('script');script.src='/integration.js?v=3';document.body.appendChild(script);});<\/script>`;
     html = html.replace('</body>', `${loader}</body>`);
 
