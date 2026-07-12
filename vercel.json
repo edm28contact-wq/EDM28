@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "env": {
+    "RESEND_FROM_EMAIL": "EDM28 <onboarding@resend.dev>",
+    "RESEND_TO_EMAIL": "edm28.contact@gmail.com"
+  },
   "functions": {
     "api/app.js": {
       "includeFiles": "index.html"
