@@ -12,14 +12,4 @@
         const response = await fetch('/index.html?source=stable', { cache: 'no-store' });
         if (!response.ok) throw new Error(`Impossible de charger l'application (${response.status})`);
         let html = await response.text();
-        html = html.replace('</body>', '<script src="/integration.js?v=1"><\/script></body>');
-        document.open();
-        document.write(html);
-        document.close();
-      } catch (error) {
-        document.body.innerHTML = `<main style="font-family:system-ui;padding:32px"><h1>EDM AUTO</h1><p>${String(error.message || error)}</p></main>`;
-      }
-    })();
-  </script>
-</body>
-</html>
+        html
