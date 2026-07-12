@@ -1,23 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/app.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/app.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, max-age=0" }
-      ]
+      "src": "/",
+      "dest": "/api/app"
     },
     {
-      "source": "/integration.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, max-age=0" }
-      ]
+      "handle": "filesystem"
     }
   ]
 }
