@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/app.js": {
+      "includeFiles": "index.html"
+    }
+  },
   "routes": [
     {
       "src": "/",
