@@ -15,21 +15,47 @@ async function authenticate(req) {
   if (!authorization.startsWith('Bearer ')) throw new Error('Session absente.');
 
   const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: {
-      Authorization: authorization,
-      apikey: SUPABASE_ANON_KEY
-    }
+    headers: { Authorization: authorization, apikey: SUPABASE_ANON_KEY }
   });
   const user = await response.json().catch(() => null);
   if (!response.ok || !user?.id) throw new Error('Session invalide.');
-  return user;
+  return { user, authorization };
+}
+
+async function findOwnedRequest(requestId, userId, authorization) {
+  const query = new URLSearchParams({
+    id: `eq.${requestId}`,
+    user_id: `eq.${userId}`,
+    select: 'id,status'
+  });
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/service_requests?${query}`, {
+    headers: { Authorization: authorization, apikey: SUPABASE_ANON_KEY }
+  });
+  const rows = await response.json().catch(() => []);
+  if (!response.ok || !Array.isArray(rows) || rows.length !== 1) return null;
+  return rows[0];
+}
+
+async function markRequestSubmitted(requestId, userId, authorization) {
+  const query = new URLSearchParams({ id: `eq.${requestId}`, user_id: `eq.${userId}` });
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/service_requests?${query}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: authorization,
+      apikey: SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify({ status: 'submitted', submitted_at: new Date().toISOString() })
+  });
+  if (!response.ok) throw new Error('Email envoyé, mais statut de la demande non mis à jour.');
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { success: false, error: 'Méthode non autorisée.' });
 
   try {
-    const user = await authenticate(req);
+    const { user, authorization } = await authenticate(req);
     const body = req.body || {};
     const client = body.client || {};
     const vehicle = body.vehicle || {};
@@ -42,8 +68,12 @@ export default async function handler(req, res) {
     if (clean(client.email, 254).toLowerCase() !== clean(user.email, 254).toLowerCase()) {
       return json(res, 403, { success: false, error: 'Identité client incohérente.' });
     }
+
+    const requestRow = await findOwnedRequest(clean(body.requestId, 80), user.id, authorization);
+    if (!requestRow) return json(res, 404, { success: false, error: 'Demande introuvable ou non autorisée.' });
+
     if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL || !process.env.RESEND_TO_EMAIL) {
-      return json(res, 503, { success: false, error: 'Service email non configuré.' });
+      return json(res, 503, { success: false, error: 'Demande enregistrée, mais service email non configuré.' });
     }
 
     const serviceLines = services.map((service) => `- ${clean(service.name, 120)} : ${Number(service.labor || 0).toFixed(2)} €`).join('\n');
@@ -83,11 +113,13 @@ export default async function handler(req, res) {
     });
     const emailResult = await emailResponse.json().catch(() => ({}));
     if (!emailResponse.ok) {
-      return json(res, 502, { success: false, error: emailResult.message || 'Échec de l’envoi email.' });
+      return json(res, 502, { success: false, saved: true, error: emailResult.message || 'Demande enregistrée, mais échec de l’envoi email.' });
     }
 
-    return json(res, 200, { success: true, requestId: body.requestId, emailId: emailResult.id || null });
+    await markRequestSubmitted(requestRow.id, user.id, authorization);
+    return json(res, 200, { success: true, requestId: requestRow.id, emailId: emailResult.id || null });
   } catch (error) {
-    return json(res, 401, { success: false, error: error.message || 'Authentification impossible.' });
+    const status = /Session|Authentification/.test(error.message || '') ? 401 : 500;
+    return json(res, status, { success: false, error: error.message || 'Erreur serveur.' });
   }
 }
