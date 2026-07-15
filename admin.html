@@ -20,6 +20,7 @@
       <button class="btn ghost" data-page="clients">Clients</button>
       <button class="btn ghost" data-page="services">Services et prix</button>
       <button class="btn ghost" data-page="documents">Documents</button>
+      <button class="btn ghost" data-page="business">Informations entreprise</button>
       <button class="btn ghost" data-page="settings">Automatisations</button>
     </nav>
 
@@ -36,11 +37,13 @@
 
     <section id="services" class="page"><div class="card"><div class="top"><div><h2>Services et prix</h2><p class="muted">Les changements publiés sont chargés par le site.</p></div><button id="newServiceBtn" class="btn primary">Nouveau service</button></div><div id="serviceEditor" class="hidden"></div><div id="serviceTable"></div></div></section>
 
-    <section id="documents" class="page"><div class="grid2"><div class="card"><h2>Créer un brouillon</h2><div class="field"><label>Client</label><select id="docClient"></select></div><div class="field"><label>Véhicule</label><select id="docVehicle"></select></div><div class="field"><label>Type</label><select id="docType"><option value="quote">Devis</option><option value="repair_order">Ordre de réparation</option><option value="invoice">Facture</option></select></div><div class="field"><label>Description</label><textarea id="docDescription"></textarea></div><button id="createDraftBtn" class="btn primary">Créer le brouillon</button><div id="docStatus" class="status hidden"></div></div><div class="card"><h2>Brouillons récents</h2><div id="draftList"></div></div></div></section>
+    <section id="documents" class="page"><div class="grid2"><div class="card"><h2>Créer un brouillon</h2><div class="field"><label>Client *</label><select id="docClient"></select></div><div class="field"><label>Véhicule</label><select id="docVehicle"></select></div><div class="field"><label>Type</label><select id="docType"><option value="quote">Devis</option><option value="repair_order">Ordre de réparation</option><option value="invoice">Facture</option></select></div><div class="field"><label>Description *</label><textarea id="docDescription"></textarea></div><button id="createDraftBtn" class="btn primary">Créer le brouillon</button><div id="docStatus" class="status hidden"></div></div><div class="card"><h2>Brouillons récents</h2><div id="draftList"></div></div></div></section>
+
+    <section id="business" class="page"><div class="card"><div class="top"><div><h2>Informations de l’entreprise</h2><p class="muted">Les champs obligatoires vides restent rouges jusqu’à saisie valide.</p></div><button id="saveBusinessBtn" class="btn primary">Enregistrer</button></div><div id="businessForm" class="grid2"></div><div id="businessStatus" class="status hidden"></div></div></section>
 
     <section id="settings" class="page"><div class="card"><h2>Automatisations</h2><div id="automationForm"></div><button id="saveAutomationBtn" class="btn primary">Enregistrer</button><div id="automationStatus" class="status hidden"></div></div></section>
   </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/admin-clients.js?v=1"></script><script src="/admin-services.js?v=1"></script><script src="/admin-docs.js?v=1"></script><script src="/admin-settings.js?v=1"></script><script src="/admin-core.js?v=1"></script>
+<script src="/admin-clients.js?v=2"></script><script src="/admin-services.js?v=2"></script><script src="/admin-docs.js?v=2"></script><script src="/admin-business.js?v=1"></script><script src="/admin-settings.js?v=2"></script><script src="/admin-core.js?v=2"></script>
 </body></html>
