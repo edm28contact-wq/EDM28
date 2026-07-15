@@ -11,6 +11,11 @@
     $: (id) => document.getElementById(id),
     esc: (value) => String(value ?? '').replace(/[&<>'"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])),
     money: (value) => Number(value || 0).toLocaleString('fr-FR', {style:'currency',currency:'EUR'}),
+    markRequired(node, invalid) {
+      if (!node) return;
+      node.classList.toggle('required-missing', Boolean(invalid));
+      node.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+    },
     status(id, message, error = false) {
       const node = this.$(id);
       node.textContent = message;
@@ -40,6 +45,10 @@
       if (noVehicle?.length) checks.push(`${noVehicle.length} demande(s) sans véhicule`);
       const { data: noPdf } = await client.from('quotes').select('id').in('status', ['sent','accepted']).is('pdf_path', null);
       if (noPdf?.length) checks.push(`${noPdf.length} devis publié(s) sans PDF`);
+      const { data: business } = await client.from('business_configuration').select('*').eq('id', true).single();
+      const required = ['business_name','legal_name','siret','siren','vat_status','address_line1','postal_code','city','country','phone','email','payment_terms','late_penalty_text','recovery_fee_text','logo_url','calendar_id','timezone'];
+      const missing = required.filter((key) => !String(business?.[key] || '').trim());
+      if (missing.length) checks.push(`${missing.length} information(s) entreprise obligatoire(s) manquante(s)`);
       this.$('anomalies').innerHTML = checks.length ? `<ul>${checks.map((x) => `<li>${this.esc(x)}</li>`).join('')}</ul>` : '<div class="status ok">Aucune anomalie principale détectée.</div>';
     },
     async open() {
@@ -50,6 +59,7 @@
         window.EDMAdminClients?.load(),
         window.EDMAdminServices?.load(),
         window.EDMAdminDocs?.load(),
+        window.EDMAdminBusiness?.load(),
         window.EDMAdminSettings?.load()
       ]);
     }
