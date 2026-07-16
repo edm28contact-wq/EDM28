@@ -1,184 +1,204 @@
 (function () {
   const style = document.createElement('style');
-  style.id = 'edm-premium-light-theme';
+  style.id = 'edm-premium-dark-theme';
   style.textContent = `
     :root {
-      --bg: #f4efe9;
-      --surface: #fffdfa;
-      --surface-2: #f8f3ed;
-      --ink: #2d2722;
-      --muted: #756b63;
-      --border: #ddd2c8;
-      --brand: #a9623b;
-      --blue: #995a34;
-      --blue-soft: #f2e2d5;
-      --green: #526d5a;
-      --green-soft: #edf4ef;
-      --orange: #a9623b;
-      --orange-soft: #f8eadf;
-      --red: #9c4038;
-      --red-soft: #faecea;
-      --shadow: 0 20px 55px rgba(68, 49, 37, .10);
+      --bg: #080d10;
+      --surface: #11181c;
+      --surface-2: #171f24;
+      --ink: #f2eee9;
+      --muted: #a9a39d;
+      --border: #2d373d;
+      --brand: #b56d43;
+      --blue: #c17b50;
+      --blue-soft: #2b211c;
+      --green: #8ba38d;
+      --green-soft: #17231b;
+      --orange: #c17b50;
+      --orange-soft: #2c2019;
+      --red: #d16d64;
+      --red-soft: #2c1918;
+      --shadow: 0 24px 70px rgba(0,0,0,.38);
     }
 
     body {
       color: var(--ink) !important;
       background:
-        radial-gradient(circle at 10% 0%, rgba(169, 98, 59, .15), transparent 28rem),
-        radial-gradient(circle at 100% 18%, rgba(110, 105, 101, .10), transparent 30rem),
-        var(--bg) !important;
+        radial-gradient(circle at 18% 0%, rgba(181,109,67,.14), transparent 30rem),
+        radial-gradient(circle at 100% 18%, rgba(120,128,132,.09), transparent 32rem),
+        linear-gradient(180deg, #0a1013, #070b0d 70%) !important;
     }
 
     p, .small, .field-hint { color: var(--muted) !important; }
 
     .sidebar {
       color: var(--ink) !important;
-      background: linear-gradient(180deg, #f7f0e9 0%, #eee3d9 100%) !important;
-      border-right: 1px solid #d7c8bb !important;
-      box-shadow: 14px 0 40px rgba(68, 49, 37, .08) !important;
+      background: linear-gradient(180deg, #10171b 0%, #090e11 100%) !important;
+      border-right: 1px solid #283238 !important;
+      box-shadow: 18px 0 45px rgba(0,0,0,.28) !important;
     }
 
-    .brand-name, .sidebar-card b { color: #3b3029 !important; }
-    .brand-sub { color: #76675c !important; }
-
-    .nav button {
-      color: #51463e !important;
-      border-color: transparent !important;
+    .brand-block { grid-template-columns: 66px 1fr !important; align-items: center !important; }
+    .brand-mark {
+      width: 66px !important;
+      height: 66px !important;
+      padding: 0 !important;
+      border-radius: 18px !important;
+      overflow: hidden !important;
+      background: #20282d !important;
+      box-shadow: 0 14px 34px rgba(0,0,0,.38), 0 0 0 1px rgba(211,154,114,.18) !important;
     }
+    .brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .brand-name, .sidebar-card b { color: #f3eee9 !important; }
+    .brand-name { color: #d4956c !important; letter-spacing: .12em !important; }
+    .brand-sub { color: #a8a29c !important; }
 
+    .nav button { color: #c8c4c0 !important; border-color: transparent !important; }
     .nav button:hover, .nav button.active {
-      color: #7f4529 !important;
-      background: rgba(169, 98, 59, .12) !important;
-      border-color: rgba(169, 98, 59, .22) !important;
+      color: #f3d0b8 !important;
+      background: linear-gradient(90deg, rgba(181,109,67,.20), rgba(181,109,67,.07)) !important;
+      border-color: rgba(202,130,84,.28) !important;
+      box-shadow: inset 3px 0 0 #c27a4e !important;
     }
 
     .sidebar-card {
-      color: #64574e !important;
-      background: rgba(255,255,255,.62) !important;
-      border-color: #d8cabf !important;
-      box-shadow: 0 10px 28px rgba(68,49,37,.06) !important;
+      color: #b9b4af !important;
+      background: rgba(255,255,255,.035) !important;
+      border-color: #2c363b !important;
+      box-shadow: 0 12px 30px rgba(0,0,0,.16) !important;
     }
 
     .topbar {
-      background: rgba(255, 253, 250, .90) !important;
-      border-color: #ddd2c8 !important;
-      box-shadow: 0 14px 38px rgba(68,49,37,.09) !important;
+      background: rgba(13,19,22,.88) !important;
+      border-color: #2a343a !important;
+      box-shadow: 0 16px 42px rgba(0,0,0,.28) !important;
     }
+    .topbar-title { color: #d4956c !important; }
 
     .panel, .card, .service-card, .basket-card, .summary-line, .check-card {
-      background: var(--surface) !important;
-      border-color: var(--border) !important;
       color: var(--ink) !important;
+      background: linear-gradient(145deg, rgba(24,32,37,.97), rgba(14,20,23,.98)) !important;
+      border-color: var(--border) !important;
     }
-
     .panel { box-shadow: var(--shadow) !important; }
+    .card, .service-card, .basket-card { box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important; }
 
     .hero {
-      color: #2f2721 !important;
+      position: relative !important;
+      color: #f5f0eb !important;
       background:
-        linear-gradient(105deg, rgba(255,253,250,.98) 0%, rgba(248,239,231,.95) 52%, rgba(221,196,176,.90) 100%) !important;
-      border: 1px solid #d8c5b5 !important;
-      box-shadow: 0 24px 65px rgba(82,57,42,.13) !important;
+        radial-gradient(circle at 82% 42%, rgba(181,109,67,.25), transparent 24rem),
+        linear-gradient(118deg, #121a1f 0%, #0c1215 58%, #17130f 100%) !important;
+      border-color: #334047 !important;
+      box-shadow: 0 30px 80px rgba(0,0,0,.48) !important;
     }
-
-    .hero p { color: #6f6259 !important; }
-    .hero h1 { color: #302720 !important; }
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(120deg, transparent 46%, rgba(215,151,106,.05) 47%, transparent 48%);
+    }
+    .hero p { color: #bbb5af !important; }
+    .hero h1 { color: #f2ece6 !important; text-shadow: 0 8px 30px rgba(0,0,0,.32); }
+    .hero h1::first-line { color: #d4956c; }
     .eyebrow {
-      color: #8f512f !important;
-      background: rgba(169,98,59,.11) !important;
-      border-color: rgba(169,98,59,.22) !important;
+      color: #e1a77f !important;
+      background: rgba(181,109,67,.12) !important;
+      border-color: rgba(202,130,84,.30) !important;
     }
-
     .hero-card {
-      background: rgba(255,255,255,.72) !important;
-      border-color: rgba(132,94,68,.20) !important;
-      box-shadow: 0 18px 42px rgba(86,59,41,.10) !important;
+      background: rgba(12,18,21,.76) !important;
+      border-color: rgba(208,139,94,.22) !important;
+      box-shadow: 0 20px 46px rgba(0,0,0,.34) !important;
     }
-
-    .hero-stat { background: rgba(255,255,255,.82) !important; }
+    .hero-stat { background: rgba(255,255,255,.035) !important; border: 1px solid rgba(255,255,255,.05); }
     .hero-stat span {
-      color: white !important;
-      background: linear-gradient(135deg, #b8754a, #8f4d2c) !important;
+      color: #101519 !important;
+      background: linear-gradient(135deg, #dda077, #a65e38) !important;
+      box-shadow: 0 7px 20px rgba(181,109,67,.24) !important;
     }
 
     .btn-primary, .btn-success, .summary-line.total {
       color: #fff !important;
-      background: linear-gradient(135deg, #b8754a, #8f4d2c) !important;
-      border-color: transparent !important;
-      box-shadow: 0 12px 28px rgba(143,77,44,.22) !important;
+      background: linear-gradient(135deg, #c47b4d, #8d4d2f) !important;
+      border-color: rgba(235,178,137,.16) !important;
+      box-shadow: 0 13px 30px rgba(112,58,33,.32), inset 0 1px 0 rgba(255,255,255,.18) !important;
     }
-
+    .btn-primary:hover, .btn-success:hover { box-shadow: 0 17px 38px rgba(138,72,40,.42) !important; }
     .btn-secondary {
-      color: #4d4037 !important;
-      background: #eee4db !important;
+      color: #e7e1dc !important;
+      background: linear-gradient(145deg, #283238, #1d262b) !important;
+      border: 1px solid #354148 !important;
     }
-
     .btn-ghost {
-      color: #6c4834 !important;
-      background: rgba(255,255,255,.55) !important;
-      border-color: #d7c5b8 !important;
+      color: #dca27b !important;
+      background: rgba(255,255,255,.025) !important;
+      border-color: #39434a !important;
     }
-
     .hero .btn-secondary {
-      color: white !important;
-      background: linear-gradient(135deg, #b8754a, #8f4d2c) !important;
+      color: #fff !important;
+      background: linear-gradient(135deg, #c47b4d, #8d4d2f) !important;
+      border-color: transparent !important;
     }
 
     input, select, textarea {
-      color: var(--ink) !important;
-      background: #fff !important;
-      border-color: #d5c8bd !important;
+      color: #f2eee9 !important;
+      background: #0d1417 !important;
+      border-color: #354047 !important;
     }
-
+    input::placeholder, textarea::placeholder { color: #777f83 !important; }
     input:focus, select:focus, textarea:focus {
-      border-color: #aa6840 !important;
-      box-shadow: 0 0 0 4px rgba(169,98,59,.13) !important;
+      border-color: #b66c42 !important;
+      box-shadow: 0 0 0 4px rgba(181,109,67,.14) !important;
     }
 
+    .step { background: #121a1e !important; border-color: #303a40 !important; }
     .step.current, .basket-card.selected {
-      color: #7f4529 !important;
-      background: #f3e2d5 !important;
-      border-color: #bf825d !important;
+      color: #edb18a !important;
+      background: linear-gradient(145deg, #2b211c, #1d1815) !important;
+      border-color: #a9633b !important;
+      box-shadow: 0 0 0 1px rgba(196,123,77,.16), 0 12px 30px rgba(0,0,0,.18) !important;
     }
+    .step.done { color: #a9c0ad !important; background: #152019 !important; border-color: #3d5a45 !important; }
 
-    .service-details, .empty {
-      background: #faf6f1 !important;
-      border-color: #d9cec4 !important;
-    }
+    .service-details, .empty { background: #0d1417 !important; border-color: #303a40 !important; }
+    .notice { color: #ddb08f !important; background: #261c17 !important; border-color: #67452f !important; }
+    .infobox { color: #d8b49c !important; background: #241b17 !important; border-color: #60412f !important; }
+    .okbox { color: #b7d2bc !important; background: #142019 !important; border-color: #3e5b47 !important; }
+    .errorbox { color: #e7aaa4 !important; background: #291817 !important; border-color: #6d3935 !important; }
 
-    .notice {
-      color: #76502f !important;
-      background: #fbefe4 !important;
-      border-color: #e9c9ac !important;
-    }
+    .pill.blue, .pill.orange { color: #e4aa82 !important; background: #2b201a !important; }
+    .pill.green { color: #b7ceb9 !important; background: #17231b !important; }
+    .table th { color: #d1cbc5 !important; }
+    .table th, .table td { border-color: #323c42 !important; }
+    .toast { background: #d18a5c !important; color: #11171a !important; box-shadow: 0 18px 50px rgba(0,0,0,.42) !important; }
 
-    .infobox {
-      color: #6f4b35 !important;
-      background: #f4e7dc !important;
-      border-color: #dfc4b0 !important;
-    }
-
-    .pill.blue, .pill.orange {
-      color: #874b2d !important;
-      background: #f3e3d7 !important;
-    }
-
-    .pill.green {
-      color: #4f6957 !important;
-      background: #edf4ef !important;
-    }
-
-    .table th { color: #66594f !important; }
-    .table th, .table td { border-color: #ddd2c8 !important; }
-
-    .toast {
-      background: #3a3029 !important;
-      color: #fff !important;
-    }
+    ::selection { background: rgba(196,123,77,.35); color: white; }
+    * { scrollbar-color: #7f4d31 #11181c; }
 
     @media (max-width: 980px) {
-      .sidebar { box-shadow: 16px 0 45px rgba(68,49,37,.16) !important; }
+      .sidebar { box-shadow: 18px 0 50px rgba(0,0,0,.52) !important; }
+      .brand-block { grid-template-columns: 58px 1fr !important; }
+      .brand-mark { width: 58px !important; height: 58px !important; }
     }
   `;
   document.head.appendChild(style);
+
+  function installBranding() {
+    const mark = document.querySelector('.brand-mark');
+    if (mark) mark.innerHTML = '<img src="/logo-edm.svg" alt="Logo EDM, spécialiste du freinage">';
+
+    const name = document.querySelector('.brand-name');
+    if (name) name.textContent = 'EDM';
+
+    const sub = document.querySelector('.brand-sub');
+    if (sub) sub.innerHTML = 'Spécialiste du freinage<br>Entretien automobile';
+
+    const topbar = document.querySelector('.topbar-title');
+    if (topbar) topbar.innerHTML = '<img src="/logo-edm.svg" alt="" style="width:38px;height:38px;border-radius:10px;object-fit:cover"><span>EDM · Spécialiste du freinage</span>';
+  }
+
+  installBranding();
+  window.addEventListener('load', installBranding);
 })();
