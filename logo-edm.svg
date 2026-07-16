@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 342 327" role="img" aria-labelledby="title desc">
+<title id="title">Logo EDM</title>
+<desc id="desc">EDM, spécialiste du freinage</desc>
+<rect width="342" height="327" rx="30" fill="#20282d"/>
+<defs><linearGradient id="c" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d39a72"/><stop offset=".55" stop-color="#a8613b"/><stop offset="1" stop-color="#774026"/></linearGradient><linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1f3f4"/><stop offset=".5" stop-color="#aeb5b9"/><stop offset="1" stop-color="#596269"/></linearGradient></defs>
+<g transform="translate(76 18)">
+<circle cx="95" cy="78" r="69" fill="none" stroke="url(#c)" stroke-width="17" stroke-dasharray="26 7"/>
+<path d="M95 9a69 69 0 0 1 64 43L95 78Z" fill="url(#s)"/>
+<path d="M95 147a69 69 0 0 1-64-43l64-26Z" fill="url(#c)"/>
+<circle cx="95" cy="78" r="42" fill="#222a2f" stroke="url(#s)" stroke-width="12" stroke-dasharray="12 6"/>
+<circle cx="95" cy="78" r="24" fill="#141a1e" stroke="url(#c)" stroke-width="7"/>
+<path d="M107 65a17 17 0 1 0 0 26" fill="none" stroke="#d0d4d6" stroke-width="7" stroke-linecap="round"/>
+</g>
+<text x="171" y="242" text-anchor="middle" fill="url(#c)" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="800" letter-spacing="5">EDM</text>
+<line x1="72" x2="270" y1="260" y2="260" stroke="#d7d7d7" stroke-width="2" opacity=".8"/>
+<text x="171" y="286" text-anchor="middle" fill="#d39a72" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" letter-spacing="1.6">SPÉCIALISTE DU FREINAGE</text>
+</svg>
