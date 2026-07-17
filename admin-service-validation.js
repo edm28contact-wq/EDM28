@@ -21,4 +21,15 @@
       return original(old);
     };
   }, 100);
+
+  let accountingLoaded = false;
+  const accountingTimer = setInterval(async () => {
+    const app = window.EDMAdmin;
+    const accounting = window.EDMAdminAccounting;
+    if (accountingLoaded || !app?.profile || !accounting) return;
+    accountingLoaded = true;
+    clearInterval(accountingTimer);
+    try { await accounting.load(); }
+    catch (error) { app.status('accountingStatus', error.message, true); }
+  }, 150);
 })();
