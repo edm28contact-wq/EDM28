@@ -1,18 +1,18 @@
 {
-  "name": "EDM AUTO - Mécano du Dimanche",
-  "short_name": "EDM AUTO",
-  "description": "Demande de RDV mécanique, paniers de pièces et suivi client EDM AUTO.",
-  "lang": "fr",
+  "name": "EDM - Spécialiste du freinage",
+  "short_name": "EDM",
+  "description": "Préparez votre demande d'entretien automobile et de freinage, consultez une estimation indicative et suivez vos documents.",
+  "lang": "fr-FR",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#f5f7fb",
-  "theme_color": "#111827",
+  "orientation": "any",
+  "background_color": "#080d10",
+  "theme_color": "#b56d43",
   "categories": ["business", "automotive", "utilities"],
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/logo-edm.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
