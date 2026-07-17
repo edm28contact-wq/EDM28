@@ -18,12 +18,14 @@
     },
     status(id, message, error = false) {
       const node = this.$(id);
+      if (!node) return;
       node.textContent = message;
       node.className = `status ${error ? 'error' : 'ok'}`;
     },
     page(id) {
       document.querySelectorAll('.page').forEach((node) => node.classList.toggle('active', node.id === id));
       document.querySelectorAll('[data-page]').forEach((node) => node.classList.toggle('active', node.dataset.page === id));
+      if (id === 'accounting') window.EDMAdminAccounting?.load();
     },
     async requireAdmin(user) {
       const { data, error } = await client.from('profiles').select('*').eq('id', user.id).single();
@@ -37,10 +39,10 @@
       if (error) throw error;
       return count || 0;
     },
-    async overview() {
+    async overview(extraChecks = []) {
       const values = await Promise.all(['profiles','service_requests','quotes','invoices','appointments','ai_drafts'].map((name) => this.count(name)));
       ['kpiClients','kpiRequests','kpiQuotes','kpiInvoices','kpiAppointments','kpiAi'].forEach((id, index) => { this.$(id).textContent = values[index]; });
-      const checks = [];
+      const checks = [...extraChecks];
       const { data: noVehicle } = await client.from('service_requests').select('id').is('vehicle_id', null);
       if (noVehicle?.length) checks.push(`${noVehicle.length} demande(s) sans véhicule`);
       const { data: noPdf } = await client.from('quotes').select('id').in('status', ['sent','accepted']).is('pdf_path', null);
@@ -54,14 +56,21 @@
     async open() {
       this.$('loginPanel').classList.add('hidden');
       this.$('dashboard').classList.remove('hidden');
-      await Promise.allSettled([
-        this.overview(),
-        window.EDMAdminClients?.load(),
-        window.EDMAdminServices?.load(),
-        window.EDMAdminDocs?.load(),
-        window.EDMAdminBusiness?.load(),
-        window.EDMAdminSettings?.load()
-      ]);
+      const modules = [
+        ['Clients', () => window.EDMAdminClients?.load()],
+        ['Services', () => window.EDMAdminServices?.load()],
+        ['Documents', () => window.EDMAdminDocs?.load()],
+        ['Comptabilité', () => window.EDMAdminAccounting?.load()],
+        ['Entreprise', () => window.EDMAdminBusiness?.load()],
+        ['Automatisations', () => window.EDMAdminSettings?.load()]
+      ];
+      const settled = await Promise.allSettled(modules.map(([, load]) => load()));
+      const failures = settled.flatMap((result, index) => result.status === 'rejected' ? [`Module ${modules[index][0]} indisponible : ${result.reason?.message || 'erreur inconnue'}`] : []);
+      try {
+        await this.overview(failures);
+      } catch (error) {
+        this.$('anomalies').innerHTML = `<div class="status error">${this.esc(error.message || 'Vue générale indisponible.')}</div>`;
+      }
     }
   };
 
