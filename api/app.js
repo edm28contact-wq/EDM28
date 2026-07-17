@@ -11,7 +11,7 @@ export default function handler(req, res) {
 
   try {
     let html = readFileSync(INDEX_PATH, 'utf8');
-    const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var scripts=['/integration.js?v=4','/final-system.js?v=1','/ui-final.js?v=6','/theme-light.js?v=3','/home-premium.js?v=2'];scripts.reduce(function(p,src){return p.then(function(){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.body.appendChild(s);});});},Promise.resolve()).catch(function(error){console.error('EDM module load error',error);});});<\/script>`;
+    const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var scripts=['/integration.js?v=4','/final-system.js?v=1','/ui-final.js?v=6','/theme-light.js?v=3','/home-premium.js?v=2','/contact-footer.js?v=1'];scripts.reduce(function(p,src){return p.then(function(){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.body.appendChild(s);});});},Promise.resolve()).catch(function(error){console.error('EDM module load error',error);});});<\/script>`;
     html = html.replace('</body>', `${loader}</body>`);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
