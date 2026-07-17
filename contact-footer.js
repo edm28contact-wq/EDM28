@@ -1,16 +1,25 @@
 (() => {
+  const publicSettings = {};
   const safe = (value) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   }[char]));
 
   function getSetting(key, fallback = '') {
+    const raw = publicSettings[key];
+    if (raw == null) return fallback;
+    if (typeof raw === 'string' || typeof raw === 'number') return String(raw);
+    return String(raw.value ?? fallback);
+  }
+
+  async function loadPublicSettings() {
     try {
-      const raw = window.EDMFinalSettings?.[key];
-      if (raw == null) return fallback;
-      if (typeof raw === 'string' || typeof raw === 'number') return String(raw);
-      return String(raw.value ?? fallback);
-    } catch (_) {
-      return fallback;
+      if (typeof supabaseClient === 'undefined') return;
+      const { data, error } = await supabaseClient.from('site_settings').select('key,value').eq('is_public', true);
+      if (error) throw error;
+      (data || []).forEach((row) => { publicSettings[row.key] = row.value; });
+      renderContact();
+    } catch (error) {
+      console.warn('EDM public contact settings unavailable', error);
     }
   }
 
@@ -51,7 +60,7 @@
     button.type = 'button';
     button.dataset.page = 'contact';
     button.textContent = '✉️ Contact';
-    button.addEventListener('click', () => typeof window.showPage === 'function' && window.showPage('contact'));
+    button.addEventListener('click', () => typeof showPage === 'function' && showPage('contact'));
     nav.appendChild(button);
   }
 
@@ -61,12 +70,11 @@
     const email = getSetting('business_email', getSetting('email', 'edm28.contact@gmail.com'));
     const phone = getSetting('business_phone', getSetting('phone', ''));
     const address = [getSetting('address_line1', ''), getSetting('postal_code', ''), getSetting('city', '')].filter(Boolean).join(' ');
-    const cards = [
+    grid.innerHTML = [
       `<article class="contact-card"><h3>Email</h3><p>Pour une question générale ou le suivi d’une demande.</p><a href="mailto:${safe(email)}">${safe(email)}</a></article>`,
       phone ? `<article class="contact-card"><h3>Téléphone</h3><p>Coordonnée téléphonique officielle.</p><a href="tel:${safe(phone.replace(/\s+/g,''))}">${safe(phone)}</a></article>` : `<article class="contact-card"><h3>Téléphone</h3><p>Le numéro officiel sera affiché dès validation.</p></article>`,
       address ? `<article class="contact-card"><h3>Adresse</h3><p>${safe(address)}</p></article>` : `<article class="contact-card"><h3>Adresse</h3><p>L’adresse professionnelle sera affichée dès validation.</p></article>`
-    ];
-    grid.innerHTML = cards.join('');
+    ].join('');
   }
 
   function addFooter() {
@@ -78,7 +86,7 @@
       <div class="site-footer-brand"><img src="/logo-edm.svg" alt="Logo EDM"><div><strong>EDM · Spécialiste du freinage</strong><p>Estimation indicative et validation humaine.</p></div></div>
       <div class="site-footer-links"><button type="button" data-footer-page="about">À propos</button><button type="button" data-footer-page="contact">Contact</button><button type="button" data-footer-page="account">Mon compte</button></div>`;
     footer.querySelectorAll('[data-footer-page]').forEach((button) => button.addEventListener('click', () => {
-      if (typeof window.showPage === 'function') window.showPage(button.dataset.footerPage);
+      if (typeof showPage === 'function') showPage(button.dataset.footerPage);
     }));
     main.appendChild(footer);
   }
@@ -89,6 +97,7 @@
     addNavigation();
     renderContact();
     addFooter();
+    loadPublicSettings();
   }
 
   window.EDMRefreshPublicContact = renderContact;
