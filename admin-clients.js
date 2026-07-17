@@ -19,10 +19,18 @@
       const app = window.EDMAdmin;
       const term = app.$('clientSearch').value.trim().toLowerCase();
       if (!term) return this.render(app.clients);
-      const { data: vehicles, error } = await app.db.from('vehicles').select('user_id,plate,brand,model').or(`plate.ilike.%${term}%,brand.ilike.%${term}%,model.ilike.%${term}%`);
-      if (error) return app.status('loginStatus', error.message, true);
-      const ids = new Set((vehicles || []).map((v) => v.user_id));
-      this.render(app.clients.filter((c) => [c.first_name,c.last_name,c.phone,c.email,c.external_client_id,c.id].some((v) => String(v || '').toLowerCase().includes(term)) || ids.has(c.id)));
+      app.$('clientSearchBtn').disabled = true;
+      try {
+        const safeTerm = term.replace(/[(),]/g, '');
+        const { data: vehicles, error } = await app.db.from('vehicles').select('user_id,plate,brand,model').or(`plate.ilike.%${safeTerm}%,brand.ilike.%${safeTerm}%,model.ilike.%${safeTerm}%`);
+        if (error) throw error;
+        const ids = new Set((vehicles || []).map((v) => v.user_id));
+        this.render(app.clients.filter((c) => [c.first_name,c.last_name,c.phone,c.email,c.external_client_id,c.id].some((v) => String(v || '').toLowerCase().includes(term)) || ids.has(c.id)));
+      } catch (error) {
+        app.$('clientResults').innerHTML = `<div class="status error">${app.esc(error.message || 'Recherche impossible.')}</div>`;
+      } finally {
+        app.$('clientSearchBtn').disabled = false;
+      }
     },
     async show(id) {
       const app = window.EDMAdmin;
@@ -35,6 +43,12 @@
         app.db.from('invoices').select('invoice_number,status,total,amount_paid').eq('user_id', id),
         app.db.from('appointments').select('starts_at,status').eq('user_id', id)
       ]);
+      const failure = [vehicles, requests, quotes, invoices, appointments].find((result) => result.error)?.error;
+      if (failure) {
+        app.$('clientDetail').classList.remove('hidden');
+        app.$('clientDetail').innerHTML = `<div class="status error">${app.esc(failure.message)}</div>`;
+        return;
+      }
       const box = app.$('clientDetail');
       box.classList.remove('hidden');
       box.innerHTML = `<h2>${app.esc(`${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Client')}</h2><p>${app.esc(client.email || 'Email non renseigné')} · ${app.esc(client.phone || 'Téléphone non renseigné')} · ${app.esc(client.external_client_id || client.id)}</p><div class="grid2"><div><h3>Véhicules</h3>${(vehicles.data || []).map((v) => `<p><span class="pill">${app.esc(v.plate)}</span> ${app.esc(`${v.brand || ''} ${v.model || ''}`)}</p>`).join('') || '<p>Aucun véhicule</p>'}</div><div><h3>Activité</h3><p>${requests.data?.length || 0} demande(s) · ${quotes.data?.length || 0} devis · ${invoices.data?.length || 0} facture(s) · ${appointments.data?.length || 0} rendez-vous</p>${(invoices.data || []).map((i) => `<p>${app.esc(i.invoice_number || 'Facture')} : ${app.money(i.total)} · payé ${app.money(i.amount_paid)}</p>`).join('')}</div></div>`;
