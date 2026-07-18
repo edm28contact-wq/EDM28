@@ -70,7 +70,7 @@
         name: row.name,
         labor: Number(row.labor_price || row.displayed_price || 0),
         parts: old.parts || { eco: [0, 0], standard: [0, 0], premium: [0, 0] },
-        type: row.pricing_type === 'quote' ? 'Sur devis' : row.pricing_type === 'starting_from' ? 'À partir de' : 'Montage',
+        type: row.pricing_type === 'quote' ? 'Sur devis' : row.pricing_type === 'from' ? 'À partir de' : 'Montage',
         eligible: old.eligible ?? true,
         excluded: old.excluded ?? false,
         short: row.client_description || row.name,
@@ -114,7 +114,7 @@
     host.innerHTML = '<div class="notice">Chargement des informations...</div>';
     const [quotes, orders, invoices, payments, appointments, messages] = await Promise.all([
       supabaseClient.from('quotes').select('id,quote_number,status,title,total,valid_until,pdf_path,created_at').eq('user_id', user.id).eq('visible_to_client', true).order('created_at', { ascending: false }),
-      supabaseClient.from('repair_orders').select('id,order_number,status,authorized_total,signed_at,created_at').eq('user_id', user.id).eq('visible_to_client', true).order('created_at', { ascending: false }),
+      supabaseClient.from('repair_orders').select('id,order_number,status,signed_at,created_at').eq('user_id', user.id).eq('visible_to_client', true).order('created_at', { ascending: false }),
       supabaseClient.from('invoices').select('id,invoice_number,status,title,total,amount_paid,pdf_path,issued_at,created_at').eq('user_id', user.id).eq('visible_to_client', true).order('created_at', { ascending: false }),
       supabaseClient.from('payments').select('id,invoice_id,amount,payment_method,paid_at').eq('user_id', user.id).order('paid_at', { ascending: false }),
       supabaseClient.from('appointments').select('id,starts_at,ends_at,status,notes').eq('user_id', user.id).eq('visible_to_client', true).order('starts_at', { ascending: false }),
@@ -125,7 +125,7 @@
 
     const cards = [];
     (quotes.data || []).forEach((q) => cards.push({ date: q.created_at, type: 'Devis', title: q.quote_number || q.title || 'Devis', status: q.status, amount: q.total, path: q.pdf_path }));
-    (orders.data || []).forEach((o) => cards.push({ date: o.created_at, type: 'Ordre de réparation', title: o.order_number || 'OR', status: o.status, amount: o.authorized_total }));
+    (orders.data || []).forEach((o) => cards.push({ date: o.created_at, type: 'Ordre de réparation', title: o.order_number || 'OR', status: o.status }));
     (invoices.data || []).forEach((i) => cards.push({ date: i.issued_at || i.created_at, type: 'Facture', title: i.invoice_number || i.title || 'Facture', status: i.status, amount: i.total, extra: `Payé : ${euro(i.amount_paid)}`, path: i.pdf_path }));
     (appointments.data || []).forEach((a) => cards.push({ date: a.starts_at, type: 'Rendez-vous', title: new Date(a.starts_at).toLocaleString('fr-FR'), status: a.status, extra: a.notes || '' }));
     cards.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
