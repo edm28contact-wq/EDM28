@@ -3,10 +3,11 @@
   "version": "3.1.0",
   "private": true,
   "scripts": {
-    "build": "echo \"No build needed\"",
+    "build": "npm run check:syntax",
+    "check:syntax": "find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --experimental-default-type=module --check",
     "dev": "vercel dev"
   },
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   }
 }
