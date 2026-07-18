@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     }
 
     const labor = services.reduce((sum, service) => sum + amount(service.labor), 0);
-    const control = body.j7Accepted ? amount(totals.controlPrice || 30) : 0;
+    const control = body.j7Accepted ? amount(totals.j7Saving ?? totals.controlPrice ?? 30) : 0;
     const serviceLines = services.map((service) => `- ${clean(service.name, 120)}`).join('\n');
     const text = [
       'Nouvelle demande EDM AUTO',
@@ -109,8 +109,8 @@ export default async function handler(req, res) {
       `Controle refuse : ${body.refuseControl ? 'Oui' : 'Non'}`,
       '',
       'ESTIMATION',
-      `Main d oeuvre estimee : ${euros(totals.laborTotal ?? labor)} EUR`,
-      `Remise combo : ${euros(totals.comboDiscount)} EUR`,
+      `Main d oeuvre estimee : ${euros(totals.laborBase ?? totals.laborTotal ?? labor)} EUR`,
+      `Remise combo : ${euros(totals.comboSaving ?? totals.comboDiscount)} EUR`,
       `Controle prealable : ${euros(control)} EUR`,
       `Pieces estimees : ${euros(totals.partsMin)} EUR a ${euros(totals.partsMax)} EUR`,
       `Total estime tout compris : ${euros(totals.totalAllMin)} EUR a ${euros(totals.totalAllMax)} EUR`,
