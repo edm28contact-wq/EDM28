@@ -126,14 +126,14 @@
         .insert({
           user_id: session.user.id,
           vehicle_id: vehicle.id,
-          status: 'submitted',
+          status: 'draft',
           selected_basket: selectedBasket,
           services: totals.selected,
           notes: payload.notes || null,
           totals,
           j7_accepted: payload.j7Accepted,
           refuse_control: payload.refuseControl,
-          submitted_at: new Date().toISOString()
+          submitted_at: null
         })
         .select('id')
         .single();
