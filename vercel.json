@@ -9,7 +9,7 @@
       "includeFiles": "index.html"
     },
     "api/admin.js": {
-      "includeFiles": "{admin.html,admin-core.js}"
+      "includeFiles": "{admin.html,admin-core.js,admin-transactional.js}"
     }
   },
   "headers": [
