@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "npm run check:syntax",
-    "check:syntax": "find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --experimental-default-type=module --check",
+    "check:syntax": "find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check",
     "dev": "vercel dev"
   },
   "engines": {
