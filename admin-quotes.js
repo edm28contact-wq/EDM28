@@ -41,29 +41,34 @@
     render(data || []);
   }
 
-  function bootstrapOperations() {
+  function addModule({ id, label, title, description, refreshId, statusId, listId, scriptSrc, before }) {
     const nav = document.querySelector('.nav');
     const dashboard = document.getElementById('dashboard');
-    if (!nav || !dashboard || document.getElementById('operations')) return;
+    if (!nav || !dashboard || document.getElementById(id)) return;
     const button = document.createElement('button');
     button.className = 'btn ghost';
-    button.dataset.page = 'operations';
-    button.textContent = 'Atelier';
-    nav.insertBefore(button, nav.querySelector('[data-page="clients"]'));
+    button.dataset.page = id;
+    button.textContent = label;
+    nav.insertBefore(button, nav.querySelector(`[data-page="${before}"]`));
     const section = document.createElement('section');
-    section.id = 'operations';
+    section.id = id;
     section.className = 'page';
-    section.innerHTML = '<div class="card"><div class="top"><div><h2>Préparation atelier</h2><p class="muted">Planifier les devis acceptés et préparer l’ordre de réparation associé.</p></div><button id="operationRefresh" class="btn ghost">Actualiser</button></div><div id="operationStatus" class="status hidden"></div><div id="operationList"></div></div>';
+    section.innerHTML = `<div class="card"><div class="top"><div><h2>${title}</h2><p class="muted">${description}</p></div><button id="${refreshId}" class="btn ghost">Actualiser</button></div><div id="${statusId}" class="status hidden"></div><div id="${listId}"></div></div>`;
     dashboard.appendChild(section);
-    button.addEventListener('click', () => app().page('operations'));
+    button.addEventListener('click', () => app().page(id));
     const script = document.createElement('script');
-    script.src = '/admin-operations.js?v=2';
+    script.src = scriptSrc;
     script.async = false;
     document.body.appendChild(script);
   }
 
+  function bootstrapModules() {
+    addModule({ id: 'operations', label: 'Atelier', title: 'Préparation atelier', description: 'Planifier les devis acceptés et préparer l’ordre de réparation associé.', refreshId: 'operationRefresh', statusId: 'operationStatus', listId: 'operationList', scriptSrc: '/admin-operations.js?v=2', before: 'clients' });
+    addModule({ id: 'finalization', label: 'Clôture', title: 'Clôture et facturation', description: 'Clôturer les interventions terminées et générer une facture brouillon contrôlée.', refreshId: 'finalizationRefresh', statusId: 'finalizationStatus', listId: 'finalizationList', scriptSrc: '/admin-finalization.js?v=1', before: 'clients' });
+  }
+
   function bind() {
-    bootstrapOperations();
+    bootstrapModules();
     document.querySelector('[data-page="quotes"]')?.addEventListener('click', () => load().catch((error) => app().status('quoteStatus', error.message || 'Devis indisponibles.', true)));
     document.getElementById('quoteRefresh')?.addEventListener('click', () => load().catch((error) => app().status('quoteStatus', error.message || 'Actualisation impossible.', true)));
   }
