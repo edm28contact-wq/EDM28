@@ -45,7 +45,7 @@ async function loadCanonicalRequest(requestId, user, authorization) {
   const request = await fetchSingle('service_requests', {
     id: `eq.${requestId}`,
     user_id: `eq.${user.id}`,
-    select: 'id,user_id,vehicle_id,status,selected_basket,services,notes,totals,j7_accepted,refuse_control,submitted_at'
+    select: 'id,user_id,vehicle_id,status,selected_basket,services,notes,totals,j7_accepted,refuse_control,submitted_at,created_at'
   }, authorization);
   if (!request) return null;
 
@@ -123,6 +123,7 @@ export default async function handler(req, res) {
     const estimatedMax = totals.totalMax ?? totals.totalAllMax ?? estimatedMin;
     const serviceLines = services.map((service) => `- ${clean(service.name, 120)}`).join('\n');
     const clientEmail = clean(user.email || profile?.email, 254).toLowerCase();
+    const receivedAt = request.created_at || request.submitted_at || 'date indisponible';
 
     const text = [
       'Nouvelle demande EDM AUTO',
@@ -161,7 +162,7 @@ export default async function handler(req, res) {
       'NOTES CLIENT',
       clean(request.notes, 2000) || 'Aucune',
       '',
-      `Recue le : ${new Date().toISOString()}`
+      `Recue le : ${receivedAt}`
     ].join('\n');
 
     const emailResponse = await fetch('https://api.resend.com/emails', {
