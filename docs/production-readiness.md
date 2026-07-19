@@ -22,6 +22,8 @@ Variables serveur requises :
 
 Le code n'utilise aucune adresse d'expéditeur codée en dur. `RESEND_FROM_EMAIL` doit appartenir à un domaine ou sous-domaine vérifié dans Resend. Configurer les enregistrements DNS demandés, puis contrôler SPF, DKIM et DMARC. Tester une demande complète, la réponse à l'adresse client, la réception EDM28 et les dossiers indésirables.
 
+Toute clé communiquée dans une conversation, une capture ou un journal doit être révoquée immédiatement, remplacée dans Vercel, puis validée sur un nouveau déploiement Preview.
+
 ## Vercel
 
 Projet canonique : `edm-28` (`prj_ZfCxVKKx7pnyACgbIcbT854m50sU`).
@@ -38,6 +40,8 @@ Vérifier séparément les variables Production et Preview :
 - `RESEND_TO_EMAIL`
 
 Aucune variable secrète ne doit être exposée avec un préfixe public.
+
+Pour valider une branche de PR, créer un nouveau déploiement Preview depuis le dernier SHA de la branche. Ne pas utiliser l'action Redeploy sur un ancien déploiement et ne pas sélectionner Production sans autorisation explicite.
 
 ## GitHub Pages
 
