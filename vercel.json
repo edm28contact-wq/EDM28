@@ -7,6 +7,9 @@
   "functions": {
     "api/app.js": {
       "includeFiles": "index.html"
+    },
+    "api/admin.js": {
+      "includeFiles": ["admin.html", "admin-core.js"]
     }
   },
   "headers": [
@@ -38,6 +41,10 @@
     {
       "src": "/",
       "dest": "/api/app"
+    },
+    {
+      "src": "/admin(?:\.html)?",
+      "dest": "/api/admin"
     },
     {
       "handle": "filesystem"
