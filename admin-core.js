@@ -84,7 +84,7 @@
     legacyButton.outerHTML = `
       <button id="adminOtpSend" class="btn primary" type="button">Recevoir un code</button>
       <div id="adminOtpPanel" class="hidden" style="margin-top:12px">
-        <label>Code à 6 chiffres<input id="adminOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+        <label>Code reçu<input id="adminOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
         <button id="adminOtpVerify" class="btn primary" type="button" style="margin-top:10px">Valider le code</button>
       </div>`;
   }
@@ -100,13 +100,13 @@
     if (error) return app.status('loginStatus', error.message, true);
     app.$('adminOtpPanel').classList.remove('hidden');
     app.$('adminOtpCode').focus();
-    app.status('loginStatus', 'Code envoyé. Saisissez les 6 chiffres reçus.');
+    app.status('loginStatus', 'Code envoyé. Saisissez le code reçu.');
   }
 
   async function verifyOtp() {
     const email = app.$('adminEmail').value.trim().toLowerCase();
-    const token = app.$('adminOtpCode').value.replace(/\D/g, '').slice(0, 6);
-    if (!email || token.length !== 6) return app.status('loginStatus', 'Code à 6 chiffres obligatoire.', true);
+    const token = app.$('adminOtpCode').value.replace(/\D/g, '').slice(0, 10);
+    if (!email || token.length < 6 || token.length > 10) return app.status('loginStatus', 'Entrez le code reçu par email.', true);
     app.status('loginStatus', 'Vérification…');
     const { data, error } = await client.auth.verifyOtp({ email, token, type: 'email' });
     if (error) return app.status('loginStatus', error.message, true);
@@ -125,7 +125,7 @@
     app.$('requestRefresh')?.addEventListener('click', () => window.EDMAdminRequests?.load().catch((error) => app.status('requestStatus', error.message || 'Actualisation impossible.', true)));
     app.$('adminOtpSend').addEventListener('click', sendOtp);
     app.$('adminOtpVerify').addEventListener('click', verifyOtp);
-    app.$('adminOtpCode').addEventListener('input', (event) => { event.target.value = event.target.value.replace(/\D/g, '').slice(0, 6); });
+    app.$('adminOtpCode').addEventListener('input', (event) => { event.target.value = event.target.value.replace(/\D/g, '').slice(0, 10); });
     app.$('adminOtpCode').addEventListener('keydown', (event) => { if (event.key === 'Enter') verifyOtp(); });
     app.$('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); location.reload(); });
     const { data } = await client.auth.getSession();
