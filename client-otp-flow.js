@@ -70,6 +70,8 @@
       if (error) throw error;
       if (!data?.user) throw new Error('Session introuvable après validation.');
       await hydrateUserFromSupabase(data.user);
+      $('btnOtpSend').classList.add('hidden');
+      $('btnOtpSignOut').classList.remove('hidden');
       setMessage('Adresse email vérifiée. Votre espace client est prêt.');
       showPage('appointment');
       updateStepper(2);
@@ -79,6 +81,18 @@
     } finally {
       setButtonBusy(button, false);
     }
+  }
+
+  async function signOut() {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) return setMessage(friendly(error), true);
+    state.user = null;
+    saveState();
+    $('btnOtpSend').classList.remove('hidden');
+    $('btnOtpSignOut').classList.add('hidden');
+    $('otpPanel').classList.add('hidden');
+    $('otpCode').value = '';
+    setMessage('Déconnecté.');
   }
 
   async function install() {
@@ -103,6 +117,7 @@
 
     $('btnOtpSend').addEventListener('click', sendCode);
     $('btnOtpVerify').addEventListener('click', verifyCode);
+    $('btnOtpSignOut').addEventListener('click', signOut);
     $('otpCode').addEventListener('input', (event) => {
       event.target.value = event.target.value.replace(/\D/g, '').slice(0, 6);
     });
@@ -112,8 +127,10 @@
 
     const { data } = await supabaseClient.auth.getSession();
     if (data?.session?.user) {
+      await hydrateUserFromSupabase(data.session.user);
       $('btnOtpSend').classList.add('hidden');
       $('btnOtpSignOut').classList.remove('hidden');
+      setMessage('Session active.');
     }
   }
 
