@@ -16,7 +16,7 @@
     }
     if (button.dataset.prepare) {
       const root = button.closest('article');
-      await rpc('admin_prepare_accepted_quote', {
+      await rpc('admin_prepare_quote', {
         p_quote_id: button.dataset.prepare,
         p_starts_at: new Date(root.querySelector('[data-field="startsAt"]').value).toISOString(),
         p_duration_minutes: Number(root.querySelector('[data-field="duration"]').value || 60),
@@ -41,7 +41,7 @@
       return;
     }
     const root = button.closest('article');
-    await rpc('admin_record_invoice_payment', {
+    await rpc('admin_record_payment', {
       p_invoice_id: button.dataset.pay,
       p_amount: Number(root.querySelector('[data-field="amount"]').value || 0),
       p_payment_method: root.querySelector('[data-field="method"]').value,
