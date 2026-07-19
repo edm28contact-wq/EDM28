@@ -40,6 +40,9 @@ jobs:
       - name: Run client journey tests
         run: npm run test:client
 
+      - name: Run admin journey tests
+        run: npm run test:admin
+
       - name: Upload syntax report
         if: always()
         uses: actions/upload-artifact@v4
