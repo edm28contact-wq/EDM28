@@ -4,7 +4,8 @@
 
   const scripts = [
     { src: '/client-otp-flow.js?v=2', marker: 'edmOtp' },
-    { src: '/client-step3-fixes.js?v=1', marker: 'edmStep3' }
+    { src: '/client-step3-fixes.js?v=1', marker: 'edmStep3' },
+    { src: '/request-submit-safe.js?v=1', marker: 'edmSafeSubmit' }
   ];
 
   const loadScript = ({ src, marker }) => new Promise((resolve, reject) => {
