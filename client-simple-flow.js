@@ -8,7 +8,8 @@
     { src: '/request-submit-safe.js?v=1', attr: 'data-edm-submit' },
     { src: '/client-quotes.js?v=1', attr: 'data-edm-quotes' },
     { src: '/client-operations.js?v=1', attr: 'data-edm-operations' },
-    { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' }
+    { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' },
+    { src: '/client-document-download.js?v=1', attr: 'data-edm-document-downloads' }
   ];
 
   const loadScript = ({ src, attr }) => new Promise((resolve, reject) => {
