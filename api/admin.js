@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 const ADMIN_PATH = join(process.cwd(), 'admin.html');
 const ADMIN_CORE_PATH = join(process.cwd(), 'admin-core.js');
+const ADMIN_TRANSACTIONAL_PATH = join(process.cwd(), 'admin-transactional.js');
 
 export default function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -13,6 +14,7 @@ export default function handler(req, res) {
   try {
     let html = readFileSync(ADMIN_PATH, 'utf8');
     let adminCore = readFileSync(ADMIN_CORE_PATH, 'utf8');
+    const adminTransactional = readFileSync(ADMIN_TRANSACTIONAL_PATH, 'utf8');
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
@@ -29,8 +31,10 @@ export default function handler(req, res) {
     }
 
     const encodedCore = Buffer.from(adminCore, 'utf8').toString('base64');
+    const encodedTransactional = Buffer.from(adminTransactional, 'utf8').toString('base64');
     const inlineLoader = `<script>eval(decodeURIComponent(escape(atob('${encodedCore}'))));<\/script>`;
-    html = html.replace('<script src="/admin-core.js?v=4"></script>', inlineLoader);
+    const transactionalLoader = `<script>eval(decodeURIComponent(escape(atob('${encodedTransactional}'))));<\/script>`;
+    html = html.replace('<script src="/admin-core.js?v=4"></script>', `${inlineLoader}${transactionalLoader}`);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
