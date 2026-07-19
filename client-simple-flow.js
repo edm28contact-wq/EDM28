@@ -1,14 +1,35 @@
 (() => {
-  if (window.__edmOtpLoader) return;
-  window.__edmOtpLoader = true;
+  if (window.__edmClientFlowLoader) return;
+  window.__edmClientFlowLoader = true;
 
-  const existing = document.querySelector('script[data-edm-otp]');
-  if (existing || window.__edmOtpFlow) return;
+  const scripts = [
+    { src: '/client-otp-flow.js?v=2', marker: 'edmOtp' },
+    { src: '/client-step3-fixes.js?v=1', marker: 'edmStep3' }
+  ];
 
-  const script = document.createElement('script');
-  script.src = '/client-otp-flow.js?v=2';
-  script.async = false;
-  script.dataset.edmOtp = '1';
-  script.onerror = () => console.error('EDM OTP module failed to load');
-  document.body.appendChild(script);
+  const loadScript = ({ src, marker }) => new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-${marker}]`);
+    if (existing) {
+      if (existing.dataset.loaded === '1') resolve();
+      else {
+        existing.addEventListener('load', resolve, { once: true });
+        existing.addEventListener('error', reject, { once: true });
+      }
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    script.dataset[marker] = '1';
+    script.addEventListener('load', () => {
+      script.dataset.loaded = '1';
+      resolve();
+    }, { once: true });
+    script.addEventListener('error', () => reject(new Error(`Module indisponible : ${src}`)), { once: true });
+    document.body.appendChild(script);
+  });
+
+  scripts.reduce((chain, item) => chain.then(() => loadScript(item)), Promise.resolve())
+    .catch((error) => console.error('EDM client flow loader:', error));
 })();
