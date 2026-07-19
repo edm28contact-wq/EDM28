@@ -9,7 +9,7 @@
       "includeFiles": "index.html"
     },
     "api/admin.js": {
-      "includeFiles": ["admin.html", "admin-core.js"]
+      "includeFiles": "{admin.html,admin-core.js}"
     }
   },
   "headers": [
@@ -43,7 +43,11 @@
       "dest": "/api/app"
     },
     {
-      "src": "/admin(?:\.html)?",
+      "src": "/admin",
+      "dest": "/api/admin"
+    },
+    {
+      "src": "/admin.html",
       "dest": "/api/admin"
     },
     {
