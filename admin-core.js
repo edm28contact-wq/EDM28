@@ -25,6 +25,7 @@
     page(id) {
       document.querySelectorAll('.page').forEach((node) => node.classList.toggle('active', node.id === id));
       document.querySelectorAll('[data-page]').forEach((node) => node.classList.toggle('active', node.dataset.page === id));
+      if (id === 'requests') window.EDMAdminRequests?.load().catch((error) => this.status('requestStatus', error.message || 'Demandes indisponibles.', true));
       if (id === 'accounting') window.EDMAdminAccounting?.load();
     },
     async requireAdmin(user) {
@@ -57,6 +58,7 @@
       this.$('loginPanel').classList.add('hidden');
       this.$('dashboard').classList.remove('hidden');
       const modules = [
+        ['Demandes', () => window.EDMAdminRequests?.load()],
         ['Clients', () => window.EDMAdminClients?.load()],
         ['Services', () => window.EDMAdminServices?.load()],
         ['Documents', () => window.EDMAdminDocs?.load()],
@@ -92,6 +94,7 @@
 
   async function boot() {
     document.querySelectorAll('[data-page]').forEach((button) => button.addEventListener('click', () => app.page(button.dataset.page)));
+    app.$('requestRefresh')?.addEventListener('click', () => window.EDMAdminRequests?.load().catch((error) => app.status('requestStatus', error.message || 'Actualisation impossible.', true)));
     app.$('loginBtn').addEventListener('click', login);
     app.$('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); location.reload(); });
     const { data } = await client.auth.getSession();
