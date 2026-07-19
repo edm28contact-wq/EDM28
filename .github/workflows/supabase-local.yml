@@ -39,11 +39,18 @@ jobs:
             supabase init
           fi
 
-      - name: Install CI schema baseline
+      - name: Prepare reproducible candidate migration chain
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p /tmp/edm28-legacy-migrations
+          mv supabase/migrations/*.sql /tmp/edm28-legacy-migrations/
           cp supabase/ci/baseline.sql supabase/migrations/20260711000000_ci_baseline.sql
+          cp /tmp/edm28-legacy-migrations/20260719190000_admin_transactional_workflow.sql supabase/migrations/
+          cp /tmp/edm28-legacy-migrations/20260719201000_consolidate_permissive_rls_policies.sql supabase/migrations/
+          cp /tmp/edm28-legacy-migrations/20260719202000_add_missing_foreign_key_indexes.sql supabase/migrations/
+          printf 'Candidate migration chain:\n'
+          find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' | sort
 
       - name: Start fresh local Supabase stack
         shell: bash
