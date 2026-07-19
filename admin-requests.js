@@ -13,6 +13,7 @@
 
   async function createQuote(request) {
     if (request.status !== 'reviewed') throw new Error('La demande doit être étudiée avant création du devis.');
+    const externalId = `request/${request.id}`;
     const { data: existing, error: lookupError } = await app().db.from('quotes').select('id').eq('service_request_id', request.id).limit(1);
     if (lookupError) throw lookupError;
     let quoteId = existing?.[0]?.id;
@@ -26,10 +27,11 @@
         user_id: request.user_id,
         vehicle_id: request.vehicle_id,
         service_request_id: request.id,
+        external_quote_id: externalId,
         status: 'draft',
         title: 'Devis EDM AUTO',
         description: `${description}${request.notes ? `\nNotes client : ${request.notes}` : ''}`,
-        subtotal: max,
+        subtotal: max + discount,
         discount,
         total: max,
         visible_to_client: false
