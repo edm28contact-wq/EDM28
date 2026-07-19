@@ -1,0 +1,114 @@
+name: Browser Smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/edm28-final-system
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start static server
+        run: |
+          python3 -m http.server 4173 > /tmp/edm28-http.log 2>&1 &
+          echo $! > /tmp/edm28-http.pid
+          for attempt in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/edm28-http.log
+          exit 1
+
+      - name: Run desktop and mobile smoke tests
+        run: |
+          mkdir -p browser-artifacts
+          cat > /tmp/browser-smoke.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs/promises';
+
+          const browser = await chromium.launch();
+          const cases = [
+            { name: 'public-desktop', path: '/', viewport: { width: 1440, height: 1000 }, title: 'EDM AUTO' },
+            { name: 'public-mobile', path: '/', viewport: { width: 390, height: 844 }, title: 'EDM AUTO' },
+            { name: 'admin-desktop', path: '/admin.html', viewport: { width: 1440, height: 1000 }, title: 'Gestion EDM28' },
+            { name: 'admin-mobile', path: '/admin.html', viewport: { width: 390, height: 844 }, title: 'Gestion EDM28' }
+          ];
+
+          const report = [];
+          let failed = false;
+
+          for (const test of cases) {
+            const page = await browser.newPage({ viewport: test.viewport });
+            const errors = [];
+            page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
+            page.on('console', message => {
+              if (message.type() === 'error') errors.push(`console: ${message.text()}`);
+            });
+
+            const response = await page.goto(`http://127.0.0.1:4173${test.path}`, {
+              waitUntil: 'domcontentloaded',
+              timeout: 30000
+            });
+            await page.waitForTimeout(1500);
+
+            const title = await page.title();
+            const bodyVisible = await page.locator('body').isVisible();
+            const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
+            const status = response?.status() ?? 0;
+
+            await page.screenshot({
+              path: `browser-artifacts/${test.name}.png`,
+              fullPage: true
+            });
+
+            const checks = {
+              status,
+              title,
+              expectedTitle: test.title,
+              bodyVisible,
+              horizontalOverflow,
+              errors
+            };
+            report.push({ name: test.name, ...checks });
+
+            if (status !== 200 || title !== test.title || !bodyVisible || horizontalOverflow || errors.length > 0) {
+              failed = true;
+            }
+            await page.close();
+          }
+
+          await browser.close();
+          await fs.writeFile('browser-artifacts/report.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          if (failed) process.exit(1);
+          EOF
+          node /tmp/browser-smoke.mjs
+
+      - name: Upload browser report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-report
+          path: browser-artifacts
+          if-no-files-found: error
