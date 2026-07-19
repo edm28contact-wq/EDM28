@@ -95,15 +95,24 @@
     setMessage('Déconnecté.');
   }
 
+  function removeLegacyPasswordUi() {
+    $('password')?.closest('label')?.remove();
+    ['btnSignUp', 'btnSignIn', 'btnSignOut', 'btnSaveAccount', 'btnGuest'].forEach((id) => $(id)?.remove());
+    window.signUpWithSupabase = undefined;
+    window.signInWithSupabase = undefined;
+    window.saveAccount = undefined;
+  }
+
   async function install() {
     if (!(await waitForApp()) || window.__edmOtpFlow) return;
     window.__edmOtpFlow = true;
+    removeLegacyPasswordUi();
 
-    $('password')?.closest('label')?.classList.add('hidden');
     const row = $('clientCard').querySelector('.btn-row');
-    row.innerHTML = `
+    row.replaceChildren();
+    row.insertAdjacentHTML('beforeend', `
       <button class="btn btn-primary" id="btnOtpSend" type="button">Recevoir mon code</button>
-      <button class="btn btn-ghost hidden" id="btnOtpSignOut" type="button">Se déconnecter</button>`;
+      <button class="btn btn-ghost hidden" id="btnOtpSignOut" type="button">Se déconnecter</button>`);
     row.insertAdjacentHTML('afterend', `
       <div id="otpPanel" class="card hidden" style="margin-top:14px">
         <h3>Code de vérification</h3>
@@ -131,6 +140,8 @@
       $('btnOtpSend').classList.add('hidden');
       $('btnOtpSignOut').classList.remove('hidden');
       setMessage('Session active.');
+    } else {
+      setMessage('Connexion sécurisée par code email. Aucun mot de passe requis.');
     }
   }
 
