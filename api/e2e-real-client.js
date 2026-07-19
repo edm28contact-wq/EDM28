@@ -3,6 +3,7 @@ import submitRequest from './submit-request-v2.js';
 const URL = process.env.SUPABASE_URL;
 const ANON = process.env.SUPABASE_ANON_KEY;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ONE_TIME_KEY = 'edm28-e2e-7f4c9a21';
 
 function json(res, status, body) {
   res.status(status).setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -28,11 +29,7 @@ async function request(path, options = {}) {
 async function callSubmit(token, requestId) {
   let statusCode = 200;
   let payload = null;
-  const req = {
-    method: 'POST',
-    headers: { authorization: `Bearer ${token}` },
-    body: { requestId }
-  };
+  const req = { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: { requestId } };
   const res = {
     status(code) { statusCode = code; return this; },
     setHeader() { return this; },
@@ -43,9 +40,9 @@ async function callSubmit(token, requestId) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return json(res, 405, { success: false });
+  if (req.method !== 'GET') return json(res, 405, { success: false });
   if (process.env.VERCEL_ENV === 'production') return json(res, 403, { success: false, error: 'Preview uniquement.' });
-  if (req.headers['x-e2e-key'] !== process.env.E2E_TEST_KEY) return json(res, 401, { success: false, error: 'Clé de test invalide.' });
+  if (req.query?.key !== ONE_TIME_KEY) return json(res, 401, { success: false, error: 'Clé de test invalide.' });
   if (!URL || !ANON || !SERVICE) return json(res, 503, { success: false, error: 'Configuration Supabase absente.' });
 
   const stamp = Date.now();
@@ -58,12 +55,7 @@ export default async function handler(req, res) {
   try {
     const created = await request('/auth/v1/admin/users', {
       method: 'POST',
-      body: {
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { first_name: 'Client', last_name: 'Test Reel', phone: '0600000000' }
-      }
+      body: { email, password, email_confirm: true, user_metadata: { first_name: 'Client', last_name: 'Test Reel', phone: '0600000000' } }
     });
     userId = created.id;
 
@@ -93,7 +85,6 @@ export default async function handler(req, res) {
 
     const result = await callSubmit(token, requestId);
     if (result.statusCode !== 200 || result.payload?.success !== true) throw new Error(`Envoi échoué: ${JSON.stringify(result)}`);
-
     return json(res, 200, { success: true, emailId: result.payload.emailId, requestId, testEmail: email });
   } catch (error) {
     return json(res, 500, { success: false, error: error.message });
