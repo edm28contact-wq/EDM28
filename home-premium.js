@@ -1,4 +1,5 @@
-(function () {
+(() => {
+  if (document.getElementById('edm-premium-home')) return;
   const style = document.createElement('style');
   style.id = 'edm-premium-home';
   style.textContent = `
@@ -8,6 +9,10 @@
     .premium-head small{color:#d99162;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
     .premium-head h2{margin-top:8px;color:#fff!important;font-size:clamp(1.8rem,3vw,2.7rem)}
     .premium-head p{max-width:760px;margin:10px auto 0;color:#bdb7b1!important}
-
     .premium-services{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-   
+    .premium-services>*{min-width:0}
+    @media(max-width:980px){.premium-services{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:560px){.premium-services{grid-template-columns:1fr}.premium-block{padding:18px;border-radius:20px}}
+  `;
+  document.head.appendChild(style);
+})();
