@@ -23,4 +23,55 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: 2.109.1
+          github-token: ${{ github.token }}
+
+      - name: Initialize local Supabase configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f supabase/config.toml ]; then
+            supabase init
+          fi
+
+      - name: Install CI schema baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp supabase/ci/baseline.sql supabase/migrations/20260711000000_ci_baseline.sql
+
+      - name: Start fresh local Supabase stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p supabase-ci-artifacts
+          supabase start 2>&1 | tee supabase-ci-artifacts/start.log
+
+      - name: Rebuild the database from migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase db reset --local --no-seed 2>&1 | tee supabase-ci-artifacts/reset.log
+
+      - name: Show migration status
+        if: always()
+        shell: bash
+        run: |
+          supabase migration list --local 2>&1 | tee supabase-ci-artifacts/migrations.log || true
+
+      - name: Upload Supabase logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-local-report
+          path: supabase-ci-artifacts
+          if-no-files-found: warn
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup || true
