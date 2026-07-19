@@ -1,6 +1,5 @@
 (() => {
   const STORAGE_KEY = 'edm28_pending_request_v2';
-
   const waitForApp = async () => {
     for (let i = 0; i < 120; i += 1) {
       if (typeof supabaseClient !== 'undefined' && typeof calculateTotals === 'function' && typeof getVehicle === 'function' && document.getElementById('btnSubmit')) return true;
@@ -8,50 +7,39 @@
     }
     return false;
   };
+  const readPending = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (_) { return null; } };
+  const writePending = (value) => value ? localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) : localStorage.removeItem(STORAGE_KEY);
+  const intOrNull = (value) => { const number = Number.parseInt(String(value || '').replace(/\D/g, ''), 10); return Number.isFinite(number) ? number : null; };
+  const field = (id) => document.getElementById(id)?.value?.trim() || '';
 
-  const readPending = () => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); }
-    catch (_) { return null; }
-  };
-
-  const writePending = (value) => {
-    if (value) localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-    else localStorage.removeItem(STORAGE_KEY);
-  };
-
-  const intOrNull = (value) => {
-    const number = Number.parseInt(String(value || '').replace(/\D/g, ''), 10);
-    return Number.isFinite(number) ? number : null;
-  };
-
-  const currentSession = async () => {
+  async function currentSession() {
     const { data, error } = await supabaseClient.auth.getSession();
     if (error) throw error;
     if (!data?.session?.user) throw new Error('Connexion requise.');
     return data.session;
-  };
+  }
 
   async function syncProfile(session) {
-    const client = typeof getClient === 'function' ? getClient() : (typeof state !== 'undefined' ? state.user || {} : {});
-    const firstName = String(client.firstName || '').trim();
-    const lastName = String(client.lastName || '').trim();
-    const phone = String(client.phone || '').trim();
-    const email = String(session.user.email || client.email || '').trim().toLowerCase();
+    const current = typeof state !== 'undefined' ? state.user || {} : {};
+    const firstName = field('firstName') || current.firstName || session.user.user_metadata?.first_name || '';
+    const lastName = field('lastName') || current.lastName || session.user.user_metadata?.last_name || '';
+    const phone = field('phone') || current.phone || session.user.user_metadata?.phone || '';
+    const email = String(session.user.email || field('email') || current.email || '').trim().toLowerCase();
     if (!firstName || !lastName || !phone) throw new Error('Complétez prénom, nom et téléphone.');
 
-    const { error } = await supabaseClient.from('profiles').upsert({
-      id: session.user.id,
-      first_name: firstName,
-      last_name: lastName,
-      phone,
-      email
-    }, { onConflict: 'id' });
+    const { data, error } = await supabaseClient.from('profiles')
+      .update({ first_name: firstName, last_name: lastName, phone })
+      .eq('id', session.user.id)
+      .select('id')
+      .maybeSingle();
     if (error) throw error;
+    if (!data?.id) throw new Error('Profil client introuvable. Reconnectez-vous puis réessayez.');
 
     if (typeof state !== 'undefined') {
       state.user = { id: session.user.id, firstName, lastName, phone, email };
       if (typeof saveState === 'function') saveState();
     }
+    return { firstName, lastName, phone, email };
   }
 
   async function saveVehicle(session) {
@@ -85,14 +73,12 @@
       refuse_control: payload.refuseControl,
       submitted_at: null
     };
-
     if (pending?.id && pending.userId === session.user.id) {
       const { data, error } = await supabaseClient.from('service_requests').update(row).eq('id', pending.id).eq('user_id', session.user.id).eq('status', 'draft').select('id').maybeSingle();
       if (error) throw error;
       if (data?.id) return data;
       writePending(null);
     }
-
     const { data, error } = await supabaseClient.from('service_requests').insert(row).select('id').single();
     if (error) throw error;
     writePending({ id: data.id, userId: session.user.id, createdAt: Date.now() });
@@ -106,13 +92,12 @@
     const status = document.getElementById('submitStatus');
     setButtonBusy(button, true, 'Envoi...');
     status.innerHTML = '<div class="notice">Enregistrement et envoi vers EDM AUTO...</div>';
-
     try {
       const session = await currentSession();
-      await syncProfile(session);
+      const client = await syncProfile(session);
       const vehicle = await saveVehicle(session);
       const payload = {
-        client: typeof state !== 'undefined' ? state.user || {} : {},
+        client,
         vehicle: getVehicle(),
         services: totals.selected,
         selectedBasket,
@@ -152,9 +137,7 @@
     const button = oldButton.cloneNode(true);
     oldButton.replaceWith(button);
     button.addEventListener('click', submitRequest);
-    supabaseClient.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') writePending(null);
-    });
+    supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') writePending(null); });
   }
 
   install().catch((error) => console.error('EDM safe submit:', error));
