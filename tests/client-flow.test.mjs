@@ -46,7 +46,22 @@ test('OTP flow is passwordless and validates six digits', async () => {
   assert.match(source, /shouldCreateUser:\s*true/);
   assert.match(source, /verifyOtp\s*\(\{\s*email,\s*token,\s*type:\s*'email'/s);
   assert.match(source, /slice\(0,\s*6\)/);
-  assert.match(source, /password.*classList\.add\('hidden'\)/s);
+  assert.match(source, /password.*closest\('label'\).*remove\(\)/s);
+  assert.match(source, /removeLegacyPasswordUi\(\)/);
+});
+
+test('legacy password authentication cannot be reintroduced', async () => {
+  const [auth, otp, app, build] = await Promise.all([
+    read('auth.js'),
+    read('client-otp-flow.js'),
+    read('api/app.js'),
+    read('scripts/build-static.mjs')
+  ]);
+  assert.doesNotMatch(auth, /signInWithPassword|auth\.signUp|prompt\([^)]*mot de passe/i);
+  assert.match(otp, /window\.signUpWithSupabase\s*=\s*undefined/);
+  assert.match(otp, /window\.signInWithSupabase\s*=\s*undefined/);
+  assert.match(app, /client-simple-flow\.js/);
+  assert.match(build, /client-simple-flow\.js/);
 });
 
 test('combo discount only groups compatible categories', async () => {
