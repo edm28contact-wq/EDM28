@@ -19,7 +19,7 @@ permissions:
 jobs:
   migrations:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -38,15 +38,25 @@ jobs:
             supabase init
           fi
 
-      - name: Apply migrations to a fresh local database
-        run: supabase db start
+      - name: Start fresh local Supabase stack
+        run: |
+          mkdir -p supabase-ci-artifacts
+          supabase start 2>&1 | tee supabase-ci-artifacts/start.log
 
       - name: Rebuild the database from migrations
-        run: supabase db reset --local --no-seed
+        run: supabase db reset --local --no-seed 2>&1 | tee supabase-ci-artifacts/reset.log
 
       - name: Show migration status
         if: always()
-        run: supabase migration list --local || true
+        run: supabase migration list --local 2>&1 | tee supabase-ci-artifacts/migrations.log || true
+
+      - name: Upload Supabase logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-local-report
+          path: supabase-ci-artifacts
+          if-no-files-found: warn
 
       - name: Stop local Supabase
         if: always()
