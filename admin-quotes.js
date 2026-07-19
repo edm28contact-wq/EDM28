@@ -11,16 +11,19 @@
     if (publish && (!validUntil || validUntil < currentDate())) throw new Error('Une date de validité future est obligatoire.');
     const patch = { quote_number: quoteNumber, total, valid_until: validUntil };
     if (publish) Object.assign(patch, { status: 'sent', visible_to_client: true });
-    const query = app().db.from('quotes').update(patch).eq('id', id);
-    if (publish) query.eq('status', 'draft');
-    const { data, error } = await query.select('id');
+    const { data, error } = await app().db.from('quotes').update(patch).eq('id', id).eq('status', 'draft').select('id');
     if (error) throw error;
-    if (!data?.length) throw new Error('Le devis a déjà changé de statut.');
+    if (!data?.length) throw new Error('Seul un brouillon peut être modifié ou publié.');
   }
 
   function render(rows) {
     const host = app().$('quoteList');
-    host.innerHTML = rows.length ? rows.map((q) => `<article class="card" data-quote-id="${q.id}" style="margin:12px 0"><div class="top"><div><span class="pill">${app().esc(q.status)}</span><h3>${app().esc(q.title || 'Devis EDM AUTO')}</h3></div><strong>${app().money(q.total)}</strong></div><p>${app().esc(q.profiles?.email || 'Client')} · ${app().esc(q.vehicles?.plate || 'Véhicule')}</p><label>Numéro<input data-field="number" value="${app().esc(q.quote_number || '')}"></label><label>Montant TTC<input data-field="total" type="number" min="0" step="0.01" value="${Number(q.total || 0)}"></label><label>Valable jusqu’au<input data-field="validUntil" type="date" value="${app().esc(q.valid_until || '')}"></label><div class="toolbar"><button class="btn ghost" data-save="${q.id}">Enregistrer</button>${q.status === 'draft' ? `<button class="btn primary" data-publish="${q.id}">Publier au client</button>` : ''}</div></article>`).join('') : '<p class="muted">Aucun devis.</p>';
+    host.innerHTML = rows.length ? rows.map((q) => {
+      const draft = q.status === 'draft';
+      const locked = draft ? '' : ' disabled';
+      const actions = draft ? `<div class="toolbar"><button class="btn ghost" data-save="${q.id}">Enregistrer</button><button class="btn primary" data-publish="${q.id}">Publier au client</button></div>` : '<p class="muted">Devis verrouillé après publication.</p>';
+      return `<article class="card" data-quote-id="${q.id}" style="margin:12px 0"><div class="top"><div><span class="pill">${app().esc(q.status)}</span><h3>${app().esc(q.title || 'Devis EDM AUTO')}</h3></div><strong>${app().money(q.total)}</strong></div><p>${app().esc(q.profiles?.email || 'Client')} · ${app().esc(q.vehicles?.plate || 'Véhicule')}</p><label>Numéro<input data-field="number" value="${app().esc(q.quote_number || '')}"${locked}></label><label>Montant TTC<input data-field="total" type="number" min="0" step="0.01" value="${Number(q.total || 0)}"${locked}></label><label>Valable jusqu’au<input data-field="validUntil" type="date" value="${app().esc(q.valid_until || '')}"${locked}></label>${actions}</article>`;
+    }).join('') : '<p class="muted">Aucun devis.</p>';
     host.querySelectorAll('[data-save],[data-publish]').forEach((button) => button.onclick = async () => {
       button.disabled = true;
       try { await save(button.dataset.save || button.dataset.publish, Boolean(button.dataset.publish)); app().status('quoteStatus', button.dataset.publish ? 'Devis publié au client.' : 'Devis enregistré.'); await load(); await app().overview(); }
