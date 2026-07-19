@@ -5,9 +5,13 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-test('admin access requires an authenticated admin profile', async () => {
+test('admin access is passwordless and requires an authenticated admin profile', async () => {
   const source = await read('admin-core.js');
-  assert.match(source, /signInWithPassword\s*\(/);
+  assert.match(source, /signInWithOtp\s*\(/);
+  assert.match(source, /shouldCreateUser:\s*false/);
+  assert.match(source, /verifyOtp\s*\(\{\s*email,\s*token,\s*type:\s*'email'/s);
+  assert.doesNotMatch(source, /signInWithPassword\s*\(/);
+  assert.match(source, /adminPassword[\s\S]*closest\('label'\)\?\.remove\(\)/);
   assert.match(source, /from\('profiles'\)\.select\('\*'\)\.eq\('id', user\.id\)\.single\(\)/);
   assert.match(source, /data\.role !== 'admin'/);
   assert.match(source, /await client\.auth\.signOut\(\)/);
