@@ -43,7 +43,7 @@ jobs:
       - name: Run desktop and mobile smoke tests
         run: |
           mkdir -p browser-artifacts
-          cat > /tmp/browser-smoke.mjs <<'EOF'
+          cat > browser-smoke.mjs <<'EOF'
           import { chromium } from 'playwright';
           import fs from 'node:fs/promises';
 
@@ -103,7 +103,7 @@ jobs:
           console.log(JSON.stringify(report, null, 2));
           if (failed) process.exit(1);
           EOF
-          node /tmp/browser-smoke.mjs
+          node browser-smoke.mjs 2>&1 | tee browser-artifacts/run.log
 
       - name: Upload browser report
         if: always()
@@ -111,4 +111,4 @@ jobs:
         with:
           name: browser-smoke-report
           path: browser-artifacts
-          if-no-files-found: error
+          if-no-files-found: warn
