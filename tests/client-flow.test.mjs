@@ -109,6 +109,10 @@ test('submit API authenticates, canonicalizes and is idempotent', async () => {
   assert.match(source, /Idempotency-Key': `service-request\/\$\{request\.id\}`/);
   assert.match(source, /status:\s*'submitted'/);
   assert.match(source, /required\.some\(\(name\) => !process\.env\[name\]\)/);
+  assert.match(source, /submitted_at,created_at/);
+  assert.match(source, /const receivedAt = request\.created_at \|\| request\.submitted_at/);
+  assert.match(source, /`Recue le : \$\{receivedAt\}`/);
+  assert.doesNotMatch(source, /`Recue le : \$\{new Date\(\)\.toISOString\(\)\}`/);
 });
 
 test('Preview handlers inject only public Supabase config before response', async () => {
