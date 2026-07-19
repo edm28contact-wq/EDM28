@@ -41,7 +41,29 @@
     render(data || []);
   }
 
+  function bootstrapOperations() {
+    const nav = document.querySelector('.nav');
+    const dashboard = document.getElementById('dashboard');
+    if (!nav || !dashboard || document.getElementById('operations')) return;
+    const button = document.createElement('button');
+    button.className = 'btn ghost';
+    button.dataset.page = 'operations';
+    button.textContent = 'Atelier';
+    nav.insertBefore(button, nav.querySelector('[data-page="clients"]'));
+    const section = document.createElement('section');
+    section.id = 'operations';
+    section.className = 'page';
+    section.innerHTML = '<div class="card"><div class="top"><div><h2>Préparation atelier</h2><p class="muted">Planifier les devis acceptés et préparer l’ordre de réparation associé.</p></div><button id="operationRefresh" class="btn ghost">Actualiser</button></div><div id="operationStatus" class="status hidden"></div><div id="operationList"></div></div>';
+    dashboard.appendChild(section);
+    button.addEventListener('click', () => app().page('operations'));
+    const script = document.createElement('script');
+    script.src = '/admin-operations.js?v=2';
+    script.async = false;
+    document.body.appendChild(script);
+  }
+
   function bind() {
+    bootstrapOperations();
     document.querySelector('[data-page="quotes"]')?.addEventListener('click', () => load().catch((error) => app().status('quoteStatus', error.message || 'Devis indisponibles.', true)));
     document.getElementById('quoteRefresh')?.addEventListener('click', () => load().catch((error) => app().status('quoteStatus', error.message || 'Actualisation impossible.', true)));
   }
