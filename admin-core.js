@@ -76,12 +76,39 @@
     }
   };
 
-  async function login() {
-    app.status('loginStatus', 'Connexion…');
-    const { data, error } = await client.auth.signInWithPassword({
-      email: app.$('adminEmail').value.trim(),
-      password: app.$('adminPassword').value
+  function installOtpUi() {
+    const password = app.$('adminPassword');
+    password?.closest('label')?.remove();
+    const legacyButton = app.$('loginBtn');
+    if (!legacyButton) return;
+    legacyButton.outerHTML = `
+      <button id="adminOtpSend" class="btn primary" type="button">Recevoir un code</button>
+      <div id="adminOtpPanel" class="hidden" style="margin-top:12px">
+        <label>Code à 6 chiffres<input id="adminOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+        <button id="adminOtpVerify" class="btn primary" type="button" style="margin-top:10px">Valider le code</button>
+      </div>`;
+  }
+
+  async function sendOtp() {
+    const email = app.$('adminEmail').value.trim().toLowerCase();
+    if (!email) return app.status('loginStatus', 'Adresse email obligatoire.', true);
+    app.status('loginStatus', 'Envoi du code…');
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false }
     });
+    if (error) return app.status('loginStatus', error.message, true);
+    app.$('adminOtpPanel').classList.remove('hidden');
+    app.$('adminOtpCode').focus();
+    app.status('loginStatus', 'Code envoyé. Saisissez les 6 chiffres reçus.');
+  }
+
+  async function verifyOtp() {
+    const email = app.$('adminEmail').value.trim().toLowerCase();
+    const token = app.$('adminOtpCode').value.replace(/\D/g, '').slice(0, 6);
+    if (!email || token.length !== 6) return app.status('loginStatus', 'Code à 6 chiffres obligatoire.', true);
+    app.status('loginStatus', 'Vérification…');
+    const { data, error } = await client.auth.verifyOtp({ email, token, type: 'email' });
     if (error) return app.status('loginStatus', error.message, true);
     try {
       await app.requireAdmin(data.user);
@@ -93,14 +120,18 @@
   }
 
   async function boot() {
+    installOtpUi();
     document.querySelectorAll('[data-page]').forEach((button) => button.addEventListener('click', () => app.page(button.dataset.page)));
     app.$('requestRefresh')?.addEventListener('click', () => window.EDMAdminRequests?.load().catch((error) => app.status('requestStatus', error.message || 'Actualisation impossible.', true)));
-    app.$('loginBtn').addEventListener('click', login);
+    app.$('adminOtpSend').addEventListener('click', sendOtp);
+    app.$('adminOtpVerify').addEventListener('click', verifyOtp);
+    app.$('adminOtpCode').addEventListener('input', (event) => { event.target.value = event.target.value.replace(/\D/g, '').slice(0, 6); });
+    app.$('adminOtpCode').addEventListener('keydown', (event) => { if (event.key === 'Enter') verifyOtp(); });
     app.$('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); location.reload(); });
     const { data } = await client.auth.getSession();
     if (data?.session?.user) {
       try { await app.requireAdmin(data.session.user); await app.open(); }
-      catch (error) { app.status('loginStatus', error.message, true); }
+      catch (error) { await client.auth.signOut(); app.status('loginStatus', error.message, true); }
     }
   }
   window.addEventListener('DOMContentLoaded', () => boot().catch((error) => app.status('loginStatus', error.message, true)));
