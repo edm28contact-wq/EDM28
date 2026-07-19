@@ -41,31 +41,35 @@
     render(data || []);
   }
 
-  function addModule({ id, label, title, description, refreshId, statusId, listId, scriptSrc, before }) {
+  function appendScripts(sources) {
+    return sources.reduce((chain, src) => chain.then(() => new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src^="${src.split('?')[0]}"]`)) return resolve();
+      const script = document.createElement('script');
+      script.src = src; script.async = false; script.onload = resolve; script.onerror = reject;
+      document.body.appendChild(script);
+    })), Promise.resolve());
+  }
+
+  function addModule({ id, label, title, description, refreshId, statusId, listId, scripts, before }) {
     const nav = document.querySelector('.nav');
     const dashboard = document.getElementById('dashboard');
     if (!nav || !dashboard || document.getElementById(id)) return;
     const button = document.createElement('button');
-    button.className = 'btn ghost';
-    button.dataset.page = id;
-    button.textContent = label;
+    button.className = 'btn ghost'; button.dataset.page = id; button.textContent = label;
     nav.insertBefore(button, nav.querySelector(`[data-page="${before}"]`));
     const section = document.createElement('section');
-    section.id = id;
-    section.className = 'page';
+    section.id = id; section.className = 'page';
     section.innerHTML = `<div class="card"><div class="top"><div><h2>${title}</h2><p class="muted">${description}</p></div><button id="${refreshId}" class="btn ghost">Actualiser</button></div><div id="${statusId}" class="status hidden"></div><div id="${listId}"></div></div>`;
     dashboard.appendChild(section);
     button.addEventListener('click', () => app().page(id));
-    const script = document.createElement('script');
-    script.src = scriptSrc;
-    script.async = false;
-    document.body.appendChild(script);
+    appendScripts(scripts).catch((e) => app().status(statusId, e.message || 'Module indisponible.', true));
   }
 
   function bootstrapModules() {
-    addModule({ id: 'operations', label: 'Atelier', title: 'Préparation atelier', description: 'Planifier les devis acceptés et préparer l’ordre de réparation associé.', refreshId: 'operationRefresh', statusId: 'operationStatus', listId: 'operationList', scriptSrc: '/admin-operations.js?v=2', before: 'clients' });
-    addModule({ id: 'finalization', label: 'Clôture', title: 'Clôture et facturation', description: 'Clôturer les interventions terminées et générer une facture brouillon contrôlée.', refreshId: 'finalizationRefresh', statusId: 'finalizationStatus', listId: 'finalizationList', scriptSrc: '/admin-finalization.js?v=1', before: 'clients' });
-    addModule({ id: 'invoice-actions', label: 'Encaissement', title: 'Émission et règlements', description: 'Émettre les factures brouillon puis enregistrer les paiements reçus.', refreshId: 'invoiceActionRefresh', statusId: 'invoiceActionStatus', listId: 'invoiceActionList', scriptSrc: '/admin-invoice-actions.js?v=1', before: 'clients' });
+    addModule({ id: 'operations', label: 'Atelier', title: 'Préparation atelier', description: 'Planifier les devis acceptés et préparer l’ordre de réparation associé.', refreshId: 'operationRefresh', statusId: 'operationStatus', listId: 'operationList', scripts: ['/admin-operations.js?v=2'], before: 'clients' });
+    addModule({ id: 'finalization', label: 'Clôture', title: 'Clôture et facturation', description: 'Clôturer les interventions terminées et générer une facture brouillon contrôlée.', refreshId: 'finalizationRefresh', statusId: 'finalizationStatus', listId: 'finalizationList', scripts: ['/admin-finalization.js?v=1'], before: 'clients' });
+    addModule({ id: 'invoice-actions', label: 'Encaissement', title: 'Émission et règlements', description: 'Émettre les factures brouillon puis enregistrer les paiements reçus.', refreshId: 'invoiceActionRefresh', statusId: 'invoiceActionStatus', listId: 'invoiceActionList', scripts: ['/admin-invoice-actions.js?v=1'], before: 'clients' });
+    addModule({ id: 'document-pdf', label: 'PDF', title: 'Documents PDF', description: 'Générer et stocker les devis, ordres de réparation et factures dans le coffre privé.', refreshId: 'documentPdfRefresh', statusId: 'documentPdfStatus', listId: 'documentPdfList', scripts: ['/pdf-lite.js?v=1', '/admin-document-pdf.js?v=1'], before: 'clients' });
   }
 
   function bind() {
@@ -73,7 +77,6 @@
     document.querySelector('[data-page="quotes"]')?.addEventListener('click', () => load().catch((error) => app().status('quoteStatus', error.message || 'Devis indisponibles.', true)));
     document.getElementById('quoteRefresh')?.addEventListener('click', () => load().catch((error) => app().status('quoteStatus', error.message || 'Actualisation impossible.', true)));
   }
-
   window.EDMAdminQuotes = { load };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true }); else bind();
 })();
