@@ -23,3 +23,11 @@ test('admin route injects the transactional adapter without privileged keys', as
   assert.match(source, /encodedTransactional/);
   assert.doesNotMatch(source, /SERVICE_ROLE|service_role/);
 });
+
+test('Vercel packages every file required by the protected admin route', async () => {
+  const config = JSON.parse(await read('vercel.json'));
+  const included = config.functions?.['api/admin.js']?.includeFiles || '';
+  assert.match(included, /admin\.html/);
+  assert.match(included, /admin-core\.js/);
+  assert.match(included, /admin-transactional\.js/);
+});
