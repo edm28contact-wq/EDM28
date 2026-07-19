@@ -11,6 +11,20 @@ export default function handler(req, res) {
 
   try {
     let html = readFileSync(INDEX_PATH, 'utf8');
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseKey) {
+      html = html
+        .replace(
+          /const SUPABASE_URL = "[^"]+";/,
+          `const SUPABASE_URL = ${JSON.stringify(supabaseUrl)};`
+        )
+        .replace(
+          /const SUPABASE_ANON_KEY = "[^"]+";/,
+          `const SUPABASE_ANON_KEY = ${JSON.stringify(supabaseKey)};`
+        );
+    }
 
     html = html
       .replace('<title>EDM AUTO</title>', '<title>EDM · Spécialiste du freinage</title>')
@@ -33,19 +47,5 @@ export default function handler(req, res) {
   } catch (error) {
     console.error('app loader error', error);
     return res.status(500).send('<h1>EDM</h1><p>Application temporairement indisponible.</p>');
-    const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
-if (supabaseUrl && supabaseKey) {
-  html = html
-    .replace(
-      /const SUPABASE_URL = "[^"]+";/,
-      `const SUPABASE_URL = ${JSON.stringify(supabaseUrl)};`
-    )
-    .replace(
-      /const SUPABASE_ANON_KEY = "[^"]+";/,
-      `const SUPABASE_ANON_KEY = ${JSON.stringify(supabaseKey)};`
-    );
-}
   }
 }
