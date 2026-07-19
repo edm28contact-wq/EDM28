@@ -31,7 +31,7 @@ jobs:
           failed=0
           while IFS= read -r -d '' file; do
             echo "Checking $file" | tee -a syntax-report.txt
-            if ! node --experimental-default-type=module --check "$file" 2>&1 | tee -a syntax-report.txt; then
+            if ! node --check "$file" 2>&1 | tee -a syntax-report.txt; then
               failed=1
             fi
           done < <(find . -type f -name '*.js' -not -path './node_modules/*' -print0)
