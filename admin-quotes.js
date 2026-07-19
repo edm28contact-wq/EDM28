@@ -70,6 +70,7 @@
     addModule({ id: 'finalization', label: 'Clôture', title: 'Clôture et facturation', description: 'Clôturer les interventions terminées et générer une facture brouillon contrôlée.', refreshId: 'finalizationRefresh', statusId: 'finalizationStatus', listId: 'finalizationList', scripts: ['/admin-finalization.js?v=1'], before: 'clients' });
     addModule({ id: 'invoice-actions', label: 'Encaissement', title: 'Émission et règlements', description: 'Émettre les factures brouillon puis enregistrer les paiements reçus.', refreshId: 'invoiceActionRefresh', statusId: 'invoiceActionStatus', listId: 'invoiceActionList', scripts: ['/admin-invoice-actions.js?v=1'], before: 'clients' });
     addModule({ id: 'document-pdf', label: 'PDF', title: 'Documents PDF', description: 'Générer et stocker les devis, ordres de réparation et factures dans le coffre privé.', refreshId: 'documentPdfRefresh', statusId: 'documentPdfStatus', listId: 'documentPdfList', scripts: ['/pdf-lite.js?v=1', '/admin-document-pdf.js?v=1'], before: 'clients' });
+    addModule({ id: 'audit-log', label: 'Journal', title: 'Journal des opérations', description: 'Consulter les changements métier enregistrés automatiquement.', refreshId: 'auditLogRefresh', statusId: 'auditLogStatus', listId: 'auditLogList', scripts: ['/admin-audit-log.js?v=1'], before: 'clients' });
   }
 
   function bind() {
