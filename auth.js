@@ -39,8 +39,7 @@ async function hydrateUserFromSupabase(user) {
     email: user.email || ""
   };
 
-  const ids = ["firstName", "lastName", "phone", "email"];
-  ids.forEach((id) => {
+  ["firstName", "lastName", "phone", "email"].forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
     if (id === "firstName") input.value = state.user.firstName || "";
@@ -65,80 +64,21 @@ async function signOutFromSupabase() {
   setAuthStatus("Déconnecté.");
 }
 
-async function saveAccount(showToast = true) {
-  const client = typeof getClient === "function" ? getClient() : null;
-  if (!client?.firstName || !client?.lastName || !client?.phone || !client?.email) {
-    setAuthStatus("Complète prénom, nom, téléphone et email.", true);
-    return false;
-  }
-
-  const raw = window.prompt("Entre un mot de passe (min. 6 caractères). Si le compte existe déjà, ce mot de passe servira à te connecter.");
-  const password = (raw || "").trim();
-
-  if (!password || password.length < 6) {
-    setAuthStatus("Mot de passe minimum 6 caractères.", true);
-    return false;
-  }
-
-  const signIn = await supabaseClient.auth.signInWithPassword({
-    email: client.email,
-    password
-  });
-
-  if (!signIn.error && signIn.data?.user) {
-    await hydrateUserFromSupabase(signIn.data.user);
-    setAuthStatus("Connexion réussie.");
-    if (showToast && typeof toast === "function") toast("Connexion réussie.");
-    return true;
-  }
-
-  const signUp = await supabaseClient.auth.signUp({
-    email: client.email,
-    password,
-    options: {
-      data: {
-        first_name: client.firstName,
-        last_name: client.lastName,
-        phone: client.phone
-      }
-    }
-  });
-
-  if (signUp.error) {
-    setAuthStatus(signUp.error.message, true);
-    return false;
-  }
-
-  if (signUp.data?.user) {
-    state.user = { ...client, id: signUp.data.user.id };
-    if (typeof saveState === "function") saveState();
-    setAuthStatus("Compte créé. Vérifie ton email si une confirmation est demandée.");
-    if (showToast && typeof toast === "function") toast("Compte créé.");
-    return true;
-  }
-
-  setAuthStatus("Compte en attente de confirmation.");
-  return true;
-}
-
 async function bootstrapSupabaseAuth() {
   ensureAuthStatusNode();
 
-  const btnGuest = document.getElementById("btnGuest");
-  if (btnGuest) {
-    btnGuest.textContent = "Se déconnecter";
-    btnGuest.addEventListener("click", signOutFromSupabase);
-  }
+  const password = document.getElementById("password");
+  password?.closest("label")?.remove();
 
-  const btnSave = document.getElementById("btnSaveAccount");
-  if (btnSave) {
-    btnSave.textContent = "Créer / connecter mon compte";
-  }
+  const legacyButtons = ["btnSignUp", "btnSignIn", "btnSaveAccount", "btnGuest"];
+  legacyButtons.forEach((id) => document.getElementById(id)?.remove());
 
   const { data } = await supabaseClient.auth.getSession();
   if (data?.session?.user) {
     await hydrateUserFromSupabase(data.session.user);
     setAuthStatus("Session active.");
+  } else {
+    setAuthStatus("Connexion sécurisée par code email.");
   }
 
   supabaseClient.auth.onAuthStateChange(async (_event, session) => {
