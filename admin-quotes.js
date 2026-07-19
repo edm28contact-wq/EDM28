@@ -65,6 +65,7 @@
   function bootstrapModules() {
     addModule({ id: 'operations', label: 'Atelier', title: 'Préparation atelier', description: 'Planifier les devis acceptés et préparer l’ordre de réparation associé.', refreshId: 'operationRefresh', statusId: 'operationStatus', listId: 'operationList', scriptSrc: '/admin-operations.js?v=2', before: 'clients' });
     addModule({ id: 'finalization', label: 'Clôture', title: 'Clôture et facturation', description: 'Clôturer les interventions terminées et générer une facture brouillon contrôlée.', refreshId: 'finalizationRefresh', statusId: 'finalizationStatus', listId: 'finalizationList', scriptSrc: '/admin-finalization.js?v=1', before: 'clients' });
+    addModule({ id: 'invoice-actions', label: 'Encaissement', title: 'Émission et règlements', description: 'Émettre les factures brouillon puis enregistrer les paiements reçus.', refreshId: 'invoiceActionRefresh', statusId: 'invoiceActionStatus', listId: 'invoiceActionList', scriptSrc: '/admin-invoice-actions.js?v=1', before: 'clients' });
   }
 
   function bind() {
