@@ -6,6 +6,8 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   }[char]));
 
+  const appState = () => (typeof state !== 'undefined' && state ? state : null);
+
   async function renderSafeAccount() {
     const page = document.getElementById('account');
     const host = document.getElementById('accountPageContent');
@@ -16,6 +18,12 @@
     document.getElementById('sidebar')?.classList.remove('open');
 
     try {
+      if (typeof supabaseClient === 'undefined') {
+        host.innerHTML = '<div class="notice">Chargement du compte...</div>';
+        setTimeout(renderSafeAccount, 150);
+        return;
+      }
+
       const { data, error } = await supabaseClient.auth.getSession();
       if (error) throw error;
       const user = data?.session?.user;
@@ -31,10 +39,11 @@
         if (!result.error) profile = result.data;
       } catch (_) {}
 
-      const firstName = profile?.first_name || user.user_metadata?.first_name || state?.user?.firstName || '';
-      const lastName = profile?.last_name || user.user_metadata?.last_name || state?.user?.lastName || '';
-      const phone = profile?.phone || user.user_metadata?.phone || state?.user?.phone || '';
-      const email = user.email || state?.user?.email || '';
+      const current = appState()?.user || {};
+      const firstName = profile?.first_name || user.user_metadata?.first_name || current.firstName || '';
+      const lastName = profile?.last_name || user.user_metadata?.last_name || current.lastName || '';
+      const phone = profile?.phone || user.user_metadata?.phone || current.phone || '';
+      const email = user.email || current.email || '';
 
       host.innerHTML = `
         <div class="grid">
@@ -61,8 +70,9 @@
         try {
           const { error: signOutError } = await supabaseClient.auth.signOut();
           if (signOutError) throw signOutError;
-          if (typeof state !== 'undefined') {
-            state.user = null;
+          const currentState = appState();
+          if (currentState) {
+            currentState.user = null;
             if (typeof saveState === 'function') saveState();
           }
           if (status) status.innerHTML = '<div class="okbox">Déconnecté.</div>';
@@ -78,6 +88,8 @@
 
   function install() {
     document.querySelectorAll('[data-page="account"]').forEach((button) => {
+      if (button.dataset.safeAccountBound === '1') return;
+      button.dataset.safeAccountBound = '1';
       button.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopImmediatePropagation();
