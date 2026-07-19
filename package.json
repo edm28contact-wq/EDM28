@@ -6,7 +6,7 @@
     "build": "npm run check:syntax",
     "check:syntax": "find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check",
     "test:client": "node --test tests/client-flow.test.mjs",
-    "test:admin": "node --test tests/admin-flow.test.mjs",
+    "test:admin": "node --test tests/admin-flow.test.mjs tests/admin-transactional.test.mjs",
     "test": "npm run check:syntax && npm run test:client && npm run test:admin",
     "dev": "vercel dev"
   },
