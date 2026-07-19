@@ -105,6 +105,9 @@ jobs:
           EOF
           node browser-smoke.mjs 2>&1 | tee browser-artifacts/run.log
 
+      - name: Run complete client journey
+        run: node tests/browser-client-journey.mjs 2>&1 | tee browser-artifacts/client-journey.log
+
       - name: Upload browser report
         if: always()
         uses: actions/upload-artifact@v4
