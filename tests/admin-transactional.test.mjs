@@ -9,9 +9,9 @@ test('sensitive admin workflows use transactional RPC calls', async () => {
   const source = await read('admin-transactional.js');
   for (const rpc of [
     'admin_create_quote_from_request',
-    'admin_prepare_accepted_quote',
+    'admin_prepare_quote',
     'admin_finalize_repair_order',
-    'admin_record_invoice_payment'
+    'admin_record_payment'
   ]) assert.match(source, new RegExp(`rpc\\('${rpc}'`));
   assert.match(source, /stopImmediatePropagation\(\)/);
   assert.match(source, /addEventListener\('click',[\s\S]*true\)/);
