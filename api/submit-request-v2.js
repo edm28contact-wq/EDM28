@@ -123,6 +123,10 @@ export default async function handler(req, res) {
     const estimatedMax = totals.totalMax ?? totals.totalAllMax ?? estimatedMin;
     const serviceLines = services.map((service) => `- ${clean(service.name, 120)}`).join('\n');
     const clientEmail = clean(user.email || profile?.email, 254).toLowerCase();
+    const firstName = clean(profile?.first_name || user.user_metadata?.first_name, 80);
+    const lastName = clean(profile?.last_name || user.user_metadata?.last_name, 80);
+    const phone = clean(profile?.phone || user.user_metadata?.phone, 40);
+    const clientLabel = clean(`${firstName} ${lastName}`.trim() || clientEmail || 'Client', 170);
     const receivedAt = request.created_at || request.submitted_at || 'date indisponible';
 
     const text = [
@@ -130,10 +134,10 @@ export default async function handler(req, res) {
       `ID Demande : ${request.id}`,
       '',
       'CLIENT',
-      `Nom : ${clean(profile?.last_name, 80)}`,
-      `Prenom : ${clean(profile?.first_name, 80)}`,
-      `Telephone : ${clean(profile?.phone, 40)}`,
-      `Email : ${clientEmail}`,
+      `Nom : ${lastName || 'Non renseigné'}`,
+      `Prenom : ${firstName || 'Non renseigné'}`,
+      `Telephone : ${phone || 'Non renseigné'}`,
+      `Email : ${clientEmail || 'Non renseigné'}`,
       '',
       'VEHICULE',
       `Plaque : ${clean(vehicle.plate, 20)}`,
@@ -176,7 +180,7 @@ export default async function handler(req, res) {
         from: process.env.RESEND_FROM_EMAIL,
         to: [process.env.RESEND_TO_EMAIL],
         reply_to: clientEmail || undefined,
-        subject: `Nouvelle demande EDM AUTO - ${clean(profile?.first_name, 80)} ${clean(profile?.last_name, 80)} - ${clean(vehicle.plate, 20)}`,
+        subject: `Nouvelle demande EDM AUTO - ${clientLabel} - ${clean(vehicle.plate, 20)}`,
         text,
         tags: [{ name: 'request_id', value: request.id }]
       })
