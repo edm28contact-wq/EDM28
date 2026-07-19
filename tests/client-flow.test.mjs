@@ -40,14 +40,24 @@ test('client modules load in deterministic order', async () => {
   }
 });
 
-test('OTP flow is passwordless and validates six digits', async () => {
+test('OTP flow is passwordless and accepts six to ten digits', async () => {
   const source = await read('client-otp-flow.js');
   assert.match(source, /signInWithOtp\s*\(/);
   assert.match(source, /shouldCreateUser:\s*true/);
   assert.match(source, /verifyOtp\s*\(\{\s*email,\s*token,\s*type:\s*'email'/s);
-  assert.match(source, /slice\(0,\s*6\)/);
+  assert.match(source, /slice\(0,\s*10\)/);
+  assert.match(source, /token\.length\s*<\s*6\s*\|\|\s*token\.length\s*>\s*10/);
+  assert.match(source, /maxlength="10"/);
   assert.match(source, /password.*closest\('label'\).*remove\(\)/s);
   assert.match(source, /removeLegacyPasswordUi\(\)/);
+});
+
+test('account page guards state before application initialization', async () => {
+  const source = await read('client-account-safe.js');
+  assert.match(source, /typeof state !== 'undefined'/);
+  assert.doesNotMatch(source, /state\?\./);
+  assert.match(source, /supabaseClient === 'undefined'/);
+  assert.match(source, /stopImmediatePropagation\(\)/);
 });
 
 test('legacy password authentication cannot be reintroduced', async () => {
@@ -126,5 +136,6 @@ test('Preview handlers inject only public Supabase config before response', asyn
 test('client page exposes every journey boundary', async () => {
   const [html, app] = await Promise.all([read('index.html'), read('api/app.js')]);
   for (const id of ['clientCard','vehicleCard','servicesArea','serviceList','basketList','btnSubmit','historyList']) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.ok(app.indexOf('client-account-safe.js') < app.indexOf('integration.js'));
   assert.ok(app.indexOf('integration.js') < app.indexOf('client-simple-flow.js'));
 });
