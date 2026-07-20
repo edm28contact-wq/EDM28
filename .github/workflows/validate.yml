@@ -21,4 +21,39 @@ jobs:
       matrix:
         pass: [1, 2, 3]
 
-    steps
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -o pipefail
+          : > syntax-report.txt
+          failed=0
+          while IFS= read -r -d '' file; do
+            echo "Checking $file" | tee -a syntax-report.txt
+            if ! node --check "$file" 2>&1 | tee -a syntax-report.txt; then
+              failed=1
+            fi
+          done < <(find . -type f -name '*.js' -not -path './node_modules/*' -print0)
+          exit "$failed"
+
+      - name: Run client journey tests
+        run: npm run test:client
+
+      - name: Run admin journey tests
+        run: npm run test:admin
+
+      - name: Upload syntax report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: syntax-report-pass-${{ matrix.pass }}
+          path: syntax-report.txt
+          if-no-files-found: error
