@@ -13,7 +13,7 @@ permissions:
 jobs:
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -27,7 +27,7 @@ jobs:
       - name: Install Playwright
         run: |
           npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox webkit
 
       - name: Start static server
         run: |
@@ -82,19 +82,10 @@ jobs:
               fullPage: true
             });
 
-            const checks = {
-              status,
-              title,
-              expectedTitle: test.title,
-              bodyVisible,
-              horizontalOverflow,
-              errors
-            };
+            const checks = { status, title, expectedTitle: test.title, bodyVisible, horizontalOverflow, errors };
             report.push({ name: test.name, ...checks });
 
-            if (status !== 200 || title !== test.title || !bodyVisible || horizontalOverflow || errors.length > 0) {
-              failed = true;
-            }
+            if (status !== 200 || title !== test.title || !bodyVisible || horizontalOverflow || errors.length > 0) failed = true;
             await page.close();
           }
 
@@ -107,6 +98,14 @@ jobs:
 
       - name: Run complete client journey
         run: node tests/browser-client-journey.mjs 2>&1 | tee browser-artifacts/client-journey.log
+
+      - name: Run connected account stress matrix
+        run: |
+          set -e
+          for browser in chromium firefox webkit; do
+            EDM_BROWSER="$browser" EDM_TEST_PORT=4190 node tests/account-navigation-stress.mjs 2>&1 | tee "browser-artifacts/account-${browser}-desktop.log"
+          done
+          EDM_BROWSER=chromium EDM_MOBILE=1 EDM_TEST_PORT=4191 node tests/account-navigation-stress.mjs 2>&1 | tee browser-artifacts/account-chromium-mobile.log
 
       - name: Upload browser report
         if: always()
