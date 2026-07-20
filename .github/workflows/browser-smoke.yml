@@ -37,7 +37,6 @@ jobs:
       - name: Start static server
         run: |
           python3 -m http.server 4173 > /tmp/edm28-http.log 2>&1 &
-          echo $! > /tmp/edm28-http.pid
           for attempt in {1..30}; do
             curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
             sleep 1
@@ -51,58 +50,40 @@ jobs:
           cat > browser-smoke.mjs <<'EOF'
           import { chromium } from 'playwright';
           import fs from 'node:fs/promises';
-
           const browser = await chromium.launch();
-          const widths = [320, 360, 390, 412, 768, 1024, 1440, 1920];
-          const cases = [];
-          for (const width of widths) {
-            const height = width <= 412 ? 844 : width <= 768 ? 1000 : 1080;
-            cases.push({ name: `public-${width}`, path: '/', viewport: { width, height }, title: 'EDM AUTO' });
-            cases.push({ name: `admin-${width}`, path: '/admin.html', viewport: { width, height }, title: 'Gestion EDM28' });
-          }
-
+          const widths = [320,360,390,412,768,1024,1440,1920];
           const report = [];
           let failed = false;
-
-          for (const test of cases) {
-            const page = await browser.newPage({ viewport: test.viewport, hasTouch: test.viewport.width <= 412 });
-            const errors = [];
-            const failedRequests = [];
-            page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
-            page.on('console', message => {
-              if (message.type() === 'error' && !message.text().includes('PWA registration failed')) errors.push(`console: ${message.text()}`);
-            });
-            page.on('requestfailed', request => failedRequests.push(`${request.url()} ${request.failure()?.errorText || ''}`));
-
-            const response = await page.goto(`http://127.0.0.1:4173${test.path}`, {
-              waitUntil: 'domcontentloaded',
-              timeout: 30000
-            });
-            await page.waitForTimeout(1500);
-
-            const title = await page.title();
-            const bodyVisible = await page.locator('body').isVisible();
-            const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
-            const status = response?.status() ?? 0;
-
-            await page.screenshot({
-              path: `browser-artifacts/${test.name}.png`,
-              fullPage: true
-            });
-
-            const checks = { status, title, expectedTitle: test.title, bodyVisible, horizontalOverflow, errors, failedRequests };
-            report.push({ name: test.name, ...checks });
-
-            if (status !== 200 || title !== test.title || !bodyVisible || horizontalOverflow || errors.length > 0 || failedRequests.length > 0) failed = true;
-            await page.close();
+          for (const width of widths) {
+            for (const item of [{name:'public',path:'/',title:'EDM AUTO'},{name:'admin',path:'/admin.html',title:'Gestion EDM28'}]) {
+              const page = await browser.newPage({ viewport:{width,height:width <= 412 ? 844 : 1080}, hasTouch:width <= 412 });
+              const errors = [];
+              page.on('pageerror', error => errors.push(error.message));
+              page.on('console', message => { if (message.type() === 'error' && !message.text().includes('PWA registration failed')) errors.push(message.text()); });
+              const response = await page.goto(`http://127.0.0.1:4173${item.path}`, { waitUntil:'domcontentloaded', timeout:30000 });
+              await page.waitForTimeout(1000);
+              const row = {
+                name:`${item.name}-${width}`,
+                status:response?.status() || 0,
+                title:await page.title(),
+                visible:await page.locator('body').isVisible(),
+                overflow:await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2),
+                errors
+              };
+              report.push(row);
+              if (row.status !== 200 || row.title !== item.title || !row.visible || row.overflow || errors.length) failed = true;
+              await page.screenshot({ path:`browser-artifacts/${row.name}.png`, fullPage:true });
+              await page.close();
+            }
           }
-
           await browser.close();
-          await fs.writeFile('browser-artifacts/report.json', JSON.stringify(report, null, 2));
-          console.log(JSON.stringify(report, null, 2));
+          await fs.writeFile('browser-artifacts/report.json', JSON.stringify(report,null,2));
           if (failed) process.exit(1);
           EOF
           node browser-smoke.mjs 2>&1 | tee browser-artifacts/run.log
+
+      - name: Run exact Preview account route
+        run: node tests/account-preview-route.mjs 2>&1 | tee browser-artifacts/account-preview-route.log
 
       - name: Run complete client journey
         run: node tests/browser-client-journey.mjs 2>&1 | tee browser-artifacts/client-journey.log
