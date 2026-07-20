@@ -21,6 +21,4 @@ jobs:
       matrix:
         pass: [1, 2, 3]
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout
+    steps
