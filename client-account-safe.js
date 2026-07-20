@@ -2,54 +2,48 @@
   if (window.__edmAccountCompatibility) return;
   window.__edmAccountCompatibility = true;
 
-  function value(id) {
-    const node = document.getElementById(id);
-    return node && node.value ? node.value.trim() : '';
-  }
-
-  function firstValue() {
-    for (let i = 0; i < arguments.length; i += 1) {
-      const candidate = String(arguments[i] || '').trim();
-      if (candidate) return candidate;
+  function first() {
+    for (const item of arguments) {
+      const value = String(item || '').trim();
+      if (value) return value;
     }
     return '';
   }
 
-  function mergeProfile(user, profile) {
-    if (typeof state === 'undefined' || !state) return;
-    const current = state.user || {};
-    const meta = user && user.user_metadata ? user.user_metadata : {};
-    state.user = {
-      id: firstValue(user && user.id, current.id),
-      firstName: firstValue(value('firstName'), current.firstName, profile && profile.first_name, meta.first_name),
-      lastName: firstValue(value('lastName'), current.lastName, profile && profile.last_name, meta.last_name),
-      phone: firstValue(value('phone'), current.phone, profile && profile.phone, meta.phone),
-      email: firstValue(user && user.email, value('email'), current.email, profile && profile.email).toLowerCase()
-    };
-
-    ['firstName', 'lastName', 'phone', 'email'].forEach((id) => {
-      const node = document.getElementById(id);
-      if (node && state.user[id]) node.value = state.user[id];
-    });
-
-    if (typeof saveState === 'function') saveState();
+  function field(id) {
+    return document.getElementById(id)?.value?.trim() || '';
   }
 
-  window.hydrateUserFromSupabase = async function safeHydrateUser(user) {
-    if (!user) return;
+  window.hydrateUserFromSupabase = async function (user) {
+    if (!user || typeof state === 'undefined') return;
     let profile = null;
     try {
-      if (typeof supabaseClient !== 'undefined') {
-        const result = await supabaseClient.from('profiles').select('*').eq('id', user.id).maybeSingle();
-        if (!result.error) profile = result.data;
-      }
-    } catch (_) {
-      profile = null;
-    }
-    mergeProfile(user, profile);
+      const result = await supabaseClient.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      if (!result.error) profile = result.data;
+    } catch (_) {}
+    const current = state.user || {};
+    const meta = user.user_metadata || {};
+    state.user = {
+      id: first(user.id, current.id),
+      firstName: first(field('firstName'), current.firstName, profile?.first_name, meta.first_name),
+      lastName: first(field('lastName'), current.lastName, profile?.last_name, meta.last_name),
+      phone: first(field('phone'), current.phone, profile?.phone, meta.phone),
+      email: first(user.email, field('email'), current.email, profile?.email).toLowerCase()
+    };
+    if (typeof saveState === 'function') saveState();
   };
 
-  window.renderSafeAccount = function renderSafeAccount() {
-    if (typeof showPage === 'function') showPage('account');
-  };
+  const baseShowPage = window.showPage;
+  if (typeof baseShowPage === 'function') {
+    window.showPage = function (pageId) {
+      if (pageId === 'account' && !state?.user?.id) {
+        baseShowPage('appointment');
+        document.getElementById('email')?.focus();
+        return;
+      }
+      baseShowPage(pageId);
+    };
+  }
+
+  window.renderSafeAccount = () => window.showPage?.('account');
 })();
