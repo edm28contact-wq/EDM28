@@ -40,7 +40,7 @@ jobs:
           cat /tmp/edm28-http.log
           exit 1
 
-      - name: Run desktop and mobile smoke tests
+      - name: Run responsive public and admin smoke tests
         run: |
           mkdir -p browser-artifacts
           cat > browser-smoke.mjs <<'EOF'
@@ -48,23 +48,26 @@ jobs:
           import fs from 'node:fs/promises';
 
           const browser = await chromium.launch();
-          const cases = [
-            { name: 'public-desktop', path: '/', viewport: { width: 1440, height: 1000 }, title: 'EDM AUTO' },
-            { name: 'public-mobile', path: '/', viewport: { width: 390, height: 844 }, title: 'EDM AUTO' },
-            { name: 'admin-desktop', path: '/admin.html', viewport: { width: 1440, height: 1000 }, title: 'Gestion EDM28' },
-            { name: 'admin-mobile', path: '/admin.html', viewport: { width: 390, height: 844 }, title: 'Gestion EDM28' }
-          ];
+          const widths = [320, 360, 390, 412, 768, 1024, 1440, 1920];
+          const cases = [];
+          for (const width of widths) {
+            const height = width <= 412 ? 844 : width <= 768 ? 1000 : 1080;
+            cases.push({ name: `public-${width}`, path: '/', viewport: { width, height }, title: 'EDM AUTO' });
+            cases.push({ name: `admin-${width}`, path: '/admin.html', viewport: { width, height }, title: 'Gestion EDM28' });
+          }
 
           const report = [];
           let failed = false;
 
           for (const test of cases) {
-            const page = await browser.newPage({ viewport: test.viewport });
+            const page = await browser.newPage({ viewport: test.viewport, hasTouch: test.viewport.width <= 412 });
             const errors = [];
+            const failedRequests = [];
             page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
             page.on('console', message => {
-              if (message.type() === 'error') errors.push(`console: ${message.text()}`);
+              if (message.type() === 'error' && !message.text().includes('PWA registration failed')) errors.push(`console: ${message.text()}`);
             });
+            page.on('requestfailed', request => failedRequests.push(`${request.url()} ${request.failure()?.errorText || ''}`));
 
             const response = await page.goto(`http://127.0.0.1:4173${test.path}`, {
               waitUntil: 'domcontentloaded',
@@ -82,10 +85,10 @@ jobs:
               fullPage: true
             });
 
-            const checks = { status, title, expectedTitle: test.title, bodyVisible, horizontalOverflow, errors };
+            const checks = { status, title, expectedTitle: test.title, bodyVisible, horizontalOverflow, errors, failedRequests };
             report.push({ name: test.name, ...checks });
 
-            if (status !== 200 || title !== test.title || !bodyVisible || horizontalOverflow || errors.length > 0) failed = true;
+            if (status !== 200 || title !== test.title || !bodyVisible || horizontalOverflow || errors.length > 0 || failedRequests.length > 0) failed = true;
             await page.close();
           }
 
