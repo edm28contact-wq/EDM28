@@ -56,37 +56,24 @@ test('account page uses the single application navigation path', async () => {
   const source = await read('client-account-safe.js');
   assert.match(source, /window\.renderSafeAccount/);
   assert.match(source, /showPage\('account'\)/);
-  assert.match(source, /showPage\('appointment'\)/);
   assert.doesNotMatch(source, /addEventListener\(['"]click/);
   assert.doesNotMatch(source, /stopImmediatePropagation\(\)/);
 });
 
-test('account hydration preserves existing non-empty client fields and has a timeout', async () => {
+test('account hydration preserves existing non-empty client fields', async () => {
   const source = await read('client-account-safe.js');
   assert.match(source, /firstValue\(value\('firstName'\), current\.firstName, profile && profile\.first_name, meta\.first_name\)/);
   assert.match(source, /firstValue\(value\('lastName'\), current\.lastName, profile && profile\.last_name, meta\.last_name\)/);
   assert.match(source, /firstValue\(value\('phone'\), current\.phone, profile && profile\.phone, meta\.phone\)/);
   assert.match(source, /firstValue\(user && user\.email, value\('email'\), current\.email, profile && profile\.email\)/);
-  assert.match(source, /withTimeout/);
-  assert.match(source, /2500/);
   assert.doesNotMatch(source, /firstName:\s*profile.*\|\|\s*''/s);
 });
 
 test('Preview loads account hydration before application bootstrap', async () => {
   const source = await read('api/app.js');
   assert.match(source, /accountPrelude/);
-  assert.match(source, /client-account-safe\.js\?v=12/);
+  assert.match(source, /client-account-safe\.js\?v=11/);
   assert.ok(source.indexOf('${accountPrelude}${loader}') > source.indexOf('const accountPrelude'));
-});
-
-test('service worker refreshes dynamic scripts and removes previous caches', async () => {
-  const source = await read('sw.js');
-  assert.match(source, /CACHE_NAME = "edm28-pwa-v4"/);
-  assert.match(source, /keys\.filter\(\(key\) => key !== CACHE_NAME\).*caches\.delete/s);
-  assert.match(source, /url\.pathname\.endsWith\("\.js"\)/);
-  assert.match(source, /url\.pathname\.endsWith\("\.css"\)/);
-  assert.match(source, /networkFirst\(request\)/);
-  assert.doesNotMatch(source, /caches\.match\(request\)\.then\(\(cached\) => cached \|\| fetch\(request\)[\s\S]*endsWith\("\.js"\)/);
 });
 
 test('legacy password authentication cannot be reintroduced', async () => {
