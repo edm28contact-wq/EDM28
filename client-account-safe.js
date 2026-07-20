@@ -7,71 +7,99 @@
   }[char]));
   const appState = () => (typeof state !== 'undefined' && state ? state : null);
 
-  async function renderSafeAccount() {
+  function showAccountShell() {
     const page = document.getElementById('account');
     const host = document.getElementById('accountPageContent');
-    if (!page || !host) return;
+    if (!page || !host) return null;
 
     document.querySelectorAll('.page').forEach((node) => node.classList.toggle('active', node === page));
     document.querySelectorAll('[data-page]').forEach((node) => node.classList.toggle('active', node.dataset.page === 'account'));
     document.getElementById('sidebar')?.classList.remove('open');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    return host;
+  }
+
+  function renderDisconnected(host) {
+    host.innerHTML = '<div class="empty">Connectez-vous pour consulter votre compte client.</div>';
+  }
+
+  function renderProfile(host, { firstName = '', lastName = '', phone = '', email = '' }) {
+    host.innerHTML = `<div class="grid"><div class="card"><h3>Informations du compte</h3><div class="summary" style="margin-top:14px"><div class="summary-line"><span>Nom</span><strong>${esc(lastName || '-')}</strong></div><div class="summary-line"><span>Prénom</span><strong>${esc(firstName || '-')}</strong></div><div class="summary-line"><span>Téléphone</span><strong>${esc(phone || '-')}</strong></div><div class="summary-line"><span>Email</span><strong>${esc(email || '-')}</strong></div></div></div><div class="card"><h3>Actions sur le compte</h3><div class="btn-row" style="margin-top:14px"><button class="btn btn-secondary" id="safeAccountSignOut" type="button">Se déconnecter</button></div><div id="safeAccountStatus" style="margin-top:12px"></div></div></div>`;
+
+    document.getElementById('safeAccountSignOut')?.addEventListener('click', async () => {
+      const status = document.getElementById('safeAccountStatus');
+      try {
+        if (typeof supabaseClient === 'undefined') throw new Error('Service de connexion indisponible.');
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+        const current = appState();
+        if (current) {
+          current.user = null;
+          if (typeof saveState === 'function') saveState();
+        }
+        if (status) status.innerHTML = '<div class="okbox">Déconnecté.</div>';
+        if (typeof showPage === 'function') showPage('home');
+      } catch (error) {
+        if (status) status.innerHTML = `<div class="errorbox">${esc(error.message || 'Déconnexion impossible.')}</div>`;
+      }
+    });
+  }
+
+  async function withTimeout(promise, milliseconds) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Délai de connexion dépassé.')), milliseconds))
+    ]);
+  }
+
+  async function renderSafeAccount() {
+    const host = showAccountShell();
+    if (!host) return;
+
+    const current = appState()?.user || null;
+    if (!current?.id) renderDisconnected(host);
+    else renderProfile(host, current);
+
+    if (typeof supabaseClient === 'undefined') return;
 
     try {
-      if (typeof supabaseClient === 'undefined') {
-        host.innerHTML = '<div class="notice">Chargement du compte...</div>';
-        setTimeout(renderSafeAccount, 150);
-        return;
-      }
-
-      const { data, error } = await supabaseClient.auth.getSession();
+      const { data, error } = await withTimeout(supabaseClient.auth.getSession(), 2500);
       if (error) throw error;
       const user = data?.session?.user;
       if (!user) {
-        host.innerHTML = '<div class="empty">Connectez-vous pour consulter votre compte client.</div>';
+        renderDisconnected(host);
         return;
       }
 
       let profile = null;
-      const result = await supabaseClient.from('profiles').select('*').eq('id', user.id).maybeSingle();
-      if (!result.error) profile = result.data;
+      try {
+        const result = await withTimeout(
+          supabaseClient.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+          2500
+        );
+        if (!result.error) profile = result.data;
+      } catch (_) {
+        profile = null;
+      }
 
-      const current = appState()?.user || {};
-      const firstName = profile?.first_name || user.user_metadata?.first_name || current.firstName || '';
-      const lastName = profile?.last_name || user.user_metadata?.last_name || current.lastName || '';
-      const phone = profile?.phone || user.user_metadata?.phone || current.phone || '';
-      const email = user.email || current.email || '';
-
-      host.innerHTML = `<div class="grid"><div class="card"><h3>Informations du compte</h3><div class="summary" style="margin-top:14px"><div class="summary-line"><span>Nom</span><strong>${esc(lastName || '-')}</strong></div><div class="summary-line"><span>Prénom</span><strong>${esc(firstName || '-')}</strong></div><div class="summary-line"><span>Téléphone</span><strong>${esc(phone || '-')}</strong></div><div class="summary-line"><span>Email</span><strong>${esc(email || '-')}</strong></div></div></div><div class="card"><h3>Actions sur le compte</h3><div class="btn-row" style="margin-top:14px"><button class="btn btn-secondary" id="safeAccountSignOut" type="button">Se déconnecter</button></div><div id="safeAccountStatus" style="margin-top:12px"></div></div></div>`;
-
-      document.getElementById('safeAccountSignOut')?.addEventListener('click', async () => {
-        const status = document.getElementById('safeAccountStatus');
-        try {
-          const { error: signOutError } = await supabaseClient.auth.signOut();
-          if (signOutError) throw signOutError;
-          const currentState = appState();
-          if (currentState) {
-            currentState.user = null;
-            if (typeof saveState === 'function') saveState();
-          }
-          if (status) status.innerHTML = '<div class="okbox">Déconnecté.</div>';
-          if (typeof showPage === 'function') showPage('home');
-        } catch (signOutError) {
-          if (status) status.innerHTML = `<div class="errorbox">${esc(signOutError.message || 'Déconnexion impossible.')}</div>`;
-        }
+      const latest = appState()?.user || {};
+      renderProfile(host, {
+        firstName: profile?.first_name || user.user_metadata?.first_name || latest.firstName || '',
+        lastName: profile?.last_name || user.user_metadata?.last_name || latest.lastName || '',
+        phone: profile?.phone || user.user_metadata?.phone || latest.phone || '',
+        email: user.email || latest.email || ''
       });
     } catch (error) {
-      host.innerHTML = `<div class="errorbox"><strong>Compte indisponible.</strong><br>${esc(error.message || 'Réessayez plus tard.')}</div>`;
+      if (!current?.id) renderDisconnected(host);
+      console.warn('EDM account refresh unavailable:', error.message || error);
     }
   }
 
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-page="account"]');
     if (!trigger) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
     renderSafeAccount();
-  }, true);
+  });
 
   window.renderSafeAccount = renderSafeAccount;
 })();
