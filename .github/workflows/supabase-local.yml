@@ -18,8 +18,13 @@ permissions:
 
 jobs:
   migrations:
+    name: Supabase pass ${{ matrix.pass }}
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        pass: [1, 2, 3]
 
     steps:
       - name: Checkout
@@ -75,7 +80,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: supabase-local-report
+          name: supabase-local-report-pass-${{ matrix.pass }}
           path: supabase-ci-artifacts
           if-no-files-found: warn
 
