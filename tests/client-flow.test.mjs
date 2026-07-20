@@ -52,14 +52,28 @@ test('OTP flow is passwordless and accepts six to ten digits', async () => {
   assert.match(source, /removeLegacyPasswordUi\(\)/);
 });
 
-test('account compatibility module installs no competing navigation listener', async () => {
+test('account page uses the single application navigation path', async () => {
   const source = await read('client-account-safe.js');
   assert.match(source, /window\.renderSafeAccount/);
-  assert.match(source, /typeof showPage === 'function'/);
   assert.match(source, /showPage\('account'\)/);
-  assert.doesNotMatch(source, /addEventListener\s*\(\s*['"]click/);
+  assert.doesNotMatch(source, /addEventListener\(['"]click/);
   assert.doesNotMatch(source, /stopImmediatePropagation\(\)/);
-  assert.doesNotMatch(source, /supabaseClient\.auth\.getSession/);
+});
+
+test('account hydration preserves existing non-empty client fields', async () => {
+  const source = await read('client-account-safe.js');
+  assert.match(source, /firstValue\(value\('firstName'\), current\.firstName, profile && profile\.first_name, meta\.first_name\)/);
+  assert.match(source, /firstValue\(value\('lastName'\), current\.lastName, profile && profile\.last_name, meta\.last_name\)/);
+  assert.match(source, /firstValue\(value\('phone'\), current\.phone, profile && profile\.phone, meta\.phone\)/);
+  assert.match(source, /firstValue\(user && user\.email, value\('email'\), current\.email, profile && profile\.email\)/);
+  assert.doesNotMatch(source, /firstName:\s*profile.*\|\|\s*''/s);
+});
+
+test('Preview loads account hydration before application bootstrap', async () => {
+  const source = await read('api/app.js');
+  assert.match(source, /accountPrelude/);
+  assert.match(source, /client-account-safe\.js\?v=11/);
+  assert.ok(source.indexOf('${accountPrelude}${loader}') > source.indexOf('const accountPrelude'));
 });
 
 test('legacy password authentication cannot be reintroduced', async () => {
@@ -138,6 +152,6 @@ test('Preview handlers inject only public Supabase config before response', asyn
 test('client page exposes every journey boundary', async () => {
   const [html, app] = await Promise.all([read('index.html'), read('api/app.js')]);
   for (const id of ['clientCard','vehicleCard','servicesArea','serviceList','basketList','btnSubmit','historyList']) assert.match(html, new RegExp(`id=["']${id}["']`));
-  assert.ok(app.indexOf('client-account-safe.js') < app.indexOf('integration.js'));
+  assert.ok(app.indexOf('accountPrelude') < app.indexOf('integration.js'));
   assert.ok(app.indexOf('integration.js') < app.indexOf('client-simple-flow.js'));
 });
