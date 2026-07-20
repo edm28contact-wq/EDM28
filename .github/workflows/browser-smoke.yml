@@ -12,8 +12,13 @@ permissions:
 
 jobs:
   browser:
+    name: Browser pass ${{ matrix.pass }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        pass: [1, 2, 3]
 
     steps:
       - name: Checkout
@@ -114,6 +119,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: browser-smoke-report
+          name: browser-smoke-report-pass-${{ matrix.pass }}
           path: browser-artifacts
           if-no-files-found: warn
