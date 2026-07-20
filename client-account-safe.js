@@ -19,8 +19,16 @@
     return host;
   }
 
-  function renderDisconnected(host) {
-    host.innerHTML = '<div class="empty">Connectez-vous pour consulter votre compte client.</div>';
+  function redirectToLogin() {
+    if (typeof showPage === 'function') showPage('appointment');
+    else {
+      document.querySelectorAll('.page').forEach((node) => node.classList.toggle('active', node.id === 'appointment'));
+      document.getElementById('sidebar')?.classList.remove('open');
+    }
+    setTimeout(() => {
+      document.getElementById('email')?.focus();
+      if (typeof toast === 'function') toast('Connectez-vous pour accéder à votre compte.');
+    }, 0);
   }
 
   function renderProfile(host, { firstName = '', lastName = '', phone = '', email = '' }) {
@@ -37,7 +45,6 @@
           current.user = null;
           if (typeof saveState === 'function') saveState();
         }
-        if (status) status.innerHTML = '<div class="okbox">Déconnecté.</div>';
         if (typeof showPage === 'function') showPage('home');
       } catch (error) {
         if (status) status.innerHTML = `<div class="errorbox">${esc(error.message || 'Déconnexion impossible.')}</div>`;
@@ -45,43 +52,31 @@
     });
   }
 
-  async function withTimeout(promise, milliseconds) {
-    return Promise.race([
-      promise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Délai de connexion dépassé.')), milliseconds))
-    ]);
-  }
-
   async function renderSafeAccount() {
+    const current = appState()?.user || null;
+    if (!current?.id) {
+      redirectToLogin();
+      return;
+    }
+
     const host = showAccountShell();
     if (!host) return;
-
-    const current = appState()?.user || null;
-    if (!current?.id) renderDisconnected(host);
-    else renderProfile(host, current);
+    renderProfile(host, current);
 
     if (typeof supabaseClient === 'undefined') return;
-
     try {
-      const { data, error } = await withTimeout(supabaseClient.auth.getSession(), 2500);
+      const { data, error } = await supabaseClient.auth.getSession();
       if (error) throw error;
       const user = data?.session?.user;
       if (!user) {
-        renderDisconnected(host);
+        const stateRef = appState();
+        if (stateRef) stateRef.user = null;
+        redirectToLogin();
         return;
       }
 
-      let profile = null;
-      try {
-        const result = await withTimeout(
-          supabaseClient.from('profiles').select('*').eq('id', user.id).maybeSingle(),
-          2500
-        );
-        if (!result.error) profile = result.data;
-      } catch (_) {
-        profile = null;
-      }
-
+      const result = await supabaseClient.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      const profile = result.error ? null : result.data;
       const latest = appState()?.user || {};
       renderProfile(host, {
         firstName: profile?.first_name || user.user_metadata?.first_name || latest.firstName || '',
@@ -90,7 +85,6 @@
         email: user.email || latest.email || ''
       });
     } catch (error) {
-      if (!current?.id) renderDisconnected(host);
       console.warn('EDM account refresh unavailable:', error.message || error);
     }
   }
@@ -98,8 +92,11 @@
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-page="account"]');
     if (!trigger) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    trigger.blur();
     renderSafeAccount();
-  });
+  }, true);
 
   window.renderSafeAccount = renderSafeAccount;
 })();
