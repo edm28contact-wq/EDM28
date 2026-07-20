@@ -52,12 +52,14 @@ test('OTP flow is passwordless and accepts six to ten digits', async () => {
   assert.match(source, /removeLegacyPasswordUi\(\)/);
 });
 
-test('account page guards state before application initialization', async () => {
+test('account compatibility module installs no competing navigation listener', async () => {
   const source = await read('client-account-safe.js');
-  assert.match(source, /typeof state !== 'undefined'/);
-  assert.doesNotMatch(source, /state\?\./);
-  assert.match(source, /supabaseClient === 'undefined'/);
-  assert.match(source, /stopImmediatePropagation\(\)/);
+  assert.match(source, /window\.renderSafeAccount/);
+  assert.match(source, /typeof showPage === 'function'/);
+  assert.match(source, /showPage\('account'\)/);
+  assert.doesNotMatch(source, /addEventListener\s*\(\s*['"]click/);
+  assert.doesNotMatch(source, /stopImmediatePropagation\(\)/);
+  assert.doesNotMatch(source, /supabaseClient\.auth\.getSession/);
 });
 
 test('legacy password authentication cannot be reintroduced', async () => {
