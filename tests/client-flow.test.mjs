@@ -76,6 +76,16 @@ test('Preview loads account hydration before application bootstrap', async () =>
   assert.ok(source.indexOf('${accountPrelude}${loader}') > source.indexOf('const accountPrelude'));
 });
 
+test('service worker refreshes dynamic scripts and removes previous caches', async () => {
+  const source = await read('sw.js');
+  assert.match(source, /CACHE_NAME = "edm28-pwa-v4"/);
+  assert.match(source, /keys\.filter\(\(key\) => key !== CACHE_NAME\).*caches\.delete/s);
+  assert.match(source, /url\.pathname\.endsWith\("\.js"\)/);
+  assert.match(source, /url\.pathname\.endsWith\("\.css"\)/);
+  assert.match(source, /networkFirst\(request\)/);
+  assert.doesNotMatch(source, /caches\.match\(request\)\.then\(\(cached\) => cached \|\| fetch\(request\)[\s\S]*endsWith\("\.js"\)/);
+});
+
 test('legacy password authentication cannot be reintroduced', async () => {
   const [auth, otp, app, build] = await Promise.all([
     read('auth.js'),
