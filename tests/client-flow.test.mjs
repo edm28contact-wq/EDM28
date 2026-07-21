@@ -26,12 +26,12 @@ test('OTP flow is passwordless', async () => {
   assert.doesNotMatch(source, /signInWithPassword/);
 });
 
-test('account routing is guarded without duplicate click handlers', async () => {
+test('private client routes are guarded without duplicate click handlers', async () => {
   const source = await read('client-account-safe.js');
-  assert.match(source, /pageId === 'account'/);
+  assert.match(source, /new Set\(\['account', 'garage', 'history'\]\)/);
+  assert.match(source, /protectedPages\.has\(pageId\)/);
   assert.match(source, /baseShowPage\('appointment'\)/);
   assert.match(source, /baseShowPage\(pageId\)/);
-  assert.match(source, /window\.renderSafeAccount/);
   assert.doesNotMatch(source, /addEventListener\(['"]click/);
   assert.doesNotMatch(source, /stopImmediatePropagation/);
 });
@@ -44,9 +44,9 @@ test('account hydration preserves non-empty fields', async () => {
   assert.match(source, /first\(user\.email, field\('email'\), current\.email/);
 });
 
-test('Preview loads guarded account module before optional modules', async () => {
+test('Preview loads protected routes module before optional modules', async () => {
   const source = await read('api/app.js');
-  assert.match(source, /client-account-safe\.js\?v=12/);
+  assert.match(source, /client-account-safe\.js\?v=13/);
   assert.ok(source.indexOf('accountPrelude') < source.indexOf('integration.js'));
 });
 
