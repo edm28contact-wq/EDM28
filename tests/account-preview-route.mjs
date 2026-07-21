@@ -13,7 +13,7 @@ const response = {
   end() { return this; }
 };
 appHandler({ method: 'GET' }, response);
-if (!html.includes('client-account-safe.js?v=12')) throw new Error('Wrong Preview account asset');
+if (!html.includes('client-account-safe.js?v=13')) throw new Error('Wrong protected routes asset');
 
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
@@ -41,19 +41,25 @@ try {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => typeof window.showPage === 'function');
 
-  await page.click('#openMenu');
-  await page.click('[data-page="account"]');
-  await page.waitForFunction(() => document.getElementById('appointment')?.classList.contains('active'));
+  for (const pageId of ['account', 'garage', 'history']) {
+    await page.click('#openMenu');
+    await page.click(`[data-page="${pageId}"]`);
+    await page.waitForFunction(() => document.getElementById('appointment')?.classList.contains('active'));
+  }
 
   await page.evaluate(() => {
     state.user = { id: 'u1', firstName: 'Jean', lastName: 'Dupont', phone: '0612345678', email: 'client@example.test' };
     saveState();
   });
-  await page.click('#openMenu');
-  await page.click('[data-page="account"]');
-  await page.waitForFunction(() => document.getElementById('account')?.classList.contains('active'));
+
+  for (const pageId of ['account', 'garage', 'history']) {
+    await page.click('#openMenu');
+    await page.click(`[data-page="${pageId}"]`);
+    await page.waitForFunction((id) => document.getElementById(id)?.classList.contains('active'), pageId);
+  }
+
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('account preview route ok');
+  console.log('protected preview routes ok');
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));
