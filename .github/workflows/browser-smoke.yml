@@ -85,6 +85,9 @@ jobs:
       - name: Run exact Preview account route
         run: node tests/account-preview-route.mjs 2>&1 | tee browser-artifacts/account-preview-route.log
 
+      - name: Run lexical connected menu route
+        run: node tests/connected-menu-lexical-state.mjs 2>&1 | tee browser-artifacts/connected-menu-lexical-state.log
+
       - name: Run all public Preview buttons
         run: node tests/browser-client-journey.mjs 2>&1 | tee browser-artifacts/public-buttons.log
 
