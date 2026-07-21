@@ -1,5 +1,8 @@
 (() => {
-  const protectedPages = ['account', 'garage', 'history'];
+  const protectedPages = new Set(['account', 'garage', 'history']);
+  const safe = (value) => typeof escapeHtml === 'function'
+    ? escapeHtml(value)
+    : String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
 
   function revealClientNavigation() {
     protectedPages.forEach((page) => {
@@ -10,21 +13,8 @@
     });
   }
 
-  function install() {
-    revealClientNavigation();
-    const nav = document.querySelector('.nav');
-    if (!nav || window.__edmClientNavigationVisible) return;
-    window.__edmClientNavigationVisible = true;
-    new MutationObserver(revealClientNavigation).observe(nav, {
-      attributes: true,
-      attributeFilter: ['class'],
-      childList: true,
-      subtree: true
+  function activatePage(pageId) {
+    document.querySelectorAll('.page').forEach((page) => {
+      page.classList.toggle('active', page.id === pageId);
     });
-    document.addEventListener('click', () => setTimeout(revealClientNavigation, 0));
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
-  else install();
-  window.addEventListener('load', install);
-})();
+    document.querySelectorAll
