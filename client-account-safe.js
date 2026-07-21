@@ -33,10 +33,11 @@
     if (typeof saveState === 'function') saveState();
   };
 
+  const protectedPages = new Set(['account', 'garage', 'history']);
   const baseShowPage = window.showPage;
   if (typeof baseShowPage === 'function') {
     window.showPage = function (pageId) {
-      if (pageId === 'account' && !state?.user?.id) {
+      if (protectedPages.has(pageId) && !state?.user?.id) {
         baseShowPage('appointment');
         document.getElementById('email')?.focus();
         return;
