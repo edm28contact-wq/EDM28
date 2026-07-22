@@ -12,7 +12,7 @@ appHandler({ method: 'GET' }, {
   send(body) { html = body; return this; },
   end() { return this; }
 });
-if (!html.includes('client-navigation-visible.js?v=4')) throw new Error('Wrong connected router asset');
+if (!html.includes('client-navigation-visible.js?v=5')) throw new Error('Wrong connected router asset');
 
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
@@ -56,6 +56,9 @@ try {
 
   await page.evaluate(() => {
     window.showPage = () => { throw new Error('legacy showPage must not control connected menu'); };
+    window.renderAccountPage = () => { throw new Error('account render failure'); };
+    window.renderGarage = () => { throw new Error('garage render failure'); };
+    window.renderHistory = () => { throw new Error('history render failure'); };
   });
 
   for (const id of ['account', 'garage', 'history', 'home', 'appointment', 'about']) {
