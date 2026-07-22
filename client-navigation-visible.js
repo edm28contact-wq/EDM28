@@ -22,28 +22,37 @@
     });
   }
 
-  function directActivate(id) {
-    document.querySelectorAll('.page').forEach((page) => page.classList.toggle('active', page.id === id));
-    document.querySelectorAll('[data-page]').forEach((button) => button.classList.toggle('active', button.dataset.page === id));
+  function closeMenu() {
     document.getElementById('sidebar')?.classList.remove('open');
     document.getElementById('sideNav')?.classList.remove('open');
     document.getElementById('menuOverlay')?.classList.remove('show');
     document.body.classList.remove('menu-open');
-    if (id === 'account' && typeof renderAccountPage === 'function') renderAccountPage();
-    if (id === 'garage' && typeof renderGarage === 'function') renderGarage();
-    if (id === 'history' && typeof renderHistory === 'function') renderHistory();
-    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  function renderSafely(id) {
+    try {
+      if (id === 'account' && typeof renderAccountPage === 'function') renderAccountPage();
+      if (id === 'garage' && typeof renderGarage === 'function') renderGarage();
+      if (id === 'history' && typeof renderHistory === 'function') renderHistory();
+    } catch (error) {
+      console.warn(`EDM ${id} render unavailable`, error);
+      const hostId = id === 'account' ? 'accountPageContent' : id === 'garage' ? 'garageList' : 'historyList';
+      const host = document.getElementById(hostId);
+      if (host && !host.textContent.trim()) host.innerHTML = '<div class="notice">Les informations sont temporairement indisponibles. La navigation reste active.</div>';
+    }
+  }
+
+  function directActivate(id) {
+    document.querySelectorAll('.page').forEach((page) => page.classList.toggle('active', page.id === id));
+    document.querySelectorAll('[data-page]').forEach((button) => button.classList.toggle('active', button.dataset.page === id));
+    closeMenu();
+    renderSafely(id);
+    try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (_) {}
   }
 
   function open(id) {
     const target = protectedPages.has(id) && !isSignedIn() ? 'appointment' : id;
-    try {
-      if (typeof showPage === 'function') showPage(target);
-      else directActivate(target);
-    } catch (error) {
-      console.warn('EDM navigation fallback', error);
-      directActivate(target);
-    }
+    directActivate(target);
     if (target === 'appointment' && target !== id) document.getElementById('email')?.focus();
   }
 
