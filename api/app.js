@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const INDEX_PATH = join(process.cwd(), 'index.html');
+const ROUTER_PATH = join(process.cwd(), 'client-navigation-visible.js');
 
 export default function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -11,6 +12,7 @@ export default function handler(req, res) {
 
   try {
     let html = readFileSync(INDEX_PATH, 'utf8');
+    const criticalRouter = readFileSync(ROUTER_PATH, 'utf8').replace(/<\/script/gi, '<\\/script');
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
@@ -28,7 +30,7 @@ export default function handler(req, res) {
       .replace('<link rel="apple-touch-icon" href="/icon.svg">', '<link rel="apple-touch-icon" href="/logo-edm.svg">')
       .replace('<meta name="apple-mobile-web-app-title" content="EDM AUTO">', '<meta name="apple-mobile-web-app-title" content="EDM">');
 
-    const socialMeta = `<meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:title" content="EDM · Spécialiste du freinage"><meta property="og:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><meta property="og:image" content="/logo-edm.svg"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="EDM · Spécialiste du freinage"><meta name="twitter:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><style id="edm-boot-style">html{background:#cec7c0}body{visibility:hidden}</style><script src="/client-navigation-visible.js?v=6"><\/script>`;
+    const socialMeta = `<meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:title" content="EDM · Spécialiste du freinage"><meta property="og:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><meta property="og:image" content="/logo-edm.svg"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="EDM · Spécialiste du freinage"><meta name="twitter:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><style id="edm-boot-style">html{background:#cec7c0}body{visibility:hidden}</style><script>${criticalRouter}<\/script>`;
     html = html.replace('</head>', `${socialMeta}</head>`);
 
     const accountPrelude = '<script src="/client-account-safe.js?v=13"><\/script>';
