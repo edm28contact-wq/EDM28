@@ -5,11 +5,22 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-test('OTP flow is passwordless', async () => {
-  const source = await read('client-otp-flow.js');
-  assert.match(source, /signInWithOtp\s*\(/);
-  assert.match(source, /verifyOtp\s*\(/);
-  assert.doesNotMatch(source, /signInWithPassword/);
+test('client authentication uses password after one-time email verification', async () => {
+  const [loader, auth] = await Promise.all([
+    read('client-simple-flow.js'),
+    read('client-password-flow.js')
+  ]);
+
+  assert.match(loader, /client-password-flow\.js\?v=2/);
+  assert.doesNotMatch(loader, /client-otp-flow\.js/);
+  assert.match(auth, /auth\.signUp\s*\(/);
+  assert.match(auth, /auth\.signInWithPassword\s*\(/);
+  assert.match(auth, /auth\.verifyOtp\s*\(/);
+  assert.match(auth, /auth\.resend\s*\(/);
+  assert.match(auth, /auth\.updateUser\(\{ password \}\)/);
+  assert.match(auth, /shouldCreateUser:\s*false/);
+  assert.match(auth, /MIN_PASSWORD_LENGTH\s*=\s*8/);
+  assert.match(auth, /Les connexions suivantes utilisent l’email et le mot de passe/);
 });
 
 test('private client routes are guarded without duplicate click handlers', async () => {
@@ -30,9 +41,10 @@ test('account hydration preserves non-empty fields', async () => {
   assert.match(source, /first\(user\.email, field\('email'\), current\.email/);
 });
 
-test('Preview loads protected routes module before optional modules', async () => {
+test('Preview loads protected routes and refreshed password client flow', async () => {
   const source = await read('api/app.js');
   assert.match(source, /client-account-safe\.js\?v=13/);
+  assert.match(source, /client-simple-flow\.js\?v=8/);
   assert.ok(source.indexOf('accountPrelude') < source.indexOf('integration.js'));
 });
 
@@ -104,7 +116,7 @@ test('submitted requests are loaded and refreshed in client history', async () =
   assert.match(history, /MutationObserver/);
   assert.match(router, /window\.renderRequestHistory/);
   assert.match(app, /request-history\.js\?v=2/);
-  assert.match(app, /client-simple-flow\.js\?v=7/);
+  assert.match(app, /client-simple-flow\.js\?v=8/);
   assert.match(loader, /request-submit-safe\.js\?v=4/);
 });
 
