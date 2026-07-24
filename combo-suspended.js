@@ -1,12 +1,17 @@
 (() => {
-  if (window.__edmComboSuspended) return;
+  if (window.__edmComboSuspensionController) {
+    window.__edmComboSuspensionController.enforce();
+    return;
+  }
+
   window.__edmComboSuspended = true;
 
   const roundMoney = (value) => Math.round(Number(value || 0) * 100) / 100;
 
   function suspendCalculation() {
     const original = window.calculateTotals;
-    if (typeof original !== 'function' || original.__edmComboSuspended) return;
+    if (typeof original !== 'function') return false;
+    if (original.__edmComboSuspended === true) return false;
 
     function calculateTotalsWithoutCombo(showAlert = false) {
       const totals = original(showAlert);
@@ -44,9 +49,10 @@
     calculateTotalsWithoutCombo.__edmComboSuspended = true;
     calculateTotalsWithoutCombo.__edmOriginal = original;
     window.calculateTotals = calculateTotalsWithoutCombo;
+    return true;
   }
 
-  function updateInterface() {
+  function updateInterface(refreshSummary = false) {
     document.documentElement.dataset.comboPolicy = 'suspended';
 
     const button = document.getElementById('comboExplainBtn');
@@ -68,6 +74,8 @@
     if (comboLine) comboLine.style.display = 'none';
     if (savingLine) savingLine.style.display = 'none';
 
+    if (!refreshSummary) return;
+
     try {
       if (typeof window.updateSummary === 'function') window.updateSummary();
     } catch (error) {
@@ -75,20 +83,31 @@
     }
   }
 
-  function install() {
-    suspendCalculation();
-    updateInterface();
+  function enforce() {
+    const calculationChanged = suspendCalculation();
+    updateInterface(calculationChanged);
   }
+
+  function scheduleEnforcement() {
+    [0, 50, 250, 750, 1500, 3000, 6000].forEach((delay) => {
+      setTimeout(enforce, delay);
+    });
+  }
+
+  window.__edmComboSuspensionController = { enforce };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', install, { once: true });
+    document.addEventListener('DOMContentLoaded', scheduleEnforcement, { once: true });
   } else {
-    install();
+    scheduleEnforcement();
   }
 
-  window.addEventListener('load', () => {
-    install();
-    setTimeout(install, 800);
-    setTimeout(updateInterface, 2200);
-  }, { once: true });
+  window.addEventListener('load', scheduleEnforcement, { once: true });
+
+  let checks = 0;
+  const guard = setInterval(() => {
+    enforce();
+    checks += 1;
+    if (checks >= 20) clearInterval(guard);
+  }, 500);
 })();
