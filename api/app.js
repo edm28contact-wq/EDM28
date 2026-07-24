@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { resolveSupabasePublicConfig } from './supabase-config.js';
 
 const INDEX_PATH = join(process.cwd(), 'index.html');
 const ROUTER_PATH = join(process.cwd(), 'client-navigation-visible.js');
@@ -13,16 +14,15 @@ export default function handler(req, res) {
   try {
     let html = readFileSync(INDEX_PATH, 'utf8');
     const criticalRouter = readFileSync(ROUTER_PATH, 'utf8').replace(/<\/script/gi, '<\\/script');
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    const supabase = resolveSupabasePublicConfig();
 
-    if (supabaseUrl && supabaseKey) {
-      html = html
-        .replace(/const SUPABASE_URL = "[^"]+";/, `const SUPABASE_URL = ${JSON.stringify(supabaseUrl)};`)
-        .replace(/const SUPABASE_ANON_KEY = "[^"]+";/, `const SUPABASE_ANON_KEY = ${JSON.stringify(supabaseKey)};`);
+    if (!supabase.url || !supabase.key) {
+      throw new Error(`Configuration Supabase ${supabase.environment} absente.`);
     }
 
     html = html
+      .replace(/const SUPABASE_URL = "[^"]+";/, `const SUPABASE_URL = ${JSON.stringify(supabase.url)};`)
+      .replace(/const SUPABASE_ANON_KEY = "[^"]+";/, `const SUPABASE_ANON_KEY = ${JSON.stringify(supabase.key)};`)
       .replace('<title>EDM AUTO</title>', '<title>EDM · Spécialiste du freinage</title>')
       .replace('content="EDM AUTO - Demande mécanique simple, estimation claire et reprise manuelle."', 'content="EDM, spécialiste du freinage et de l’entretien automobile. Préparez votre demande et consultez une estimation indicative."')
       .replace('<meta name="theme-color" content="#111827">', '<meta name="theme-color" content="#cec7c0">')
@@ -30,7 +30,7 @@ export default function handler(req, res) {
       .replace('<link rel="apple-touch-icon" href="/icon.svg">', '<link rel="apple-touch-icon" href="/logo-edm.svg">')
       .replace('<meta name="apple-mobile-web-app-title" content="EDM AUTO">', '<meta name="apple-mobile-web-app-title" content="EDM">');
 
-    const socialMeta = `<meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:title" content="EDM · Spécialiste du freinage"><meta property="og:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><meta property="og:image" content="/logo-edm.svg"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="EDM · Spécialiste du freinage"><meta name="twitter:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><style id="edm-boot-style">html{background:#cec7c0}body{visibility:hidden}</style><script>${criticalRouter}<\/script>`;
+    const socialMeta = `<meta name="edm-environment" content="${supabase.environment}"><meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:title" content="EDM · Spécialiste du freinage"><meta property="og:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><meta property="og:image" content="/logo-edm.svg"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="EDM · Spécialiste du freinage"><meta name="twitter:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><style id="edm-boot-style">html{background:#cec7c0}body{visibility:hidden}</style><script>${criticalRouter}<\/script>`;
     html = html.replace('</head>', `${socialMeta}</head>`);
 
     const accountPrelude = '<script src="/client-account-safe.js?v=13"><\/script>';
@@ -39,6 +39,7 @@ export default function handler(req, res) {
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('X-EDM-Environment', supabase.environment);
     if (req.method === 'HEAD') return res.status(200).end();
     return res.status(200).send(html);
   } catch (error) {
