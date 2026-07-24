@@ -2,7 +2,9 @@ import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import adminIconHandler from '../api/admin-icon.js';
+import adminHandler from '../api/admin.js';
+
+process.env.VERCEL_ENV = 'preview';
 
 const port = Number(process.env.EDM_ADMIN_PWA_PORT || 4194);
 const mime = {
@@ -15,7 +17,7 @@ const mime = {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${port}`);
 
-  if (url.pathname === '/api/admin-icon') {
+  if (url.pathname === '/api/admin' && url.searchParams.has('icon')) {
     const headers = {};
     const response = {
       code: 200,
@@ -25,9 +27,18 @@ const server = createServer(async (req, res) => {
         res.writeHead(this.code, headers);
         res.end(body);
         return this;
+      },
+      send(body) {
+        res.writeHead(this.code, headers);
+        res.end(body);
+        return this;
       }
     };
-    adminIconHandler({ method: req.method, query: Object.fromEntries(url.searchParams) }, response);
+    adminHandler({
+      method: req.method,
+      query: Object.fromEntries(url.searchParams),
+      url: req.url
+    }, response);
     return;
   }
 
@@ -98,8 +109,8 @@ try {
     const manifestResponse = await fetch(manifestLink);
     const manifest = await manifestResponse.json();
     const registration = await navigator.serviceWorker.ready;
-    const icon192 = await fetch('/api/admin-icon?size=192');
-    const icon512 = await fetch('/api/admin-icon?size=512');
+    const icon192 = await fetch('/api/admin?icon=192');
+    const icon512 = await fetch('/api/admin?icon=512');
     return {
       title: document.title,
       manifestLink,
