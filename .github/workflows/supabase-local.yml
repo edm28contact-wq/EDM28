@@ -34,13 +34,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2
         with:
           version: 2.109.1
           github-token: ${{ github.token }}
-
       - name: Initialize local Supabase configuration
         shell: bash
         run: |
@@ -48,7 +46,6 @@ jobs:
           if [ ! -f supabase/config.toml ]; then
             supabase init
           fi
-
       - name: Prepare reproducible candidate migration chain
         shell: bash
         run: |
@@ -61,31 +58,31 @@ jobs:
           cp /tmp/edm28-legacy-migrations/20260719202000_add_missing_foreign_key_indexes.sql supabase/migrations/
           cp /tmp/edm28-legacy-migrations/20260724190000_client_messaging_loop.sql supabase/migrations/
           cp /tmp/edm28-legacy-migrations/20260724193000_client_messaging_hardening.sql supabase/migrations/
-          if [ -f /tmp/edm28-legacy-migrations/20260724213000_backoffice_management_and_part_modes.sql ]; then
-            cp /tmp/edm28-legacy-migrations/20260724213000_backoffice_management_and_part_modes.sql supabase/migrations/
-          fi
+          for migration in \
+            20260724213000_backoffice_management_and_part_modes.sql \
+            20260724220000_micro_accounting_operations.sql \
+            20260724221000_micro_accounting_recalculation_and_cash.sql \
+            20260724221500_fix_item_recalculation_triggers.sql; do
+            cp "/tmp/edm28-legacy-migrations/$migration" supabase/migrations/
+          done
           printf 'Candidate migration chain:\n'
           find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' | sort
-
       - name: Start fresh local Supabase stack
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p supabase-ci-artifacts
           supabase start 2>&1 | tee supabase-ci-artifacts/start.log
-
       - name: Rebuild the database from migrations
         shell: bash
         run: |
           set -euo pipefail
           supabase db reset --local --no-seed 2>&1 | tee supabase-ci-artifacts/reset.log
-
       - name: Show migration status
         if: always()
         shell: bash
         run: |
           supabase migration list --local 2>&1 | tee supabase-ci-artifacts/migrations.log || true
-
       - name: Upload Supabase logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -93,7 +90,6 @@ jobs:
           name: supabase-local-report-pass-${{ matrix.pass }}
           path: supabase-ci-artifacts
           if-no-files-found: warn
-
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup || true
