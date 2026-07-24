@@ -12,7 +12,7 @@ appHandler({ method: 'GET' }, {
   send(body) { html = body; return this; },
   end() { return this; }
 });
-if (!html.includes('client-account-safe.js?v=12')) throw new Error('Preview asset mismatch');
+if (!html.includes('client-account-safe.js?v=13')) throw new Error('Preview asset mismatch');
 
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
@@ -120,11 +120,21 @@ try {
   await page.click('#btnSaveVehicle');
   await page.click('#btnAccessServices');
   await page.waitForSelector('#servicesArea:not(.hidden)');
+  await page.waitForFunction(() => window.__edmComboSuspended === true);
 
   for (const filter of ['all','Freinage','Train avant']) await page.click(`[data-filter="${filter}"]`);
   await page.click('[data-filter="all"]');
   await page.click('[data-more]');
-  await page.click('#comboExplainBtn');
+
+  const comboPolicy = await page.evaluate(() => ({
+    disabled: document.getElementById('comboExplainBtn')?.disabled,
+    text: document.getElementById('comboExplainBtn')?.textContent,
+    policy: document.documentElement.dataset.comboPolicy
+  }));
+  if (!comboPolicy.disabled || comboPolicy.policy !== 'suspended' || !comboPolicy.text?.includes('suspendue')) {
+    throw new Error(`Combo policy not suspended: ${JSON.stringify(comboPolicy)}`);
+  }
+
   await page.click('[data-select-pack="freinage"]');
   for (const basket of ['eco','standard','premium']) await page.click(`[data-basket="${basket}"]`);
   await page.click('#j7Accepted');
