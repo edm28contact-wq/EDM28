@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { resolveSupabasePublicConfig } from './supabase-config.js';
 
 const ADMIN_PATH = join(process.cwd(), 'admin.html');
 const ADMIN_CORE_PATH = join(process.cwd(), 'admin-core.js');
@@ -15,20 +16,17 @@ export default function handler(req, res) {
     let html = readFileSync(ADMIN_PATH, 'utf8');
     let adminCore = readFileSync(ADMIN_CORE_PATH, 'utf8');
     const adminTransactional = readFileSync(ADMIN_TRANSACTIONAL_PATH, 'utf8');
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    const supabase = resolveSupabasePublicConfig();
 
-    if (supabaseUrl && supabaseKey) {
-      adminCore = adminCore
-        .replace(
-          /'https:\/\/[^']+\.supabase\.co'/,
-          JSON.stringify(supabaseUrl)
-        )
-        .replace(
-          /'sb_publishable_[^']+'/,
-          JSON.stringify(supabaseKey)
-        );
+    if (!supabase.url || !supabase.key) {
+      throw new Error(`Configuration Supabase ${supabase.environment} absente.`);
     }
+
+    adminCore = adminCore
+      .replace(/'https:\/\/[^']+\.supabase\.co'/, JSON.stringify(supabase.url))
+      .replace(/'sb_publishable_[^']+'/, JSON.stringify(supabase.key));
+
+    html = html.replace('</head>', `<meta name="edm-environment" content="${supabase.environment}"></head>`);
 
     const encodedCore = Buffer.from(adminCore, 'utf8').toString('base64');
     const encodedTransactional = Buffer.from(adminTransactional, 'utf8').toString('base64');
@@ -38,6 +36,7 @@ export default function handler(req, res) {
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('X-EDM-Environment', supabase.environment);
     if (req.method === 'HEAD') return res.status(200).end();
     return res.status(200).send(html);
   } catch (error) {
