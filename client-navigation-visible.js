@@ -56,6 +56,10 @@
     } catch (error) {
       showFallback(id, error);
     }
+
+    if (id === 'history' && typeof window.renderRequestHistory === 'function') {
+      void window.renderRequestHistory().catch((error) => console.warn('EDM request history unavailable', error));
+    }
   }
 
   function activate(id) {
