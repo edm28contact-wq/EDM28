@@ -1,18 +1,33 @@
 (() => {
-  if (window.__edmMenuRouterV6) return;
-  window.__edmMenuRouterV6 = true;
+  if (window.__edmMenuRouterV7) return;
+  window.__edmMenuRouterV7 = true;
+  window.__edmConnectedRouter = true;
 
   const allPages = new Set(['home', 'appointment', 'account', 'garage', 'history', 'about']);
   const privatePages = new Set(['account', 'garage', 'history']);
-  let knownSessionUser = null;
-  let sessionSync = null;
+
+  let sessionUser = null;
+  let sessionKnown = false;
+  let sessionRequest = null;
+
+  function getStateUser() {
+    try {
+      return typeof state !== 'undefined' ? state?.user || null : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function hasKnownUser() {
+    return Boolean(sessionUser?.id || getStateUser()?.id);
+  }
 
   function revealNavigation() {
     privatePages.forEach((id) => {
       document.querySelectorAll(`[data-page="${id}"]`).forEach((button) => {
-        button.classList.remove('hidden');
-        button.removeAttribute('aria-hidden');
-        button.disabled = false;
+        if (button.classList.contains('hidden')) button.classList.remove('hidden');
+        if (button.hasAttribute('aria-hidden')) button.removeAttribute('aria-hidden');
+        if (button.disabled) button.disabled = false;
       });
     });
   }
@@ -29,7 +44,7 @@
     const hostId = id === 'account' ? 'accountPageContent' : id === 'garage' ? 'garageList' : 'historyList';
     const host = document.getElementById(hostId);
     if (host && !host.textContent.trim()) {
-      host.innerHTML = '<div class="notice">Cette page est ouverte. Les informations du compte sont en cours de chargement.</div>';
+      host.innerHTML = '<div class="notice">La page est ouverte. Les informations du compte sont en cours de chargement.</div>';
     }
   }
 
@@ -48,16 +63,22 @@
       page.classList.toggle('active', page.id === id);
     });
     document.querySelectorAll('[data-page]').forEach((button) => {
-      button.classList.toggle('active', button.dataset.page === id);
+      const active = button.dataset.page === id;
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
     });
     closeMenu();
     renderPage(id);
-    try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (_) {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    } catch (_) {}
   }
 
   async function hydrateSessionUser(user) {
-    if (!user) return false;
-    knownSessionUser = user;
+    if (!user?.id) return false;
+    sessionUser = user;
+
     try {
       if (typeof hydrateUserFromSupabase === 'function') {
         await hydrateUserFromSupabase(user);
@@ -76,48 +97,103 @@
     } catch (error) {
       console.warn('EDM session hydration unavailable', error);
     }
+
     return true;
   }
 
-  async function syncSession(activePage) {
-    if (sessionSync) return sessionSync;
-    sessionSync = (async () => {
-      try {
-        if (knownSessionUser) {
-          await hydrateSessionUser(knownSessionUser);
-        } else if (typeof supabaseClient !== 'undefined') {
-          const result = await Promise.race([
-            supabaseClient.auth.getSession(),
-            new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 2500))
-          ]);
-          const user = result?.data?.session?.user || null;
-          if (user) await hydrateSessionUser(user);
-        }
-      } catch (error) {
-        console.warn('EDM session check unavailable', error);
-      } finally {
-        sessionSync = null;
-      }
-      if (activePage && document.getElementById(activePage)?.classList.contains('active')) renderPage(activePage);
-    })();
-    return sessionSync;
+  function clearStaleLocalUser() {
+    try {
+      if (typeof state === 'undefined' || !state?.user) return;
+      state.user = null;
+      if (typeof saveState === 'function') saveState();
+    } catch (error) {
+      console.warn('EDM local session cleanup unavailable', error);
+    }
   }
 
-  function navigate(id) {
-    activate(id);
-    if (privatePages.has(id)) void syncSession(id);
+  async function resolveSession() {
+    if (sessionUser?.id) return hydrateSessionUser(sessionUser);
+    if (sessionKnown) return false;
+    if (sessionRequest) return sessionRequest;
+
+    sessionRequest = (async () => {
+      try {
+        if (typeof supabaseClient === 'undefined') return hasKnownUser();
+
+        const result = await Promise.race([
+          supabaseClient.auth.getSession(),
+          new Promise((resolve) => setTimeout(() => resolve({ data: { session: null }, timedOut: true }), 2500))
+        ]);
+
+        if (result?.timedOut) return hasKnownUser();
+
+        sessionKnown = true;
+        sessionUser = result?.data?.session?.user || null;
+
+        if (sessionUser) return hydrateSessionUser(sessionUser);
+
+        clearStaleLocalUser();
+        return false;
+      } catch (error) {
+        console.warn('EDM session check unavailable', error);
+        return hasKnownUser();
+      } finally {
+        sessionRequest = null;
+      }
+    })();
+
+    return sessionRequest;
+  }
+
+  async function navigate(id) {
+    if (!privatePages.has(id)) {
+      activate(id);
+      return;
+    }
+
+    if (hasKnownUser()) {
+      activate(id);
+      const authenticated = await resolveSession();
+      if (!authenticated && document.getElementById(id)?.classList.contains('active')) {
+        activate('appointment');
+        document.getElementById('email')?.focus();
+      } else if (authenticated && document.getElementById(id)?.classList.contains('active')) {
+        renderPage(id);
+      }
+      return;
+    }
+
+    closeMenu();
+    activate('appointment');
+    document.getElementById('email')?.focus();
+
+    const authenticated = await resolveSession();
+    if (authenticated) activate(id);
   }
 
   function installAuthListener() {
     try {
       if (typeof supabaseClient === 'undefined') return;
+
       supabaseClient.auth.onAuthStateChange((_event, session) => {
-        knownSessionUser = session?.user || null;
-        if (knownSessionUser) void hydrateSessionUser(knownSessionUser);
-        const activePrivate = [...privatePages].find((id) => document.getElementById(id)?.classList.contains('active'));
-        if (activePrivate) setTimeout(() => renderPage(activePrivate), 0);
+        sessionKnown = true;
+        sessionUser = session?.user || null;
+
+        if (sessionUser) {
+          void hydrateSessionUser(sessionUser).then(() => {
+            const activePrivate = [...privatePages].find((id) => document.getElementById(id)?.classList.contains('active'));
+            if (activePrivate) renderPage(activePrivate);
+          });
+        } else {
+          clearStaleLocalUser();
+          const activePrivate = [...privatePages].find((id) => document.getElementById(id)?.classList.contains('active'));
+          if (activePrivate) activate('appointment');
+        }
+
+        revealNavigation();
       });
-      void syncSession();
+
+      void resolveSession();
     } catch (error) {
       console.warn('EDM auth listener unavailable', error);
     }
@@ -125,26 +201,30 @@
 
   function install() {
     revealNavigation();
+
     document.addEventListener('click', (event) => {
-      const button = event.target.closest?.('[data-page]');
-      const id = button?.dataset?.page;
+      const routeButton = event.target.closest?.('[data-page], [data-jump]');
+      const id = routeButton?.dataset?.page || routeButton?.dataset?.jump;
       if (!id || !allPages.has(id)) return;
+
       event.preventDefault();
       event.stopImmediatePropagation();
-      navigate(id);
+      void navigate(id);
     }, true);
-
-    new MutationObserver(revealNavigation).observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'disabled', 'aria-hidden']
-    });
 
     installAuthListener();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
-  else install();
-  window.addEventListener('load', revealNavigation);
+  window.__edmNavigate = navigate;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', install, { once: true });
+  } else {
+    install();
+  }
+
+  window.addEventListener('pageshow', () => {
+    revealNavigation();
+    void resolveSession();
+  });
 })();
