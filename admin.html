@@ -2,7 +2,16 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
-  <title>Gestion EDM28</title><link rel="stylesheet" href="/admin.css">
+  <meta name="theme-color" content="#111827">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EDM28 Gestion">
+  <title>Gestion EDM28</title>
+  <link rel="manifest" href="/admin-manifest.webmanifest">
+  <link rel="icon" href="/api/admin-icon?size=192" type="image/png">
+  <link rel="apple-touch-icon" href="/api/admin-icon?size=192">
+  <link rel="stylesheet" href="/admin.css">
 </head>
 <body>
 <main id="adminApp">
@@ -11,10 +20,13 @@
     <label>Email<input id="adminEmail" type="email" autocomplete="email"></label>
     <label>Mot de passe<input id="adminPassword" type="password" autocomplete="current-password"></label>
     <button id="loginBtn" class="btn primary">Se connecter</button><div id="loginStatus" class="status hidden"></div>
+    <div class="toolbar"><button data-install-admin class="btn ghost hidden" type="button">Installer l’application</button></div>
+    <p data-install-status class="muted" aria-live="polite"></p>
   </section>
 
   <section id="dashboard" class="hidden">
-    <header class="top"><div><h1>Tableau de commande EDM28</h1><p class="muted" id="adminIdentity"></p></div><button id="logoutBtn" class="btn ghost">Déconnexion</button></header>
+    <header class="top"><div><h1>Tableau de commande EDM28</h1><p class="muted" id="adminIdentity"></p></div><div class="toolbar"><button data-install-admin class="btn ghost hidden" type="button">Installer l’application</button><button id="logoutBtn" class="btn ghost">Déconnexion</button></div></header>
+    <p data-install-status class="muted" aria-live="polite"></p>
     <nav class="nav">
       <button class="btn ghost active" data-page="overview">Vue générale</button>
       <button class="btn ghost" data-page="requests">Demandes</button>
@@ -53,6 +65,7 @@
     <section id="settings" class="page"><div class="card"><h2>Automatisations</h2><div id="automationForm"></div><button id="saveAutomationBtn" class="btn primary">Enregistrer</button><div id="automationStatus" class="status hidden"></div></div></section>
   </section>
 </main>
+<script src="/admin-install.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/admin-clients.js?v=2"></script><script src="/admin-requests.js?v=2"></script><script src="/admin-quotes.js?v=1"></script><script src="/admin-services.js?v=2"></script><script src="/admin-docs.js?v=2"></script><script src="/admin-business.js?v=1"></script><script src="/admin-settings.js?v=2"></script><script src="/admin-accounting.js?v=1"></script><script src="/admin-messages.js?v=1"></script><script src="/admin-core.js?v=4"></script><script src="/admin-readiness.js?v=2"></script><script src="/admin-doc-fields.js?v=1"></script><script src="/admin-doc-logic.js?v=1"></script><script src="/admin-service-validation.js?v=1"></script>
 </body></html>
