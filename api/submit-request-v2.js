@@ -1,8 +1,13 @@
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+import { resolveSupabasePublicConfig } from './supabase-config.js';
+
+const supabase = resolveSupabasePublicConfig();
+const SUPABASE_URL = supabase.url;
+const SUPABASE_ANON_KEY = supabase.key;
+const SUPABASE_ENVIRONMENT = supabase.environment;
 
 function sendJson(res, status, body) {
   res.status(status).setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('X-EDM-Environment', SUPABASE_ENVIRONMENT);
   return res.end(JSON.stringify(body));
 }
 
@@ -19,10 +24,29 @@ function euros(value) {
   return amount(value).toFixed(2).replace('.', ',');
 }
 
+function firstNonEmpty(...values) {
+  return values.find((value) => typeof value === 'string' && value.trim())?.trim() || '';
+}
+
+function resolveEmailConfig() {
+  const preview = SUPABASE_ENVIRONMENT !== 'production';
+  return {
+    apiKey: preview
+      ? firstNonEmpty(process.env.PREVIEW_RESEND_API_KEY, process.env.RESEND_API_KEY)
+      : firstNonEmpty(process.env.RESEND_API_KEY),
+    from: preview
+      ? firstNonEmpty(process.env.PREVIEW_RESEND_FROM_EMAIL, process.env.RESEND_FROM_EMAIL)
+      : firstNonEmpty(process.env.RESEND_FROM_EMAIL),
+    to: preview
+      ? firstNonEmpty(process.env.PREVIEW_RESEND_TO_EMAIL, process.env.RESEND_TO_EMAIL)
+      : firstNonEmpty(process.env.RESEND_TO_EMAIL)
+  };
+}
+
 async function authenticate(req) {
   const authorization = req.headers.authorization || '';
   if (!authorization.startsWith('Bearer ')) throw new Error('Session absente.');
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Configuration Supabase absente.');
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error(`Configuration Supabase ${SUPABASE_ENVIRONMENT} absente.`);
   const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { Authorization: authorization, apikey: SUPABASE_ANON_KEY }
   });
@@ -111,14 +135,17 @@ export default async function handler(req, res) {
       return sendJson(res, 400, { success: false, saved: true, error: 'Demande enregistrée mais incomplète.' });
     }
 
-    const required = ['RESEND_API_KEY', 'RESEND_FROM_EMAIL', 'RESEND_TO_EMAIL'];
-    if (required.some((name) => !process.env[name])) {
-      return sendJson(res, 503, { success: false, saved: true, error: 'Demande enregistrée, mais service email non configuré.' });
+    const email = resolveEmailConfig();
+    if (!email.apiKey || !email.from || !email.to) {
+      return sendJson(res, 503, { success: false, saved: true, error: `Demande enregistrée, mais service email ${SUPABASE_ENVIRONMENT} non configuré.` });
+    }
+    if (SUPABASE_ENVIRONMENT === 'production' && /onboarding@resend\.dev/i.test(email.from)) {
+      return sendJson(res, 503, { success: false, saved: true, error: 'Domaine expéditeur de production non vérifié.' });
     }
 
     const totals = request.totals || {};
     const labor = services.reduce((sum, service) => sum + amount(service.labor), 0);
-    const control = request.j7_accepted ? amount(totals.j7Saving ?? totals.controlPrice ?? 30) : 0;
+    const control = request.j7_accepted ? amount(totals.controlFee ?? totals.j7Saving ?? totals.controlPrice ?? 30) : 0;
     const estimatedMin = totals.totalMin ?? totals.totalAllMin ?? totals.laborAfter ?? totals.laborTotal ?? labor;
     const estimatedMax = totals.totalMax ?? totals.totalAllMax ?? estimatedMin;
     const serviceLines = services.map((service) => `- ${clean(service.name, 120)}`).join('\n');
@@ -172,17 +199,20 @@ export default async function handler(req, res) {
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        Authorization: `Bearer ${email.apiKey}`,
         'Content-Type': 'application/json',
         'Idempotency-Key': `service-request/${request.id}`
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM_EMAIL,
-        to: [process.env.RESEND_TO_EMAIL],
+        from: email.from,
+        to: [email.to],
         reply_to: clientEmail || undefined,
         subject: `Nouvelle demande EDM AUTO - ${clientLabel} - ${clean(vehicle.plate, 20)}`,
         text,
-        tags: [{ name: 'request_id', value: request.id }]
+        tags: [
+          { name: 'request_id', value: request.id },
+          { name: 'environment', value: SUPABASE_ENVIRONMENT }
+        ]
       })
     });
     const emailResult = await emailResponse.json().catch(() => ({}));
