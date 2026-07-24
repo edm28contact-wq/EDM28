@@ -25,7 +25,7 @@ test('client authentication uses password after one-time email verification', as
 
 test('private client routes are guarded without duplicate click handlers', async () => {
   const source = await read('client-account-safe.js');
-  assert.match(source, /new Set\(\['account', 'garage', 'history'\]\)/);
+  assert.match(source, /new Set\(\['account', 'garage', 'history', 'messages'\]\)/);
   assert.match(source, /protectedPages\.has\(pageId\)/);
   assert.match(source, /baseShowPage\('appointment'\)/);
   assert.match(source, /baseShowPage\(pageId\)/);
@@ -118,6 +118,49 @@ test('submitted requests are loaded and refreshed in client history', async () =
   assert.match(app, /request-history\.js\?v=2/);
   assert.match(app, /client-simple-flow\.js\?v=8/);
   assert.match(loader, /request-submit-safe\.js\?v=4/);
+});
+
+test('messaging loop uses guarded RPCs and explicit human approval', async () => {
+  const [loader, client, admin, router, ai, migration, hardening] = await Promise.all([
+    read('client-simple-flow.js'),
+    read('client-messages.js'),
+    read('admin-messages.js'),
+    read('client-navigation-visible.js'),
+    read('api/ai-message-draft.js'),
+    read('supabase/migrations/20260724190000_client_messaging_loop.sql'),
+    read('supabase/migrations/20260724193000_client_messaging_hardening.sql')
+  ]);
+
+  assert.match(loader, /client-messages\.js\?v=1/);
+  assert.match(router, /'messages'/);
+  assert.match(router, /renderClientMessages/);
+  assert.match(client, /rpc\('client_send_message'/);
+  assert.match(client, /rpc\('client_mark_messages_read'/);
+  assert.match(client, /read_by_admin/);
+  assert.match(admin, /rpc\('admin_send_message'/);
+  assert.match(admin, /Envoyer après validation/);
+  assert.match(admin, /if \(!this\.isActive\(\)\) return/);
+  assert.match(admin, /Brouillon IA modifié · validation humaine/);
+
+  assert.match(ai, /https:\/\/api\.openai\.com\/v1\/responses/);
+  assert.match(ai, /store:\s*false/);
+  assert.match(ai, /type:\s*'json_schema'/);
+  assert.match(ai, /strict:\s*true/);
+  assert.match(ai, /PREVIEW_OPENAI_API_KEY/);
+  assert.doesNotMatch(ai, /PREVIEW_OPENAI_API_KEY\s*\|\|\s*process\.env\.OPENAI_API_KEY/);
+  assert.match(ai, /automation_settings/);
+  assert.match(ai, /requiresHumanApproval:\s*true/);
+  assert.match(ai, /select=id,first_name,last_name,role/);
+  assert.doesNotMatch(ai, /select=id,first_name,last_name,phone,email/);
+
+  assert.match(migration, /client_send_message/);
+  assert.match(migration, /client_mark_messages_read/);
+  assert.match(migration, /admin_send_message/);
+  assert.match(migration, /admin_mark_conversation_read/);
+  assert.match(hardening, /v_recent_count\s*>=\s*12/);
+  assert.match(hardening, /profile\.role\s*=\s*'customer'/);
+  assert.match(hardening, /v_draft_request_id is distinct from p_service_request_id/);
+  assert.match(hardening, /'human_edited', v_human_edited/);
 });
 
 test('Preview exposes all client journey boundaries', async () => {
