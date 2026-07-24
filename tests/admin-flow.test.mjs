@@ -93,6 +93,32 @@ test('admin route injects environment-scoped public config without service-role 
   assert.match(source, /X-EDM-Environment/);
 });
 
+test('admin messaging requires explicit human approval before publication', async () => {
+  const [html, core, messages, ai, hardening] = await Promise.all([
+    read('admin.html'),
+    read('admin-core.js'),
+    read('admin-messages.js'),
+    read('api/ai-message-draft.js'),
+    read('supabase/migrations/20260724193000_client_messaging_hardening.sql')
+  ]);
+
+  assert.match(html, /admin-messages\.js\?v=1/);
+  assert.match(core, /id === 'messages'/);
+  assert.match(core, /EDMAdminMessages\?\.load/);
+  assert.match(messages, /Proposer avec l’IA/);
+  assert.match(messages, /Envoyer après validation/);
+  assert.match(messages, /selectedDraftId/);
+  assert.match(messages, /rpc\('admin_send_message'/);
+  assert.match(messages, /if \(!this\.isActive\(\)\) return/);
+  assert.match(messages, /Le client ou la demande a changé pendant la génération/);
+  assert.match(ai, /requiresHumanApproval:\s*true/);
+  assert.match(ai, /document_type:\s*'message'/);
+  assert.doesNotMatch(ai, /client_messages\?select=.*method:\s*'POST'/s);
+  assert.match(hardening, /status = 'published'/);
+  assert.match(hardening, /approved_by = auth\.uid\(\)/);
+  assert.match(hardening, /'published_message_id', v_message_id/);
+});
+
 test('admin interface exposes operational boundaries and audit journal', async () => {
   const [html, quotes, audit] = await Promise.all([
     read('admin.html'), read('admin-quotes.js'), read('admin-audit-log.js')
