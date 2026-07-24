@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "EDM28 Pilotage",
+    "slug": "edm28-pilotage",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "edm28pilotage",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": false },
+    "android": {
+      "package": "fr.edm28.pilotage",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1220"
+      }
+    }
+  }
+}
