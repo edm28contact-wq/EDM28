@@ -26,6 +26,7 @@
       document.querySelectorAll('.page').forEach((node) => node.classList.toggle('active', node.id === id));
       document.querySelectorAll('[data-page]').forEach((node) => node.classList.toggle('active', node.dataset.page === id));
       if (id === 'requests') window.EDMAdminRequests?.load().catch((error) => this.status('requestStatus', error.message || 'Demandes indisponibles.', true));
+      if (id === 'messages') window.EDMAdminMessages?.load().catch((error) => this.status('adminMessageStatus', error.message || 'Messagerie indisponible.', true));
       if (id === 'accounting') window.EDMAdminAccounting?.load();
     },
     async requireAdmin(user) {
@@ -60,6 +61,7 @@
       const modules = [
         ['Demandes', () => window.EDMAdminRequests?.load()],
         ['Clients', () => window.EDMAdminClients?.load()],
+        ['Messagerie', () => window.EDMAdminMessages?.load()],
         ['Services', () => window.EDMAdminServices?.load()],
         ['Documents', () => window.EDMAdminDocs?.load()],
         ['Comptabilité', () => window.EDMAdminAccounting?.load()],
