@@ -62,7 +62,8 @@ jobs:
             20260724213000_backoffice_management_and_part_modes.sql \
             20260724220000_micro_accounting_operations.sql \
             20260724221000_micro_accounting_recalculation_and_cash.sql \
-            20260724221500_fix_item_recalculation_triggers.sql; do
+            20260724221500_fix_item_recalculation_triggers.sql \
+            20260724222000_complete_micro_accounting_rpcs_and_indexes.sql; do
             cp "/tmp/edm28-legacy-migrations/$migration" supabase/migrations/
           done
           printf 'Candidate migration chain:\n'
