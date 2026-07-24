@@ -36,7 +36,7 @@
     const itemCount = await db.from('invoice_items').select('id', { count: 'exact', head: true }).eq('invoice_id', invoiceId);
     if (itemCount.error) throw itemCount.error;
     if (!itemCount.count) {
-      const quoteItems = await db.from('quote_items').select('id,item_type,description,quantity,unit_price,total,display_order').eq('quote_id', order.quote_id).order('display_order');
+      const quoteItems = await db.from('quote_items').select('id,item_type,description,quantity,unit_price,display_order,part_handling_mode,purchase_total,supplier_invoice_holder,customer_mandate_reference,customer_mandate_path,supplier_document_path,business_purchase_reference,supplier_reference,vat_rate').eq('quote_id', order.quote_id).order('display_order');
       if (quoteItems.error) throw quoteItems.error;
       const items = (quoteItems.data || []).map((item) => ({
         invoice_id: invoiceId,
@@ -44,11 +44,19 @@
         description: item.description,
         quantity: Number(item.quantity || 1),
         unit_price: Number(item.unit_price || 0),
-        line_total: Number(item.total ?? Number(item.quantity || 1) * Number(item.unit_price || 0)),
         source_quote_item_id: item.id,
-        display_order: item.display_order || 0
+        display_order: item.display_order || 0,
+        part_handling_mode: item.part_handling_mode,
+        purchase_total: item.purchase_total,
+        supplier_invoice_holder: item.supplier_invoice_holder,
+        customer_mandate_reference: item.customer_mandate_reference,
+        customer_mandate_path: item.customer_mandate_path,
+        supplier_document_path: item.supplier_document_path,
+        business_purchase_reference: item.business_purchase_reference,
+        supplier_reference: item.supplier_reference,
+        vat_rate: item.vat_rate
       }));
-      if (!items.length) items.push({ invoice_id: invoiceId, item_type: 'labor', description: 'Prestations selon devis accepté', quantity: 1, unit_price: Number(order.quotes?.total || 0), line_total: Number(order.quotes?.total || 0), display_order: 0 });
+      if (!items.length) items.push({ invoice_id: invoiceId, item_type: 'labor', description: 'Prestations selon devis accepté', quantity: 1, unit_price: Number(order.quotes?.total || 0), display_order: 0 });
       const inserted = await db.from('invoice_items').insert(items);
       if (inserted.error) throw inserted.error;
     }
