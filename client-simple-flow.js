@@ -10,7 +10,7 @@
     { src: '/client-operations.js?v=1', attr: 'data-edm-operations' },
     { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' },
     { src: '/client-document-download.js?v=1', attr: 'data-edm-document-downloads' },
-    { src: '/client-notifications.js?v=1', attr: 'data-edm-notifications' },
+    { src: '/client-messages.js?v=1', attr: 'data-edm-messages' },
     { src: '/combo-suspended.js?v=1', attr: 'data-edm-combo-policy' }
   ];
 
