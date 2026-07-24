@@ -61,9 +61,22 @@
     return `${formatMoney(minimum)} à ${formatMoney(maximum)}`;
   }
 
+  function installHostObserver() {
+    const host = document.getElementById('historyList');
+    if (!host || host.dataset.requestHistoryObserved === '1') return;
+    host.dataset.requestHistoryObserved = '1';
+
+    new MutationObserver(() => {
+      const historyActive = document.getElementById('history')?.classList.contains('active');
+      const requestSectionPresent = Boolean(host.querySelector('[data-request-history]'));
+      if (historyActive && !requestSectionPresent) scheduleRender(75);
+    }).observe(host, { childList: true, subtree: false });
+  }
+
   async function renderRequests() {
     const host = document.getElementById('historyList');
     if (!host) return;
+    installHostObserver();
 
     const sequence = ++renderSequence;
     const userId = await currentUserId();
@@ -148,8 +161,15 @@
 
   window.addEventListener('edm:request-submitted', () => scheduleRender(0));
   window.addEventListener('pageshow', () => {
+    installHostObserver();
     if (document.getElementById('history')?.classList.contains('active')) scheduleRender(100);
   });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installHostObserver, { once: true });
+  } else {
+    installHostObserver();
+  }
 
   if (typeof supabaseClient !== 'undefined') {
     supabaseClient.auth.onAuthStateChange((_event, session) => {
