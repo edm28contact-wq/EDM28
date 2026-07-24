@@ -78,12 +78,19 @@ test('PDF generation uses private storage and compensates failed metadata update
   assert.match(source, /storage\.from\('repair-documents'\)\.remove\(\[path\]\)/);
 });
 
-test('admin route injects Preview config without service-role credentials', async () => {
-  const source = await read('api/admin.js');
-  assert.match(source, /process\.env\.SUPABASE_URL/);
-  assert.match(source, /process\.env\.SUPABASE_ANON_KEY/);
+test('admin route injects environment-scoped public config without service-role credentials', async () => {
+  const [source, config] = await Promise.all([
+    read('api/admin.js'),
+    read('api/supabase-config.js')
+  ]);
+  assert.match(source, /resolveSupabasePublicConfig/);
+  assert.match(config, /process\.env\.SUPABASE_URL/);
+  assert.match(config, /process\.env\.SUPABASE_ANON_KEY/);
+  assert.match(config, /PREVIEW_SUPABASE_URL/);
+  assert.match(config, /PREVIEW_SUPABASE_ANON_KEY/);
   assert.doesNotMatch(source, /SERVICE_ROLE|service_role/);
   assert.match(source, /Cache-Control', 'no-store, max-age=0'/);
+  assert.match(source, /X-EDM-Environment/);
 });
 
 test('admin interface exposes operational boundaries and audit journal', async () => {
