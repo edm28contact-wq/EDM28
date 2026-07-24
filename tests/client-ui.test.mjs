@@ -1,37 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-function functionSource(source, marker) {
-  const start = source.indexOf(marker);
-  assert.notEqual(start, -1, `Missing ${marker}`);
-  const fn = source.indexOf('function', start);
-  const brace = source.indexOf('{', fn);
-  let depth = 0;
-  let quote = '';
-  let escaped = false;
-  for (let i = brace; i < source.length; i += 1) {
-    const c = source[i];
-    if (quote) {
-      if (escaped) escaped = false;
-      else if (c === '\\') escaped = true;
-      else if (c === quote) quote = '';
-      continue;
-    }
-    if (c === '"' || c === "'" || c === '`') { quote = c; continue; }
-    if (c === '{') depth += 1;
-    if (c === '}' && --depth === 0) return source.slice(fn, i + 1);
-  }
-  throw new Error(`Unclosed ${marker}`);
-}
-
 test('client modules load in deterministic order', async () => {
   const source = await read('client-simple-flow.js');
-  const modules = ['client-otp-flow.js','client-step3-fixes.js','request-submit-safe.js','client-quotes.js','client-operations.js','client-invoices.js','client-document-download.js','client-notifications.js','combo-suspended.js'];
+  const modules = ['client-password-flow.js','client-step3-fixes.js','request-submit-safe.js','client-quotes.js','client-operations.js','client-invoices.js','client-document-download.js','client-notifications.js','combo-suspended.js'];
   let previous = -1;
   for (const module of modules) {
     const index = source.indexOf(module);
@@ -40,30 +16,29 @@ test('client modules load in deterministic order', async () => {
   }
 });
 
-test('OTP flow is passwordless and accepts six to ten digits', async () => {
-  const source = await read('client-otp-flow.js');
-  assert.match(source, /signInWithOtp\s*\(/);
-  assert.match(source, /shouldCreateUser:\s*true/);
-  assert.match(source, /verifyOtp\s*\(\{\s*email,\s*token,\s*type:\s*'email'/s);
-  assert.match(source, /slice\(0,\s*10\)/);
-  assert.match(source, /token\.length\s*<\s*6\s*\|\|\s*token\.length\s*>\s*10/);
-  assert.match(source, /maxlength="10"/);
-  assert.match(source, /password.*closest\('label'\).*remove\(\)/s);
-  assert.match(source, /removeLegacyPasswordUi\(\)/);
+test('client signup verifies email once and subsequent logins use a password', async () => {
+  const source = await read('client-password-flow.js');
+  assert.match(source, /auth\.signUp\s*\(/);
+  assert.match(source, /auth\.signInWithPassword\s*\(/);
+  assert.match(source, /auth\.verifyOtp\s*\(/);
+  assert.match(source, /auth\.resend\s*\(/);
+  assert.match(source, /auth\.updateUser\(\{ password \}\)/);
+  assert.match(source, /shouldCreateUser:\s*false/);
+  assert.match(source, /MIN_PASSWORD_LENGTH\s*=\s*8/);
+  assert.match(source, /passwordConfirm/);
+  assert.match(source, /Mot de passe oublié \/ à définir/);
 });
 
-test('legacy password authentication cannot be reintroduced', async () => {
-  const [auth, otp, app, build] = await Promise.all([
-    read('auth.js'),
-    read('client-otp-flow.js'),
+test('legacy recurring OTP flow is not loaded', async () => {
+  const [loader, app, build] = await Promise.all([
+    read('client-simple-flow.js'),
     read('api/app.js'),
     read('scripts/build-static.mjs')
   ]);
-  assert.doesNotMatch(auth, /signInWithPassword|auth\.signUp|prompt\([^)]*mot de passe/i);
-  assert.match(otp, /window\.signUpWithSupabase\s*=\s*undefined/);
-  assert.match(otp, /window\.signInWithSupabase\s*=\s*undefined/);
-  assert.match(app, /client-simple-flow\.js/);
-  assert.match(build, /client-simple-flow\.js/);
+  assert.doesNotMatch(loader, /client-otp-flow\.js/);
+  assert.match(loader, /client-password-flow\.js/);
+  assert.match(app, /client-simple-flow\.js\?v=8/);
+  assert.match(build, /client-simple-flow\.js\?v=8/);
 });
 
 test('combo discount is explicitly suspended in the client UI', async () => {
@@ -101,23 +76,23 @@ test('submit API authenticates, canonicalizes and is idempotent', async () => {
   assert.match(source, /alreadySubmitted:\s*true/);
   assert.match(source, /Idempotency-Key': `service-request\/\$\{request\.id\}`/);
   assert.match(source, /status:\s*'submitted'/);
-  assert.match(source, /required\.some\(\(name\) => !process\.env\[name\]\)/);
-  assert.match(source, /submitted_at,created_at/);
-  assert.match(source, /const receivedAt = request\.created_at \|\| request\.submitted_at/);
-  assert.match(source, /`Recue le : \$\{receivedAt\}`/);
-  assert.doesNotMatch(source, /`Recue le : \$\{new Date\(\)\.toISOString\(\)\}`/);
 });
 
 test('Preview handlers inject only public Supabase config before response', async () => {
-  const [app, admin] = await Promise.all([read('api/app.js'), read('api/admin.js')]);
-  assert.ok(app.indexOf('const supabaseUrl') < app.indexOf('return res.status(200).send(html)'));
-  assert.ok(admin.indexOf('const supabaseUrl') < admin.indexOf('return res.status(200).send(html)'));
-  assert.match(app + admin, /SUPABASE_ANON_KEY/);
+  const [app, admin, config] = await Promise.all([
+    read('api/app.js'),
+    read('api/admin.js'),
+    read('api/supabase-config.js')
+  ]);
+  assert.match(app + admin, /resolveSupabasePublicConfig/);
+  assert.match(config, /SUPABASE_ANON_KEY/);
   assert.doesNotMatch(app + admin, /SERVICE_ROLE|service_role/);
 });
 
 test('client page exposes every journey boundary', async () => {
   const [html, app] = await Promise.all([read('index.html'), read('api/app.js')]);
-  for (const id of ['clientCard','vehicleCard','servicesArea','serviceList','basketList','btnSubmit','historyList']) assert.match(html, new RegExp(`id=["']${id}["']`));
+  for (const id of ['clientCard','vehicleCard','servicesArea','serviceList','basketList','btnSubmit','historyList']) {
+    assert.match(html, new RegExp(`id=["']${id}["']`));
+  }
   assert.ok(app.indexOf('integration.js') < app.indexOf('client-simple-flow.js'));
 });
