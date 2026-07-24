@@ -3,7 +3,7 @@
   window.__edmClientMessagesInstalled = true;
 
   const $ = (id) => document.getElementById(id);
-  const REFRESH_INTERVAL_MS = 12000;
+  const REFRESH_INTERVAL_MS = 15000;
   let refreshTimer = null;
   let loading = null;
 
@@ -43,8 +43,8 @@
               </div>
               <button id="clientMessageRefresh" class="btn btn-ghost" type="button">Actualiser</button>
             </div>
-            <div id="clientMessageStatus" class="small"></div>
-            <div id="clientMessageThread" class="card" style="min-height:260px;max-height:560px;overflow:auto;display:grid;gap:10px"></div>
+            <div id="clientMessageStatus" class="small" aria-live="polite"></div>
+            <div id="clientMessageThread" class="card" aria-live="polite" style="min-height:260px;max-height:560px;overflow:auto;display:grid;gap:10px"></div>
             <div class="card" style="margin-top:14px">
               <div class="grid">
                 <label>Demande liée
@@ -108,6 +108,7 @@
       const label = mine ? 'Vous' : message.direction === 'system' ? 'Information EDM AUTO' : 'EDM AUTO';
       const background = mine ? 'var(--blue-soft)' : 'var(--surface-2)';
       const align = mine ? 'margin-left:auto' : 'margin-right:auto';
+      const delivery = mine ? (message.read_by_admin ? 'Lu par EDM AUTO' : 'Envoyé') : '';
       return `<article class="card" data-client-message-id="${safe(message.id)}" style="max-width:86%;${align};background:${background};white-space:pre-wrap">
         <div class="section-title" style="margin-bottom:8px">
           <strong>${safe(label)}</strong>
@@ -115,6 +116,7 @@
         </div>
         ${message.subject ? `<strong>${safe(message.subject)}</strong>` : ''}
         <div style="margin-top:6px">${safe(message.body)}</div>
+        ${delivery ? `<div class="small" style="margin-top:8px;text-align:right">${safe(delivery)}</div>` : ''}
       </article>`;
     }).join('');
     host.scrollTop = host.scrollHeight;
@@ -127,9 +129,12 @@
     badge.classList.toggle('hidden', !count);
   }
 
-  async function loadMessages() {
+  async function loadMessages(force = false) {
     ensureUi();
-    if (loading) return loading;
+    if (loading) {
+      if (!force) return loading;
+      await loading;
+    }
 
     loading = (async () => {
       const userId = await currentUserId();
@@ -144,7 +149,7 @@
       const [{ data: messages, error: messagesError }, { data: requests, error: requestsError }] = await Promise.all([
         supabaseClient
           .from('client_messages')
-          .select('id,service_request_id,direction,subject,body,channel,read_by_client,created_at')
+          .select('id,service_request_id,direction,subject,body,channel,read_by_client,read_by_admin,created_at')
           .eq('user_id', userId)
           .eq('visible_to_client', true)
           .order('created_at', { ascending: true })
@@ -209,7 +214,7 @@
       if (error) throw error;
       $('clientMessageBody').value = '';
       setStatus('Message envoyé à EDM AUTO.');
-      await loadMessages();
+      await loadMessages(true);
     } catch (error) {
       setStatus(error.message || 'Envoi impossible.', true);
     } finally {
@@ -223,23 +228,26 @@
   function startRefreshLoop() {
     clearInterval(refreshTimer);
     refreshTimer = setInterval(() => {
-      if (document.visibilityState === 'visible' && $('messages')?.classList.contains('active')) void loadMessages();
+      if (document.visibilityState === 'visible') void loadMessages();
     }, REFRESH_INTERVAL_MS);
   }
 
   function install() {
     ensureUi();
-    $('clientMessageRefresh')?.addEventListener('click', () => void loadMessages());
+    $('clientMessageRefresh')?.addEventListener('click', () => void loadMessages(true));
     $('clientMessageSend')?.addEventListener('click', () => void sendMessage());
     $('clientMessageBody')?.addEventListener('keydown', (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') void sendMessage();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void loadMessages(true);
     });
     startRefreshLoop();
     void loadMessages();
 
     if (typeof supabaseClient !== 'undefined') {
       supabaseClient.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) void loadMessages();
+        if (session?.user) void loadMessages(true);
         else {
           renderMessages([]);
           updateUnreadBadge(0);
@@ -248,7 +256,7 @@
     }
   }
 
-  window.renderClientMessages = loadMessages;
+  window.renderClientMessages = () => loadMessages(true);
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
   else install();
