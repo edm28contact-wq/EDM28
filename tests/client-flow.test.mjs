@@ -79,6 +79,25 @@ test('safe submit authenticates and API is idempotent', async () => {
   assert.match(api, /Idempotency-Key/);
 });
 
+test('submitted requests are loaded and refreshed in client history', async () => {
+  const [submit, history, router, app, loader] = await Promise.all([
+    read('request-submit-safe.js'),
+    read('request-history.js'),
+    read('client-navigation-visible.js'),
+    read('api/app.js'),
+    read('client-simple-flow.js')
+  ]);
+  assert.match(submit, /CustomEvent\('edm:request-submitted'/);
+  assert.match(submit, /renderRequestHistory/);
+  assert.match(history, /from\('service_requests'\)/);
+  assert.match(history, /data-service-request-id/);
+  assert.match(history, /MutationObserver/);
+  assert.match(router, /window\.renderRequestHistory/);
+  assert.match(app, /request-history\.js\?v=2/);
+  assert.match(app, /client-simple-flow\.js\?v=7/);
+  assert.match(loader, /request-submit-safe\.js\?v=4/);
+});
+
 test('Preview exposes all client journey boundaries', async () => {
   const html = await read('index.html');
   for (const id of ['clientCard','vehicleCard','servicesArea','serviceList','basketList','btnSubmit','historyList','accountPageContent']) {
