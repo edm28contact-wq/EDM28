@@ -30,8 +30,11 @@
       document.querySelectorAll('[data-page]').forEach((node) => node.classList.toggle('active', node.dataset.page === id));
       if (id === 'requests') window.EDMAdminRequests?.load().catch((error) => this.status('requestStatus', error.message || 'Demandes indisponibles.', true));
       if (id === 'messages') window.EDMAdminMessages?.load().catch((error) => this.status('adminMessageStatus', error.message || 'Messagerie indisponible.', true));
-      if (id === 'accounting') window.EDMAdminAccounting?.load();
+      if (id === 'accounting') window.EDMAdminAccounting?.load().catch((error) => this.status('accountingStatus', error.message || 'Factures indisponibles.', true));
       if (id === 'management') window.EDMAdminManagement?.load().catch((error) => this.status('managementStatus', error.message || 'Gestion indisponible.', true));
+      if (id === 'parts') window.EDMAdminParts?.load().catch((error) => this.status('partsStatus', error.message || 'Pièces indisponibles.', true));
+      if (id === 'purchases') window.EDMAdminPurchases?.load().catch((error) => this.status('purchasesStatus', error.message || 'Achats indisponibles.', true));
+      if (id === 'micro-accounting') window.EDMAdminMicroAccounting?.load().catch((error) => this.status('microAccountingStatus', error.message || 'Comptabilité indisponible.', true));
     },
     async requireAdmin(user) {
       const { data, error } = await client.from('profiles').select('*').eq('id', user.id).single();
@@ -54,17 +57,29 @@
     },
     applyModuleVisibility(modules) {
       const pageMap = {
-        quotes: ['quotes'], agenda: [], workshop: ['operations','finalization'], parts: [], suppliers: [], purchases: [],
-        invoices: ['invoice-actions'], payments: ['invoice-actions','accounting'], micro_accounting: ['accounting'],
-        messaging: ['messages'], automations: ['settings'], ai_assistant: [], documents: ['documents','document-pdf']
+        quotes: ['quotes'],
+        agenda: [],
+        workshop: ['operations','finalization'],
+        parts: ['parts'],
+        suppliers: ['purchases'],
+        purchases: ['purchases'],
+        invoices: ['invoice-actions','accounting'],
+        payments: ['invoice-actions','accounting'],
+        micro_accounting: ['micro-accounting'],
+        messaging: ['messages'],
+        automations: ['settings'],
+        ai_assistant: [],
+        documents: ['documents','document-pdf']
       };
+      const pageStates = {};
       Object.entries(pageMap).forEach(([module, pages]) => {
         const enabled = modules[module] !== false;
-        pages.forEach((pageId) => {
-          document.querySelectorAll(`[data-page="${pageId}"]`).forEach((node) => { node.hidden = !enabled; });
-          const page = this.$(pageId);
-          if (page) page.dataset.moduleEnabled = enabled ? 'true' : 'false';
-        });
+        pages.forEach((pageId) => { pageStates[pageId] = (pageStates[pageId] ?? false) || enabled; });
+      });
+      Object.entries(pageStates).forEach(([pageId,enabled]) => {
+        document.querySelectorAll(`[data-page="${pageId}"]`).forEach((node) => { node.hidden = !enabled; });
+        const page = this.$(pageId);
+        if (page) page.dataset.moduleEnabled = enabled ? 'true' : 'false';
       });
     },
     async overview(extraChecks = []) {
@@ -83,6 +98,12 @@
       const requiredManagement = ['declared_activity_label','activity_kind','vat_mode','urssaf_frequency','stock_mode'];
       const missingManagement = requiredManagement.filter((key) => !String(configuration?.[key] || '').trim());
       if (missingManagement.length) checks.push(`${missingManagement.length} réglage(s) obligatoire(s) manquant(s) dans Gestion`);
+      if (configuration?.enabled_modules?.micro_accounting !== false) {
+        const { data: parameters } = await client.from('accounting_parameters').select('*').eq('id',true).single();
+        const requiredRates = ['social_rate_services','social_rate_sales'];
+        const missingRates = requiredRates.filter((key) => parameters?.[key] === null || parameters?.[key] === undefined);
+        if (missingRates.length) checks.push(`${missingRates.length} taux comptable(s) à renseigner dans Comptabilité micro`);
+      }
       this.$('anomalies').innerHTML = checks.length ? `<ul>${checks.map((x) => `<li>${this.esc(x)}</li>`).join('')}</ul>` : '<div class="status ok">Aucune anomalie principale détectée.</div>';
     },
     async open() {
@@ -95,24 +116,18 @@
         ['Services', () => window.EDMAdminServices?.load()],
         ['Documents', () => window.EDMAdminDocs?.load()],
         ['Gestion', () => window.EDMAdminManagement?.load()],
-        ['Comptabilité', () => window.EDMAdminAccounting?.load()],
+        ['Factures', () => window.EDMAdminAccounting?.load()],
         ['Entreprise', () => window.EDMAdminBusiness?.load()],
         ['Automatisations', () => window.EDMAdminSettings?.load()]
       ];
-      const settled = await Promise.allSettled([
-        this.loadBackofficeConfiguration(),
-        ...modules.map(([, load]) => load())
-      ]);
+      const settled = await Promise.allSettled([this.loadBackofficeConfiguration(), ...modules.map(([, load]) => load())]);
       const failures = settled.flatMap((result, index) => {
         if (result.status !== 'rejected') return [];
         const label = index === 0 ? 'Configuration' : modules[index - 1][0];
         return [`Module ${label} indisponible : ${result.reason?.message || 'erreur inconnue'}`];
       });
-      try {
-        await this.overview(failures);
-      } catch (error) {
-        this.$('anomalies').innerHTML = `<div class="status error">${this.esc(error.message || 'Vue générale indisponible.')}</div>`;
-      }
+      try { await this.overview(failures); }
+      catch (error) { this.$('anomalies').innerHTML = `<div class="status error">${this.esc(error.message || 'Vue générale indisponible.')}</div>`; }
     }
   };
 
@@ -121,22 +136,14 @@
     password?.closest('label')?.remove();
     const legacyButton = app.$('loginBtn');
     if (!legacyButton) return;
-    legacyButton.outerHTML = `
-      <button id="adminOtpSend" class="btn primary" type="button">Recevoir un code</button>
-      <div id="adminOtpPanel" class="hidden" style="margin-top:12px">
-        <label>Code reçu<input id="adminOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
-        <button id="adminOtpVerify" class="btn primary" type="button" style="margin-top:10px">Valider le code</button>
-      </div>`;
+    legacyButton.outerHTML = `<button id="adminOtpSend" class="btn primary" type="button">Recevoir un code</button><div id="adminOtpPanel" class="hidden" style="margin-top:12px"><label>Code reçu<input id="adminOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label><button id="adminOtpVerify" class="btn primary" type="button" style="margin-top:10px">Valider le code</button></div>`;
   }
 
   async function sendOtp() {
     const email = app.$('adminEmail').value.trim().toLowerCase();
     if (!email) return app.status('loginStatus', 'Adresse email obligatoire.', true);
     app.status('loginStatus', 'Envoi du code…');
-    const { error } = await client.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: false }
-    });
+    const { error } = await client.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
     if (error) return app.status('loginStatus', error.message, true);
     app.$('adminOtpPanel').classList.remove('hidden');
     app.$('adminOtpCode').focus();
@@ -150,13 +157,8 @@
     app.status('loginStatus', 'Vérification…');
     const { data, error } = await client.auth.verifyOtp({ email, token, type: 'email' });
     if (error) return app.status('loginStatus', error.message, true);
-    try {
-      await app.requireAdmin(data.user);
-      await app.open();
-    } catch (errorAdmin) {
-      await client.auth.signOut();
-      app.status('loginStatus', errorAdmin.message, true);
-    }
+    try { await app.requireAdmin(data.user); await app.open(); }
+    catch (errorAdmin) { await client.auth.signOut(); app.status('loginStatus', errorAdmin.message, true); }
   }
 
   async function boot() {
