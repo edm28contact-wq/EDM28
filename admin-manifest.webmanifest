@@ -1,0 +1,50 @@
+{
+  "id": "/admin",
+  "name": "EDM28 Gestion",
+  "short_name": "EDM28",
+  "description": "Back-office EDM28 pour gérer les clients, demandes, devis, factures et messages.",
+  "lang": "fr-FR",
+  "start_url": "/admin?source=pwa",
+  "scope": "/admin",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "any",
+  "background_color": "#f4f6fa",
+  "theme_color": "#111827",
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/api/admin-icon?size=192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/api/admin-icon?size=512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/api/admin-icon?size=512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ouvrir le tableau de bord",
+      "short_name": "Tableau de bord",
+      "url": "/admin?source=shortcut",
+      "icons": [
+        {
+          "src": "/api/admin-icon?size=192",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
