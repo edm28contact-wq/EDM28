@@ -5,7 +5,7 @@
   const scripts = [
     { src: '/client-otp-flow.js?v=3', attr: 'data-edm-otp' },
     { src: '/client-step3-fixes.js?v=2', attr: 'data-edm-step3' },
-    { src: '/request-submit-safe.js?v=3', attr: 'data-edm-submit' },
+    { src: '/request-submit-safe.js?v=4', attr: 'data-edm-submit' },
     { src: '/client-quotes.js?v=1', attr: 'data-edm-quotes' },
     { src: '/client-operations.js?v=1', attr: 'data-edm-operations' },
     { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' },
