@@ -57,17 +57,18 @@ test('service worker refreshes scripts and deletes old caches', async () => {
   assert.match(source, /caches\.delete/);
 });
 
-test('combo discount only groups compatible services', async () => {
-  const source = await read('client-step3-fixes.js');
-  const fn = functionSource(source, 'calculateTotals = function patchedCalculateTotals');
-  const selected = [
-    { category:'Freinage', labor:69, eligible:true, excluded:false, parts:{standard:[40,70]} },
-    { category:'Freinage', labor:99, eligible:true, excluded:false, parts:{standard:[120,170]} }
-  ];
-  const context = { calculateTotals:null, getSelectedServices:()=>selected, selectedBasket:'standard', document:{getElementById:()=>({checked:true})}, toast(){}, Map, Array, Number, Math, String };
-  vm.createContext(context);
-  vm.runInContext(`calculateTotals = ${fn}`, context);
-  assert.equal(context.calculateTotals().comboSaving, 20.7);
+test('combo discount is suspended pending rate review', async () => {
+  const [loader, policy] = await Promise.all([
+    read('client-simple-flow.js'),
+    read('combo-suspended.js')
+  ]);
+  assert.ok(loader.indexOf('client-step3-fixes.js') < loader.indexOf('combo-suspended.js'));
+  assert.match(policy, /comboSaving:\s*0/);
+  assert.match(policy, /comboDiscount:\s*0/);
+  assert.match(policy, /comboSuspended:\s*true/);
+  assert.match(policy, /pricingPolicy:\s*'combo_suspended'/);
+  assert.match(policy, /laborAfter\s*=\s*roundMoney\(laborBase \+ controlFee\)/);
+  assert.match(policy, /Remise combo suspendue/);
 });
 
 test('safe submit authenticates and API is idempotent', async () => {
