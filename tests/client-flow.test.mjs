@@ -1,23 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
-
-function functionSource(source, marker) {
-  const start = source.indexOf(marker);
-  assert.notEqual(start, -1, `Missing ${marker}`);
-  const fn = source.indexOf('function', start);
-  const brace = source.indexOf('{', fn);
-  let depth = 0;
-  for (let i = brace; i < source.length; i += 1) {
-    if (source[i] === '{') depth += 1;
-    if (source[i] === '}' && --depth === 0) return source.slice(fn, i + 1);
-  }
-  throw new Error(`Unclosed ${marker}`);
-}
 
 test('OTP flow is passwordless', async () => {
   const source = await read('client-otp-flow.js');
@@ -77,6 +63,30 @@ test('safe submit authenticates and API is idempotent', async () => {
   assert.match(client, /Authorization:/);
   assert.match(api, /alreadySubmitted:\s*true/);
   assert.match(api, /Idempotency-Key/);
+});
+
+test('Preview and production Supabase credentials are isolated', async () => {
+  const [config, app, admin, submit, deletion] = await Promise.all([
+    read('api/supabase-config.js'),
+    read('api/app.js'),
+    read('api/admin.js'),
+    read('api/submit-request-v2.js'),
+    read('api/delete-account.js')
+  ]);
+
+  assert.match(config, /process\.env\.VERCEL_ENV === 'production'/);
+  assert.match(config, /PREVIEW_SUPABASE_URL/);
+  assert.match(config, /PREVIEW_SUPABASE_ANON_KEY/);
+  assert.match(config, /process\.env\.SUPABASE_URL/);
+  assert.match(config, /process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(config, /process\.env\.PREVIEW_SUPABASE_SERVICE_ROLE_KEY/);
+
+  assert.match(app, /resolveSupabasePublicConfig/);
+  assert.match(admin, /resolveSupabasePublicConfig/);
+  assert.match(submit, /resolveSupabasePublicConfig/);
+  assert.match(deletion, /resolveSupabaseServiceConfig/);
+  assert.doesNotMatch(app + admin, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.ok(submit.includes('onboarding@resend\\.dev'));
 });
 
 test('submitted requests are loaded and refreshed in client history', async () => {
