@@ -14,7 +14,7 @@ appHandler({ method: 'GET' }, {
 });
 if (!html.includes('client-account-safe.js?v=13')) throw new Error('Preview account asset mismatch');
 if (!html.includes('request-history.js?v=2')) throw new Error('Preview history asset mismatch');
-if (!html.includes('client-simple-flow.js?v=7')) throw new Error('Preview client flow asset mismatch');
+if (!html.includes('client-simple-flow.js?v=8')) throw new Error('Preview password flow asset mismatch');
 
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
@@ -52,9 +52,16 @@ const stub = `
   const listeners = [];
   const user = { id:'u1', email:'client@example.test', user_metadata:{ first_name:'Jean', last_name:'Dupont', phone:'0612345678' } };
   let session = null;
+  let confirmed = false;
+  let accountPassword = '';
   const vehicles = [];
   const requests = [];
   const profile = { id:'u1', first_name:'Jean', last_name:'Dupont', phone:'0612345678', email:user.email };
+
+  function emit(event) {
+    listeners.forEach((listener) => listener(event, session));
+  }
+
   function builder(table) {
     let op='select', payload=null;
     const api={
@@ -83,12 +90,37 @@ const stub = `
     }
     return api;
   }
+
   window.supabase={createClient(){return{
     auth:{
       async getSession(){return {data:{session},error:null}},
+      async signUp({email,password,options}){
+        if(email!==user.email)return {data:{user:null,session:null},error:new Error('unexpected email')};
+        accountPassword=password;
+        user.user_metadata={...user.user_metadata,...(options?.data||{})};
+        return {data:{user,session:null},error:null};
+      },
+      async verifyOtp({email,token,type}){
+        if(email!==user.email || token!=='12345678' || !['email','signup','recovery'].includes(type)){
+          return {data:{user:null,session:null},error:new Error('invalid token')};
+        }
+        confirmed=true;
+        session={access_token:'token',user};
+        emit('SIGNED_IN');
+        return {data:{session,user},error:null};
+      },
+      async signInWithPassword({email,password}){
+        if(!confirmed || email!==user.email || password!==accountPassword){
+          return {data:{user:null,session:null},error:new Error('Invalid login credentials')};
+        }
+        session={access_token:'token',user};
+        emit('SIGNED_IN');
+        return {data:{session,user},error:null};
+      },
       async signInWithOtp(){return {data:{},error:null}},
-      async verifyOtp({token}){if(token!=='12345678')return {data:{},error:new Error('invalid token')};session={access_token:'token',user};listeners.forEach(fn=>fn('SIGNED_IN',session));return {data:{session,user},error:null}},
-      async signOut(){session=null;listeners.forEach(fn=>fn('SIGNED_OUT',null));return {error:null}},
+      async resend(){return {data:{},error:null}},
+      async updateUser({password}){accountPassword=password;return {data:{user},error:null}},
+      async signOut(){session=null;emit('SIGNED_OUT');return {error:null}},
       onAuthStateChange(fn){listeners.push(fn);return {data:{subscription:{unsubscribe(){}}}}}
     },
     from:builder,
@@ -99,7 +131,8 @@ await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route)
 
 try {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForSelector('#btnOtpSend', { timeout:15000 });
+  await page.waitForFunction(() => window.__edmPasswordAuthReady === true);
+  await page.waitForSelector('#btnSignUp', { timeout:15000 });
 
   const privatePages = new Set(['account','garage','history']);
   for (const id of ['home','appointment','account','garage','history','about']) {
@@ -113,9 +146,19 @@ try {
   await page.fill('#firstName','Jean');
   await page.fill('#phone','0612345678');
   await page.fill('#email','client@example.test');
-  await page.click('#btnOtpSend');
-  await page.fill('#otpCode','12345678');
-  await page.click('#btnOtpVerify');
+  await page.fill('#password','MotDePasse-test-2026');
+  await page.fill('#passwordConfirm','MotDePasse-test-2026');
+  await page.click('#btnSignUp');
+  await page.waitForSelector('#passwordVerificationPanel:not(.hidden)');
+  await page.fill('#passwordVerificationCode','12345678');
+  await page.click('#btnPasswordVerify');
+  await page.waitForFunction(() => state?.user?.id === 'u1');
+
+  await page.click('#btnSignOut');
+  await page.waitForFunction(() => !state?.user?.id);
+  await page.fill('#email','client@example.test');
+  await page.fill('#password','MotDePasse-test-2026');
+  await page.click('#btnSignIn');
   await page.waitForFunction(() => state?.user?.id === 'u1');
 
   await page.fill('#plate','AA123BC');
@@ -158,7 +201,7 @@ try {
 
   await page.waitForSelector('#historyList [data-service-request-id="request-e2e-1"]', { timeout:5000 });
   const historyText = await page.locator('#historyList [data-service-request-id="request-e2e-1"]').textContent();
-  if (!historyText?.includes('AA-123-BC') || !historyText.includes('Transmise') && !historyText.includes('Enregistrée')) {
+  if (!historyText?.includes('AA-123-BC') || (!historyText.includes('Transmise') && !historyText.includes('Enregistrée'))) {
     throw new Error(`Submitted request is missing from history: ${historyText}`);
   }
 
@@ -168,7 +211,7 @@ try {
   await page.waitForFunction(() => !state?.user?.id);
 
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('public Preview buttons and submitted request history ok');
+  console.log('password signup, one-time verification, password login, buttons and history ok');
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));
