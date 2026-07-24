@@ -6,6 +6,7 @@ on:
     branches:
       - pwa-edm28
       - feature/edm28-final-system
+      - feature/edm28-micro-solo-v1
   workflow_dispatch:
 
 concurrency:
