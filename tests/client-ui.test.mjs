@@ -31,7 +31,7 @@ function functionSource(source, marker) {
 
 test('client modules load in deterministic order', async () => {
   const source = await read('client-simple-flow.js');
-  const modules = ['client-otp-flow.js','client-step3-fixes.js','request-submit-safe.js','client-quotes.js','client-operations.js','client-invoices.js','client-document-download.js','client-notifications.js'];
+  const modules = ['client-otp-flow.js','client-step3-fixes.js','request-submit-safe.js','client-quotes.js','client-operations.js','client-invoices.js','client-document-download.js','client-notifications.js','combo-suspended.js'];
   let previous = -1;
   for (const module of modules) {
     const index = source.indexOf(module);
@@ -66,27 +66,18 @@ test('legacy password authentication cannot be reintroduced', async () => {
   assert.match(build, /client-simple-flow\.js/);
 });
 
-test('combo discount only groups compatible categories', async () => {
-  const source = await read('client-step3-fixes.js');
-  const fn = functionSource(source, 'calculateTotals = function patchedCalculateTotals');
-  let selected = [
-    { category:'Freinage', labor:69, eligible:true, excluded:false, parts:{standard:[40,70]} },
-    { category:'Freinage', labor:99, eligible:true, excluded:false, parts:{standard:[120,170]} },
-    { category:'Freinage', labor:55, eligible:false, excluded:true, parts:{standard:[15,25]} }
-  ];
-  let checked = true;
-  const context = { calculateTotals:null, getSelectedServices:()=>selected, selectedBasket:'standard', document:{getElementById:()=>({checked})}, toast(){}, Map, Array, Number, Math, String };
-  vm.createContext(context);
-  vm.runInContext(`calculateTotals = ${fn}`, context);
-  const result = context.calculateTotals();
-  assert.equal(result.comboSaving, 20.7);
-  assert.equal(result.totalAllMin, 407.3);
-  selected = [
-    { category:'Freinage', labor:69, eligible:true, excluded:false, parts:{standard:[40,70]} },
-    { category:'Train avant', labor:70, eligible:true, excluded:false, parts:{standard:[55,95]} }
-  ];
-  checked = false;
-  assert.equal(context.calculateTotals().comboSaving, 0);
+test('combo discount is explicitly suspended in the client UI', async () => {
+  const [loader, policy] = await Promise.all([
+    read('client-simple-flow.js'),
+    read('combo-suspended.js')
+  ]);
+  assert.ok(loader.indexOf('client-step3-fixes.js') < loader.indexOf('combo-suspended.js'));
+  assert.match(policy, /comboSaving:\s*0/);
+  assert.match(policy, /comboSuspended:\s*true/);
+  assert.match(policy, /pricingPolicy:\s*'combo_suspended'/);
+  assert.match(policy, /button\.disabled\s*=\s*true/);
+  assert.match(policy, /Les taux sont en cours de révision/);
+  assert.match(policy, /style\.display\s*=\s*'none'/);
 });
 
 test('safe submit requires auth, saves a draft and checks API success', async () => {
