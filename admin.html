@@ -34,6 +34,7 @@
       <button class="btn ghost" data-page="clients">Clients</button>
       <button class="btn ghost" data-page="services">Services et prix</button>
       <button class="btn ghost" data-page="documents">Documents</button>
+      <button class="btn ghost" data-page="management">Gestion</button>
       <button class="btn ghost" data-page="accounting">Comptabilité</button>
       <button class="btn ghost" data-page="business">Informations entreprise</button>
       <button class="btn ghost" data-page="settings">Automatisations</button>
@@ -58,6 +59,8 @@
 
     <section id="documents" class="page"><div class="grid2"><div class="card"><h2>Créer un brouillon</h2><div class="field"><label>Client *</label><select id="docClient"></select></div><div class="field"><label>Véhicule</label><select id="docVehicle"></select></div><div class="field"><label>Type</label><select id="docType"><option value="quote">Devis</option><option value="repair_order">Ordre de réparation</option><option value="invoice">Facture</option></select></div><div class="field"><label>Description *</label><textarea id="docDescription"></textarea></div><button id="createDraftBtn" class="btn primary">Créer le brouillon</button><div id="docStatus" class="status hidden"></div></div><div class="card"><h2>Brouillons récents</h2><div id="draftList"></div></div></div></section>
 
+    <section id="management" class="page"><div class="card"><div class="top"><div><h2>Gestion du back-office</h2><p class="muted">Définis ton activité, les modules visibles, les notions comptables et le traitement des pièces.</p></div><button id="saveManagementBtn" class="btn primary">Enregistrer</button></div><div id="managementForm"></div><div id="managementStatus" class="status hidden"></div></div></section>
+
     <section id="accounting" class="page"><div class="card"><div class="top"><div><h2>Comptabilité</h2><p class="muted">Suivi des factures, encaissements et échéances.</p></div><div class="toolbar"><select id="accountingFilter"><option value="all">Toutes</option><option value="paid">Soldées</option><option value="unpaid">À encaisser</option><option value="overdue">Échues</option></select><button id="accountingExport" class="btn ghost">Exporter CSV</button></div></div><div id="accountingKpis" class="grid"></div><div id="accountingTable" style="margin-top:14px"></div><div id="accountingStatus" class="status hidden"></div></div></section>
 
     <section id="business" class="page"><div class="card"><div class="top"><div><h2>Informations de l’entreprise</h2><p class="muted">Les champs obligatoires vides restent rouges jusqu’à saisie valide.</p></div><button id="saveBusinessBtn" class="btn primary">Enregistrer</button></div><div id="businessForm" class="grid2"></div><div id="businessStatus" class="status hidden"></div></div></section>
@@ -67,5 +70,5 @@
 </main>
 <script src="/admin-install.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/admin-clients.js?v=2"></script><script src="/admin-requests.js?v=2"></script><script src="/admin-quotes.js?v=1"></script><script src="/admin-services.js?v=2"></script><script src="/admin-docs.js?v=2"></script><script src="/admin-business.js?v=1"></script><script src="/admin-settings.js?v=2"></script><script src="/admin-accounting.js?v=1"></script><script src="/admin-messages.js?v=1"></script><script src="/admin-core.js?v=4"></script><script src="/admin-readiness.js?v=2"></script><script src="/admin-doc-fields.js?v=1"></script><script src="/admin-doc-logic.js?v=1"></script><script src="/admin-service-validation.js?v=1"></script>
+<script src="/admin-clients.js?v=2"></script><script src="/admin-requests.js?v=2"></script><script src="/admin-quotes.js?v=1"></script><script src="/admin-services.js?v=2"></script><script src="/admin-docs.js?v=2"></script><script src="/admin-management.js?v=1"></script><script src="/admin-business.js?v=1"></script><script src="/admin-settings.js?v=2"></script><script src="/admin-accounting.js?v=1"></script><script src="/admin-messages.js?v=1"></script><script src="/admin-core.js?v=5"></script><script src="/admin-readiness.js?v=2"></script><script src="/admin-doc-fields.js?v=1"></script><script src="/admin-doc-logic.js?v=1"></script><script src="/admin-service-validation.js?v=1"></script>
 </body></html>
