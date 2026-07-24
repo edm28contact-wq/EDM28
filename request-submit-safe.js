@@ -122,6 +122,12 @@
       updateStepper(4);
       status.innerHTML = '<div class="okbox"><strong>Demande transmise.</strong><br>Votre demande est enregistrée et EDM AUTO reviendra vers vous après étude.</div>';
       toast('Demande enregistrée et envoyée.');
+      window.dispatchEvent(new CustomEvent('edm:request-submitted', {
+        detail: { requestId: result.requestId || request.id }
+      }));
+      if (typeof window.renderRequestHistory === 'function') {
+        void window.renderRequestHistory().catch((error) => console.warn('EDM request history refresh unavailable', error));
+      }
     } catch (error) {
       const prefix = error.saved ? 'Votre demande est enregistrée. ' : '';
       status.innerHTML = `<div class="errorbox"><strong>Envoi non terminé.</strong><br>${escapeHtml(prefix + (error.message || 'Réessayez plus tard.'))}</div>`;
