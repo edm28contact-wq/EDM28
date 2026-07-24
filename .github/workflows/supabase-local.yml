@@ -58,6 +58,7 @@ jobs:
           cp /tmp/edm28-legacy-migrations/20260719190000_admin_transactional_workflow.sql supabase/migrations/
           cp /tmp/edm28-legacy-migrations/20260719201000_consolidate_permissive_rls_policies.sql supabase/migrations/
           cp /tmp/edm28-legacy-migrations/20260719202000_add_missing_foreign_key_indexes.sql supabase/migrations/
+          cp /tmp/edm28-legacy-migrations/20260724190000_client_messaging_loop.sql supabase/migrations/
           printf 'Candidate migration chain:\n'
           find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' | sort
 
