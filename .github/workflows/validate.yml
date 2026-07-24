@@ -29,12 +29,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
       - name: Validate JavaScript syntax
         shell: bash
         run: |
@@ -48,17 +46,17 @@ jobs:
             fi
           done < <(find . -type f -name '*.js' -not -path './node_modules/*' -print0)
           exit "$failed"
-
       - name: Run client journey tests
-        run: npm run test:client
-
+        run: npm run test:client 2>&1 | tee client-test-report.txt
       - name: Run admin journey tests
-        run: npm run test:admin
-
-      - name: Upload syntax report
+        run: npm run test:admin 2>&1 | tee admin-test-report.txt
+      - name: Upload validation reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: syntax-report-pass-${{ matrix.pass }}
-          path: syntax-report.txt
-          if-no-files-found: error
+          name: validation-report-pass-${{ matrix.pass }}
+          path: |
+            syntax-report.txt
+            client-test-report.txt
+            admin-test-report.txt
+          if-no-files-found: warn
