@@ -4,7 +4,6 @@ const supabase = resolveSupabasePublicConfig();
 const SUPABASE_URL = supabase.url;
 const SUPABASE_ANON_KEY = supabase.key;
 const ENVIRONMENT = supabase.environment;
-const DEFAULT_MESSAGE_MODEL = 'gpt-5.6-luna';
 
 function sendJson(res, status, body) {
   res.status(status).setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -25,8 +24,8 @@ function aiKey() {
 
 function modelName() {
   return ENVIRONMENT === 'production'
-    ? clean(process.env.OPENAI_MESSAGE_MODEL || DEFAULT_MESSAGE_MODEL, 100)
-    : clean(process.env.PREVIEW_OPENAI_MESSAGE_MODEL || DEFAULT_MESSAGE_MODEL, 100);
+    ? clean(process.env.OPENAI_MESSAGE_MODEL, 100)
+    : clean(process.env.PREVIEW_OPENAI_MESSAGE_MODEL, 100);
 }
 
 async function rest(path, authorization, options = {}) {
@@ -221,7 +220,13 @@ export default async function handler(req, res) {
 
     const key = aiKey();
     const model = modelName();
-    if (!key) return sendJson(res, 503, { success: false, configured: false, error: `Assistant IA ${ENVIRONMENT} non configuré.` });
+    if (!key || !model) {
+      return sendJson(res, 503, {
+        success: false,
+        configured: false,
+        error: `Assistant IA ${ENVIRONMENT} non configuré : clé ou modèle manquant.`
+      });
+    }
 
     const [{ 0: settings }, profiles, messages] = await Promise.all([
       rest('automation_settings?id=eq.true&select=ai_enabled,test_mode', authorization),
