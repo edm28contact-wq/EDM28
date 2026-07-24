@@ -3,6 +3,8 @@
   const n = (v) => Number(v || 0);
 
   async function issue(id) {
+    const validation = await A().db.rpc('admin_validate_invoice_for_issue', { p_invoice_id: id });
+    if (validation.error) throw validation.error;
     const { data, error } = await A().db.from('invoices').update({ status: 'issued', visible_to_client: true, issued_at: new Date().toISOString() }).eq('id', id).eq('status', 'draft').gt('total', 0).not('invoice_number', 'is', null).select('id');
     if (error) throw error;
     if (!data?.length) throw new Error('Facture non émissible.');
@@ -14,6 +16,11 @@
     const reference = root.querySelector('[data-field="reference"]').value.trim() || null;
     const balance = Math.max(0, n(invoice.total) - n(invoice.amount_paid));
     if (!(amount > 0) || amount > balance) throw new Error('Montant invalide ou supérieur au solde.');
+    if (paymentMethod === 'cash') {
+      const { data: session, error: sessionError } = await A().db.from('cash_register_sessions').select('id').eq('status','open').maybeSingle();
+      if (sessionError) throw sessionError;
+      if (!session) throw new Error('Ouvre la caisse avant d’enregistrer un paiement en espèces.');
+    }
     const { error } = await A().db.from('payments').insert({ invoice_id: invoice.id, user_id: invoice.user_id, amount, payment_method: paymentMethod, reference });
     if (error) throw error;
   }
@@ -22,21 +29,26 @@
     const host = A().$('invoiceActionList');
     host.innerHTML = rows.length ? rows.map((i) => {
       const balance = Math.max(0, n(i.total) - n(i.amount_paid));
-      const issueButton = i.status === 'draft' ? `<button class="btn primary" data-issue="${i.id}">Émettre au client</button>` : '';
-      const paymentForm = ['issued','partially_paid'].includes(i.status) && balance > 0 ? `<div class="toolbar"><input data-field="amount" type="number" min="0.01" max="${balance}" step="0.01" placeholder="Montant"><select data-field="method"><option value="card">Carte</option><option value="cash">Espèces</option><option value="transfer">Virement</option><option value="check">Chèque</option></select><input data-field="reference" placeholder="Référence"><button class="btn primary" data-pay="${i.id}">Enregistrer le règlement</button></div>` : '';
+      const issueButton = i.status === 'draft' ? `<div class="toolbar"><button class="btn ghost" data-parts="${i.id}">Gérer les pièces</button><button class="btn primary" data-issue="${i.id}">Émettre au client</button></div>` : '';
+      const paymentForm = ['issued','partially_paid'].includes(i.status) && balance > 0 ? `<div class="toolbar"><input data-field="amount" type="number" min="0.01" max="${balance}" step="0.01" placeholder="Montant"><select data-field="method"><option value="card">Carte</option><option value="cash">Espèces</option><option value="bank_transfer">Virement</option><option value="check">Chèque</option></select><input data-field="reference" placeholder="Référence"><button class="btn primary" data-pay="${i.id}">Enregistrer le règlement</button></div>` : '';
       return `<article class="card" data-invoice-action="${i.id}" style="margin:12px 0"><div class="top"><div><span class="pill">${A().esc(i.status)}</span><h3>${A().esc(i.invoice_number || i.title || 'Facture')}</h3></div><strong>${A().money(i.total)}</strong></div><p>Payé : ${A().money(i.amount_paid)} · Reste : ${A().money(balance)}</p>${issueButton}${paymentForm}</article>`;
     }).join('') : '<p class="muted">Aucune facture.</p>';
 
+    host.querySelectorAll('[data-parts]').forEach((button) => button.onclick = async () => {
+      A().page('parts');
+      window.EDMAdminParts.selectedType = 'invoice';
+      window.EDMAdminParts.selectedId = button.dataset.parts;
+      await window.EDMAdminParts.load();
+    });
     host.querySelectorAll('[data-issue]').forEach((button) => button.onclick = async () => {
       button.disabled = true;
       try { await issue(button.dataset.issue); A().status('invoiceActionStatus', 'Facture émise au client.'); await load(); window.EDMAdminAccounting?.load(); }
       catch (e) { A().status('invoiceActionStatus', e.message || 'Émission impossible.', true); }
       finally { button.disabled = false; }
     });
-
     host.querySelectorAll('[data-pay]').forEach((button) => button.onclick = async () => {
       button.disabled = true;
-      try { const invoice = rows.find((row) => row.id === button.dataset.pay); await pay(invoice, button.closest('article')); A().status('invoiceActionStatus', 'Règlement enregistré.'); await load(); window.EDMAdminAccounting?.load(); }
+      try { const invoice = rows.find((row) => row.id === button.dataset.pay); await pay(invoice, button.closest('article')); A().status('invoiceActionStatus', 'Règlement enregistré.'); await load(); window.EDMAdminAccounting?.load(); window.EDMAdminMicroAccounting?.load(); }
       catch (e) { A().status('invoiceActionStatus', e.message || 'Règlement impossible.', true); }
       finally { button.disabled = false; }
     });
