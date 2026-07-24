@@ -122,3 +122,43 @@ test('AI messaging creates a stored draft without sending a client message', asy
     delete process.env.PREVIEW_OPENAI_MESSAGE_MODEL;
   }
 });
+
+test('AI messaging refuses to run without an explicitly configured model', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_OPENAI_API_KEY = 'preview-openai-test-key';
+  delete process.env.PREVIEW_OPENAI_MESSAGE_MODEL;
+
+  const calls = [];
+  const originalFetch = global.fetch;
+  global.fetch = async (url, options = {}) => {
+    const href = String(url);
+    calls.push({ href, options });
+    if (href.endsWith('/auth/v1/user')) return response(200, { id: adminId, email: 'admin@example.test' });
+    if (href.includes('/rest/v1/profiles?id=eq.') && href.includes('select=id,role')) {
+      return response(200, [{ id: adminId, role: 'admin' }]);
+    }
+    throw new Error(`Unexpected fetch: ${href}`);
+  };
+
+  try {
+    const { default: handler } = await import(`../api/ai-message-draft.js?missing-model=${Date.now()}`);
+    const req = {
+      method: 'POST',
+      headers: { authorization: 'Bearer admin-token' },
+      body: { userId: customerId, serviceRequestId: null, guidance: '' }
+    };
+    const res = createRes();
+
+    await handler(req, res);
+
+    assert.equal(res.statusCode, 503);
+    assert.equal(res.payload.success, false);
+    assert.equal(res.payload.configured, false);
+    assert.match(res.payload.error, /clé ou modèle manquant/);
+    assert.equal(calls.some((call) => call.href === 'https://api.openai.com/v1/responses'), false);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_OPENAI_API_KEY;
+    delete process.env.PREVIEW_OPENAI_MESSAGE_MODEL;
+  }
+});
