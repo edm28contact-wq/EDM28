@@ -33,7 +33,8 @@ const scripts = [
   '/light-palette-final.js?v=2',
   '/mid-palette-final.js?v=1',
   '/client-simple-flow.js?v=1',
-  '/client-otp-flow.js?v=1'
+  '/client-otp-flow.js?v=1',
+  '/combo-suspended.js?v=1'
 ];
 const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var scripts=${JSON.stringify(scripts)};scripts.reduce(function(p,src){return p.then(function(){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.body.appendChild(s);});});},Promise.resolve()).catch(function(error){console.error('EDM module load error',error);});});<\/script>`;
 html = html.replace('</body>', `${loader}</body>`);
