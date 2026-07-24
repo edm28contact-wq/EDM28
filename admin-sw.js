@@ -1,12 +1,12 @@
-const CACHE_NAME = 'edm28-admin-shell-v1';
+const CACHE_NAME = 'edm28-admin-shell-v2';
 const OFFLINE_URL = '/admin-offline.html';
 const SHELL_ASSETS = [
   OFFLINE_URL,
   '/admin.css',
   '/admin-install.js?v=1',
   '/admin-manifest.webmanifest',
-  '/api/admin-icon?size=192',
-  '/api/admin-icon?size=512'
+  '/api/admin?icon=192',
+  '/api/admin?icon=512'
 ];
 
 self.addEventListener('install', (event) => {
@@ -54,12 +54,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.startsWith('/api/') && url.pathname !== '/api/admin-icon') return;
+  const isAdminIcon = url.pathname === '/api/admin' && ['192', '512'].includes(url.searchParams.get('icon'));
+  if (url.pathname.startsWith('/api/') && !isAdminIcon) return;
 
   const isStaticAsset = url.pathname.endsWith('.js')
     || url.pathname.endsWith('.css')
     || url.pathname.endsWith('.webmanifest')
-    || url.pathname === '/api/admin-icon'
+    || isAdminIcon
     || url.pathname === OFFLINE_URL;
 
   if (isStaticAsset) event.respondWith(networkFirst(request));
