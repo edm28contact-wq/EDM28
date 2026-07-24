@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - feature/edm28-final-system
+      - feature/edm28-micro-solo-v1
     paths:
       - "supabase/**"
       - ".github/workflows/supabase-local.yml"
@@ -60,6 +61,9 @@ jobs:
           cp /tmp/edm28-legacy-migrations/20260719202000_add_missing_foreign_key_indexes.sql supabase/migrations/
           cp /tmp/edm28-legacy-migrations/20260724190000_client_messaging_loop.sql supabase/migrations/
           cp /tmp/edm28-legacy-migrations/20260724193000_client_messaging_hardening.sql supabase/migrations/
+          if [ -f /tmp/edm28-legacy-migrations/20260724213000_backoffice_management_and_part_modes.sql ]; then
+            cp /tmp/edm28-legacy-migrations/20260724213000_backoffice_management_and_part_modes.sql supabase/migrations/
+          fi
           printf 'Candidate migration chain:\n'
           find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' | sort
 
