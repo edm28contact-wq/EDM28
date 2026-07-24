@@ -12,7 +12,9 @@ appHandler({ method: 'GET' }, {
   send(body) { html = body; return this; },
   end() { return this; }
 });
-if (!html.includes('client-account-safe.js?v=13')) throw new Error('Preview asset mismatch');
+if (!html.includes('client-account-safe.js?v=13')) throw new Error('Preview account asset mismatch');
+if (!html.includes('request-history.js?v=2')) throw new Error('Preview history asset mismatch');
+if (!html.includes('client-simple-flow.js?v=7')) throw new Error('Preview client flow asset mismatch');
 
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
@@ -69,7 +71,11 @@ const stub = `
         return {data:vehicles,error:null};
       }
       if(table==='service_requests'){
-        if(op==='insert'){const row={id:'request-e2e-1',...(Array.isArray(payload)?payload[0]:payload)};requests.splice(0,requests.length,row);return {data:[row],error:null}}
+        if(op==='insert'){
+          const row={id:'request-e2e-1',created_at:new Date().toISOString(),submitted_at:new Date().toISOString(),...(Array.isArray(payload)?payload[0]:payload)};
+          requests.splice(0,requests.length,row);
+          return {data:[row],error:null};
+        }
         return {data:requests,error:null};
       }
       if(table==='repairs') return {data:[],error:null};
@@ -95,10 +101,11 @@ try {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil:'domcontentloaded', timeout:30000 });
   await page.waitForSelector('#btnOtpSend', { timeout:15000 });
 
+  const privatePages = new Set(['account','garage','history']);
   for (const id of ['home','appointment','account','garage','history','about']) {
     await page.click('#openMenu');
     await page.click(`[data-page="${id}"]`);
-    const expected = id === 'account' ? 'appointment' : id;
+    const expected = privatePages.has(id) ? 'appointment' : id;
     await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), expected);
   }
 
@@ -149,13 +156,19 @@ try {
     await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), id);
   }
 
+  await page.waitForSelector('#historyList [data-service-request-id="request-e2e-1"]', { timeout:5000 });
+  const historyText = await page.locator('#historyList [data-service-request-id="request-e2e-1"]').textContent();
+  if (!historyText?.includes('AA-123-BC') || !historyText.includes('Transmise') && !historyText.includes('Enregistrée')) {
+    throw new Error(`Submitted request is missing from history: ${historyText}`);
+  }
+
   await page.click('#openMenu');
   await page.click('[data-page="account"]');
   await page.click('#accountSignOutBtn');
   await page.waitForFunction(() => !state?.user?.id);
 
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('public Preview buttons ok');
+  console.log('public Preview buttons and submitted request history ok');
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));
