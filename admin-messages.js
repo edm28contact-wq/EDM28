@@ -30,7 +30,7 @@
                   <div><h2 id="adminMessageClientName">Conversation</h2><p class="muted" id="adminMessageClientMeta"></p></div>
                   <span id="adminMessageAiState" class="pill">Validation humaine obligatoire</span>
                 </div>
-                <div id="adminMessageThread" style="min-height:280px;max-height:520px;overflow:auto;display:grid;gap:10px;padding:12px;background:#f8fafc;border:1px solid #e4e7ec;border-radius:16px"></div>
+                <div id="adminMessageThread" aria-live="polite" style="min-height:280px;max-height:520px;overflow:auto;display:grid;gap:10px;padding:12px;background:#f8fafc;border:1px solid #e4e7ec;border-radius:16px"></div>
                 <div style="margin-top:14px">
                   <div class="grid2">
                     <div class="field"><label>Demande liée</label><select id="adminMessageRequest"><option value="">Conversation générale</option></select></div>
@@ -42,7 +42,7 @@
                     <button id="adminMessageAiDraft" class="btn ghost" type="button">Proposer avec l’IA</button>
                     <button id="adminMessageSend" class="btn primary" type="button">Envoyer après validation</button>
                   </div>
-                  <div id="adminMessageStatus" class="status hidden"></div>
+                  <div id="adminMessageStatus" class="status hidden" aria-live="polite"></div>
                   <p class="muted">L’IA ne répond jamais automatiquement : elle produit uniquement un brouillon modifiable, envoyé après clic explicite de l’administrateur.</p>
                 </div>
               </div>
@@ -60,6 +60,22 @@
     selectedUserId: null,
     selectedDraftId: null,
     timer: null,
+
+    isActive() {
+      return document.getElementById('messages')?.classList.contains('active') === true;
+    },
+
+    resetDraftState(clearComposer = false) {
+      this.selectedDraftId = null;
+      const app = window.EDMAdmin;
+      if (!app) return;
+      app.$('adminMessageAiState').textContent = 'Validation humaine obligatoire';
+      if (clearComposer) {
+        app.$('adminMessageSubject').value = '';
+        app.$('adminMessageBody').value = '';
+        app.$('adminMessageGuidance').value = '';
+      }
+    },
 
     async load() {
       const app = window.EDMAdmin;
@@ -79,11 +95,13 @@
       this.installHandlers();
       this.startLoop();
 
+      if (!this.isActive()) return;
+
       if (this.selectedUserId && this.clients.some((client) => client.id === this.selectedUserId)) {
-        await this.open(this.selectedUserId, false);
+        await this.open(this.selectedUserId, false, true);
       } else {
         const first = this.sortedClients()[0];
-        if (first) await this.open(first.id, false);
+        if (first) await this.open(first.id, false, false);
       }
     },
 
@@ -104,6 +122,18 @@
       if (app.$('adminMessageAiDraft') && !app.$('adminMessageAiDraft').dataset.bound) {
         app.$('adminMessageAiDraft').dataset.bound = '1';
         app.$('adminMessageAiDraft').onclick = () => this.createAiDraft();
+      }
+      if (app.$('adminMessageRequest') && !app.$('adminMessageRequest').dataset.bound) {
+        app.$('adminMessageRequest').dataset.bound = '1';
+        app.$('adminMessageRequest').onchange = () => this.resetDraftState(false);
+      }
+      for (const id of ['adminMessageSubject', 'adminMessageBody']) {
+        const input = app.$(id);
+        if (!input || input.dataset.bound) continue;
+        input.dataset.bound = '1';
+        input.addEventListener('input', () => {
+          if (this.selectedDraftId) app.$('adminMessageAiState').textContent = 'Brouillon IA modifié · validation humaine';
+        });
       }
     },
 
@@ -150,16 +180,17 @@
         </button>`;
       }).join('') || '<p class="muted">Aucun client.</p>';
       host.querySelectorAll('[data-message-client]').forEach((button) => {
-        button.onclick = () => this.open(button.dataset.messageClient);
+        button.onclick = () => this.open(button.dataset.messageClient, true, false);
       });
     },
 
-    async open(userId, reloadList = true) {
+    async open(userId, reloadList = true, preserveComposer = false) {
       const app = window.EDMAdmin;
       const client = this.clients.find((item) => item.id === userId);
       if (!client) return;
+      const switchingClient = this.selectedUserId !== userId;
       this.selectedUserId = userId;
-      this.selectedDraftId = null;
+      if (switchingClient || !preserveComposer) this.resetDraftState(true);
       app.$('adminMessageEmpty').classList.add('hidden');
       app.$('adminMessageConversation').classList.remove('hidden');
       app.$('adminMessageClientName').textContent = `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Client';
@@ -175,12 +206,15 @@
 
       this.renderThread(messages || []);
       this.renderRequests(requests || []);
-      const { error: markError } = await app.db.rpc('admin_mark_conversation_read', { p_user_id: userId });
-      if (markError) throw markError;
 
-      this.messages = this.messages.map((message) => message.user_id === userId && message.direction === 'inbound'
-        ? { ...message, read_by_admin: true }
-        : message);
+      if (this.isActive()) {
+        const { error: markError } = await app.db.rpc('admin_mark_conversation_read', { p_user_id: userId });
+        if (markError) throw markError;
+        this.messages = this.messages.map((message) => message.user_id === userId && message.direction === 'inbound'
+          ? { ...message, read_by_admin: true }
+          : message);
+      }
+
       this.updateUnreadBadge();
       if (reloadList) this.renderConversationList();
       app.status('adminMessageStatus', 'Conversation à jour.');
@@ -228,13 +262,9 @@
           p_ai_draft_id: this.selectedDraftId
         });
         if (error) throw error;
-        app.$('adminMessageBody').value = '';
-        app.$('adminMessageGuidance').value = '';
-        this.selectedDraftId = null;
-        app.$('adminMessageAiState').textContent = 'Validation humaine obligatoire';
+        this.resetDraftState(true);
         app.status('adminMessageStatus', 'Message envoyé au client.');
         await this.load();
-        await this.open(this.selectedUserId);
       } catch (error) {
         app.status('adminMessageStatus', error.message || 'Envoi impossible.', true);
       } finally {
@@ -246,6 +276,10 @@
       const app = window.EDMAdmin;
       if (!this.selectedUserId) return app.status('adminMessageStatus', 'Sélectionnez un client.', true);
       const button = app.$('adminMessageAiDraft');
+      const targetUserId = this.selectedUserId;
+      const targetRequestId = app.$('adminMessageRequest').value || null;
+      this.selectedDraftId = null;
+      app.$('adminMessageAiState').textContent = 'Génération du brouillon IA';
       button.disabled = true;
       button.textContent = 'Génération...';
       app.status('adminMessageStatus', 'Création du brouillon IA...');
@@ -262,13 +296,16 @@
             Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
-            userId: this.selectedUserId,
-            serviceRequestId: app.$('adminMessageRequest').value || null,
+            userId: targetUserId,
+            serviceRequestId: targetRequestId,
             guidance: app.$('adminMessageGuidance').value.trim()
           })
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || result.success !== true) throw new Error(result.error || 'Brouillon IA indisponible.');
+        if (this.selectedUserId !== targetUserId || (app.$('adminMessageRequest').value || null) !== targetRequestId) {
+          throw new Error('Le client ou la demande a changé pendant la génération. Relancez le brouillon.');
+        }
 
         this.selectedDraftId = result.draftId || null;
         app.$('adminMessageSubject').value = result.draft?.subject || '';
@@ -279,6 +316,8 @@
           ? `Brouillon généré. Vérifications : ${warnings.join(' · ')}`
           : 'Brouillon généré. Relisez et modifiez avant envoi.');
       } catch (error) {
+        this.selectedDraftId = null;
+        app.$('adminMessageAiState').textContent = 'Validation humaine obligatoire';
         app.status('adminMessageStatus', error.message || 'Génération impossible.', true);
       } finally {
         button.disabled = false;
@@ -289,7 +328,7 @@
     startLoop() {
       clearInterval(this.timer);
       this.timer = setInterval(() => {
-        if (document.visibilityState === 'visible' && document.getElementById('messages')?.classList.contains('active')) {
+        if (document.visibilityState === 'visible' && this.isActive()) {
           this.load().catch(() => {});
         }
       }, REFRESH_INTERVAL_MS);
