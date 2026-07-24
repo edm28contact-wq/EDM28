@@ -147,6 +147,9 @@ test('messaging loop uses guarded RPCs and explicit human approval', async () =>
   assert.match(ai, /type:\s*'json_schema'/);
   assert.match(ai, /strict:\s*true/);
   assert.match(ai, /PREVIEW_OPENAI_API_KEY/);
+  assert.match(ai, /PREVIEW_OPENAI_MESSAGE_MODEL/);
+  assert.match(ai, /!key \|\| !model/);
+  assert.doesNotMatch(ai, /DEFAULT_MESSAGE_MODEL/);
   assert.doesNotMatch(ai, /PREVIEW_OPENAI_API_KEY\s*\|\|\s*process\.env\.OPENAI_API_KEY/);
   assert.match(ai, /automation_settings/);
   assert.match(ai, /requiresHumanApproval:\s*true/);
