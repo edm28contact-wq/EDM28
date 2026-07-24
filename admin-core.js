@@ -8,6 +8,7 @@
     profile: null,
     clients: [],
     services: [],
+    backofficeConfiguration: null,
     $: (id) => document.getElementById(id),
     esc: (value) => String(value ?? '').replace(/[&<>'"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])),
     money: (value) => Number(value || 0).toLocaleString('fr-FR', {style:'currency',currency:'EUR'}),
@@ -23,11 +24,14 @@
       node.className = `status ${error ? 'error' : 'ok'}`;
     },
     page(id) {
+      const button = document.querySelector(`[data-page="${id}"]`);
+      if (button?.hidden) return this.status('managementStatus', 'Ce module est désactivé dans Gestion du back-office.', true);
       document.querySelectorAll('.page').forEach((node) => node.classList.toggle('active', node.id === id));
       document.querySelectorAll('[data-page]').forEach((node) => node.classList.toggle('active', node.dataset.page === id));
       if (id === 'requests') window.EDMAdminRequests?.load().catch((error) => this.status('requestStatus', error.message || 'Demandes indisponibles.', true));
       if (id === 'messages') window.EDMAdminMessages?.load().catch((error) => this.status('adminMessageStatus', error.message || 'Messagerie indisponible.', true));
       if (id === 'accounting') window.EDMAdminAccounting?.load();
+      if (id === 'management') window.EDMAdminManagement?.load().catch((error) => this.status('managementStatus', error.message || 'Gestion indisponible.', true));
     },
     async requireAdmin(user) {
       const { data, error } = await client.from('profiles').select('*').eq('id', user.id).single();
@@ -41,6 +45,28 @@
       if (error) throw error;
       return count || 0;
     },
+    async loadBackofficeConfiguration() {
+      const { data, error } = await client.from('backoffice_configuration').select('*').eq('id', true).single();
+      if (error) throw error;
+      this.backofficeConfiguration = data;
+      this.applyModuleVisibility(data?.enabled_modules || {});
+      return data;
+    },
+    applyModuleVisibility(modules) {
+      const pageMap = {
+        quotes: ['quotes'], agenda: [], workshop: ['operations','finalization'], parts: [], suppliers: [], purchases: [],
+        invoices: ['invoice-actions'], payments: ['invoice-actions','accounting'], micro_accounting: ['accounting'],
+        messaging: ['messages'], automations: ['settings'], ai_assistant: [], documents: ['documents','document-pdf']
+      };
+      Object.entries(pageMap).forEach(([module, pages]) => {
+        const enabled = modules[module] !== false;
+        pages.forEach((pageId) => {
+          document.querySelectorAll(`[data-page="${pageId}"]`).forEach((node) => { node.hidden = !enabled; });
+          const page = this.$(pageId);
+          if (page) page.dataset.moduleEnabled = enabled ? 'true' : 'false';
+        });
+      });
+    },
     async overview(extraChecks = []) {
       const values = await Promise.all(['profiles','service_requests','quotes','invoices','appointments','ai_drafts'].map((name) => this.count(name)));
       ['kpiClients','kpiRequests','kpiQuotes','kpiInvoices','kpiAppointments','kpiAi'].forEach((id, index) => { this.$(id).textContent = values[index]; });
@@ -53,6 +79,10 @@
       const required = ['business_name','legal_name','siret','siren','vat_status','address_line1','postal_code','city','country','phone','email','payment_terms','late_penalty_text','recovery_fee_text','logo_url','calendar_id','timezone'];
       const missing = required.filter((key) => !String(business?.[key] || '').trim());
       if (missing.length) checks.push(`${missing.length} information(s) entreprise obligatoire(s) manquante(s)`);
+      const configuration = this.backofficeConfiguration;
+      const requiredManagement = ['declared_activity_label','activity_kind','vat_mode','urssaf_frequency','stock_mode'];
+      const missingManagement = requiredManagement.filter((key) => !String(configuration?.[key] || '').trim());
+      if (missingManagement.length) checks.push(`${missingManagement.length} réglage(s) obligatoire(s) manquant(s) dans Gestion`);
       this.$('anomalies').innerHTML = checks.length ? `<ul>${checks.map((x) => `<li>${this.esc(x)}</li>`).join('')}</ul>` : '<div class="status ok">Aucune anomalie principale détectée.</div>';
     },
     async open() {
@@ -64,12 +94,20 @@
         ['Messagerie', () => window.EDMAdminMessages?.load()],
         ['Services', () => window.EDMAdminServices?.load()],
         ['Documents', () => window.EDMAdminDocs?.load()],
+        ['Gestion', () => window.EDMAdminManagement?.load()],
         ['Comptabilité', () => window.EDMAdminAccounting?.load()],
         ['Entreprise', () => window.EDMAdminBusiness?.load()],
         ['Automatisations', () => window.EDMAdminSettings?.load()]
       ];
-      const settled = await Promise.allSettled(modules.map(([, load]) => load()));
-      const failures = settled.flatMap((result, index) => result.status === 'rejected' ? [`Module ${modules[index][0]} indisponible : ${result.reason?.message || 'erreur inconnue'}`] : []);
+      const settled = await Promise.allSettled([
+        this.loadBackofficeConfiguration(),
+        ...modules.map(([, load]) => load())
+      ]);
+      const failures = settled.flatMap((result, index) => {
+        if (result.status !== 'rejected') return [];
+        const label = index === 0 ? 'Configuration' : modules[index - 1][0];
+        return [`Module ${label} indisponible : ${result.reason?.message || 'erreur inconnue'}`];
+      });
       try {
         await this.overview(failures);
       } catch (error) {
