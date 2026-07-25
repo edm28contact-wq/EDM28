@@ -9,7 +9,20 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "plugins": ["expo-router"],
-    "experiments": { "typedRoutes": false },
+    "experiments": {
+      "typedRoutes": false
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/76ac28bb-2c07-4f4c-8b1b-49404f87d857"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "76ac28bb-2c07-4f4c-8b1b-49404f87d857"
+      }
+    },
     "android": {
       "package": "fr.edm28.pilotage",
       "versionCode": 1,
