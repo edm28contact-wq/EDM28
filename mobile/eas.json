@@ -7,8 +7,12 @@
     "apk": {
       "distribution": "internal",
       "channel": "android-preview",
+      "env": {
+        "EX_UPDATES_NATIVE_DEBUG": "1"
+      },
       "android": {
-        "buildType": "apk"
+        "withoutCredentials": true,
+        "gradleCommand": ":app:assembleDebug"
       }
     }
   }
