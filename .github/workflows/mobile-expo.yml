@@ -28,8 +28,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - run: npm install --package-lock-only
-      - run: npm ci
+      - run: npm install --legacy-peer-deps
       - run: npx expo-doctor
       - run: npx expo export --platform android --output-dir dist
 
@@ -61,8 +60,7 @@ jobs:
       - name: Install mobile dependencies
         working-directory: mobile
         run: |
-          npm install --package-lock-only
-          npm ci
+          npm install --legacy-peer-deps
           npx expo install expo-updates --npm
 
       - name: Link existing EAS project
