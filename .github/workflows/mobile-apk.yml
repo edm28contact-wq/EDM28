@@ -1,0 +1,77 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-apk.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build-apk:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Check Expo token
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "Le secret EXPO_TOKEN est absent."
+            exit 1
+          fi
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Validate Expo project
+        run: npx expo-doctor
+
+      - name: Build Android APK
+        run: eas build --platform android --profile apk --non-interactive --wait --json > build.json
+
+      - name: Read APK URL
+        id: apk
+        run: |
+          URL=$(jq -r '.[0].artifacts.buildUrl // .[0].artifacts.applicationArchiveUrl // empty' build.json)
+          if [ -z "$URL" ]; then
+            cat build.json
+            echo "URL APK introuvable."
+            exit 1
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          curl -L --fail --retry 3 "$URL" -o EDM28-Pilotage.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EDM28-Pilotage-Android-APK
+          path: mobile/EDM28-Pilotage.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish download link in PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APK_URL: ${{ steps.apk.outputs.url }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body "## APK Android EDM28 prêt\n\n[Télécharger directement l’APK](${APK_URL})\n\nVersion interne de test, connectée uniquement au Supabase staging. Aucun envoi au Play Store."
