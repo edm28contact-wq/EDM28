@@ -2,10 +2,11 @@
   "name": "edm-auto-mecano-du-dimanche",
   "version": "3.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "npm run check:syntax",
     "check:syntax": "find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check",
-    "test:client": "node --test tests/client-flow.test.mjs tests/ai-message-draft.test.mjs",
+    "test:client": "node --test tests/client-flow.test.mjs tests/client-ui.test.mjs tests/public-shell.test.mjs tests/public-catalog-rls.test.mjs tests/ai-message-draft.test.mjs",
     "test:admin": "node --test tests/admin-flow.test.mjs tests/admin-transactional.test.mjs tests/admin-pwa.test.mjs tests/admin-management.test.mjs tests/admin-micro-accounting.test.mjs tests/document-templates.test.mjs",
     "test": "npm run check:syntax && npm run test:client && npm run test:admin",
     "dev": "vercel dev"

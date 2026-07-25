@@ -11,7 +11,7 @@ test('admin exposes a configurable management area', async () => {
   ]);
   assert.match(html, /data-page="management"/);
   assert.match(html, /id="managementForm"/);
-  assert.match(html, /admin-management\.js\?v=1/);
+  assert.match(html, /admin-management\.js\?v=2/);
   for (const section of ['Activité','Modules','Comptabilité','Pièces et débours']) assert.match(management, new RegExp(section));
   assert.match(management, /from\('backoffice_configuration'\)/);
   assert.match(core, /loadBackofficeConfiguration/);

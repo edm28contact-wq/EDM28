@@ -16,12 +16,12 @@ const scripts = [
   '/final-system.js?v=2',
   '/request-history.js?v=1',
   '/service-details.js?v=1',
-  '/ui-final.js?v=6',
-  '/theme-light.js?v=4',
+  '/ui-final.js?v=7',
+  '/theme-light.js?v=5',
   '/home-premium.js?v=3',
-  '/contact-footer.js?v=1',
+  '/contact-footer.js?v=2',
   '/accessibility-mobile.js?v=1',
-  '/reliability.js?v=1',
+  '/reliability.js?v=2',
   '/white-background.js?v=2',
   '/light-palette-final.js?v=2',
   '/mid-palette-final.js?v=1',
@@ -122,6 +122,10 @@ try {
   const cycle = ['home', 'account', 'appointment', 'garage', 'history', 'about', 'home'];
   for (let round = 0; round < 20; round += 1) {
     for (const pageId of cycle) {
+      if (mobile) {
+        await page.click('#openMenu');
+        await page.waitForTimeout(20);
+      }
       await page.click(`[data-page="${pageId}"]`);
       await page.waitForFunction((id) => document.getElementById(id)?.classList.contains('active'), pageId);
       await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 20)));

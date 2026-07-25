@@ -132,7 +132,7 @@ await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route)
 try {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil:'domcontentloaded', timeout:30000 });
   await page.waitForFunction(() => window.__edmPasswordAuthReady === true);
-  await page.waitForSelector('#btnSignUp', { timeout:15000 });
+  await page.waitForSelector('#btnSignUp', { state:'attached', timeout:15000 });
 
   const privatePages = new Set(['account','garage','history']);
   for (const id of ['home','appointment','account','garage','history','about']) {
@@ -142,6 +142,10 @@ try {
     await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), expected);
   }
 
+  await page.click('#openMenu');
+  await page.click('[data-page="appointment"]');
+  await page.waitForFunction(() => document.getElementById('appointment')?.classList.contains('active'));
+  await page.waitForSelector('#btnSignUp', { state:'visible' });
   await page.fill('#lastName','Dupont');
   await page.fill('#firstName','Jean');
   await page.fill('#phone','0612345678');

@@ -30,7 +30,7 @@ test('parts support resale customer supplied and strict disbursement modes', asy
     assert.match(sql, new RegExp(field));
     assert.match(parts, new RegExp(field));
   }
-  assert.match(sql, /purchase_total <> v_qty \* v_unit/);
+  assert.match(sql, /v_purchase <> v_qty \* v_unit/);
   assert.match(sql, /admin_validate_quote_for_publication/);
   assert.match(sql, /admin_validate_invoice_for_issue/);
   assert.match(parts, /repair-documents/);

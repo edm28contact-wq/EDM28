@@ -45,14 +45,26 @@
     }, true);
   }
 
+  function showUpdateBanner() {
+    let banner = document.getElementById('edm-update-banner');
+    if (banner) {
+      banner.style.display = 'flex';
+      return;
+    }
+
+    banner = document.createElement('div');
+    banner.id = 'edm-update-banner';
+    banner.setAttribute('role', 'status');
+    banner.setAttribute('aria-live', 'polite');
+    banner.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9998;display:flex;align-items:center;gap:10px;max-width:min(92vw,620px);padding:11px 14px;border-radius:16px;background:#172126;color:#fff;box-shadow:0 14px 34px rgba(0,0,0,.28)';
+    banner.innerHTML = '<span>Une mise à jour est prête. Terminez votre saisie avant d’actualiser.</span><button type="button" class="btn btn-primary">Actualiser</button>';
+    banner.querySelector('button').addEventListener('click', () => window.location.reload());
+    document.body.appendChild(banner);
+  }
+
   function watchServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (sessionStorage.getItem('edm-reloaded')) return;
-      sessionStorage.setItem('edm-reloaded', '1');
-      window.location.reload();
-    });
-    window.addEventListener('beforeunload', () => sessionStorage.removeItem('edm-reloaded'));
+    navigator.serviceWorker.addEventListener('controllerchange', showUpdateBanner);
   }
 
   function init() {

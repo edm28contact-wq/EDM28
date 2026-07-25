@@ -47,9 +47,15 @@ jobs:
           done < <(find . -type f -name '*.js' -not -path './node_modules/*' -print0)
           exit "$failed"
       - name: Run client journey tests
-        run: npm run test:client 2>&1 | tee client-test-report.txt
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:client 2>&1 | tee client-test-report.txt
       - name: Run admin journey tests
-        run: npm run test:admin 2>&1 | tee admin-test-report.txt
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:admin 2>&1 | tee admin-test-report.txt
       - name: Upload validation reports
         if: always()
         uses: actions/upload-artifact@v4

@@ -7,7 +7,7 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 
 test('client modules load in deterministic order', async () => {
   const source = await read('client-simple-flow.js');
-  const modules = ['client-password-flow.js','client-step3-fixes.js','request-submit-safe.js','client-quotes.js','client-operations.js','client-invoices.js','client-document-download.js','client-notifications.js','combo-suspended.js'];
+  const modules = ['client-password-flow.js','client-step3-fixes.js','request-submit-safe.js','client-quotes.js','client-operations.js','client-invoices.js','client-document-download.js','client-messages.js','combo-suspended.js'];
   let previous = -1;
   for (const module of modules) {
     const index = source.indexOf(module);

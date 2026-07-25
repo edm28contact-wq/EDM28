@@ -33,11 +33,11 @@ test('request transitions are conditional and quote creation is idempotent', asy
 
 test('quotes validate publication and lock after sending', async () => {
   const source = await read('admin-quotes.js');
-  assert.match(source, /total <= 0/);
+  assert.match(source, /rpc\('admin_validate_quote_for_publication'/);
   assert.match(source, /validUntil < currentDate\(\)/);
   assert.match(source, /status:\s*'sent',\s*visible_to_client:\s*true/);
-  assert.match(source, /\.eq\('status', 'draft'\)/);
-  assert.match(source, /Seul un brouillon peut être modifié ou publié/);
+  assert.match(source, /\.eq\('status', 'draft'\)\.gt\('total', 0\)/);
+  assert.match(source, /Seul un brouillon complet avec un total positif peut être modifié ou publié/);
 });
 
 test('accepted quotes create one appointment and one repair order', async () => {

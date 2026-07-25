@@ -900,11 +900,13 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      updateAccountUi();
-      renderGarage();
-      renderHistory();
-      renderAccountPage();
-      renderSavedVehicles();
+      [updateAccountUi, renderGarage, renderHistory, renderAccountPage, renderSavedVehicles].forEach((refresh) => {
+        try {
+          refresh();
+        } catch (error) {
+          console.warn("EDM interface refresh unavailable", error);
+        }
+      });
     }
 
     function toast(message) {
