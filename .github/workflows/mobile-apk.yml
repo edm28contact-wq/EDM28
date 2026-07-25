@@ -1,0 +1,142 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-apk.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build-apk:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Check Expo token
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "Le secret EXPO_TOKEN est absent."
+            exit 1
+          fi
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Validate Expo project
+        run: |
+          npx expo-doctor
+          eas config --platform android --profile apk --non-interactive
+
+      - name: Build Android APK
+        id: build
+        shell: bash
+        run: |
+          set +e
+          eas build --platform android --profile apk --non-interactive --wait --json --verbose-logs > build.json 2> >(tee build-error.log >&2)
+          STATUS=$?
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Report exact build failure
+        if: steps.build.outputs.status != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          : > eas-remote.log
+          INDEX=0
+          if [ -s build.json ]; then
+            jq -r '.[0].logFiles[]? // empty' build.json | while IFS= read -r LOG_URL; do
+              INDEX=$((INDEX + 1))
+              RAW="eas-log-${INDEX}.bin"
+              if curl -L --fail --silent --show-error --compressed "$LOG_URL" -o "$RAW"; then
+                if gzip -t "$RAW" 2>/dev/null; then
+                  gzip -dc "$RAW" >> eas-remote.log || true
+                else
+                  cat "$RAW" >> eas-remote.log
+                fi
+                printf '\n' >> eas-remote.log
+              fi
+            done
+          fi
+
+          {
+            echo "## Échec de construction APK"
+            echo
+            echo "Diagnostic de la phase EAS qui bloque :"
+            echo
+            echo '```text'
+            if [ -s eas-remote.log ]; then
+              MATCHES=$(grep -Ein -B 6 -A 16 'npm ERR|ERESOLVE|error|failed|failure|not found|ENOENT|unsupported|incompatible' eas-remote.log | tail -n 260 || true)
+              if [ -n "$MATCHES" ]; then
+                printf '%s\n' "$MATCHES"
+              else
+                tail -n 220 eas-remote.log
+              fi
+            elif [ -s build-error.log ]; then
+              tail -n 160 build-error.log
+            else
+              echo "Aucun journal distant récupéré."
+            fi
+            echo '```'
+            echo
+            BUILD_ID=$(jq -r '.[0].id // empty' build.json 2>/dev/null || true)
+            if [ -n "$BUILD_ID" ]; then
+              echo "Build Expo : https://expo.dev/accounts/edm-28/projects/edm28-pilotage/builds/${BUILD_ID}"
+            fi
+          } > apk-error.md
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file apk-error.md
+          fi
+          cat apk-error.md
+          exit 1
+
+      - name: Read APK URL
+        if: steps.build.outputs.status == '0'
+        id: apk
+        run: |
+          URL=$(jq -r '.[0].artifacts.buildUrl // .[0].artifacts.applicationArchiveUrl // empty' build.json)
+          if [ -z "$URL" ]; then
+            cat build.json
+            echo "URL APK introuvable."
+            exit 1
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          curl -L --fail --retry 3 "$URL" -o EDM28-Pilotage.apk
+
+      - name: Upload APK artifact
+        if: steps.build.outputs.status == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: EDM28-Pilotage-Android-APK
+          path: mobile/EDM28-Pilotage.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish download link in PR
+        if: steps.build.outputs.status == '0' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APK_URL: ${{ steps.apk.outputs.url }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body "## APK Android EDM28 prêt\n\n[Télécharger directement l’APK](${APK_URL})\n\nVersion interne de test, connectée uniquement au Supabase staging. Aucun envoi au Play Store."

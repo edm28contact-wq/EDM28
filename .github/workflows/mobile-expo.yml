@@ -1,0 +1,95 @@
+name: Mobile Expo
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-expo.yml'
+  push:
+    branches:
+      - 'feature/edm28-android-dashboard-v1'
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-expo.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate-mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm install --legacy-peer-deps
+      - run: npx expo-doctor
+      - run: npx expo export --platform android --output-dir dist
+
+  publish-preview:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: validate-mobile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Check Expo token
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "Le secret EXPO_TOKEN est absent."
+            exit 1
+          fi
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: |
+          npm install --legacy-peer-deps
+          npx expo install expo-updates --npm
+
+      - name: Link existing EAS project
+        working-directory: mobile
+        run: eas project:init --non-interactive --force
+
+      - name: Configure EAS Update for Expo Go
+        working-directory: mobile
+        run: |
+          eas update:configure --platform android --environment preview --non-interactive
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const file = 'app.json';
+          const config = JSON.parse(fs.readFileSync(file, 'utf8'));
+          config.expo.runtimeVersion = { policy: 'sdkVersion' };
+          fs.writeFileSync(file, JSON.stringify(config, null, 2) + '\n');
+          NODE
+
+      - name: Publish Android preview and QR
+        id: expo-preview
+        uses: expo/expo-github-action/preview@v8
+        with:
+          working-directory: mobile
+          qr-target: expo-go
+          comment: ${{ github.event_name == 'pull_request' }}
+          command: eas update --branch android-preview --message "EDM28 Android preview ${{ github.sha }}" --platform android --environment preview --non-interactive
+
+      - name: Show preview links
+        run: |
+          echo "QR: ${{ steps.expo-preview.outputs.androidQR || steps.expo-preview.outputs.qr }}"
+          echo "Update: ${{ steps.expo-preview.outputs.androidLink || steps.expo-preview.outputs.link }}"
+          echo "Project ID: ${{ steps.expo-preview.outputs.projectId }}"
