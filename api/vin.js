@@ -1,4 +1,6 @@
-const { sendJson, sendOptions, readJsonBody, readJsonResponse } = require("./_utils.cjs");
+import utils from "./utils.cjs";
+
+const { sendJson, sendOptions, readJsonBody, readJsonResponse } = utils;
 
 function normalizeVin(input) {
   return String(input || "")
@@ -14,7 +16,7 @@ function pick() {
   return "";
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === "OPTIONS") return sendOptions(res);
   if (!["GET", "POST"].includes(req.method)) {
     return sendJson(res, 405, { success: false, error: "Méthode non autorisée." });
@@ -69,4 +71,4 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     return sendJson(res, 500, { success: false, error: error?.message || "Erreur serveur VIN." });
   }
-};
+}

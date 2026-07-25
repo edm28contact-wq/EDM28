@@ -31,10 +31,14 @@
       <button class="btn ghost active" data-page="overview">Vue générale</button>
       <button class="btn ghost" data-page="requests">Demandes</button>
       <button class="btn ghost" data-page="quotes">Devis</button>
+      <button class="btn ghost" data-page="parts">Pièces</button>
+      <button class="btn ghost" data-page="purchases">Fournisseurs et achats</button>
       <button class="btn ghost" data-page="clients">Clients</button>
       <button class="btn ghost" data-page="services">Services et prix</button>
       <button class="btn ghost" data-page="documents">Documents</button>
-      <button class="btn ghost" data-page="accounting">Comptabilité</button>
+      <button class="btn ghost" data-page="management">Gestion</button>
+      <button class="btn ghost" data-page="accounting">Factures</button>
+      <button class="btn ghost" data-page="micro-accounting">Comptabilité micro</button>
       <button class="btn ghost" data-page="business">Informations entreprise</button>
       <button class="btn ghost" data-page="settings">Automatisations</button>
     </nav>
@@ -49,23 +53,23 @@
     </div><div class="card" style="margin-top:14px"><h2>Anomalies</h2><div id="anomalies">Chargement…</div></div></section>
 
     <section id="requests" class="page"><div class="card"><div class="top"><div><h2>Demandes clients</h2><p class="muted">Demandes reçues et étudiées, classées de la plus récente à la plus ancienne.</p></div><button id="requestRefresh" class="btn ghost">Actualiser</button></div><div id="requestStatus" class="status hidden"></div><div id="requestList"></div></div></section>
-
     <section id="quotes" class="page"><div class="card"><div class="top"><div><h2>Devis</h2><p class="muted">Compléter les devis puis les publier explicitement au client.</p></div><button id="quoteRefresh" class="btn ghost">Actualiser</button></div><div id="quoteStatus" class="status hidden"></div><div id="quoteList"></div></div></section>
 
+    <section id="parts" class="page"><div class="card"><div class="top"><div><h2>Pièces et débours</h2><p class="muted">Revente, pièce client ou débours strict avec justificatifs privés.</p></div><button class="btn ghost" onclick="window.EDMAdminParts?.load()">Actualiser</button></div><div id="partsDocument"></div><div id="partsStatus" class="status hidden"></div><div id="partsEditor"></div><div id="partsList" style="margin-top:14px"></div></div></section>
+
+    <section id="purchases" class="page"><div class="grid2"><div class="card"><h2>Fournisseur</h2><div id="supplierForm"></div><div id="supplierList" style="margin-top:14px"></div></div><div class="card"><h2>Achat et facture fournisseur</h2><div id="purchaseForm"></div><div id="purchaseList" style="margin-top:14px"></div></div></div><div class="card" style="margin-top:14px"><h2>Dépense professionnelle</h2><div id="expenseForm"></div><div id="expenseList" style="margin-top:14px"></div><div id="purchasesStatus" class="status hidden"></div></div></section>
+
     <section id="clients" class="page"><div class="card"><h2>Recherche client</h2><div class="toolbar"><input id="clientSearch" placeholder="Nom, téléphone, email, plaque ou identifiant" style="flex:1;min-width:260px;padding:11px;border:1px solid #d0d5dd;border-radius:12px"><button id="clientSearchBtn" class="btn primary">Rechercher</button></div><div id="clientResults"></div></div><div id="clientDetail" class="card hidden" style="margin-top:14px"></div></section>
-
     <section id="services" class="page"><div class="card"><div class="top"><div><h2>Services et prix</h2><p class="muted">Les changements publiés sont chargés par le site.</p></div><button id="newServiceBtn" class="btn primary">Nouveau service</button></div><div id="serviceEditor" class="hidden"></div><div id="serviceTable"></div></div></section>
-
     <section id="documents" class="page"><div class="grid2"><div class="card"><h2>Créer un brouillon</h2><div class="field"><label>Client *</label><select id="docClient"></select></div><div class="field"><label>Véhicule</label><select id="docVehicle"></select></div><div class="field"><label>Type</label><select id="docType"><option value="quote">Devis</option><option value="repair_order">Ordre de réparation</option><option value="invoice">Facture</option></select></div><div class="field"><label>Description *</label><textarea id="docDescription"></textarea></div><button id="createDraftBtn" class="btn primary">Créer le brouillon</button><div id="docStatus" class="status hidden"></div></div><div class="card"><h2>Brouillons récents</h2><div id="draftList"></div></div></div></section>
-
-    <section id="accounting" class="page"><div class="card"><div class="top"><div><h2>Comptabilité</h2><p class="muted">Suivi des factures, encaissements et échéances.</p></div><div class="toolbar"><select id="accountingFilter"><option value="all">Toutes</option><option value="paid">Soldées</option><option value="unpaid">À encaisser</option><option value="overdue">Échues</option></select><button id="accountingExport" class="btn ghost">Exporter CSV</button></div></div><div id="accountingKpis" class="grid"></div><div id="accountingTable" style="margin-top:14px"></div><div id="accountingStatus" class="status hidden"></div></div></section>
-
+    <section id="management" class="page"><div class="card"><div class="top"><div><h2>Gestion du back-office</h2><p class="muted">Définis ton activité, les modules visibles, les notions comptables et le traitement des pièces.</p></div><button id="saveManagementBtn" class="btn primary">Enregistrer</button></div><div id="managementForm"></div><div id="managementStatus" class="status hidden"></div></div></section>
+    <section id="accounting" class="page"><div class="card"><div class="top"><div><h2>Factures et encaissements</h2><p class="muted">Suivi des factures, encaissements et échéances.</p></div><div class="toolbar"><select id="accountingFilter"><option value="all">Toutes</option><option value="paid">Soldées</option><option value="unpaid">À encaisser</option><option value="overdue">Échues</option></select><button id="accountingExport" class="btn ghost">Exporter CSV</button></div></div><div id="accountingKpis" class="grid"></div><div id="accountingTable" style="margin-top:14px"></div><div id="accountingStatus" class="status hidden"></div></div></section>
+    <section id="micro-accounting" class="page"><div class="card"><div class="top"><div><h2>Comptabilité micro</h2><p class="muted">Affiche uniquement les notions activées dans Gestion.</p></div><button class="btn ghost" onclick="window.EDMAdminMicroAccounting?.load()">Actualiser</button></div><div id="microAccountingStatus" class="status hidden"></div><div id="microAccountingHost" class="stack"></div></div></section>
     <section id="business" class="page"><div class="card"><div class="top"><div><h2>Informations de l’entreprise</h2><p class="muted">Les champs obligatoires vides restent rouges jusqu’à saisie valide.</p></div><button id="saveBusinessBtn" class="btn primary">Enregistrer</button></div><div id="businessForm" class="grid2"></div><div id="businessStatus" class="status hidden"></div></div></section>
-
     <section id="settings" class="page"><div class="card"><h2>Automatisations</h2><div id="automationForm"></div><button id="saveAutomationBtn" class="btn primary">Enregistrer</button><div id="automationStatus" class="status hidden"></div></div></section>
   </section>
 </main>
 <script src="/admin-install.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/admin-clients.js?v=2"></script><script src="/admin-requests.js?v=2"></script><script src="/admin-quotes.js?v=1"></script><script src="/admin-services.js?v=2"></script><script src="/admin-docs.js?v=2"></script><script src="/admin-business.js?v=1"></script><script src="/admin-settings.js?v=2"></script><script src="/admin-accounting.js?v=1"></script><script src="/admin-messages.js?v=1"></script><script src="/admin-core.js?v=4"></script><script src="/admin-readiness.js?v=2"></script><script src="/admin-doc-fields.js?v=1"></script><script src="/admin-doc-logic.js?v=1"></script><script src="/admin-service-validation.js?v=1"></script>
+<script src="/admin-clients.js?v=2"></script><script src="/admin-requests.js?v=2"></script><script src="/admin-quotes.js?v=2"></script><script src="/admin-services.js?v=2"></script><script src="/admin-docs.js?v=2"></script><script src="/admin-management.js?v=2"></script><script src="/admin-parts.js?v=1"></script><script src="/admin-purchases.js?v=1"></script><script src="/admin-micro-accounting.js?v=1"></script><script src="/admin-business.js?v=1"></script><script src="/admin-settings.js?v=2"></script><script src="/admin-accounting.js?v=1"></script><script src="/admin-messages.js?v=1"></script><script src="/admin-core.js?v=6"></script><script src="/admin-readiness.js?v=2"></script><script src="/admin-doc-fields.js?v=1"></script><script src="/admin-doc-logic.js?v=1"></script><script src="/admin-service-validation.js?v=1"></script>
 </body></html>

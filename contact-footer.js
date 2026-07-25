@@ -83,7 +83,7 @@
     const footer = document.createElement('footer');
     footer.className = 'site-footer';
     footer.innerHTML = `
-      <div class="site-footer-brand"><img src="/logo-edm.svg" alt="Logo EDM"><div><strong>EDM · Spécialiste du freinage</strong><p>Estimation indicative et validation humaine.</p></div></div>
+      <div class="site-footer-brand"><img src="/logo-edm.svg" alt="Logo EDM"><div><strong>EDM · Freinage & liaison au sol</strong><p>Estimation détaillée et accord avant travaux.</p></div></div>
       <div class="site-footer-links"><button type="button" data-footer-page="about">À propos</button><button type="button" data-footer-page="contact">Contact</button><button type="button" data-footer-page="account">Mon compte</button></div>`;
     footer.querySelectorAll('[data-footer-page]').forEach((button) => button.addEventListener('click', () => {
       if (typeof showPage === 'function') showPage(button.dataset.footerPage);

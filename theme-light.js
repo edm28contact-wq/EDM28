@@ -193,10 +193,10 @@
     if (name) name.textContent = 'EDM';
 
     const sub = document.querySelector('.brand-sub');
-    if (sub) sub.innerHTML = 'Spécialiste du freinage<br>Entretien automobile';
+    if (sub) sub.innerHTML = 'Freinage & liaison au sol<br>Mesures · prix · accord';
 
     const topbar = document.querySelector('.topbar-title');
-    if (topbar) topbar.innerHTML = '<img src="/logo-edm.svg" alt="" style="width:38px;height:38px;border-radius:10px;object-fit:cover"><span>EDM · Spécialiste du freinage</span>';
+    if (topbar) topbar.innerHTML = '<img src="/logo-edm.svg" alt="" style="width:38px;height:38px;border-radius:10px;object-fit:cover"><span>EDM · Freinage & liaison au sol</span>';
   }
 
   installBranding();

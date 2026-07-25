@@ -9,6 +9,13 @@ const ADMIN_TRANSACTIONAL_PATH = join(process.cwd(), 'admin-transactional.js');
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const ICON_CACHE = new Map();
 
+function setSecurityHeaders(res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+}
+
 function crc32(buffer) {
   let crc = 0xffffffff;
   for (const byte of buffer) {
@@ -29,14 +36,12 @@ function pngChunk(type, data = Buffer.alloc(0)) {
 
 function createAdminIcon(size) {
   if (ICON_CACHE.has(size)) return ICON_CACHE.get(size);
-
   const stride = (size * 4) + 1;
   const raw = Buffer.alloc(stride * size);
   const outer = Math.round(size * 0.08);
   const inner = Math.round(size * 0.15);
   const stripeTop = Math.round(size * 0.65);
   const stripeBottom = Math.round(size * 0.85);
-
   for (let y = 0; y < size; y += 1) {
     const row = y * stride;
     raw[row] = 0;
@@ -46,7 +51,6 @@ function createAdminIcon(size) {
       const insideInner = x >= inner && x < size - inner && y >= inner && y < size - inner;
       if (insideOuter && !insideInner) color = [255, 255, 255, 255];
       if (insideInner && y >= stripeTop && y < stripeBottom) color = [245, 119, 48, 255];
-
       const offset = row + 1 + (x * 4);
       raw[offset] = color[0];
       raw[offset + 1] = color[1];
@@ -54,19 +58,12 @@ function createAdminIcon(size) {
       raw[offset + 3] = color[3];
     }
   }
-
   const header = Buffer.alloc(13);
   header.writeUInt32BE(size, 0);
   header.writeUInt32BE(size, 4);
   header[8] = 8;
   header[9] = 6;
-
-  const icon = Buffer.concat([
-    PNG_SIGNATURE,
-    pngChunk('IHDR', header),
-    pngChunk('IDAT', deflateSync(raw, { level: 9 })),
-    pngChunk('IEND')
-  ]);
+  const icon = Buffer.concat([PNG_SIGNATURE,pngChunk('IHDR', header),pngChunk('IDAT', deflateSync(raw, { level: 9 })),pngChunk('IEND')]);
   ICON_CACHE.set(size, icon);
   return icon;
 }
@@ -84,11 +81,11 @@ function requestedIconSize(req) {
 }
 
 export default function handler(req, res) {
+  setSecurityHeaders(res);
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).end();
   }
-
   const iconSize = requestedIconSize(req);
   if (iconSize) {
     const icon = createAdminIcon(iconSize);
@@ -98,29 +95,23 @@ export default function handler(req, res) {
     if (req.method === 'HEAD') return res.status(200).end();
     return res.status(200).end(icon);
   }
-
   try {
     let html = readFileSync(ADMIN_PATH, 'utf8');
     let adminCore = readFileSync(ADMIN_CORE_PATH, 'utf8');
     const adminTransactional = readFileSync(ADMIN_TRANSACTIONAL_PATH, 'utf8');
     const supabase = resolveSupabasePublicConfig();
-
-    if (!supabase.url || !supabase.key) {
-      throw new Error(`Configuration Supabase ${supabase.environment} absente.`);
-    }
-
+    if (!supabase.url || !supabase.key) throw new Error(`Configuration Supabase ${supabase.environment} absente.`);
     adminCore = adminCore
       .replace(/'https:\/\/[^']+\.supabase\.co'/, JSON.stringify(supabase.url))
       .replace(/'sb_publishable_[^']+'/, JSON.stringify(supabase.key));
-
     html = html.replace('</head>', `<meta name="edm-environment" content="${supabase.environment}"></head>`);
-
     const encodedCore = Buffer.from(adminCore, 'utf8').toString('base64');
     const encodedTransactional = Buffer.from(adminTransactional, 'utf8').toString('base64');
     const inlineLoader = `<script>eval(decodeURIComponent(escape(atob('${encodedCore}'))));<\/script>`;
     const transactionalLoader = `<script>eval(decodeURIComponent(escape(atob('${encodedTransactional}'))));<\/script>`;
-    html = html.replace('<script src="/admin-core.js?v=4"></script>', `${inlineLoader}${transactionalLoader}`);
-
+    const coreTag = /<script src="\/admin-core\.js\?v=\d+"><\/script>/;
+    if (!coreTag.test(html)) throw new Error('Balise admin-core versionnée introuvable.');
+    html = html.replace(coreTag, `${inlineLoader}${transactionalLoader}`);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     res.setHeader('X-EDM-Environment', supabase.environment);

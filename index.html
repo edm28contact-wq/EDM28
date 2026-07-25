@@ -612,8 +612,8 @@
       <div class="brand-block">
         <div class="brand-mark">EDM</div>
         <div>
-          <div class="brand-name">EDM AUTO</div>
-          <div class="brand-sub">Mécano du Dimanche<br>Demande simple · estimation · reprise manuelle</div>
+          <div class="brand-name">EDM</div>
+          <div class="brand-sub">Freinage & liaison au sol<br>Mesures · prix · accord</div>
         </div>
       </div>
 
@@ -627,7 +627,7 @@
       </nav>
 
       <div class="sidebar-card" id="accountChip"><b>Non connecté</b><br>Connectez-vous pour retrouver votre garage et vos demandes.</div>
-      <div class="sidebar-card"><b>Fonctionnement actuel</b><br>Le site prépare votre demande et votre estimation. La validation finale reste faite manuellement par EDM AUTO.</div>
+      <div class="sidebar-card"><b>Engagement EDM</b><br>Aucune intervention supplémentaire sans votre accord.</div>
     </aside>
 
     <main class="main">
@@ -641,18 +641,18 @@
         <div class="panel hero">
           <div class="hero-grid">
             <div>
-              <div class="eyebrow">Demande simple · estimation claire · reprise manuelle</div>
-              <h1>Préparez votre demande mécanique en quelques minutes.</h1>
-              <p class="lead">Créez votre compte, renseignez votre véhicule, sélectionnez les prestations souhaitées, consultez une estimation, puis transmettez votre demande à EDM AUTO pour reprise manuelle.</p>
+              <div class="eyebrow">Freinage · liaison au sol · sur rendez-vous</div>
+              <h1>Votre sécurité, preuves à l’appui.</h1>
+              <p class="lead">Décrivez votre besoin, comparez les niveaux de pièces et validez le prix avant toute intervention supplémentaire.</p>
               <div class="btn-row">
                 <button class="btn btn-secondary" data-jump="appointment" type="button">Commencer ma demande</button>
                 <button class="btn btn-ghost" data-jump="about" type="button" style="color:white;border-color:rgba(255,255,255,.25)">Voir le principe</button>
               </div>
             </div>
             <div class="hero-card">
-              <div class="hero-stat"><span>1</span><div><b>Compte</b><p>Créez votre compte pour retrouver vos véhicules et vos demandes.</p></div></div>
-              <div class="hero-stat"><span>2</span><div><b>Estimation</b><p>Consultez plusieurs niveaux de panier selon votre besoin et votre budget.</p></div></div>
-              <div class="hero-stat"><span>3</span><div><b>Validation EDM</b><p>Chaque demande est ensuite revue manuellement avant confirmation.</p></div></div>
+                <div class="hero-stat"><span>1</span><div><b>Demande qualifiée</b><p>Véhicule, symptômes et prestations sont réunis dans un seul dossier.</p></div></div>
+                <div class="hero-stat"><span>2</span><div><b>Estimation détaillée</b><p>Pièces et main-d’œuvre restent séparées et lisibles.</p></div></div>
+                <div class="hero-stat"><span>3</span><div><b>Accord avant travaux</b><p>Aucune intervention supplémentaire sans votre validation.</p></div></div>
             </div>
           </div>
         </div>
@@ -900,11 +900,13 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      updateAccountUi();
-      renderGarage();
-      renderHistory();
-      renderAccountPage();
-      renderSavedVehicles();
+      [updateAccountUi, renderGarage, renderHistory, renderAccountPage, renderSavedVehicles].forEach((refresh) => {
+        try {
+          refresh();
+        } catch (error) {
+          console.warn("EDM interface refresh unavailable", error);
+        }
+      });
     }
 
     function toast(message) {
