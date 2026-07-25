@@ -63,10 +63,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           : > eas-remote.log
+          INDEX=0
           if [ -s build.json ]; then
             jq -r '.[0].logFiles[]? // empty' build.json | while IFS= read -r LOG_URL; do
-              curl -L --fail --silent --show-error "$LOG_URL" >> eas-remote.log || true
-              printf '\n' >> eas-remote.log
+              INDEX=$((INDEX + 1))
+              RAW="eas-log-${INDEX}.bin"
+              if curl -L --fail --silent --show-error --compressed "$LOG_URL" -o "$RAW"; then
+                if gzip -t "$RAW" 2>/dev/null; then
+                  gzip -dc "$RAW" >> eas-remote.log || true
+                else
+                  cat "$RAW" >> eas-remote.log
+                fi
+                printf '\n' >> eas-remote.log
+              fi
             done
           fi
 
@@ -77,22 +86,22 @@ jobs:
             echo
             echo '```text'
             if [ -s eas-remote.log ]; then
-              MATCHES=$(grep -Ein -B 4 -A 12 'npm ERR|ERESOLVE|error|failed|failure|not found|ENOENT|unsupported|incompatible' eas-remote.log | tail -n 220 || true)
+              MATCHES=$(grep -Ein -B 6 -A 16 'npm ERR|ERESOLVE|error|failed|failure|not found|ENOENT|unsupported|incompatible' eas-remote.log | tail -n 260 || true)
               if [ -n "$MATCHES" ]; then
                 printf '%s\n' "$MATCHES"
               else
-                tail -n 180 eas-remote.log
+                tail -n 220 eas-remote.log
               fi
             elif [ -s build-error.log ]; then
-              tail -n 120 build-error.log
+              tail -n 160 build-error.log
             else
               echo "Aucun journal distant récupéré."
             fi
             echo '```'
             echo
-            BUILD_URL=$(jq -r '.[0].id // empty' build.json 2>/dev/null || true)
-            if [ -n "$BUILD_URL" ]; then
-              echo "Build Expo : https://expo.dev/accounts/edm-28/projects/edm28-pilotage/builds/${BUILD_URL}"
+            BUILD_ID=$(jq -r '.[0].id // empty' build.json 2>/dev/null || true)
+            if [ -n "$BUILD_ID" ]; then
+              echo "Build Expo : https://expo.dev/accounts/edm-28/projects/edm28-pilotage/builds/${BUILD_ID}"
             fi
           } > apk-error.md
 
