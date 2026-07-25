@@ -62,24 +62,40 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          : > eas-remote.log
+          if [ -s build.json ]; then
+            jq -r '.[0].logFiles[]? // empty' build.json | while IFS= read -r LOG_URL; do
+              curl -L --fail --silent --show-error "$LOG_URL" >> eas-remote.log || true
+              printf '\n' >> eas-remote.log
+            done
+          fi
+
           {
             echo "## Échec de construction APK"
             echo
-            echo "Dernier diagnostic EAS :"
+            echo "Diagnostic de la phase EAS qui bloque :"
             echo
             echo '```text'
-            if [ -s build-error.log ]; then
-              tail -n 100 build-error.log
+            if [ -s eas-remote.log ]; then
+              MATCHES=$(grep -Ein -B 4 -A 12 'npm ERR|ERESOLVE|error|failed|failure|not found|ENOENT|unsupported|incompatible' eas-remote.log | tail -n 220 || true)
+              if [ -n "$MATCHES" ]; then
+                printf '%s\n' "$MATCHES"
+              else
+                tail -n 180 eas-remote.log
+              fi
+            elif [ -s build-error.log ]; then
+              tail -n 120 build-error.log
             else
-              echo "Aucun message d'erreur écrit sur stderr."
-            fi
-            if [ -s build.json ]; then
-              echo
-              echo "Sortie JSON :"
-              tail -n 80 build.json
+              echo "Aucun journal distant récupéré."
             fi
             echo '```'
+            echo
+            BUILD_URL=$(jq -r '.[0].id // empty' build.json 2>/dev/null || true)
+            if [ -n "$BUILD_URL" ]; then
+              echo "Build Expo : https://expo.dev/accounts/edm-28/projects/edm28-pilotage/builds/${BUILD_URL}"
+            fi
           } > apk-error.md
+
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file apk-error.md
           fi
