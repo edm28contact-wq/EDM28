@@ -52,10 +52,20 @@ test('local persistence isolates independent interface refresh failures', async 
 });
 
 test('public promise names the workshop specialty and requires agreement before extra work', async () => {
-  const [theme, app] = await Promise.all([read('ui-final.js'), read('api/app.js')]);
+  const [theme, app, html, dynamic] = await Promise.all([
+    read('ui-final.js'),
+    read('api/app.js'),
+    read('index.html'),
+    read('final-system.js')
+  ]);
   assert.match(theme, /Freinage · liaison au sol · sur rendez-vous/);
   assert.match(theme, /Aucune intervention supplémentaire n’est ajoutée sans votre validation/);
   assert.match(theme, /La demande en ligne ne remplace pas une prise en charge urgente/);
+  assert.match(theme, /document\.readyState === 'loading'/);
+  assert.match(theme, /else \{\s*init\(\);\s*\}/s);
+  assert.match(html, /Votre sécurité, preuves à l’appui/);
+  assert.match(dynamic, /settingValue\('business_subtitle', 'Freinage & liaison au sol'\)/);
+  assert.match(dynamic, /topbarLabel\.textContent = `\$\{businessName\} · \$\{subtitle\}`/);
   assert.match(app, /EDM · Freinage & liaison au sol/);
 });
 

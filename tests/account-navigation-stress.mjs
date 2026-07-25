@@ -13,10 +13,10 @@ if (!browserType) throw new Error(`Unsupported browser: ${browserName}`);
 const scripts = [
   '/client-account-safe.js?v=10',
   '/integration.js?v=5',
-  '/final-system.js?v=2',
+  '/final-system.js?v=3',
   '/request-history.js?v=1',
   '/service-details.js?v=1',
-  '/ui-final.js?v=7',
+  '/ui-final.js?v=8',
   '/theme-light.js?v=5',
   '/home-premium.js?v=3',
   '/contact-footer.js?v=2',

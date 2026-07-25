@@ -36,12 +36,14 @@
   }
 
   function applySiteSettings() {
-    const businessName = settingValue('business_name', 'EDM AUTO');
-    const subtitle = settingValue('business_subtitle', 'Mécano du Dimanche');
+    const businessName = settingValue('business_name', 'EDM');
+    const subtitle = settingValue('business_subtitle', 'Freinage & liaison au sol');
     const logoUrl = settingValue('logo_url', '');
-    document.querySelectorAll('.brand-name, .topbar-title span:last-child').forEach((node) => { node.textContent = businessName; });
+    document.querySelectorAll('.brand-name').forEach((node) => { node.textContent = businessName; });
+    const topbarLabel = document.querySelector('.topbar-title span:last-child');
+    if (topbarLabel) topbarLabel.textContent = `${businessName} · ${subtitle}`;
     const sub = document.querySelector('.brand-sub');
-    if (sub) sub.innerHTML = `${safe(subtitle)}<br>Demande simple · estimation · validation manuelle`;
+    if (sub) sub.innerHTML = `${safe(subtitle)}<br>Mesures · prix · accord`;
     if (logoUrl) {
       document.querySelectorAll('.brand-mark').forEach((node) => {
         node.innerHTML = `<img src="${safe(logoUrl)}" alt="${safe(businessName)}" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">`;
