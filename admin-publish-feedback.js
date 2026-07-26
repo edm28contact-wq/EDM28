@@ -52,4 +52,4 @@
   }, true);
 })();
 
-// Redéploiement forcé après mise à jour de la variable RESEND_API_KEY.
+// Redéploiement Preview demandé après correction de RESEND_API_KEY et RESEND_FROM_EMAIL.
