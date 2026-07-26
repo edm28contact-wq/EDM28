@@ -6,6 +6,7 @@ import { resolveSupabasePublicConfig } from './supabase-config.js';
 const ADMIN_PATH = join(process.cwd(), 'admin.html');
 const ADMIN_CORE_PATH = join(process.cwd(), 'admin-core.js');
 const ADMIN_TRANSACTIONAL_PATH = join(process.cwd(), 'admin-transactional.js');
+const PREVIEW_ALIAS = 'edm-28-git-feat-admin-prefill-documents-edm-28-s-projects.vercel.app';
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const ICON_CACHE = new Map();
 
@@ -83,6 +84,12 @@ function requestedIconSize(req) {
   return null;
 }
 
+function immutablePreviewHost(req) {
+  const host = String(req.headers?.host || '').split(':')[0].toLowerCase();
+  return process.env.VERCEL_ENV === 'preview'
+    && /^edm-28-(?!git-)[a-z0-9]+-edm-28-s-projects\.vercel\.app$/.test(host);
+}
+
 export default function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
@@ -99,11 +106,19 @@ export default function handler(req, res) {
     return res.status(200).end(icon);
   }
 
+  if (immutablePreviewHost(req)) {
+    const path = String(req.url || '/admin').startsWith('/') ? String(req.url || '/admin') : '/admin';
+    res.setHeader('Location', `https://${PREVIEW_ALIAS}${path}`);
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    return res.status(307).end();
+  }
+
   try {
     let html = readFileSync(ADMIN_PATH, 'utf8');
     let adminCore = readFileSync(ADMIN_CORE_PATH, 'utf8');
     const adminTransactional = readFileSync(ADMIN_TRANSACTIONAL_PATH, 'utf8');
     const supabase = resolveSupabasePublicConfig();
+    const build = String(process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 7);
 
     if (!supabase.url || !supabase.key) {
       throw new Error(`Configuration Supabase ${supabase.environment} absente.`);
@@ -113,7 +128,9 @@ export default function handler(req, res) {
       .replace(/'https:\/\/[^']+\.supabase\.co'/, JSON.stringify(supabase.url))
       .replace(/'sb_publishable_[^']+'/, JSON.stringify(supabase.key));
 
-    html = html.replace('</head>', `<meta name="edm-environment" content="${supabase.environment}"></head>`);
+    html = html
+      .replace('</head>', `<meta name="edm-environment" content="${supabase.environment}"><meta name="edm-build" content="${build}"></head>`)
+      .replaceAll('__EDM_BUILD__', build);
 
     const encodedCore = Buffer.from(adminCore, 'utf8').toString('base64');
     const encodedTransactional = Buffer.from(adminTransactional, 'utf8').toString('base64');
@@ -124,6 +141,7 @@ export default function handler(req, res) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     res.setHeader('X-EDM-Environment', supabase.environment);
+    res.setHeader('X-EDM-Build', build);
     if (req.method === 'HEAD') return res.status(200).end();
     return res.status(200).send(html);
   } catch (error) {
