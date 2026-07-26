@@ -31,7 +31,7 @@ test('request transitions are conditional and quote creation is idempotent', asy
 
 test('quotes validate publication and lock after sending', async () => {
   const source = await read('admin-quotes.js');
-  assert.match(source, /total <= 0/);
+  assert.match(source, /!\(total > 0\)/);
   assert.match(source, /validUntil < currentDate\(\)/);
   assert.match(source, /status:\s*'sent',\s*visible_to_client:\s*true/);
   assert.match(source, /\.eq\('status', 'draft'\)/);
