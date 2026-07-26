@@ -29,20 +29,34 @@
         overview: () => this.overview(),
         requests: () => window.EDMAdminRequests?.load(),
         quotes: () => window.EDMAdminQuotes?.load(),
+        notifications: () => window.EDMAdminNotifications?.load(),
         operations: () => window.EDMAdminOperations?.load(),
         interventions: () => window.EDMAdminInterventions?.load(),
         finalization: () => window.EDMAdminFinalization?.load(),
         'invoice-actions': () => window.EDMAdminInvoiceActions?.load(),
         clients: () => window.EDMAdminClients?.load(),
         messages: () => window.EDMAdminMessages?.load(),
+        services: () => window.EDMAdminServices?.load(),
+        documents: () => window.EDMAdminDocs?.load(),
         accounting: () => window.EDMAdminAccounting?.load(),
+        business: () => window.EDMAdminBusiness?.load(),
+        settings: () => window.EDMAdminSettings?.load(),
         'document-pdf': () => window.EDMAdminDocumentPdf?.load(),
         'audit-log': () => window.EDMAdminAuditLog?.load()
       };
+      const errorTargets = {
+        overview: 'anomalies', requests: 'requestStatus', quotes: 'quoteStatus', notifications: 'notificationStatus',
+        operations: 'operationStatus', interventions: 'interventionStatus', finalization: 'finalizationStatus',
+        'invoice-actions': 'invoiceActionStatus', clients: 'clientDetail', messages: 'messageStatus',
+        accounting: 'accountingStatus', business: 'businessStatus', settings: 'automationStatus',
+        'document-pdf': 'documentPdfStatus', 'audit-log': 'auditLogStatus'
+      };
       Promise.resolve(loaders[id]?.()).catch((error) => {
-        const target = id === 'overview' ? 'anomalies' : id === 'requests' ? 'requestStatus' : id === 'quotes' ? 'quoteStatus' : id === 'clients' ? 'clientDetail' : 'anomalies';
-        if (target === 'anomalies') this.$(target).innerHTML = `<div class="status error">${this.esc(error.message || 'Module indisponible.')}</div>`;
-        else this.status(target, error.message || 'Module indisponible.', true);
+        const target = errorTargets[id] || 'anomalies';
+        if (target === 'anomalies' || target === 'clientDetail') {
+          const node = this.$(target);
+          if (node) node.innerHTML = `<div class="status error">${this.esc(error.message || 'Module indisponible.')}</div>`;
+        } else this.status(target, error.message || 'Module indisponible.', true);
       });
     },
     async count(table, configure) {
@@ -51,6 +65,12 @@
       const { count, error } = await query;
       if (error) throw error;
       return count || 0;
+    },
+    listData(result) {
+      return Array.isArray(result?.data) ? result.data : [];
+    },
+    objectData(result) {
+      return result?.data && !Array.isArray(result.data) ? result.data : {};
     },
     ensureOverviewUi() {
       const overview = this.$('overview');
@@ -106,57 +126,58 @@
       ]);
       const queryNames = ['Clients','Véhicules','Demandes','Devis','Rendez-vous','Ordres','Contrôles','Factures','Messages','Entreprise'];
       const queryErrors = results.flatMap((result, index) => result.error ? [`${queryNames[index]} : ${result.error.message}`] : []);
-      const [profiles, vehicles, requests, quotes, appointments, orders, inspections, invoices, unreadMessages, business] = results.map((result) => result.data || (Array.isArray(result.data) ? [] : {}));
+      const [profiles, vehicles, requests, quotes, appointments, orders, inspections, invoices, unreadMessages] = results.slice(0, 9).map((result) => this.listData(result));
+      const business = this.objectData(results[9]);
       const alerts = extraChecks.map((detail) => ({ severity: 'error', title: 'Module indisponible', detail, page: 'overview' }));
       queryErrors.forEach((detail) => alerts.push({ severity: 'error', title: 'Contrôle incomplet', detail, page: 'overview' }));
       const push = (condition, severity, title, detail, page) => { if (condition) alerts.push({ severity, title, detail, page }); };
 
-      const incompleteClients = (profiles || []).filter((p) => !String(p.email || '').trim() || !String(p.phone || '').trim() || !String(p.first_name || '').trim() || !String(p.last_name || '').trim());
+      const incompleteClients = profiles.filter((p) => !String(p.email || '').trim() || !String(p.phone || '').trim() || !String(p.first_name || '').trim() || !String(p.last_name || '').trim());
       push(incompleteClients.length, 'warning', 'Coordonnées client incomplètes', `${incompleteClients.length} client(s) sans nom, email ou téléphone complet.`, 'clients');
-      const incompleteVehicles = (vehicles || []).filter((v) => !String(v.plate || '').trim() || !String(v.brand || '').trim() || !String(v.model || '').trim() || !(Number(v.mileage) >= 0));
+      const incompleteVehicles = vehicles.filter((v) => !String(v.plate || '').trim() || !String(v.brand || '').trim() || !String(v.model || '').trim() || !(Number(v.mileage) >= 0));
       push(incompleteVehicles.length, 'warning', 'Véhicules incomplets', `${incompleteVehicles.length} véhicule(s) sans plaque, modèle ou kilométrage.`, 'clients');
 
-      const activeRequests = (requests || []).filter((r) => !['quoted','cancelled','closed','completed'].includes(r.status));
+      const activeRequests = requests.filter((r) => !['quoted','cancelled','closed','completed'].includes(r.status));
       const oldRequests = activeRequests.filter((r) => new Date(r.updated_at || r.created_at) < oneDayAgo);
       push(activeRequests.length, 'info', 'Demandes à traiter', `${activeRequests.length} demande(s) ne sont pas encore transformées en devis.`, 'requests');
       push(oldRequests.length, 'warning', 'Demandes en attente', `${oldRequests.length} demande(s) attendent depuis plus de 24 heures.`, 'requests');
-      const requestsWithoutVehicle = (requests || []).filter((r) => !r.vehicle_id);
+      const requestsWithoutVehicle = requests.filter((r) => !r.vehicle_id);
       push(requestsWithoutVehicle.length, 'error', 'Demandes sans véhicule', `${requestsWithoutVehicle.length} demande(s) ne sont liées à aucun véhicule.`, 'requests');
 
-      const draftQuotes = (quotes || []).filter((q) => q.status === 'draft');
+      const draftQuotes = quotes.filter((q) => q.status === 'draft');
       const incompleteDraftQuotes = draftQuotes.filter((q) => !String(q.quote_number || '').trim() || !(Number(q.total) > 0) || !q.valid_until);
-      const staleSentQuotes = (quotes || []).filter((q) => q.status === 'sent' && new Date(q.updated_at || q.created_at) < fiveDaysAgo);
-      const publishedQuotesWithoutPdf = (quotes || []).filter((q) => ['sent','accepted'].includes(q.status) && !q.pdf_path);
+      const staleSentQuotes = quotes.filter((q) => q.status === 'sent' && new Date(q.updated_at || q.created_at) < fiveDaysAgo);
+      const publishedQuotesWithoutPdf = quotes.filter((q) => ['sent','accepted'].includes(q.status) && !q.pdf_path);
       push(draftQuotes.length, 'info', 'Devis brouillons', `${draftQuotes.length} devis restent à compléter ou à publier.`, 'quotes');
       push(incompleteDraftQuotes.length, 'error', 'Devis incomplets', `${incompleteDraftQuotes.length} brouillon(s) sans numéro, montant ou validité.`, 'quotes');
       push(staleSentQuotes.length, 'warning', 'Devis sans réponse', `${staleSentQuotes.length} devis envoyé(s) sont sans réponse depuis plus de 5 jours.`, 'quotes');
       push(publishedQuotesWithoutPdf.length, 'error', 'Devis publiés sans PDF', `${publishedQuotesWithoutPdf.length} devis envoyé(s) ou accepté(s) n’ont pas de PDF.`, 'document-pdf');
 
-      const todayAppointments = (appointments || []).filter((a) => new Date(a.starts_at) >= today && new Date(a.starts_at) < tomorrow && a.status !== 'cancelled');
-      const tomorrowAppointments = (appointments || []).filter((a) => new Date(a.starts_at) >= tomorrow && new Date(a.starts_at) < afterTomorrow && a.status !== 'cancelled');
+      const todayAppointments = appointments.filter((a) => new Date(a.starts_at) >= today && new Date(a.starts_at) < tomorrow && a.status !== 'cancelled');
+      const tomorrowAppointments = appointments.filter((a) => new Date(a.starts_at) >= tomorrow && new Date(a.starts_at) < afterTomorrow && a.status !== 'cancelled');
       push(todayAppointments.length, 'info', 'Rendez-vous aujourd’hui', `${todayAppointments.length} véhicule(s) sont attendus aujourd’hui.`, 'operations');
       push(tomorrowAppointments.length, 'info', 'Rendez-vous demain', `${tomorrowAppointments.length} rendez-vous sont prévus demain.`, 'operations');
 
-      const inspectionByOrder = new Map((inspections || []).map((r) => [r.repair_order_id, r]));
-      const activeOrders = (orders || []).filter((o) => ['ready','signed','in_progress','completed'].includes(o.status));
+      const inspectionByOrder = new Map(inspections.map((r) => [r.repair_order_id, r]));
+      const activeOrders = orders.filter((o) => ['ready','signed','in_progress','completed'].includes(o.status));
       const ordersWithoutInspection = activeOrders.filter((o) => !inspectionByOrder.has(o.id));
-      const incompleteInspections = (inspections || []).filter((r) => r.status !== 'completed');
-      const completedWithoutPdf = (inspections || []).filter((r) => r.status === 'completed' && !r.pdf_path);
+      const incompleteInspections = inspections.filter((r) => r.status !== 'completed');
+      const completedWithoutPdf = inspections.filter((r) => r.status === 'completed' && !r.pdf_path);
       push(activeOrders.length, 'info', 'Dossiers atelier actifs', `${activeOrders.length} intervention(s) sont en préparation ou en cours.`, 'interventions');
       push(ordersWithoutInspection.length, 'warning', 'Contrôles non créés', `${ordersWithoutInspection.length} ordre(s) actif(s) n’ont pas encore de fiche de contrôle.`, 'interventions');
       push(incompleteInspections.length, 'warning', 'Contrôles incomplets', `${incompleteInspections.length} fiche(s) de contrôle restent à terminer.`, 'interventions');
       push(completedWithoutPdf.length, 'error', 'Contrôles sans PDF', `${completedWithoutPdf.length} contrôle(s) terminé(s) n’ont pas de PDF.`, 'document-pdf');
-      const completedOrders = (orders || []).filter((o) => o.status === 'completed');
+      const completedOrders = orders.filter((o) => o.status === 'completed');
       push(completedOrders.length, 'warning', 'Interventions à facturer', `${completedOrders.length} intervention(s) terminée(s) attendent une facture.`, 'finalization');
 
-      const draftInvoices = (invoices || []).filter((i) => i.status === 'draft');
-      const invoicesWithoutPdf = (invoices || []).filter((i) => ['issued','partially_paid','paid'].includes(i.status) && !i.pdf_path);
-      const overdueInvoices = (invoices || []).filter((i) => ['issued','partially_paid','overdue'].includes(i.status) && i.due_at && new Date(i.due_at) < now && Number(i.amount_paid || 0) < Number(i.total || 0));
-      const outstanding = (invoices || []).reduce((sum, i) => sum + Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0)), 0);
+      const draftInvoices = invoices.filter((i) => i.status === 'draft');
+      const invoicesWithoutPdf = invoices.filter((i) => ['issued','partially_paid','paid'].includes(i.status) && !i.pdf_path);
+      const overdueInvoices = invoices.filter((i) => ['issued','partially_paid','overdue'].includes(i.status) && i.due_at && new Date(i.due_at) < now && Number(i.amount_paid || 0) < Number(i.total || 0));
+      const outstanding = invoices.reduce((sum, i) => sum + Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0)), 0);
       push(draftInvoices.length, 'info', 'Factures brouillons', `${draftInvoices.length} facture(s) attendent validation et PDF.`, 'invoice-actions');
       push(invoicesWithoutPdf.length, 'error', 'Factures émises sans PDF', `${invoicesWithoutPdf.length} facture(s) visible(s) par les clients n’ont pas de PDF.`, 'document-pdf');
       push(overdueInvoices.length, 'error', 'Factures échues', `${overdueInvoices.length} facture(s) sont échues pour ${this.money(overdueInvoices.reduce((sum, i) => sum + Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0)), 0))}.`, 'accounting');
-      push((unreadMessages || []).length, 'warning', 'Messages non lus', `${(unreadMessages || []).length} message(s) client attendent une réponse.`, 'messages');
+      push(unreadMessages.length, 'warning', 'Messages non lus', `${unreadMessages.length} message(s) client attendent une réponse.`, 'messages');
 
       const requiredBusiness = ['business_name','legal_name','siret','siren','vat_status','address_line1','postal_code','city','country','phone','email','payment_terms','late_penalty_text','recovery_fee_text','logo_url','calendar_id','booking_url','timezone'];
       const missingBusiness = requiredBusiness.filter((key) => !String(business?.[key] || '').trim());
@@ -169,7 +190,7 @@
         ['À facturer', completedOrders.length],
         ['À encaisser', this.money(outstanding)],
         ['Échues', overdueInvoices.length],
-        ['Messages non lus', (unreadMessages || []).length]
+        ['Messages non lus', unreadMessages.length]
       ].map(([label, value]) => `<article class="card kpi"><span>${this.esc(label)}</span><strong>${this.esc(value)}</strong></article>`).join('');
 
       const weight = { error: 0, warning: 1, info: 2 };
