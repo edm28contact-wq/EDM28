@@ -31,6 +31,7 @@
       <button class="btn ghost active" data-page="overview">Vue générale</button>
       <button class="btn ghost" data-page="requests">Demandes</button>
       <button class="btn ghost" data-page="quotes">Devis</button>
+      <button class="btn ghost" data-page="notifications">Notifications</button>
       <button class="btn ghost" data-page="clients">Clients</button>
       <button class="btn ghost" data-page="services">Services et prix</button>
       <button class="btn ghost" data-page="documents">Documents</button>
@@ -49,23 +50,17 @@
     </div><div class="card" style="margin-top:14px"><h2>Anomalies</h2><div id="anomalies">Chargement…</div></div></section>
 
     <section id="requests" class="page"><div class="card"><div class="top"><div><h2>Demandes clients</h2><p class="muted">Demandes reçues et étudiées, classées de la plus récente à la plus ancienne.</p></div><button id="requestRefresh" class="btn ghost">Actualiser</button></div><div id="requestStatus" class="status hidden"></div><div id="requestList"></div></div></section>
-
     <section id="quotes" class="page"><div class="card"><div class="top"><div><h2>Devis</h2><p class="muted">Compléter les devis puis les publier explicitement au client.</p></div><button id="quoteRefresh" class="btn ghost">Actualiser</button></div><div id="quoteStatus" class="status hidden"></div><div id="quoteList"></div></div></section>
-
+    <section id="notifications" class="page"><div class="card"><div class="top"><div><h2>Notifications client</h2><p class="muted">Envoyer les devis, confirmations, factures et relances avec traçabilité.</p></div><button id="notificationRefresh" class="btn ghost">Actualiser</button></div><div id="notificationStatus" class="status hidden"></div><div id="notificationList"></div></div></section>
     <section id="clients" class="page"><div class="card"><h2>Recherche client</h2><div class="toolbar"><input id="clientSearch" placeholder="Nom, téléphone, email, plaque ou identifiant" style="flex:1;min-width:260px;padding:11px;border:1px solid #d0d5dd;border-radius:12px"><button id="clientSearchBtn" class="btn primary">Rechercher</button></div><div id="clientResults"></div></div><div id="clientDetail" class="card hidden" style="margin-top:14px"></div></section>
-
     <section id="services" class="page"><div class="card"><div class="top"><div><h2>Services et prix</h2><p class="muted">Les changements publiés sont chargés par le site.</p></div><button id="newServiceBtn" class="btn primary">Nouveau service</button></div><div id="serviceEditor" class="hidden"></div><div id="serviceTable"></div></div></section>
-
     <section id="documents" class="page"><div class="grid2"><div class="card"><h2>Créer un brouillon</h2><div class="field"><label>Client *</label><select id="docClient"></select></div><div class="field"><label>Véhicule</label><select id="docVehicle"></select></div><div class="field"><label>Type</label><select id="docType"><option value="quote">Devis</option><option value="repair_order">Ordre de réparation</option><option value="invoice">Facture</option></select></div><div class="field"><label>Description *</label><textarea id="docDescription"></textarea></div><button id="createDraftBtn" class="btn primary">Créer le brouillon</button><div id="docStatus" class="status hidden"></div></div><div class="card"><h2>Brouillons récents</h2><div id="draftList"></div></div></div></section>
-
     <section id="accounting" class="page"><div class="card"><div class="top"><div><h2>Comptabilité</h2><p class="muted">Suivi des factures, encaissements et échéances.</p></div><div class="toolbar"><select id="accountingFilter"><option value="all">Toutes</option><option value="paid">Soldées</option><option value="unpaid">À encaisser</option><option value="overdue">Échues</option></select><button id="accountingExport" class="btn ghost">Exporter CSV</button></div></div><div id="accountingKpis" class="grid"></div><div id="accountingTable" style="margin-top:14px"></div><div id="accountingStatus" class="status hidden"></div></div></section>
-
     <section id="business" class="page"><div class="card"><div class="top"><div><h2>Informations de l’entreprise</h2><p class="muted">Les champs obligatoires vides restent rouges jusqu’à saisie valide.</p></div><button id="saveBusinessBtn" class="btn primary">Enregistrer</button></div><div id="businessForm" class="grid2"></div><div id="businessStatus" class="status hidden"></div></div></section>
-
     <section id="settings" class="page"><div class="card"><h2>Automatisations</h2><div id="automationForm"></div><button id="saveAutomationBtn" class="btn primary">Enregistrer</button><div id="automationStatus" class="status hidden"></div></div></section>
   </section>
 </main>
 <script src="/admin-install.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/admin-clients.js?v=2"></script><script src="/admin-requests.js?v=2"></script><script src="/admin-quotes.js?v=1"></script><script src="/admin-services.js?v=2"></script><script src="/admin-docs.js?v=2"></script><script src="/admin-business.js?v=1"></script><script src="/admin-settings.js?v=2"></script><script src="/admin-accounting.js?v=1"></script><script src="/admin-messages.js?v=1"></script><script src="/admin-core.js?v=4"></script><script src="/admin-readiness.js?v=2"></script><script src="/admin-doc-fields.js?v=1"></script><script src="/admin-doc-logic.js?v=1"></script><script src="/admin-service-validation.js?v=1"></script>
+<script src="/admin-clients.js?v=3"></script><script src="/admin-requests.js?v=2"></script><script src="/admin-quotes.js?v=3"></script><script src="/admin-notifications.js?v=1"></script><script src="/admin-services.js?v=2"></script><script src="/admin-docs.js?v=2"></script><script src="/admin-business.js?v=2"></script><script src="/admin-settings.js?v=2"></script><script src="/admin-accounting.js?v=1"></script><script src="/admin-messages.js?v=1"></script><script src="/admin-core.js?v=4"></script><script src="/admin-readiness.js?v=2"></script><script src="/admin-doc-fields.js?v=1"></script><script src="/admin-doc-logic.js?v=1"></script><script src="/admin-service-validation.js?v=1"></script>
 </body></html>
