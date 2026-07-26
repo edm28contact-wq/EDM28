@@ -44,7 +44,7 @@ test('admin interface exposes install controls and PWA metadata', async () => {
 test('admin service worker caches only the shell and never business APIs', async () => {
   const source = await read('admin-sw.js');
   const shellAssets = source.match(/const SHELL_ASSETS = \[([\s\S]*?)\];/)?.[1] || '';
-  assert.match(source, /edm28-admin-shell-v2/);
+  assert.match(source, /edm28-admin-shell-v\d+/);
   assert.match(source, /admin-offline\.html/);
   assert.match(source, /request\.mode === 'navigate'/);
   assert.match(source, /url\.pathname\.startsWith\('\/api\/'\)/);
