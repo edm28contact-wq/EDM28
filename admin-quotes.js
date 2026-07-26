@@ -4,10 +4,15 @@
 
   async function save(id, publish) {
     const root = document.querySelector(`[data-quote-id="${id}"]`);
-    const quoteNumber = root.querySelector('[data-field="number"]').value.trim();
+    let quoteNumber = root.querySelector('[data-field="number"]').value.trim();
     const total = Number(root.querySelector('[data-field="total"]').value || 0);
     const validUntil = root.querySelector('[data-field="validUntil"]').value || null;
-    if (!quoteNumber || !Number.isFinite(total) || total <= 0) throw new Error('Numéro et montant positif obligatoires.');
+    if (!quoteNumber) {
+      const next = await app().db.rpc('next_document_number', { p_type: 'quote' });
+      if (next.error) throw next.error;
+      quoteNumber = next.data;
+    }
+    if (!Number.isFinite(total) || total <= 0) throw new Error('Montant positif obligatoire.');
     if (publish && (!validUntil || validUntil < currentDate())) throw new Error('Une date de validité future est obligatoire.');
     const patch = { quote_number: quoteNumber, total, valid_until: validUntil };
     if (publish) Object.assign(patch, { status: 'sent', visible_to_client: true });
@@ -22,7 +27,7 @@
       const draft = q.status === 'draft';
       const locked = draft ? '' : ' disabled';
       const actions = draft ? `<div class="toolbar"><button class="btn ghost" data-save="${q.id}">Enregistrer</button><button class="btn primary" data-publish="${q.id}">Publier au client</button></div>` : '<p class="muted">Devis verrouillé après publication.</p>';
-      return `<article class="card" data-quote-id="${q.id}" style="margin:12px 0"><div class="top"><div><span class="pill">${app().esc(q.status)}</span><h3>${app().esc(q.title || 'Devis EDM AUTO')}</h3></div><strong>${app().money(q.total)}</strong></div><p>${app().esc(q.profiles?.email || 'Client')} · ${app().esc(q.vehicles?.plate || 'Véhicule')}</p><label>Numéro<input data-field="number" value="${app().esc(q.quote_number || '')}"${locked}></label><label>Montant TTC<input data-field="total" type="number" min="0" step="0.01" value="${Number(q.total || 0)}"${locked}></label><label>Valable jusqu’au<input data-field="validUntil" type="date" value="${app().esc(q.valid_until || '')}"${locked}></label>${actions}</article>`;
+      return `<article class="card" data-quote-id="${q.id}" style="margin:12px 0"><div class="top"><div><span class="pill">${app().esc(q.status)}</span><h3>${app().esc(q.title || 'Devis EDM28')}</h3></div><strong>${app().money(q.total)}</strong></div><p>${app().esc(q.profiles?.email || 'Client')} · ${app().esc(q.vehicles?.plate || 'Véhicule')}</p><label>Numéro<input data-field="number" placeholder="Généré automatiquement" value="${app().esc(q.quote_number || '')}"${locked}></label><label>Montant TTC<input data-field="total" type="number" min="0" step="0.01" value="${Number(q.total || 0)}"${locked}></label><label>Valable jusqu’au<input data-field="validUntil" type="date" value="${app().esc(q.valid_until || '')}"${locked}></label>${actions}</article>`;
     }).join('') : '<p class="muted">Aucun devis.</p>';
     host.querySelectorAll('[data-save],[data-publish]').forEach((button) => button.onclick = async () => {
       button.disabled = true;
@@ -66,10 +71,12 @@
   }
 
   function bootstrapModules() {
-    addModule({ id: 'operations', label: 'Atelier', title: 'Préparation atelier', description: 'Planifier les devis acceptés et préparer l’ordre de réparation associé.', refreshId: 'operationRefresh', statusId: 'operationStatus', listId: 'operationList', scripts: ['/admin-operations.js?v=2'], before: 'clients' });
-    addModule({ id: 'finalization', label: 'Clôture', title: 'Clôture et facturation', description: 'Clôturer les interventions terminées et générer une facture brouillon contrôlée.', refreshId: 'finalizationRefresh', statusId: 'finalizationStatus', listId: 'finalizationList', scripts: ['/admin-finalization.js?v=1'], before: 'clients' });
+    addModule({ id: 'operations', label: 'Atelier', title: 'Préparation atelier', description: 'Planifier les devis acceptés et préparer l’ordre de réparation associé.', refreshId: 'operationRefresh', statusId: 'operationStatus', listId: 'operationList', scripts: ['/admin-operations.js?v=3'], before: 'clients' });
+    addModule({ id: 'interventions', label: 'Interventions', title: 'Dossiers intervention', description: 'Dossier unique, fiche de contrôle mobile, photos et avancement atelier.', refreshId: 'interventionRefresh', statusId: 'interventionStatus', listId: 'interventionList', scripts: ['/admin-interventions.js?v=2'], before: 'clients' });
+    addModule({ id: 'finalization', label: 'Clôture', title: 'Clôture et facturation', description: 'Clôturer les interventions terminées et générer une facture brouillon contrôlée.', refreshId: 'finalizationRefresh', statusId: 'finalizationStatus', listId: 'finalizationList', scripts: ['/admin-finalization.js?v=2'], before: 'clients' });
     addModule({ id: 'invoice-actions', label: 'Encaissement', title: 'Émission et règlements', description: 'Émettre les factures brouillon puis enregistrer les paiements reçus.', refreshId: 'invoiceActionRefresh', statusId: 'invoiceActionStatus', listId: 'invoiceActionList', scripts: ['/admin-invoice-actions.js?v=1'], before: 'clients' });
-    addModule({ id: 'document-pdf', label: 'PDF', title: 'Documents PDF', description: 'Générer et stocker les devis, ordres de réparation et factures dans le coffre privé.', refreshId: 'documentPdfRefresh', statusId: 'documentPdfStatus', listId: 'documentPdfList', scripts: ['/pdf-lite.js?v=1', '/admin-document-pdf.js?v=1'], before: 'clients' });
+    addModule({ id: 'message-templates', label: 'Messages', title: 'Modèles de messages', description: 'Modifier les messages de confirmation, devis, rendez-vous, véhicule prêt, facture et relance.', refreshId: 'messageTemplateRefresh', statusId: 'messageTemplateStatus', listId: 'messageTemplateList', scripts: ['/admin-message-templates.js?v=1'], before: 'clients' });
+    addModule({ id: 'document-pdf', label: 'PDF', title: 'Documents PDF', description: 'Générer et stocker les devis, ordres de réparation, contrôles et factures dans le coffre privé.', refreshId: 'documentPdfRefresh', statusId: 'documentPdfStatus', listId: 'documentPdfList', scripts: ['/pdf-lite.js?v=1', '/admin-document-pdf.js?v=2'], before: 'clients' });
     addModule({ id: 'audit-log', label: 'Journal', title: 'Journal des opérations', description: 'Consulter les changements métier enregistrés automatiquement.', refreshId: 'auditLogRefresh', statusId: 'auditLogStatus', listId: 'auditLogList', scripts: ['/admin-audit-log.js?v=1'], before: 'clients' });
   }
 
