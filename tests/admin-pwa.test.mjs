@@ -35,7 +35,7 @@ test('admin interface exposes install controls and PWA metadata', async () => {
   const html = await read('admin.html');
   assert.match(html, /rel="manifest" href="\/admin-manifest\.webmanifest"/);
   assert.match(html, /name="theme-color" content="#111827"/);
-  assert.match(html, /admin-install\.js\?v=1/);
+  assert.match(html, /admin-install\.js\?v=2/);
   assert.match(html, /data-install-admin/);
   assert.match(html, /data-install-status/);
   assert.match(html, /\/api\/admin\?icon=192/);
