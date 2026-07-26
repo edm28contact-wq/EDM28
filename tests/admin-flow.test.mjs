@@ -70,6 +70,16 @@ test('invoice issuing and payment input are constrained', async () => {
   assert.match(source, /user_id:\s*invoice\.user_id/);
 });
 
+test('draft invoice saving validates every row and uses one database transaction', async () => {
+  const source = await read('admin-transactional.js');
+  assert.match(source, /admin_save_draft_invoice/);
+  assert.match(source, /Ligne \$\{index \+ 1\} : désignation obligatoire/);
+  assert.match(source, /quantité positive obligatoire/);
+  assert.match(source, /taux de TVA invalide/);
+  assert.match(source, /coût d’achat invalide/);
+  assert.match(source, /p_items:\s*invoiceItems\(root\)/);
+});
+
 test('PDF generation uses private storage and compensates failed metadata updates', async () => {
   const source = await read('admin-document-pdf.js');
   assert.match(source, /storage\.from\('repair-documents'\)\.upload/);
@@ -103,8 +113,7 @@ test('admin messaging requires explicit human approval before publication', asyn
   ]);
 
   assert.match(html, /admin-messages\.js\?v=1/);
-  assert.match(core, /id === 'messages'/);
-  assert.match(core, /EDMAdminMessages\?\.load/);
+  assert.match(core, /messages:\s*\(\) => window\.EDMAdminMessages\?\.load\(\)/);
   assert.match(messages, /Proposer avec l’IA/);
   assert.match(messages, /Envoyer après validation/);
   assert.match(messages, /selectedDraftId/);
@@ -119,11 +128,23 @@ test('admin messaging requires explicit human approval before publication', asyn
   assert.match(hardening, /'published_message_id', v_message_id/);
 });
 
+test('dashboard normalizes nullable database results and loads every visible module', async () => {
+  const source = await read('admin-core.js');
+  assert.match(source, /listData\(result\)/);
+  assert.match(source, /Array\.isArray\(result\?\.data\) \? result\.data : \[\]/);
+  assert.match(source, /objectData\(result\)/);
+  assert.match(source, /results\.slice\(0, 9\)\.map\(\(result\) => this\.listData\(result\)\)/);
+  assert.match(source, /const business = this\.objectData\(results\[9\]\)/);
+  for (const module of ['notifications','services','documents','business','settings']) {
+    assert.match(source, new RegExp(`${module}:\\s*\\(\\) =>`));
+  }
+});
+
 test('admin interface exposes operational boundaries and audit journal', async () => {
   const [html, quotes, audit] = await Promise.all([
     read('admin.html'), read('admin-quotes.js'), read('admin-audit-log.js')
   ]);
-  for (const id of ['loginPanel','dashboard','requests','quotes','clients','services','documents','accounting','business','settings']) {
+  for (const id of ['loginPanel','dashboard','requests','quotes','notifications','clients','services','documents','accounting','business','settings']) {
     assert.match(html, new RegExp(`id=["']${id}["']`));
   }
   for (const module of ['admin-operations.js','admin-finalization.js','admin-invoice-actions.js','admin-document-pdf.js','admin-audit-log.js']) {
