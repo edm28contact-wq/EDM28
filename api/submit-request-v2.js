@@ -4,6 +4,7 @@ const supabase = resolveSupabasePublicConfig();
 const SUPABASE_URL = supabase.url;
 const SUPABASE_ANON_KEY = supabase.key;
 const SUPABASE_ENVIRONMENT = supabase.environment;
+const PRODUCTION_RESEND_FROM = 'EDM28 <contact@edm28.fr>';
 
 function sendJson(res, status, body) {
   res.status(status).setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -28,15 +29,23 @@ function firstNonEmpty(...values) {
   return values.find((value) => typeof value === 'string' && value.trim())?.trim() || '';
 }
 
+function resolveProductionSender(value) {
+  const sender = clean(value, 254);
+  if (!sender || /onboarding@resend\.dev/i.test(sender)) return PRODUCTION_RESEND_FROM;
+  return sender;
+}
+
 function resolveEmailConfig() {
   const preview = SUPABASE_ENVIRONMENT !== 'production';
+  const configuredFrom = preview
+    ? firstNonEmpty(process.env.PREVIEW_RESEND_FROM_EMAIL, process.env.RESEND_FROM_EMAIL)
+    : firstNonEmpty(process.env.RESEND_FROM_EMAIL);
+
   return {
     apiKey: preview
       ? firstNonEmpty(process.env.PREVIEW_RESEND_API_KEY, process.env.RESEND_API_KEY)
       : firstNonEmpty(process.env.RESEND_API_KEY),
-    from: preview
-      ? firstNonEmpty(process.env.PREVIEW_RESEND_FROM_EMAIL, process.env.RESEND_FROM_EMAIL)
-      : firstNonEmpty(process.env.RESEND_FROM_EMAIL),
+    from: preview ? configuredFrom : resolveProductionSender(configuredFrom),
     to: preview
       ? firstNonEmpty(process.env.PREVIEW_RESEND_TO_EMAIL, process.env.RESEND_TO_EMAIL)
       : firstNonEmpty(process.env.RESEND_TO_EMAIL)
@@ -138,9 +147,6 @@ export default async function handler(req, res) {
     const email = resolveEmailConfig();
     if (!email.apiKey || !email.from || !email.to) {
       return sendJson(res, 503, { success: false, saved: true, error: `Demande enregistrée, mais service email ${SUPABASE_ENVIRONMENT} non configuré.` });
-    }
-    if (SUPABASE_ENVIRONMENT === 'production' && /onboarding@resend\.dev/i.test(email.from)) {
-      return sendJson(res, 503, { success: false, saved: true, error: 'Domaine expéditeur de production non vérifié.' });
     }
 
     const totals = request.totals || {};
