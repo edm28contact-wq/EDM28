@@ -1,12 +1,17 @@
 (() => {
   const A = () => window.EDMAdmin;
   const esc = (v) => A().esc(v ?? '');
+  const HISTORY_FOLDER = 'client-history';
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const MAX_BATCH_FILES = 12;
+
   const date = (v, withTime = false) => {
     if (!v) return '—';
     const d = new Date(v);
     if (Number.isNaN(d.getTime())) return '—';
     return withTime ? d.toLocaleString('fr-FR') : d.toLocaleDateString('fr-FR');
   };
+
   const statusLabel = (value) => ({
     draft: 'Brouillon', sent: 'Envoyé', accepted: 'Accepté', refused: 'Refusé',
     ready: 'Prêt', signed: 'Signé', in_progress: 'En cours', completed: 'Terminé', invoiced: 'Facturé',
@@ -14,24 +19,83 @@
     confirmed: 'Confirmé', cancelled: 'Annulé', reviewed: 'Étudiée', quoted: 'Devis créé'
   }[value] || value || '—');
 
+  const bytes = (value) => {
+    const size = Number(value || 0);
+    if (!(size > 0)) return '';
+    if (size < 1024) return `${size} o`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} Ko`;
+    return `${(size / (1024 * 1024)).toFixed(1)} Mo`;
+  };
+
+  function originalFileName(storedName) {
+    return String(storedName || '').replace(/^\d{13}-[a-z0-9]{6,12}-/i, '') || 'Fichier client';
+  }
+
+  function fileKind(file) {
+    const mime = String(file?.metadata?.mimetype || file?.metadata?.contentType || '').toLowerCase();
+    const name = String(file?.name || '').toLowerCase();
+    return mime.startsWith('image/') || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(name) ? 'photo' : 'pdf';
+  }
+
+  function historyFiles(userId, rows) {
+    return (rows || []).filter((row) => row?.name && row.name !== '.emptyFolderPlaceholder').map((row) => ({
+      path: `${userId}/${HISTORY_FOLDER}/${row.name}`,
+      name: originalFileName(row.name),
+      kind: fileKind(row),
+      created_at: row.created_at || row.updated_at || row.last_accessed_at || null,
+      size: Number(row.metadata?.size || 0)
+    })).sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+  }
+
   function timeline(data) {
     const events = [];
     (data.requests || []).forEach((r) => events.push({ at: r.created_at, type: 'Demande', title: `Demande ${statusLabel(r.status)}`, detail: r.notes || '' }));
-    (data.quotes || []).forEach((q) => events.push({ at: q.created_at, type: 'Devis', title: `${q.quote_number || 'Devis'} · ${statusLabel(q.status)}`, detail: `${A().money(q.total)}${q.valid_until ? ` · valable jusqu’au ${date(q.valid_until)}` : ''}`, pdf: q.pdf_path }));
+    (data.quotes || []).forEach((q) => events.push({ at: q.created_at, type: 'Devis', title: `${q.quote_number || 'Devis'} · ${statusLabel(q.status)}`, detail: `${A().money(q.total)}${q.valid_until ? ` · valable jusqu’au ${date(q.valid_until)}` : ''}`, filePath: q.pdf_path, fileLabel: 'Ouvrir le PDF' }));
     (data.appointments || []).forEach((r) => events.push({ at: r.starts_at || r.created_at, type: 'Rendez-vous', title: statusLabel(r.status), detail: `${date(r.starts_at, true)}${r.ends_at ? ` → ${date(r.ends_at, true)}` : ''}` }));
-    (data.orders || []).forEach((o) => events.push({ at: o.created_at, type: 'Ordre', title: `${o.order_number || 'Ordre de réparation'} · ${statusLabel(o.status)}`, detail: o.mileage_in ? `${Number(o.mileage_in).toLocaleString('fr-FR')} km` : '', pdf: o.pdf_path }));
-    (data.inspections || []).forEach((r) => events.push({ at: r.completed_at || r.created_at, type: 'Contrôle', title: `${r.report_number || 'Fiche de contrôle'} · ${statusLabel(r.status)}`, detail: r.observations || '', pdf: r.pdf_path }));
-    (data.invoices || []).forEach((i) => events.push({ at: i.issued_at || i.created_at, type: 'Facture', title: `${i.invoice_number || 'Facture'} · ${statusLabel(i.status)}`, detail: `${A().money(i.total)} · payé ${A().money(i.amount_paid)} · reste ${A().money(Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0)))}`, pdf: i.pdf_path }));
+    (data.orders || []).forEach((o) => events.push({ at: o.created_at, type: 'Ordre', title: `${o.order_number || 'Ordre de réparation'} · ${statusLabel(o.status)}`, detail: o.mileage_in ? `${Number(o.mileage_in).toLocaleString('fr-FR')} km` : '', filePath: o.pdf_path, fileLabel: 'Ouvrir le PDF' }));
+    (data.inspections || []).forEach((r) => events.push({ at: r.completed_at || r.created_at, type: 'Contrôle', title: `${r.report_number || 'Fiche de contrôle'} · ${statusLabel(r.status)}`, detail: r.observations || '', filePath: r.pdf_path, fileLabel: 'Ouvrir le PDF' }));
+    (data.invoices || []).forEach((i) => events.push({ at: i.issued_at || i.created_at, type: 'Facture', title: `${i.invoice_number || 'Facture'} · ${statusLabel(i.status)}`, detail: `${A().money(i.total)} · payé ${A().money(i.amount_paid)} · reste ${A().money(Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0)))}`, filePath: i.pdf_path, fileLabel: 'Ouvrir le PDF' }));
     (data.payments || []).forEach((p) => events.push({ at: p.paid_at || p.created_at, type: 'Paiement', title: `${A().money(p.amount)} · ${p.payment_method || 'Mode non renseigné'}`, detail: p.reference || '' }));
     (data.messages || []).forEach((m) => events.push({ at: m.created_at, type: 'Message', title: m.direction === 'inbound' ? 'Message client' : 'Message EDM28', detail: m.subject || m.body?.slice(0, 140) || '' }));
+    (data.historyFiles || []).forEach((file) => events.push({
+      at: file.created_at,
+      type: file.kind === 'photo' ? 'Photo' : 'PDF ajouté',
+      title: file.name,
+      detail: bytes(file.size),
+      filePath: file.path,
+      fileLabel: file.kind === 'photo' ? 'Ouvrir la photo' : 'Ouvrir le PDF',
+      removable: true
+    }));
     return events.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
   }
 
   async function signedUrl(path) {
     if (!path) return null;
-    const { data, error } = await A().db.storage.from('repair-documents').createSignedUrl(path, 120);
+    const { data, error } = await A().db.storage.from('repair-documents').createSignedUrl(path, 300);
     if (error) throw error;
     return data?.signedUrl || null;
+  }
+
+  function safeFileName(name) {
+    const raw = String(name || 'fichier').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const dot = raw.lastIndexOf('.');
+    const extension = dot > -1 ? raw.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) : '';
+    const base = (dot > -1 ? raw.slice(0, dot) : raw).replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'fichier';
+    return extension ? `${base}.${extension}` : base;
+  }
+
+  function randomId() {
+    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID().replaceAll('-', '').slice(0, 8);
+    return Math.random().toString(36).slice(2, 10);
+  }
+
+  function validateHistoryFile(file) {
+    const mime = String(file.type || '').toLowerCase();
+    const isImage = mime.startsWith('image/');
+    const isPdf = mime === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+    if (!isImage && !isPdf) throw new Error(`${file.name} : seuls les photos et les PDF sont autorisés.`);
+    if (!(file.size > 0)) throw new Error(`${file.name} : fichier vide.`);
+    if (file.size > MAX_FILE_SIZE) throw new Error(`${file.name} : taille maximale de 10 Mo dépassée.`);
   }
 
   const mod = window.EDMAdminClients = {
@@ -84,7 +148,12 @@
       const failure = queries.find((result) => result.error)?.error;
       if (failure) throw failure;
       const [vehicles, requests, quotes, appointments, orders, inspections, invoices, payments, messages] = queries.map((r) => r.data || []);
-      return { vehicles, requests, quotes, appointments, orders, inspections, invoices, payments, messages };
+      const fileResult = await A().db.storage.from('repair-documents').list(`${id}/${HISTORY_FOLDER}`, { limit: 100, offset: 0 });
+      return {
+        vehicles, requests, quotes, appointments, orders, inspections, invoices, payments, messages,
+        historyFiles: fileResult.error ? [] : historyFiles(id, fileResult.data),
+        historyFilesError: fileResult.error?.message || null
+      };
     },
 
     vehicleEditor(vehicle) {
@@ -97,6 +166,20 @@
         <label>Moteur<input data-v="engine" value="${esc(vehicle.engine)}"></label>
         <label>Kilométrage<input data-v="mileage" type="number" min="0" value="${vehicle.mileage ?? ''}"></label>
       </div><button class="btn ghost" data-save-vehicle="${vehicle.id}">Enregistrer le véhicule</button></article>`;
+    },
+
+    historyUploader(data) {
+      return `<div class="card" style="margin-top:12px">
+        <div class="top"><div><h3>Ajouter à l’historique</h3><p class="muted">Photos et documents PDF privés, visibles uniquement dans le dossier client du back-office.</p></div><span class="pill">${data.historyFiles.length} fichier(s)</span></div>
+        <div class="grid2">
+          <label>Photos<input data-history-photos type="file" accept="image/*" multiple></label>
+          <label>Documents PDF<input data-history-pdfs type="file" accept="application/pdf,.pdf" multiple></label>
+        </div>
+        <p class="muted">10 Mo maximum par fichier, 12 fichiers maximum par ajout.</p>
+        <button type="button" class="btn primary" data-upload-history>Ajouter les fichiers à l’historique</button>
+        <div id="clientHistoryStatus" class="status hidden"></div>
+        ${data.historyFilesError ? `<div class="status error">Liste des fichiers indisponible : ${esc(data.historyFilesError)}</div>` : ''}
+      </div>`;
     },
 
     async show(id) {
@@ -126,22 +209,77 @@
             <article class="card kpi"><span>À encaisser</span><strong>${A().money(Math.max(0, totalBilled - totalPaid))}</strong></article>
           </div>
           <div class="card"><div class="top"><h3>Véhicules</h3><span class="muted">${data.vehicles.length} véhicule(s)</span></div>${data.vehicles.map((v) => this.vehicleEditor(v)).join('') || '<p>Aucun véhicule.</p>'}</div>
-          <div class="card" style="margin-top:12px"><h3>Historique chronologique</h3><div style="display:grid;gap:10px">${events.map((event) => `<article class="card" style="padding:12px"><div class="top"><div><span class="pill">${esc(event.type)}</span><strong style="margin-left:8px">${esc(event.title)}</strong></div><span class="muted">${date(event.at, true)}</span></div>${event.detail ? `<p>${esc(event.detail)}</p>` : ''}${event.pdf ? `<button class="btn ghost" data-open-document="${esc(event.pdf)}">Ouvrir le PDF</button>` : ''}</article>`).join('') || '<p>Aucune activité.</p>'}</div></div>`;
+          ${this.historyUploader(data)}
+          <div class="card" style="margin-top:12px"><h3>Historique chronologique</h3><div style="display:grid;gap:10px">${events.map((event) => `<article class="card" style="padding:12px"><div class="top"><div><span class="pill">${esc(event.type)}</span><strong style="margin-left:8px">${esc(event.title)}</strong></div><span class="muted">${date(event.at, true)}</span></div>${event.detail ? `<p>${esc(event.detail)}</p>` : ''}${event.filePath ? `<div class="toolbar"><button type="button" class="btn ghost" data-open-document="${esc(event.filePath)}">${esc(event.fileLabel || 'Ouvrir')}</button>${event.removable ? `<button type="button" class="btn danger" data-delete-history-file="${esc(event.filePath)}">Supprimer</button>` : ''}</div>` : ''}</article>`).join('') || '<p>Aucune activité.</p>'}</div></div>`;
 
         box.querySelector('[data-save-client]').onclick = () => this.saveClient(client, box);
         box.querySelectorAll('[data-save-vehicle]').forEach((button) => button.onclick = () => this.saveVehicle(button.dataset.saveVehicle, button.closest('[data-vehicle]')));
+        box.querySelector('[data-upload-history]').onclick = () => this.uploadHistoryFiles(id, box);
         box.querySelectorAll('[data-open-document]').forEach((button) => button.onclick = async () => {
           button.disabled = true;
           try { const url = await signedUrl(button.dataset.openDocument); if (url) window.open(url, '_blank', 'noopener'); }
           catch (error) { A().status('clientDetailStatus', error.message || 'Document indisponible.', true); }
           finally { button.disabled = false; }
         });
+        box.querySelectorAll('[data-delete-history-file]').forEach((button) => button.onclick = () => this.deleteHistoryFile(button.dataset.deleteHistoryFile, button));
         box.querySelector('[data-message-client-open]').onclick = () => {
           A().page('messages');
           setTimeout(() => window.EDMAdminMessages?.open(id, true, false).catch(() => {}), 200);
         };
       } catch (error) {
         box.innerHTML = `<div class="status error">${esc(error.message || 'Dossier client indisponible.')}</div>`;
+      }
+    },
+
+    async uploadHistoryFiles(id, root) {
+      const button = root.querySelector('[data-upload-history]');
+      const photoInput = root.querySelector('[data-history-photos]');
+      const pdfInput = root.querySelector('[data-history-pdfs]');
+      const files = [...(photoInput.files || []), ...(pdfInput.files || [])];
+      if (!files.length) return A().status('clientHistoryStatus', 'Sélectionnez au moins une photo ou un PDF.', true);
+      if (files.length > MAX_BATCH_FILES) return A().status('clientHistoryStatus', `Maximum ${MAX_BATCH_FILES} fichiers par ajout.`, true);
+
+      const uploaded = [];
+      button.disabled = true;
+      button.textContent = 'Ajout en cours…';
+      A().status('clientHistoryStatus', `Ajout de ${files.length} fichier(s)…`);
+      try {
+        files.forEach(validateHistoryFile);
+        for (const file of files) {
+          const path = `${id}/${HISTORY_FOLDER}/${Date.now()}-${randomId()}-${safeFileName(file.name)}`;
+          const result = await A().db.storage.from('repair-documents').upload(path, file, {
+            contentType: file.type || (/\.pdf$/i.test(file.name) ? 'application/pdf' : 'application/octet-stream'),
+            cacheControl: '3600',
+            upsert: false
+          });
+          if (result.error) throw result.error;
+          uploaded.push(path);
+        }
+        await this.show(id);
+        A().status('clientHistoryStatus', `${uploaded.length} fichier(s) ajouté(s) à l’historique.`);
+      } catch (error) {
+        if (uploaded.length) await A().db.storage.from('repair-documents').remove(uploaded).catch(() => {});
+        A().status('clientHistoryStatus', error.message || 'Ajout impossible.', true);
+      } finally {
+        const currentButton = A().$('clientDetail')?.querySelector('[data-upload-history]');
+        if (currentButton) { currentButton.disabled = false; currentButton.textContent = 'Ajouter les fichiers à l’historique'; }
+      }
+    },
+
+    async deleteHistoryFile(path, button) {
+      const expectedPrefix = `${this.selectedId}/${HISTORY_FOLDER}/`;
+      if (!path.startsWith(expectedPrefix)) return A().status('clientHistoryStatus', 'Fichier client invalide.', true);
+      if (!window.confirm('Supprimer définitivement ce fichier de l’historique client ?')) return;
+      button.disabled = true;
+      try {
+        const result = await A().db.storage.from('repair-documents').remove([path]);
+        if (result.error) throw result.error;
+        const id = this.selectedId;
+        await this.show(id);
+        A().status('clientHistoryStatus', 'Fichier supprimé de l’historique.');
+      } catch (error) {
+        A().status('clientHistoryStatus', error.message || 'Suppression impossible.', true);
+        button.disabled = false;
       }
     },
 
