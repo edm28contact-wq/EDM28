@@ -7,7 +7,7 @@
     ['payment_terms','Conditions de paiement',true],['late_penalty_text','Pénalités de retard',true],
     ['recovery_fee_text','Indemnité de recouvrement',true],['insurance_name','Assureur',false],
     ['insurance_policy','Police d’assurance',false],['logo_url','URL du logo',true],['calendar_id','Identifiant Google Agenda',true],
-    ['timezone','Fuseau horaire',true],['ai_provider','Fournisseur IA',false],['ai_model','Modèle IA',false]
+    ['booking_url','Lien public de réservation',true],['timezone','Fuseau horaire',true],['ai_provider','Fournisseur IA',false],['ai_model','Modèle IA',false]
   ];
   window.EDMAdminBusiness = {
     data: {},
