@@ -126,6 +126,11 @@
       await A().db.storage.from('repair-documents').remove([path]);
       throw saved.error || new Error('Le document a été modifié pendant la génération.');
     }
+    return path;
+  }
+
+  async function generateFor(type, row) {
+    return generate(type, row, await business());
   }
 
   async function load() {
@@ -164,6 +169,7 @@
     document.querySelector('[data-page="document-pdf"]')?.addEventListener('click', () => load().catch((e) => A().status('documentPdfStatus', e.message || 'Documents indisponibles.', true)));
     document.getElementById('documentPdfRefresh')?.addEventListener('click', () => load().catch((e) => A().status('documentPdfStatus', e.message || 'Actualisation impossible.', true)));
   }
-  window.EDMAdminDocumentPdf = { load };
+
+  window.EDMAdminDocumentPdf = { load, generateFor };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true }); else bind();
 })();
