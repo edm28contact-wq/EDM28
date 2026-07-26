@@ -112,7 +112,7 @@ test('admin messaging requires explicit human approval before publication', asyn
     read('supabase/migrations/20260724193000_client_messaging_hardening.sql')
   ]);
 
-  assert.match(html, /admin-messages\.js\?v=1/);
+  assert.match(html, /admin-messages\.js\?v=(?:1|__EDM_BUILD__)/);
   assert.match(core, /messages:\s*\(\) => window\.EDMAdminMessages\?\.load\(\)/);
   assert.match(messages, /Proposer avec l’IA/);
   assert.match(messages, /Envoyer après validation/);
@@ -126,6 +126,20 @@ test('admin messaging requires explicit human approval before publication', asyn
   assert.match(hardening, /status = 'published'/);
   assert.match(hardening, /approved_by = auth\.uid\(\)/);
   assert.match(hardening, /'published_message_id', v_message_id/);
+});
+
+test('client folders accept private photos and PDF history files', async () => {
+  const source = await read('admin-clients.js');
+  assert.match(source, /const HISTORY_FOLDER = 'client-history'/);
+  assert.match(source, /accept="image\/\*"/);
+  assert.match(source, /accept="application\/pdf,\.pdf"/);
+  assert.match(source, /seuls les photos et les PDF sont autorisés/);
+  assert.match(source, /MAX_FILE_SIZE = 10 \* 1024 \* 1024/);
+  assert.match(source, /storage\.from\('repair-documents'\)\.upload/);
+  assert.match(source, /storage\.from\('repair-documents'\)\.list/);
+  assert.match(source, /createSignedUrl\(path, 300\)/);
+  assert.match(source, /data-delete-history-file/);
+  assert.match(source, /storage\.from\('repair-documents'\)\.remove/);
 });
 
 test('dashboard normalizes nullable database results and loads every visible module', async () => {
