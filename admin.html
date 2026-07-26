@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#111827">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,7 +11,7 @@
   <link rel="manifest" href="/admin-manifest.webmanifest">
   <link rel="icon" href="/api/admin?icon=192" type="image/png">
   <link rel="apple-touch-icon" href="/api/admin?icon=192">
-  <link rel="stylesheet" href="/admin.css?v=3">
+  <link rel="stylesheet" href="/admin.css?v=4">
 </head>
 <body>
 <main id="adminApp">
@@ -52,7 +52,7 @@
     <section id="requests" class="page"><div class="card"><div class="top"><div><h2>Demandes clients</h2><p class="muted">Demandes reçues et étudiées, classées de la plus récente à la plus ancienne.</p></div><button id="requestRefresh" class="btn ghost">Actualiser</button></div><div id="requestStatus" class="status hidden"></div><div id="requestList"></div></div></section>
     <section id="quotes" class="page"><div class="card"><div class="top"><div><h2>Devis</h2><p class="muted">Compléter les devis puis les publier explicitement au client.</p></div><button id="quoteRefresh" class="btn ghost">Actualiser</button></div><div id="quoteStatus" class="status hidden"></div><div id="quoteList"></div></div></section>
     <section id="notifications" class="page"><div class="card"><div class="top"><div><h2>Notifications client</h2><p class="muted">Envoyer les devis, confirmations, factures et relances avec traçabilité.</p></div><button id="notificationRefresh" class="btn ghost">Actualiser</button></div><div id="notificationStatus" class="status hidden"></div><div id="notificationList"></div></div></section>
-    <section id="clients" class="page"><div class="card"><h2>Recherche client</h2><div class="toolbar"><input id="clientSearch" placeholder="Nom, téléphone, email, plaque ou identifiant" style="flex:1;min-width:260px;padding:11px;border:1px solid #d0d5dd;border-radius:12px"><button id="clientSearchBtn" class="btn primary">Rechercher</button></div><div id="clientResults"></div></div><div id="clientDetail" class="card hidden" style="margin-top:14px"></div></section>
+    <section id="clients" class="page"><div class="card"><h2>Recherche client</h2><div class="toolbar"><input id="clientSearch" placeholder="Nom, téléphone, email, plaque ou identifiant" style="flex:1;min-width:0;padding:11px;border:1px solid #d0d5dd;border-radius:12px"><button id="clientSearchBtn" class="btn primary">Rechercher</button></div><div id="clientResults"></div></div><div id="clientDetail" class="card hidden" style="margin-top:14px"></div></section>
     <section id="services" class="page"><div class="card"><div class="top"><div><h2>Services et prix</h2><p class="muted">Les changements publiés sont chargés par le site.</p></div><button id="newServiceBtn" class="btn primary">Nouveau service</button></div><div id="serviceEditor" class="hidden"></div><div id="serviceTable"></div></div></section>
     <section id="documents" class="page"><div class="grid2"><div class="card"><h2>Créer un brouillon</h2><div class="field"><label>Client *</label><select id="docClient"></select></div><div class="field"><label>Véhicule</label><select id="docVehicle"></select></div><div class="field"><label>Type</label><select id="docType"><option value="quote">Devis</option><option value="repair_order">Ordre de réparation</option><option value="invoice">Facture</option></select></div><div class="field"><label>Description *</label><textarea id="docDescription"></textarea></div><button id="createDraftBtn" class="btn primary">Créer le brouillon</button><div id="docStatus" class="status hidden"></div></div><div class="card"><h2>Brouillons récents</h2><div id="draftList"></div></div></div></section>
     <section id="accounting" class="page"><div class="card"><div class="top"><div><h2>Comptabilité</h2><p class="muted">Suivi des factures, encaissements et échéances.</p></div><div class="toolbar"><select id="accountingFilter"><option value="all">Toutes</option><option value="paid">Soldées</option><option value="unpaid">À encaisser</option><option value="overdue">Échues</option></select><button id="accountingExport" class="btn ghost">Exporter CSV</button></div></div><div id="accountingKpis" class="grid"></div><div id="accountingTable" style="margin-top:14px"></div><div id="accountingStatus" class="status hidden"></div></div></section>
