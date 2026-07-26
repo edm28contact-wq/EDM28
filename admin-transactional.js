@@ -5,6 +5,11 @@
     if (error) throw error;
     return data;
   };
+  const documentNumber = async (type, current) => {
+    const value = String(current || '').trim();
+    if (value) return value;
+    return rpc('next_document_number', { p_type: type });
+  };
 
   async function run(button) {
     if (button.dataset.action === 'quote') {
@@ -16,11 +21,15 @@
     }
     if (button.dataset.prepare) {
       const root = button.closest('article');
+      const startsAt = root.querySelector('[data-field="startsAt"]').value;
+      if (!startsAt) throw new Error('Date et heure du rendez-vous obligatoires.');
+      const orderNumber = await documentNumber('order', root.querySelector('[data-field="orderNumber"]').value);
+      root.querySelector('[data-field="orderNumber"]').value = orderNumber;
       await rpc('admin_prepare_quote', {
         p_quote_id: button.dataset.prepare,
-        p_starts_at: new Date(root.querySelector('[data-field="startsAt"]').value).toISOString(),
+        p_starts_at: new Date(startsAt).toISOString(),
         p_duration_minutes: Number(root.querySelector('[data-field="duration"]').value || 60),
-        p_order_number: root.querySelector('[data-field="orderNumber"]').value.trim()
+        p_order_number: orderNumber
       });
       A().status('operationStatus', 'Rendez-vous et ordre créés dans une transaction unique.');
       await window.EDMAdminOperations?.load();
@@ -29,9 +38,11 @@
     }
     if (button.dataset.finalize) {
       const root = button.closest('article');
+      const invoiceNumber = await documentNumber('invoice', root.querySelector('[data-field="invoiceNumber"]').value);
+      root.querySelector('[data-field="invoiceNumber"]').value = invoiceNumber;
       await rpc('admin_finalize_repair_order', {
         p_order_id: button.dataset.finalize,
-        p_invoice_number: root.querySelector('[data-field="invoiceNumber"]').value.trim(),
+        p_invoice_number: invoiceNumber,
         p_due_days: Number(root.querySelector('[data-field="dueDays"]').value || 30)
       });
       A().status('finalizationStatus', 'Clôture et facturation réalisées dans une transaction unique.');
