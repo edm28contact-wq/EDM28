@@ -51,3 +51,5 @@
     }, 15000);
   }, true);
 })();
+
+// Redéploiement forcé après mise à jour de la variable RESEND_API_KEY.
