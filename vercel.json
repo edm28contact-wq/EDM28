@@ -73,6 +73,10 @@
       "dest": "/api/admin"
     },
     {
+      "src": "/api/send-notification",
+      "dest": "/api/health"
+    },
+    {
       "handle": "filesystem"
     }
   ]
