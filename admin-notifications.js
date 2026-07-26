@@ -8,7 +8,7 @@
     if (sessionError) throw sessionError;
     const token = sessionData?.session?.access_token;
     if (!token) throw new Error('Session administrateur introuvable.');
-    const response = await fetch('/api/send-notification', {
+    const response = await fetch('/api/health', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload)
