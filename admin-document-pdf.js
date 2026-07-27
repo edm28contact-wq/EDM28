@@ -1,6 +1,6 @@
 (() => {
   const A = () => window.EDMAdmin;
-  const VAT_EXEMPTION_MENTION = 'TVA non aplicable, art. 29';
+  const VAT_EXEMPTION_MENTION = 'TVA non applicable, art. 293 B du CGI';
   const typeLabels = { quote: 'DEVIS', order: 'ORDRE DE RÉPARATION', inspection: 'FICHE DE CONTRÔLE', invoice: 'FACTURE' };
   const number = (type, row) => type === 'quote' ? row.quote_number : type === 'order' ? row.order_number : type === 'inspection' ? row.report_number : row.invoice_number;
   const tableFor = (type) => type === 'quote' ? 'quotes' : type === 'order' ? 'repair_orders' : type === 'inspection' ? 'inspection_reports' : 'invoices';
