@@ -1,5 +1,6 @@
 (() => {
   const A = () => window.EDMAdmin;
+  const VAT_EXEMPTION_MENTION = 'TVA non aplicable, art. 29';
   const typeLabels = { quote: 'DEVIS', order: 'ORDRE DE RÉPARATION', inspection: 'FICHE DE CONTRÔLE', invoice: 'FACTURE' };
   const number = (type, row) => type === 'quote' ? row.quote_number : type === 'order' ? row.order_number : type === 'inspection' ? row.report_number : row.invoice_number;
   const tableFor = (type) => type === 'quote' ? 'quotes' : type === 'order' ? 'repair_orders' : type === 'inspection' ? 'inspection_reports' : 'invoices';
@@ -7,7 +8,11 @@
   async function business() {
     const result = await A().db.from('business_configuration').select('*').eq('id', true).single();
     if (result.error) throw result.error;
-    return result.data || {};
+    const data = result.data || {};
+    return {
+      ...data,
+      vat_status: data.vat_number ? data.vat_status : VAT_EXEMPTION_MENTION
+    };
   }
 
   async function one(table, id) {
