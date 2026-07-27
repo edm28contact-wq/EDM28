@@ -15,7 +15,8 @@
     { src: '/combo-suspended.js?v=1', attr: 'data-edm-combo-policy' },
     { src: '/client-basket-pricing.js?v=1', attr: 'data-edm-basket-pricing' },
     { src: '/client-note-guidance.js?v=1', attr: 'data-edm-note-guidance' },
-    { src: '/client-labor-pricing.js?v=1', attr: 'data-edm-labor-pricing' }
+    { src: '/client-labor-pricing.js?v=1', attr: 'data-edm-labor-pricing' },
+    { src: '/client-competitor-pricing.js?v=1', attr: 'data-edm-competitor-pricing' }
   ];
 
   const loadScript = ({ src, attr }) => new Promise((resolve, reject) => {
