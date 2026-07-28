@@ -29,6 +29,7 @@ main{display:block;width:100%;max-width:1440px;margin:0 auto;padding:24px;overfl
 .pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#eef2f7;font-size:.82rem;font-weight:800}
 .status{margin-top:10px;padding:10px;border-radius:12px;background:#eef2f7}.error{background:#fef3f2;color:var(--bad)}.ok{background:#ecfdf3;color:var(--ok)}
 [data-install-status]:empty{display:none}
+.service-mobile-list{display:none}
 
 @media(display-mode:standalone){
   html,body,#adminApp,#dashboard,main{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
@@ -58,6 +59,10 @@ main{display:block;width:100%;max-width:1440px;margin:0 auto;padding:24px;overfl
   .toolbar .btn{flex:1 1 160px}
   .card{padding:14px;border-radius:15px}
   .login{width:100%;max-width:460px;margin:4vh auto;padding:18px}
+  .service-desktop-table{display:none}
+  .service-mobile-list{display:block}
+  .service-mobile-card .top{margin-bottom:8px}
+  .service-mobile-card .btn{width:100%}
 }
 
 @media(max-width:520px){
