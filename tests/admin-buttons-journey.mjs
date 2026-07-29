@@ -71,14 +71,6 @@ await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route)
 try {
   await page.goto(`http://127.0.0.1:${port}/`, {waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForSelector('#adminOtpSend', {timeout:15000});
-  await page.fill('#adminEmail','admin@example.test');
-  await page.click('#adminOtpSend');
-  await page.waitForSelector('#adminOtpPanel:not(.hidden)');
-  await page.fill('#adminOtpCode','12345678');
-  await page.click('#adminOtpVerify');
-  await page.waitForSelector('#dashboard:not(.hidden)', {timeout:15000});
-  await page.waitForSelector('[data-page="planning"]', {timeout:5000});
-  await page.waitForSelector('[data-page="messages"]', {timeout:5000});
 
   const remember = page.locator('#rememberAdmin');
   if (await remember.count()) {
@@ -87,6 +79,15 @@ try {
     await remember.check();
     if (await page.evaluate(() => localStorage.getItem('edm_admin_remember')) !== '1') throw new Error('Admin remember-on preference was not saved.');
   } else throw new Error('Admin remember-me control is missing.');
+
+  await page.fill('#adminEmail','admin@example.test');
+  await page.click('#adminOtpSend');
+  await page.waitForSelector('#adminOtpPanel:not(.hidden)');
+  await page.fill('#adminOtpCode','12345678');
+  await page.click('#adminOtpVerify');
+  await page.waitForSelector('#dashboard:not(.hidden)', {timeout:15000});
+  await page.waitForSelector('[data-page="planning"]', {timeout:5000});
+  await page.waitForSelector('[data-page="messages"]', {timeout:5000});
 
   const pages=['overview','requests','quotes','operations','planning','interventions','finalization','invoice-actions','notifications','clients','messages','services','documents','document-pdf','accounting','business','settings','audit-log'];
   for (const id of pages) {
