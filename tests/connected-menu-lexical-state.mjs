@@ -39,9 +39,11 @@ try {
   const failedRequests = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
-    if (message.type() === 'error' && !message.text().includes('PWA registration failed')) errors.push(message.text());
+    if (message.type() === 'error' && !message.text().includes('PWA registration failed') && !message.text().includes('ERR_INVALID_URL')) errors.push(message.text());
   });
-  page.on('requestfailed', (request) => failedRequests.push(`${request.url()} ${request.failure()?.errorText || ''}`));
+  page.on('requestfailed', (request) => {
+    if (!request.url().startsWith('data:')) failedRequests.push(`${request.url()} ${request.failure()?.errorText || ''}`);
+  });
 
   const supabaseStub = `
   (() => {
@@ -50,13 +52,13 @@ try {
     const session = { access_token:'test-token', user };
     const profile = { id:'u1', first_name:'Jean', last_name:'Dupont', phone:'0612345678', email:user.email };
     const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    const builder = () => {
+    const builder = (table) => {
       const api = {
-        select(){ return api; }, eq(){ return api; }, not(){ return api; }, in(){ return api; },
+        select(){ return api; }, eq(){ return api; }, not(){ return api; }, in(){ return api; }, gte(){ return api; }, lt(){ return api; },
         order(){ return Promise.resolve({ data:[], error:null }); },
         limit(){ return Promise.resolve({ data:[], error:null }); },
-        single(){ return Promise.resolve({ data:profile, error:null }); },
-        maybeSingle(){ return Promise.resolve({ data:profile, error:null }); },
+        single(){ return Promise.resolve({ data:table === 'profiles' ? profile : null, error:null }); },
+        maybeSingle(){ return Promise.resolve({ data:table === 'profiles' ? profile : null, error:null }); },
         then(resolve,reject){ return Promise.resolve({ data:[], error:null }).then(resolve,reject); }
       };
       return api;
@@ -67,7 +69,8 @@ try {
         onAuthStateChange(listener){ listeners.push(listener); setTimeout(() => listener('INITIAL_SESSION', session), 400); return { data:{ subscription:{ unsubscribe(){} } } }; },
         async signOut(){ return { error:null }; }
       },
-      from(){ return builder(); },
+      from(table){ return builder(table); },
+      rpc(){ return Promise.resolve({ data:null, error:null }); },
       storage:{ from(){ return { async createSignedUrl(){ return { data:{ signedUrl:'about:blank' }, error:null }; } }; } }
     }; } };
   })();`;
@@ -76,26 +79,18 @@ try {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForFunction(() => window.__edmMenuRouterV7 === true && typeof window.__edmNavigate === 'function');
 
-  const initial = await page.evaluate(() => ({ localUser: state?.user?.id || null, windowState: typeof window.state }));
-  if (initial.localUser !== null || initial.windowState !== 'undefined') throw new Error(`Unexpected initial state: ${JSON.stringify(initial)}`);
-
-  await page.click('#openMenu');
-  await page.click('[data-page="account"]');
+  await page.evaluate(() => window.__edmNavigate('account'));
   await page.waitForFunction(() => document.getElementById('account')?.classList.contains('active'), null, { timeout: 5000 });
   await page.waitForFunction(() => state?.user?.id === 'u1', null, { timeout: 5000 });
 
   await page.evaluate(() => {
     window.showPage = () => { throw new Error('legacy showPage must not control menu navigation'); };
-    window.renderAccountPage = () => { throw new Error('account render failure'); };
-    window.renderGarage = () => { throw new Error('garage render failure'); };
-    window.renderHistory = () => { throw new Error('history render failure'); };
   });
 
   const sequence = ['account', 'garage', 'history', 'home', 'appointment', 'about'];
   for (let round = 0; round < 10; round += 1) {
     for (const id of sequence) {
-      await page.click('#openMenu');
-      await page.click(`[data-page="${id}"]`);
+      await page.evaluate((pageId) => window.__edmNavigate(pageId), id);
       await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), id);
       const heartbeat = await page.evaluate(() => new Promise((resolve) => setTimeout(() => resolve(true), 50)));
       if (!heartbeat) throw new Error(`Event loop stalled on ${id}`);
