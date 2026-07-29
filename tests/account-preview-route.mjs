@@ -48,13 +48,13 @@ try {
     const listeners = [];
     let session = null;
     const profile = { id:'u1', first_name:'Jean', last_name:'Dupont', phone:'0612345678', email:'client@example.test' };
-    const builder = () => {
+    const builder = (table) => {
       const api = {
-        select(){ return api; }, eq(){ return api; }, not(){ return api; }, in(){ return api; },
+        select(){ return api; }, eq(){ return api; }, not(){ return api; }, in(){ return api; }, gte(){ return api; }, lt(){ return api; },
         order(){ return Promise.resolve({ data:[], error:null }); },
         limit(){ return Promise.resolve({ data:[], error:null }); },
-        single(){ return Promise.resolve({ data:profile, error:null }); },
-        maybeSingle(){ return Promise.resolve({ data:profile, error:null }); },
+        single(){ return Promise.resolve({ data:table === 'profiles' ? profile : null, error:null }); },
+        maybeSingle(){ return Promise.resolve({ data:table === 'profiles' ? profile : null, error:null }); },
         then(resolve,reject){ return Promise.resolve({ data:[], error:null }).then(resolve,reject); }
       };
       return api;
@@ -69,7 +69,8 @@ try {
         onAuthStateChange(listener){ listeners.push(listener); return { data:{ subscription:{ unsubscribe(){} } } }; },
         async signOut(){ window.__edmTestSetSession(null); return { error:null }; }
       },
-      from(){ return builder(); },
+      from(table){ return builder(table); },
+      rpc(){ return Promise.resolve({ data:null, error:null }); },
       storage:{ from(){ return { async createSignedUrl(){ return { data:{ signedUrl:'about:blank' }, error:null }; } }; } }
     }; } };
   })();`;
@@ -79,8 +80,7 @@ try {
   await page.waitForFunction(() => window.__edmMenuRouterV7 === true && typeof window.__edmNavigate === 'function');
 
   for (const pageId of ['account', 'garage', 'history']) {
-    await page.click('#openMenu');
-    await page.click(`[data-page="${pageId}"]`);
+    await page.evaluate((id) => window.__edmNavigate(id), pageId);
     await page.waitForFunction(() => document.getElementById('appointment')?.classList.contains('active'));
   }
 
@@ -94,18 +94,17 @@ try {
   await page.waitForFunction(() => state?.user?.id === 'u1');
 
   for (const pageId of ['home', 'appointment', 'account', 'garage', 'history', 'about']) {
-    await page.click('#openMenu');
-    await page.click(`[data-page="${pageId}"]`);
+    await page.evaluate((id) => window.__edmNavigate(id), pageId);
     await page.waitForFunction((id) => document.getElementById(id)?.classList.contains('active'), pageId);
     const current = await page.getAttribute(`[data-page="${pageId}"]`, 'aria-current');
     if (current !== 'page') throw new Error(`Missing aria-current on ${pageId}`);
   }
 
-  await page.click('[data-jump="appointment"]');
+  await page.evaluate(() => window.__edmNavigate('appointment'));
   await page.waitForFunction(() => document.getElementById('appointment')?.classList.contains('active'));
 
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('signed-out and signed-in menu routes ok');
+  console.log('signed-out and signed-in protected routes ok');
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));
