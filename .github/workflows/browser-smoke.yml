@@ -14,6 +14,10 @@ concurrency:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   browser:
     name: Browser pass ${{ matrix.pass }}
@@ -35,11 +39,13 @@ jobs:
 
       - name: Install Playwright
         run: |
+          set -euo pipefail
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium firefox webkit
 
       - name: Start static server
         run: |
+          set -euo pipefail
           python3 -m http.server 4173 > /tmp/edm28-http.log 2>&1 &
           for attempt in {1..30}; do
             curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
@@ -50,6 +56,7 @@ jobs:
 
       - name: Run responsive public and admin smoke tests
         run: |
+          set -euo pipefail
           mkdir -p browser-artifacts
           cat > browser-smoke.mjs <<'EOF'
           import { chromium } from 'playwright';
@@ -87,26 +94,38 @@ jobs:
           node browser-smoke.mjs 2>&1 | tee browser-artifacts/run.log
 
       - name: Run exact Preview account route
-        run: node tests/account-preview-route.mjs 2>&1 | tee browser-artifacts/account-preview-route.log
+        run: |
+          set -euo pipefail
+          node tests/account-preview-route.mjs 2>&1 | tee browser-artifacts/account-preview-route.log
 
       - name: Run lexical connected menu route
-        run: node tests/connected-menu-lexical-state.mjs 2>&1 | tee browser-artifacts/connected-menu-lexical-state.log
+        run: |
+          set -euo pipefail
+          node tests/connected-menu-lexical-state.mjs 2>&1 | tee browser-artifacts/connected-menu-lexical-state.log
 
       - name: Run all public Preview buttons
-        run: node tests/browser-client-journey.mjs 2>&1 | tee browser-artifacts/public-buttons.log
+        run: |
+          set -euo pipefail
+          node tests/browser-client-journey.mjs 2>&1 | tee browser-artifacts/public-buttons.log
 
       - name: Run all safe admin buttons
-        run: node tests/admin-buttons-journey.mjs 2>&1 | tee browser-artifacts/admin-buttons.log
+        run: |
+          set -euo pipefail
+          node tests/admin-buttons-journey.mjs 2>&1 | tee browser-artifacts/admin-buttons.log
 
       - name: Run installable admin app
-        run: node tests/admin-installable.mjs 2>&1 | tee browser-artifacts/admin-installable.log
+        run: |
+          set -euo pipefail
+          node tests/admin-installable.mjs 2>&1 | tee browser-artifacts/admin-installable.log
 
       - name: Run client and admin messaging loop
-        run: node tests/messaging-loop.mjs 2>&1 | tee browser-artifacts/messaging-loop.log
+        run: |
+          set -euo pipefail
+          node tests/messaging-loop.mjs 2>&1 | tee browser-artifacts/messaging-loop.log
 
       - name: Run connected account stress matrix
         run: |
-          set -e
+          set -euo pipefail
           for browser in chromium firefox webkit; do
             EDM_BROWSER="$browser" EDM_TEST_PORT=4190 node tests/account-navigation-stress.mjs 2>&1 | tee "browser-artifacts/account-${browser}-desktop.log"
           done
