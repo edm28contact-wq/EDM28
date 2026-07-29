@@ -33,8 +33,9 @@ const server = createServer(async (req, res) => {
 await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
 
 const browser = await chromium.launch();
+const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 try {
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
   const errors = [];
   const failedRequests = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -101,6 +102,7 @@ try {
   if (failedRequests.length) throw new Error(failedRequests.join('\n'));
   console.log('delayed real-session menu routing ok');
 } finally {
+  await context.close();
   await browser.close();
   await new Promise((resolve) => server.close(resolve));
 }
