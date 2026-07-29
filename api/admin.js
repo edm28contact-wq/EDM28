@@ -136,7 +136,7 @@ export default function handler(req, res) {
     const encodedTransactional = Buffer.from(adminTransactional, 'utf8').toString('base64');
     const inlineLoader = `<script>eval(decodeURIComponent(escape(atob('${encodedCore}'))));<\/script>`;
     const transactionalLoader = `<script>eval(decodeURIComponent(escape(atob('${encodedTransactional}'))));<\/script>`;
-    html = html.replace('<script src="/admin-core.js?v=4"></script>', `${inlineLoader}${transactionalLoader}`);
+    html = html.replace(/<script src="\/admin-core\.js\?v=[^"]+"><\/script>/, `${inlineLoader}${transactionalLoader}`);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
