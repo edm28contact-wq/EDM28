@@ -32,7 +32,7 @@
     section.innerHTML = `
       <div class="panel">
         <div class="section-title">
-          <div><h2>Choisir mon rendez-vous</h2><p>Choisissez un devis, puis un créneau calculé selon la durée de main-d’œuvre, les horaires du garage et les rendez-vous déjà pris.</p></div>
+          <div><h2>Choisir mon rendez-vous</h2><p>Choisissez un devis accepté, puis un créneau calculé selon la durée de main-d’œuvre, les horaires du garage et les rendez-vous déjà pris.</p></div>
           <span class="pill blue">Planning EDM28</span>
         </div>
         <div id="internalBookingStatus"></div>
@@ -65,20 +65,21 @@
       .select('id,quote_number,status,title,description,total,labor_duration_minutes,vehicle_id,vehicles(plate,brand,model)')
       .eq('user_id', user.id)
       .eq('visible_to_client', true)
+      .eq('status', 'accepted')
       .not('labor_duration_minutes', 'is', null)
       .order('created_at', { ascending:false });
     if (error) throw error;
 
-    quotes = (data || []).filter((row) => !['draft','cancelled','rejected','expired'].includes(row.status));
+    quotes = data || [];
     if (!quotes.length) {
-      content.innerHTML = '<div class="empty">Aucun devis disponible pour la prise de rendez-vous. Le devis doit être publié et contenir une durée de main-d’œuvre.</div>';
+      content.innerHTML = '<div class="empty">Aucun devis accepté disponible. Le devis doit être accepté et contenir une durée de main-d’œuvre avant la prise de rendez-vous.</div>';
       return;
     }
 
     selectedQuoteId = selectedQuoteId && quotes.some((row) => row.id === selectedQuoteId) ? selectedQuoteId : quotes[0].id;
     content.innerHTML = `
       <div class="card">
-        <label>Devis à planifier
+        <label>Devis accepté à planifier
           <select id="bookingQuoteSelect">${quotes.map((row) => `<option value="${esc(row.id)}">${esc(quoteLabel(row))}</option>`).join('')}</select>
         </label>
         <div id="bookingQuoteSummary" class="notice" style="margin-top:12px"></div>
@@ -182,9 +183,9 @@
     try {
       const { data, error } = await supabaseClient.rpc('book_quote_appointment', { p_quote_id:selectedQuoteId, p_starts_at:selectedSlot });
       if (error) throw error;
-      status('Rendez-vous confirmé. L’intervention a été créée dans votre dossier et dans le planning EDM28.');
+      status('Rendez-vous confirmé. L’intervention et l’ordre de réparation ont été créés dans votre dossier et dans le planning EDM28.');
       selectedSlot = '';
-      await loadSlots();
+      await loadQuotes();
       if (typeof window.renderVehicleHistory === 'function') window.renderVehicleHistory().catch(() => {});
       return data;
     } finally {
