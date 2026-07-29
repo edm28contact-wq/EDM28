@@ -1,9 +1,9 @@
-const CACHE_NAME = 'edm28-admin-shell-v2';
+const CACHE_NAME = 'edm28-admin-shell-v3';
 const OFFLINE_URL = '/admin-offline.html';
 const SHELL_ASSETS = [
   OFFLINE_URL,
-  '/admin.css',
-  '/admin-install.js?v=1',
+  '/admin.css?v=4',
+  '/admin-install.js?v=2',
   '/admin-manifest.webmanifest',
   '/api/admin?icon=192',
   '/api/admin?icon=512'

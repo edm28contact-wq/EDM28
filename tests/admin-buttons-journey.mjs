@@ -29,20 +29,23 @@ page.on('dialog', async (dialog) => dialog.dismiss());
 const stub = `
 (() => {
   const user={id:'admin-1',email:'admin@example.test'};
-  const session={access_token:'admin-token',user};
+  const session={access_token:'admin-token',refresh_token:'admin-refresh',user};
   const profile={id:user.id,role:'admin',first_name:'Admin',last_name:'EDM',email:user.email,phone:'0600000000',external_client_id:'CLI-1',created_at:new Date().toISOString()};
-  const business={id:true,business_name:'EDM',legal_name:'EDM',siret:'12345678901234',siren:'123456789',vat_status:'franchise',address_line1:'1 rue Test',postal_code:'75000',city:'Paris',country:'France',phone:'0600000000',email:'admin@example.test',payment_terms:'30 jours',late_penalty_text:'Taux legal',recovery_fee_text:'40 EUR',logo_url:'https://example.test/logo.svg',calendar_id:'primary',timezone:'Europe/Paris'};
+  const business={id:true,business_name:'EDM',legal_name:'EDM',siret:'12345678901234',siren:'123456789',vat_status:'franchise',address_line1:'1 rue Test',postal_code:'75000',city:'Paris',country:'France',phone:'0600000000',email:'admin@example.test',payment_terms:'30 jours',late_penalty_text:'Taux legal',recovery_fee_text:'40 EUR',logo_url:'https://example.test/logo.svg',calendar_id:'primary',booking_url:'https://example.test/booking',timezone:'Europe/Paris'};
+  const hours=Array.from({length:7},(_,weekday)=>({weekday,is_open:weekday<5,morning_start:weekday<5?'08:00:00':null,morning_end:weekday<5?'12:00:00':null,afternoon_start:weekday<5?'13:30:00':null,afternoon_end:weekday<5?'18:00:00':null}));
   function rows(table){
     if(table==='profiles') return [profile];
     if(table==='business_configuration') return [business];
+    if(table==='business_hours') return hours;
     if(table==='site_services') return [{id:'svc-1',name:'Freinage',category:'Freinage',labor_price:69,duration_minutes:60,client_description:'Test',active:true,published_at:new Date().toISOString(),online_booking_enabled:true,display_order:10,pricing_type:'fixed'}];
     return [];
   }
   function builder(table){
     let head=false;
     const api={
-      select(_columns,options){head=Boolean(options?.head);return api}, eq(){return api}, is(){return api}, in(){return api}, not(){return api}, or(){return api}, limit(){return api}, order(){return Promise.resolve(result())},
-      insert(){return Promise.resolve({data:[],error:null})}, upsert(){return Promise.resolve({data:[],error:null})}, update(){return api}, delete(){return api},
+      select(_columns,options){head=Boolean(options?.head);return api}, eq(){return api}, is(){return api}, in(){return api}, not(){return api}, or(){return api}, limit(){return api}, order(){return api},
+      gte(){return api}, lte(){return api}, gt(){return api}, lt(){return api}, neq(){return api}, contains(){return api}, match(){return api},
+      insert(){return api}, upsert(){return api}, update(){return api}, delete(){return api},
       single(){const list=rows(table);return Promise.resolve({data:list[0]||null,error:null})}, maybeSingle(){const list=rows(table);return Promise.resolve({data:list[0]||null,error:null})},
       then(resolve,reject){return Promise.resolve(result()).then(resolve,reject)}
     };
@@ -50,27 +53,46 @@ const stub = `
     return api;
   }
   window.supabase={createClient(){return{
-    auth:{async getSession(){return {data:{session},error:null}},async signInWithOtp(){return {data:{},error:null}},async verifyOtp(){return {data:{user,session},error:null}},async signOut(){return {error:null}}},
+    auth:{async getSession(){return {data:{session},error:null}},async setSession(){return {data:{session},error:null}},async signInWithOtp(){return {data:{},error:null}},async verifyOtp(){return {data:{user,session},error:null}},async signOut(){return {error:null}}},
     from:builder,
-    storage:{from(){return{async upload(){return {data:{path:'test'},error:null}},async createSignedUrl(){return {data:{signedUrl:'about:blank'},error:null}}}}}
-  }}};
+    async rpc(name){return {data:name==='next_document_number'?'TEST-001':null,error:null}},
+    storage:{from(){return{async upload(){return {data:{path:'test'},error:null}},async createSignedUrl(){return {data:{signedUrl:'about:blank'},error:null}},async remove(){return {data:{},error:null}}}}}
+  }};
 })();`;
 await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({status:200,contentType:'text/javascript',body:stub}));
 
 try {
   await page.goto(`http://127.0.0.1:${port}/`, {waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForSelector('#dashboard:not(.hidden)', {timeout:15000});
+  await page.waitForSelector('[data-page="planning"]', {timeout:5000});
+  await page.waitForSelector('[data-page="messages"]', {timeout:5000});
 
-  const pages=['overview','requests','quotes','clients','services','documents','accounting','business','settings'];
+  const remember = page.locator('#rememberAdmin');
+  if (await remember.count()) {
+    await remember.uncheck();
+    if (await page.evaluate(() => localStorage.getItem('edm_admin_remember')) !== '0') throw new Error('Admin remember-off preference was not saved.');
+    await remember.check();
+    if (await page.evaluate(() => localStorage.getItem('edm_admin_remember')) !== '1') throw new Error('Admin remember-on preference was not saved.');
+  } else throw new Error('Admin remember-me control is missing.');
+
+  const pages=['overview','requests','quotes','operations','planning','interventions','finalization','invoice-actions','notifications','clients','messages','services','documents','document-pdf','accounting','business','settings','audit-log'];
   for (const id of pages) {
-    await page.click(`[data-page="${id}"]`);
+    const nav=page.locator(`[data-page="${id}"]`);
+    if (!(await nav.count())) throw new Error(`Missing back-office navigation button: ${id}`);
+    await nav.click();
     await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), id);
   }
 
-  const safeIds=['requestRefresh','quoteRefresh','clientSearchBtn','newServiceBtn','createDraftBtn','accountingExport','saveBusinessBtn','saveAutomationBtn'];
+  const safeIds=[
+    'requestRefresh','quoteRefresh','operationRefresh','planningPrev','planningToday','planningNext','planningRefresh',
+    'businessHoursRefresh','businessHoursSave','exceptionAdd','interventionRefresh','finalizationRefresh','invoiceActionRefresh',
+    'notificationRefresh','adminMessageRefresh','clientSearchBtn','newServiceBtn','createDraftBtn','documentPdfRefresh',
+    'accountingExport','saveBusinessBtn','saveAutomationBtn','auditLogRefresh'
+  ];
   for (const id of safeIds) {
     const button=page.locator(`#${id}`);
-    if (await button.count() && await button.isVisible() && await button.isEnabled()) {
+    if (!(await button.count())) throw new Error(`Missing back-office control: ${id}`);
+    if (await button.isVisible() && await button.isEnabled()) {
       await button.click();
       await page.waitForTimeout(100);
     }
@@ -85,8 +107,11 @@ try {
     if (await page.locator('#cancelServiceBtn').count()) await page.click('#cancelServiceBtn');
   }
 
+  const technicalStatusErrors = await page.locator('.status.error').allTextContents();
+  const technicalFailures = technicalStatusErrors.filter((text) => /is not a function|undefined|module indisponible|cannot read/i.test(text));
+  if (technicalFailures.length) errors.push(...technicalFailures);
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('admin safe buttons ok');
+  console.log('complete back-office navigation, persistence and safe controls ok');
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

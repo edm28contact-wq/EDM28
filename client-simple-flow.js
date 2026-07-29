@@ -8,10 +8,14 @@
     { src: '/request-submit-safe.js?v=4', attr: 'data-edm-submit' },
     { src: '/client-quotes.js?v=1', attr: 'data-edm-quotes' },
     { src: '/client-operations.js?v=1', attr: 'data-edm-operations' },
+    { src: '/client-inspections.js?v=1', attr: 'data-edm-inspections' },
     { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' },
     { src: '/client-document-download.js?v=1', attr: 'data-edm-document-downloads' },
     { src: '/client-messages.js?v=1', attr: 'data-edm-messages' },
-    { src: '/combo-suspended.js?v=1', attr: 'data-edm-combo-policy' }
+    { src: '/combo-suspended.js?v=1', attr: 'data-edm-combo-policy' },
+    { src: '/client-basket-pricing.js?v=1', attr: 'data-edm-basket-pricing' },
+    { src: '/client-note-guidance.js?v=1', attr: 'data-edm-note-guidance' },
+    { src: '/client-labor-pricing.js?v=2', attr: 'data-edm-labor-pricing' }
   ];
 
   const loadScript = ({ src, attr }) => new Promise((resolve, reject) => {

@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm test",
   "env": {
     "RESEND_FROM_EMAIL": "EDM28 <onboarding@resend.dev>",
     "RESEND_TO_EMAIL": "edm28.contact@gmail.com"
@@ -19,7 +20,7 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" }
       ]
     },
     {
@@ -70,6 +71,10 @@
     {
       "src": "/admin.html",
       "dest": "/api/admin"
+    },
+    {
+      "src": "/api/send-notification",
+      "dest": "/api/health"
     },
     {
       "handle": "filesystem"
