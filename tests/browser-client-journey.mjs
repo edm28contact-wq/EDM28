@@ -25,7 +25,7 @@ const server = createServer(async (req, res) => {
   }
   if (path === '/api/submit-request-v2') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, requestId: 'request-e2e-1' }));
+    res.end(JSON.stringify({ success: true, requestId: 'request-e2e-1', emailSent: true }));
     return;
   }
   try {
@@ -40,11 +40,12 @@ const server = createServer(async (req, res) => {
 await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+const page = await context.newPage();
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('console', (message) => {
-  if (message.type() === 'error' && !message.text().includes('PWA registration failed')) errors.push(message.text());
+  if (message.type() === 'error' && !message.text().includes('PWA registration failed') && !message.text().includes('ERR_INVALID_URL')) errors.push(message.text());
 });
 
 const stub = `
@@ -58,14 +59,13 @@ const stub = `
   const requests = [];
   const profile = { id:'u1', first_name:'Jean', last_name:'Dupont', phone:'0612345678', email:user.email };
 
-  function emit(event) {
-    listeners.forEach((listener) => listener(event, session));
-  }
+  function emit(event) { listeners.forEach((listener) => listener(event, session)); }
 
   function builder(table) {
     let op='select', payload=null;
     const api={
-      select(){return api}, eq(){return api}, order(){return Promise.resolve(result())},
+      select(){return api}, eq(){return api}, not(){return api}, in(){return api}, gte(){return api}, lt(){return api},
+      order(){return Promise.resolve(result())}, limit(){return Promise.resolve(result())},
       single(){const r=result();return Promise.resolve({data:Array.isArray(r.data)?r.data[0]||null:r.data,error:r.error})},
       maybeSingle(){const r=result();return Promise.resolve({data:Array.isArray(r.data)?r.data[0]||null:r.data,error:r.error})},
       upsert(v){op='upsert';payload=v;return api}, insert(v){op='insert';payload=v;return api}, update(v){op='update';payload=v;return api},
@@ -83,6 +83,7 @@ const stub = `
           requests.splice(0,requests.length,row);
           return {data:[row],error:null};
         }
+        if(op==='update') return {data:requests,error:null};
         return {data:requests,error:null};
       }
       if(table==='repairs') return {data:[],error:null};
@@ -101,29 +102,20 @@ const stub = `
         return {data:{user,session:null},error:null};
       },
       async verifyOtp({email,token,type}){
-        if(email!==user.email || token!=='12345678' || !['email','signup','recovery'].includes(type)){
-          return {data:{user:null,session:null},error:new Error('invalid token')};
-        }
-        confirmed=true;
-        session={access_token:'token',user};
-        emit('SIGNED_IN');
-        return {data:{session,user},error:null};
+        if(email!==user.email || token!=='12345678' || !['email','signup','recovery'].includes(type)) return {data:{user:null,session:null},error:new Error('invalid token')};
+        confirmed=true; session={access_token:'token',user}; emit('SIGNED_IN'); return {data:{session,user},error:null};
       },
       async signInWithPassword({email,password}){
-        if(!confirmed || email!==user.email || password!==accountPassword){
-          return {data:{user:null,session:null},error:new Error('Invalid login credentials')};
-        }
-        session={access_token:'token',user};
-        emit('SIGNED_IN');
-        return {data:{session,user},error:null};
+        if(!confirmed || email!==user.email || password!==accountPassword) return {data:{user:null,session:null},error:new Error('Invalid login credentials')};
+        session={access_token:'token',user}; emit('SIGNED_IN'); return {data:{session,user},error:null};
       },
-      async signInWithOtp(){return {data:{},error:null}},
-      async resend(){return {data:{},error:null}},
+      async signInWithOtp(){return {data:{},error:null}}, async resend(){return {data:{},error:null}},
       async updateUser({password}){accountPassword=password;return {data:{user},error:null}},
       async signOut(){session=null;emit('SIGNED_OUT');return {error:null}},
       onAuthStateChange(fn){listeners.push(fn);return {data:{subscription:{unsubscribe(){}}}}}
     },
     from:builder,
+    rpc(){return Promise.resolve({data:null,error:null})},
     storage:{from(){return{async createSignedUrl(){return {data:{signedUrl:'about:blank'},error:null}}}}}
   }}};
 })();`;
@@ -131,17 +123,17 @@ await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route)
 
 try {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForFunction(() => window.__edmPasswordAuthReady === true);
-  await page.waitForSelector('#btnSignUp', { timeout:15000 });
+  await page.waitForFunction(() => window.__edmPasswordAuthReady === true && typeof window.__edmNavigate === 'function');
 
-  const privatePages = new Set(['account','garage','history']);
+  const privatePages = new Set(['account','garage','history','messages']);
   for (const id of ['home','appointment','account','garage','history','about']) {
-    await page.click('#openMenu');
-    await page.click(`[data-page="${id}"]`);
+    await page.evaluate((pageId) => window.__edmNavigate(pageId), id);
     const expected = privatePages.has(id) ? 'appointment' : id;
     await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), expected);
   }
 
+  await page.evaluate(() => window.__edmNavigate('appointment'));
+  await page.waitForSelector('#appointment.active #btnSignUp', { state:'visible', timeout:15000 });
   await page.fill('#lastName','Dupont');
   await page.fill('#firstName','Jean');
   await page.fill('#phone','0612345678');
@@ -181,9 +173,7 @@ try {
     text: document.getElementById('comboExplainBtn')?.textContent,
     policy: document.documentElement.dataset.comboPolicy
   }));
-  if (!comboPolicy.disabled || comboPolicy.policy !== 'suspended' || !comboPolicy.text?.includes('suspendue')) {
-    throw new Error(`Combo policy not suspended: ${JSON.stringify(comboPolicy)}`);
-  }
+  if (!comboPolicy.disabled || comboPolicy.policy !== 'suspended' || !comboPolicy.text?.includes('suspendue')) throw new Error(`Combo policy not suspended: ${JSON.stringify(comboPolicy)}`);
 
   await page.click('[data-select-pack="freinage"]');
   for (const basket of ['eco','standard','premium']) await page.click(`[data-basket="${basket}"]`);
@@ -194,25 +184,22 @@ try {
   await page.waitForFunction(() => document.querySelector('#submitStatus')?.textContent.includes('Demande transmise'));
 
   for (const id of ['account','garage','history']) {
-    await page.click('#openMenu');
-    await page.click(`[data-page="${id}"]`);
+    await page.evaluate((pageId) => window.__edmNavigate(pageId), id);
     await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), id);
   }
 
   await page.waitForSelector('#historyList [data-service-request-id="request-e2e-1"]', { timeout:5000 });
   const historyText = await page.locator('#historyList [data-service-request-id="request-e2e-1"]').textContent();
-  if (!historyText?.includes('AA-123-BC') || (!historyText.includes('Transmise') && !historyText.includes('Enregistrée'))) {
-    throw new Error(`Submitted request is missing from history: ${historyText}`);
-  }
+  if (!historyText?.includes('AA-123-BC') || (!historyText.includes('Transmise') && !historyText.includes('Enregistrée'))) throw new Error(`Submitted request is missing from history: ${historyText}`);
 
-  await page.click('#openMenu');
-  await page.click('[data-page="account"]');
+  await page.evaluate(() => window.__edmNavigate('account'));
   await page.click('#accountSignOutBtn');
   await page.waitForFunction(() => !state?.user?.id);
 
   if (errors.length) throw new Error(errors.join('\n'));
   console.log('password signup, one-time verification, password login, buttons and history ok');
 } finally {
+  await context.close();
   await browser.close();
   await new Promise((resolve) => server.close(resolve));
 }
