@@ -33,10 +33,12 @@ const stub = `
   let session=null;
   const profile={id:user.id,role:'admin',first_name:'Admin',last_name:'EDM',email:user.email,phone:'0600000000',external_client_id:'CLI-1',created_at:new Date().toISOString()};
   const business={id:true,business_name:'EDM',legal_name:'EDM',siret:'12345678901234',siren:'123456789',vat_status:'franchise',address_line1:'1 rue Test',postal_code:'75000',city:'Paris',country:'France',phone:'0600000000',email:'admin@example.test',payment_terms:'30 jours',late_penalty_text:'Taux legal',recovery_fee_text:'40 EUR',logo_url:'https://example.test/logo.svg',calendar_id:'primary',booking_url:'https://example.test/booking',timezone:'Europe/Paris'};
+  const automation={id:true,automations_enabled:false,request_ack_enabled:false,quote_reminder_enabled:false,appointment_reminder_enabled:false,invoice_reminder_enabled:false,quote_reminder_days:5,appointment_reminder_hours:24,invoice_reminder_days:7};
   const hours=Array.from({length:7},(_,weekday)=>({weekday,is_open:weekday<5,morning_start:weekday<5?'08:00:00':null,morning_end:weekday<5?'12:00:00':null,afternoon_start:weekday<5?'13:30:00':null,afternoon_end:weekday<5?'18:00:00':null}));
   function rows(table){
     if(table==='profiles') return [profile];
     if(table==='business_configuration') return [business];
+    if(table==='automation_settings') return [automation];
     if(table==='business_hours') return hours;
     if(table==='site_services') return [{id:'svc-1',name:'Freinage',category:'Freinage',labor_price:69,duration_minutes:60,client_description:'Test',active:true,published_at:new Date().toISOString(),online_booking_enabled:true,display_order:10,pricing_type:'fixed'}];
     return [];
@@ -63,7 +65,12 @@ const stub = `
     },
     from:builder,
     async rpc(name){return {data:name==='next_document_number'?'TEST-001':null,error:null}},
-    storage:{from(){return{async upload(){return {data:{path:'test'},error:null}},async createSignedUrl(){return {data:{signedUrl:'about:blank'},error:null}},async remove(){return {data:{},error:null}}}}}
+    storage:{from(){return{
+      async upload(){return {data:{path:'test'},error:null}},
+      async createSignedUrl(){return {data:{signedUrl:'about:blank'},error:null}},
+      async remove(){return {data:{},error:null}},
+      async list(){return {data:[],error:null}}
+    }}}
   }}};
 })();`;
 await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({status:200,contentType:'text/javascript',body:stub}));
