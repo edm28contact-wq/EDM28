@@ -20,7 +20,8 @@ const server = createServer(async (req,res) => {
 await new Promise((resolve) => server.listen(port,'127.0.0.1',resolve));
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport:{ width:1440, height:1000 }, acceptDownloads:true });
+const context = await browser.newContext({ viewport:{ width:1440, height:1000 }, acceptDownloads:true, serviceWorkers:'block' });
+const page = await context.newPage();
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
@@ -29,7 +30,7 @@ page.on('dialog', async (dialog) => dialog.dismiss());
 const stub = `
 (() => {
   const user={id:'admin-1',email:'admin@example.test'};
-  const session={access_token:'admin-token',refresh_token:'admin-refresh',user};
+  let session=null;
   const profile={id:user.id,role:'admin',first_name:'Admin',last_name:'EDM',email:user.email,phone:'0600000000',external_client_id:'CLI-1',created_at:new Date().toISOString()};
   const business={id:true,business_name:'EDM',legal_name:'EDM',siret:'12345678901234',siren:'123456789',vat_status:'franchise',address_line1:'1 rue Test',postal_code:'75000',city:'Paris',country:'France',phone:'0600000000',email:'admin@example.test',payment_terms:'30 jours',late_penalty_text:'Taux legal',recovery_fee_text:'40 EUR',logo_url:'https://example.test/logo.svg',calendar_id:'primary',booking_url:'https://example.test/booking',timezone:'Europe/Paris'};
   const hours=Array.from({length:7},(_,weekday)=>({weekday,is_open:weekday<5,morning_start:weekday<5?'08:00:00':null,morning_end:weekday<5?'12:00:00':null,afternoon_start:weekday<5?'13:30:00':null,afternoon_end:weekday<5?'18:00:00':null}));
@@ -53,16 +54,28 @@ const stub = `
     return api;
   }
   window.supabase={createClient(){return{
-    auth:{async getSession(){return {data:{session},error:null}},async setSession(){return {data:{session},error:null}},async signInWithOtp(){return {data:{},error:null}},async verifyOtp(){return {data:{user,session},error:null}},async signOut(){return {error:null}}},
+    auth:{
+      async getSession(){return {data:{session},error:null}},
+      async setSession(){return {data:{session},error:null}},
+      async signInWithOtp(){return {data:{},error:null}},
+      async verifyOtp(){session={access_token:'admin-token',refresh_token:'admin-refresh',user};return {data:{user,session},error:null}},
+      async signOut(){session=null;return {error:null}}
+    },
     from:builder,
     async rpc(name){return {data:name==='next_document_number'?'TEST-001':null,error:null}},
     storage:{from(){return{async upload(){return {data:{path:'test'},error:null}},async createSignedUrl(){return {data:{signedUrl:'about:blank'},error:null}},async remove(){return {data:{},error:null}}}}}
-  }};
+  }}};
 })();`;
 await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({status:200,contentType:'text/javascript',body:stub}));
 
 try {
   await page.goto(`http://127.0.0.1:${port}/`, {waitUntil:'domcontentloaded',timeout:30000});
+  await page.waitForSelector('#adminOtpSend', {timeout:15000});
+  await page.fill('#adminEmail','admin@example.test');
+  await page.click('#adminOtpSend');
+  await page.waitForSelector('#adminOtpPanel:not(.hidden)');
+  await page.fill('#adminOtpCode','12345678');
+  await page.click('#adminOtpVerify');
   await page.waitForSelector('#dashboard:not(.hidden)', {timeout:15000});
   await page.waitForSelector('[data-page="planning"]', {timeout:5000});
   await page.waitForSelector('[data-page="messages"]', {timeout:5000});
@@ -113,6 +126,7 @@ try {
   if (errors.length) throw new Error(errors.join('\n'));
   console.log('complete back-office navigation, persistence and safe controls ok');
 } finally {
+  await context.close();
   await browser.close();
   await new Promise((resolve) => server.close(resolve));
 }
