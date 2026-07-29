@@ -47,6 +47,7 @@
     if (error) throw error;
     if (!data?.length) throw new Error('La durée ne peut être modifiée que sur un devis brouillon.');
     button.dataset.durationPass = '1';
+    button.disabled = false;
     button.click();
   }
 
