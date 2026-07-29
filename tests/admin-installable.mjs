@@ -106,6 +106,7 @@ try {
 
   const result = await page.evaluate(async () => {
     const manifestLink = document.querySelector('link[rel="manifest"]')?.getAttribute('href');
+    const manifestUrl = manifestLink ? new URL(manifestLink, location.origin) : null;
     const manifestResponse = await fetch(manifestLink);
     const manifest = await manifestResponse.json();
     const registration = await navigator.serviceWorker.ready;
@@ -114,6 +115,7 @@ try {
     return {
       title: document.title,
       manifestLink,
+      manifestPathname: manifestUrl?.pathname || '',
       manifest,
       scope: new URL(registration.scope).pathname,
       installButtons: document.querySelectorAll('[data-install-admin]').length,
@@ -124,7 +126,7 @@ try {
   });
 
   if (result.title !== 'Gestion EDM28') throw new Error(`Unexpected title: ${result.title}`);
-  if (result.manifestLink !== '/admin-manifest.webmanifest') throw new Error('Admin manifest link is missing');
+  if (result.manifestPathname !== '/admin-manifest.webmanifest') throw new Error(`Admin manifest link is missing: ${result.manifestLink || 'none'}`);
   if (result.manifest.display !== 'standalone') throw new Error('Admin manifest is not standalone');
   if (!result.manifest.icons.some((icon) => icon.sizes === '192x192')) throw new Error('Missing 192 icon');
   if (!result.manifest.icons.some((icon) => icon.sizes === '512x512')) throw new Error('Missing 512 icon');
