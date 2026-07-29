@@ -6,7 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 test('admin shell exposes core workflow pages', async () => {
   const source = await read('admin.html');
-  for (const id of ['dashboard','requests','quotes','operations','finalization','clients']) {
+  for (const id of ['dashboard','requests','quotes','notifications','clients','services','documents','accounting','business','settings']) {
     assert.match(source, new RegExp(`id="${id}"`));
   }
 });
