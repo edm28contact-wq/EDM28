@@ -29,6 +29,10 @@ function firstNonEmpty(...values) {
   return values.find((value) => typeof value === 'string' && value.trim())?.trim() || '';
 }
 
+function uniqueNonEmpty(...values) {
+  return [...new Set(values.filter((value) => typeof value === 'string' && value.trim()).map((value) => value.trim()))];
+}
+
 function resolveProductionSender(value) {
   const sender = clean(value, 254);
   if (!sender || /onboarding@resend\.dev/i.test(sender)) return PRODUCTION_RESEND_FROM;
@@ -42,9 +46,9 @@ function resolveEmailConfig() {
     : firstNonEmpty(process.env.RESEND_FROM_EMAIL);
 
   return {
-    apiKey: preview
-      ? firstNonEmpty(process.env.PREVIEW_RESEND_API_KEY, process.env.RESEND_API_KEY)
-      : firstNonEmpty(process.env.RESEND_API_KEY),
+    apiKeys: preview
+      ? uniqueNonEmpty(process.env.PREVIEW_RESEND_API_KEY, process.env.RESEND_API_KEY)
+      : uniqueNonEmpty(process.env.RESEND_API_KEY),
     from: preview ? configuredFrom : resolveProductionSender(configuredFrom),
     to: preview
       ? firstNonEmpty(process.env.PREVIEW_RESEND_TO_EMAIL, process.env.RESEND_TO_EMAIL)
@@ -116,8 +120,37 @@ async function markSubmitted(requestId, userId, authorization) {
   });
   const rows = await response.json().catch(() => []);
   if (!response.ok || !Array.isArray(rows) || rows.length !== 1) {
-    throw new Error('Email envoyé, mais statut non mis à jour.');
+    throw new Error('Demande enregistrée, mais statut non mis à jour.');
   }
+}
+
+async function sendWithResend(config, requestId, payload) {
+  let lastFailure = null;
+
+  for (const apiKey of config.apiKeys) {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': `service-request/${requestId}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (response.ok) return { ok: true, result };
+
+    lastFailure = {
+      status: response.status,
+      name: clean(result.name, 120),
+      message: clean(result.message, 300)
+    };
+
+    const invalidKey = response.status === 401 || /api key is invalid/i.test(lastFailure.message);
+    if (!invalidKey) break;
+  }
+
+  return { ok: false, failure: lastFailure };
 }
 
 export default async function handler(req, res) {
@@ -144,9 +177,25 @@ export default async function handler(req, res) {
       return sendJson(res, 400, { success: false, saved: true, error: 'Demande enregistrée mais incomplète.' });
     }
 
+    await markSubmitted(request.id, user.id, authorization);
+
     const email = resolveEmailConfig();
-    if (!email.apiKey || !email.from || !email.to) {
-      return sendJson(res, 503, { success: false, saved: true, error: `Demande enregistrée, mais service email ${SUPABASE_ENVIRONMENT} non configuré.` });
+    const emailUnavailable = !email.apiKeys.length || !email.from || !email.to;
+    if (emailUnavailable) {
+      console.error('request email unavailable', {
+        environment: SUPABASE_ENVIRONMENT,
+        requestId: request.id,
+        hasApiKey: email.apiKeys.length > 0,
+        hasFrom: Boolean(email.from),
+        hasTo: Boolean(email.to)
+      });
+      return sendJson(res, 200, {
+        success: true,
+        saved: true,
+        emailSent: false,
+        requestId: request.id,
+        warning: 'Votre demande est enregistrée dans le back-office. La notification email est momentanément indisponible.'
+      });
     }
 
     const totals = request.totals || {};
@@ -202,38 +251,42 @@ export default async function handler(req, res) {
       `Recue le : ${receivedAt}`
     ].join('\n');
 
-    const emailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${email.apiKey}`,
-        'Content-Type': 'application/json',
-        'Idempotency-Key': `service-request/${request.id}`
-      },
-      body: JSON.stringify({
-        from: email.from,
-        to: [email.to],
-        reply_to: clientEmail || undefined,
-        subject: `Nouvelle demande EDM AUTO - ${clientLabel} - ${clean(vehicle.plate, 20)}`,
-        text,
-        tags: [
-          { name: 'request_id', value: request.id },
-          { name: 'environment', value: SUPABASE_ENVIRONMENT }
-        ]
-      })
+    const emailAttempt = await sendWithResend(email, request.id, {
+      from: email.from,
+      to: [email.to],
+      reply_to: clientEmail || undefined,
+      subject: `Nouvelle demande EDM AUTO - ${clientLabel} - ${clean(vehicle.plate, 20)}`,
+      text,
+      tags: [
+        { name: 'request_id', value: request.id },
+        { name: 'environment', value: SUPABASE_ENVIRONMENT }
+      ]
     });
-    const emailResult = await emailResponse.json().catch(() => ({}));
-    if (!emailResponse.ok) {
-      const concurrent = emailResponse.status === 409 && emailResult.name === 'concurrent_idempotent_requests';
-      return sendJson(res, concurrent ? 409 : 502, {
-        success: false,
+
+    if (!emailAttempt.ok) {
+      console.error('request email failed', {
+        environment: SUPABASE_ENVIRONMENT,
+        requestId: request.id,
+        providerStatus: emailAttempt.failure?.status || null,
+        providerName: emailAttempt.failure?.name || null,
+        providerMessage: emailAttempt.failure?.message || null
+      });
+      return sendJson(res, 200, {
+        success: true,
         saved: true,
-        retryable: concurrent,
-        error: emailResult.message || 'Demande enregistrée, mais échec de l’envoi email.'
+        emailSent: false,
+        requestId: request.id,
+        warning: 'Votre demande est enregistrée dans le back-office. La notification email est momentanément indisponible.'
       });
     }
 
-    await markSubmitted(request.id, user.id, authorization);
-    return sendJson(res, 200, { success: true, requestId: request.id, emailId: emailResult.id || null });
+    return sendJson(res, 200, {
+      success: true,
+      saved: true,
+      emailSent: true,
+      requestId: request.id,
+      emailId: emailAttempt.result?.id || null
+    });
   } catch (error) {
     const message = error.message || 'Erreur serveur.';
     const status = /Session|Configuration Supabase/.test(message) ? 401 : 500;
