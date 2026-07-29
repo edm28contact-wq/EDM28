@@ -114,16 +114,22 @@
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success !== true) {
-        const error = new Error(result.error || 'Envoi email impossible.');
+        const error = new Error(result.error || 'Transmission impossible.');
         error.saved = result.saved === true;
         throw error;
       }
       writePending(null);
       updateStepper(4);
-      status.innerHTML = '<div class="okbox"><strong>Demande transmise.</strong><br>Votre demande est enregistrée et EDM AUTO reviendra vers vous après étude.</div>';
-      toast('Demande enregistrée et envoyée.');
+      if (result.emailSent === false) {
+        const warning = result.warning || 'Votre demande est enregistrée dans le back-office. La notification email est momentanément indisponible.';
+        status.innerHTML = `<div class="notice"><strong>Demande enregistrée.</strong><br>${escapeHtml(warning)}</div>`;
+        toast('Demande enregistrée dans le back-office.');
+      } else {
+        status.innerHTML = '<div class="okbox"><strong>Demande transmise.</strong><br>Votre demande est enregistrée et EDM AUTO reviendra vers vous après étude.</div>';
+        toast('Demande enregistrée et notification envoyée.');
+      }
       window.dispatchEvent(new CustomEvent('edm:request-submitted', {
-        detail: { requestId: result.requestId || request.id }
+        detail: { requestId: result.requestId || request.id, emailSent: result.emailSent !== false }
       }));
       if (typeof window.renderRequestHistory === 'function') {
         void window.renderRequestHistory().catch((error) => console.warn('EDM request history refresh unavailable', error));
