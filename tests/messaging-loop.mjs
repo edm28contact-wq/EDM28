@@ -84,7 +84,8 @@ const supabaseStub = `
   ];
   const rpcCalls = [];
   const listeners = [];
-  const business = { id:true, business_name:'EDM', legal_name:'EDM', siret:'12345678901234', siren:'123456789', vat_status:'franchise', address_line1:'1 rue Test', postal_code:'75000', city:'Paris', country:'France', phone:'0600000000', email:'admin@example.test', payment_terms:'30 jours', late_penalty_text:'Taux légal', recovery_fee_text:'40 EUR', logo_url:'https://example.test/logo.svg', calendar_id:'primary', timezone:'Europe/Paris' };
+  const localAssetUrl = 'http://127.0.0.1:${port}/logo-edm.svg';
+  const business = { id:true, business_name:'EDM', legal_name:'EDM', siret:'12345678901234', siren:'123456789', vat_status:'franchise', address_line1:'1 rue Test', postal_code:'75000', city:'Paris', country:'France', phone:'0600000000', email:'admin@example.test', payment_terms:'30 jours', late_penalty_text:'Taux légal', recovery_fee_text:'40 EUR', logo_url:localAssetUrl, calendar_id:'primary', timezone:'Europe/Paris' };
   const automation = { id:true, automations_enabled:false, messages_enabled:true, booking_enabled:false, reminders_enabled:false, ai_enabled:true, test_mode:true, test_recipient:'admin@example.test' };
 
   function tableRows(table) {
@@ -191,7 +192,7 @@ const supabaseStub = `
     },
     from:builder,
     rpc,
-    storage:{ from(){ return { async upload(){ return { data:{ path:'test' }, error:null }; }, async createSignedUrl(){ return { data:{ signedUrl:'about:blank' }, error:null }; }, async remove(){ return { data:[], error:null }; } }; } }
+    storage:{ from(){ return { async upload(){ return { data:{ path:'test' }, error:null }; }, async createSignedUrl(){ return { data:{ signedUrl:localAssetUrl }, error:null }; }, async remove(){ return { data:[], error:null }; } }; } }
   }; } };
 })();`;
 
