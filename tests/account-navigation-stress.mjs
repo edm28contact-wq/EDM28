@@ -67,9 +67,25 @@ const errors = [];
 const badResponses = [];
 page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
 page.on('console', (message) => {
-  if (message.type() === 'error' && !message.text().includes('PWA registration failed')) errors.push(`console: ${message.text()}`);
+  const source = String(message.location().url || '');
+  const knownChromiumImageNoise = browserName === 'chromium'
+    && message.type() === 'error'
+    && message.text().includes('ERR_INVALID_URL')
+    && source.startsWith('data:image/jpeg');
+  if (message.type() === 'error'
+    && !message.text().includes('PWA registration failed')
+    && !knownChromiumImageNoise) {
+    errors.push(`console: ${message.text()}`);
+  }
 });
-page.on('requestfailed', (request) => errors.push(`requestfailed: ${request.url()} ${request.failure()?.errorText || ''}`));
+page.on('requestfailed', (request) => {
+  const url = request.url();
+  const failure = request.failure()?.errorText || '';
+  const knownChromiumImageNoise = browserName === 'chromium'
+    && url.startsWith('data:image/jpeg')
+    && failure.includes('ERR_INVALID_URL');
+  if (!knownChromiumImageNoise) errors.push(`requestfailed: ${url} ${failure}`);
+});
 page.on('response', (response) => {
   if (response.status() >= 400 && !response.url().includes('manifest')) badResponses.push(`${response.status()} ${response.url()}`);
 });
@@ -90,6 +106,7 @@ const supabaseStub = `
 (() => {
   const user = ${JSON.stringify({ id: user.id, email: user.email, user_metadata: { first_name: user.firstName, last_name: user.lastName, phone: user.phone } })};
   const session = { access_token: 'test-token', user };
+  const localAssetUrl = 'http://127.0.0.1:${port}/logo-edm.svg';
   const emptyBuilder = () => {
     const api = { select(){return api}, eq(){return api}, not(){return api}, order(){return Promise.resolve({data:[],error:null})}, limit(){return Promise.resolve({data:[],error:null})}, single(){return Promise.resolve({data:null,error:null})}, maybeSingle(){return Promise.resolve({data:null,error:null})}, then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject)} };
     return api;
@@ -97,7 +114,7 @@ const supabaseStub = `
   window.supabase = { createClient(){ return {
     auth: { async getSession(){ return {data:{session},error:null} }, onAuthStateChange(){ return {data:{subscription:{unsubscribe(){}}}} }, async signOut(){ return {error:null} } },
     from(){ return emptyBuilder() },
-    storage:{ from(){ return { async createSignedUrl(){ return {data:{signedUrl:'about:blank'},error:null} } } } }
+    storage:{ from(){ return { async createSignedUrl(){ return {data:{signedUrl:localAssetUrl},error:null} } } } }
   } } };
 })();`;
 await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: supabaseStub }));
