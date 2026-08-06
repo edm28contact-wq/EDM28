@@ -60,7 +60,8 @@ const browser = await browserType.launch();
 const context = await browser.newContext({
   viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 },
   hasTouch: mobile,
-  isMobile: mobile
+  isMobile: mobile,
+  serviceWorkers: 'block'
 });
 const page = await context.newPage();
 const errors = [];
@@ -119,8 +120,22 @@ const supabaseStub = `
 })();`;
 await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: supabaseStub }));
 
+const targetUrl = `http://127.0.0.1:${port}/`;
+
+async function openInitialPage() {
+  try {
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  } catch (error) {
+    const message = String(error?.message || error);
+    const sameUrlFirefoxReload = browserName === 'firefox'
+      && message.includes(`Navigation to "${targetUrl}" is interrupted by another navigation to "${targetUrl}"`);
+    if (!sameUrlFirefoxReload) throw error;
+    await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
+  }
+}
+
 try {
-  await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await openInitialPage();
   await page.waitForFunction(() => typeof window.showPage === 'function' && document.querySelector('[data-page="account"]'));
   await page.waitForTimeout(1200);
 
