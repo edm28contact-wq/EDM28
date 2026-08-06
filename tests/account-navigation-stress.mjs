@@ -46,7 +46,11 @@ const server = createServer(async (req, res) => {
     const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
     const safe = normalize(relative).replace(/^\.\.(\/|\\|$)/, '');
     let content = await readFile(join(root, safe));
-    if (safe === 'index.html') content = Buffer.from(content.toString('utf8').replace('</body>', `${loader}</body>`));
+    if (safe === 'index.html') {
+      let html = content.toString('utf8');
+      html = html.replace(/\s*<script>\s*if \("serviceWorker" in navigator\) \{[\s\S]*?navigator\.serviceWorker\.register\("\/sw\.js"\);[\s\S]*?<\/script>\s*(?=<\/body>)/, '');
+      content = Buffer.from(html.replace('</body>', `${loader}</body>`));
+    }
     res.writeHead(200, { 'Content-Type': mime[extname(safe)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(content);
   } catch {
@@ -121,22 +125,38 @@ const supabaseStub = `
 await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: supabaseStub }));
 
 const targetUrl = `http://127.0.0.1:${port}/`;
+const isReady = () => typeof window.showPage === 'function' && Boolean(document.querySelector('[data-page="account"]'));
 
 async function openInitialPage() {
-  try {
-    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  } catch (error) {
-    const message = String(error?.message || error);
-    const sameUrlFirefoxReload = browserName === 'firefox'
-      && message.includes(`Navigation to "${targetUrl}" is interrupted by another navigation to "${targetUrl}"`);
-    if (!sameUrlFirefoxReload) throw error;
-    await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    } catch (error) {
+      const message = String(error?.message || error);
+      const sameUrlFirefoxReload = browserName === 'firefox'
+        && message.includes(`Navigation to "${targetUrl}" is interrupted by another navigation to "${targetUrl}"`);
+      if (!sameUrlFirefoxReload) throw error;
+      lastError = error;
+    }
+
+    try {
+      await page.waitForFunction(isReady, undefined, { timeout: 10000 });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt === 3) break;
+      await page.goto('about:blank', { waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(250);
+    }
   }
+
+  throw new Error(`Initial ${browserName} page did not become ready after 3 attempts: ${lastError?.message || lastError}`);
 }
 
 try {
   await openInitialPage();
-  await page.waitForFunction(() => typeof window.showPage === 'function' && document.querySelector('[data-page="account"]'));
   await page.waitForTimeout(1200);
 
   const initialDomCount = await page.locator('*').count();
