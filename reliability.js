@@ -1,5 +1,6 @@
 (() => {
   let submitting = false;
+  let serviceWorkerWatching = false;
 
   function ensureNetworkBanner() {
     if (document.getElementById('edm-network-banner')) return;
@@ -46,13 +47,26 @@
   }
 
   function watchServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
+    if (!('serviceWorker' in navigator) || serviceWorkerWatching) return;
+    serviceWorkerWatching = true;
+
+    const controlledAtStart = Boolean(navigator.serviceWorker.controller);
+    const reloadKey = 'edm-sw-controller-reload-at';
+    let reloadScheduled = false;
+
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (sessionStorage.getItem('edm-reloaded')) return;
-      sessionStorage.setItem('edm-reloaded', '1');
-      window.location.reload();
+      // A first installation can claim the current page while it is still loading.
+      // Reloading in that case interrupts navigation and can send users back home.
+      if (!controlledAtStart || reloadScheduled) return;
+
+      const now = Date.now();
+      const lastReload = Number(sessionStorage.getItem(reloadKey) || 0);
+      if (now - lastReload < 30000) return;
+
+      reloadScheduled = true;
+      sessionStorage.setItem(reloadKey, String(now));
+      setTimeout(() => window.location.reload(), 250);
     });
-    window.addEventListener('beforeunload', () => sessionStorage.removeItem('edm-reloaded'));
   }
 
   function init() {
