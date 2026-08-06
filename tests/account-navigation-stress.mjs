@@ -38,6 +38,30 @@ const mime = {
   '.json': 'application/json; charset=utf-8'
 };
 
+const user = {
+  id: 'connected-test-user',
+  firstName: 'Jean',
+  lastName: 'Dupont',
+  phone: '0612345678',
+  email: 'client@example.test'
+};
+
+const supabaseStub = `
+(() => {
+  const user = ${JSON.stringify({ id: user.id, email: user.email, user_metadata: { first_name: user.firstName, last_name: user.lastName, phone: user.phone } })};
+  const session = { access_token: 'test-token', user };
+  const localAssetUrl = 'http://127.0.0.1:${port}/logo-edm.svg';
+  const emptyBuilder = () => {
+    const api = { select(){return api}, eq(){return api}, not(){return api}, order(){return Promise.resolve({data:[],error:null})}, limit(){return Promise.resolve({data:[],error:null})}, single(){return Promise.resolve({data:null,error:null})}, maybeSingle(){return Promise.resolve({data:null,error:null})}, then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject)} };
+    return api;
+  };
+  window.supabase = { createClient(){ return {
+    auth: { async getSession(){ return {data:{session},error:null} }, onAuthStateChange(){ return {data:{subscription:{unsubscribe(){}}}} }, async signOut(){ return {error:null} } },
+    from(){ return emptyBuilder() },
+    storage:{ from(){ return { async createSignedUrl(){ return {data:{signedUrl:localAssetUrl},error:null} } } } }
+  } } };
+})();`;
+
 const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var scripts=${JSON.stringify(scripts)};scripts.reduce(function(p,src){return p.then(function(){return new Promise(function(resolve){var s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=resolve;document.body.appendChild(s);});});},Promise.resolve());});<\/script>`;
 
 const server = createServer(async (req, res) => {
@@ -48,6 +72,10 @@ const server = createServer(async (req, res) => {
     let content = await readFile(join(root, safe));
     if (safe === 'index.html') {
       let html = content.toString('utf8');
+      html = html.replace(
+        '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>',
+        `<script>${supabaseStub}<\/script>`
+      );
       html = html.replace(/\s*<script>\s*if \("serviceWorker" in navigator\) \{[\s\S]*?navigator\.serviceWorker\.register\("\/sw\.js"\);[\s\S]*?<\/script>\s*(?=<\/body>)/, '');
       content = Buffer.from(html.replace('</body>', `${loader}</body>`));
     }
@@ -95,47 +123,31 @@ page.on('response', (response) => {
   if (response.status() >= 400 && !response.url().includes('manifest')) badResponses.push(`${response.status()} ${response.url()}`);
 });
 
-const user = {
-  id: 'connected-test-user',
-  firstName: 'Jean',
-  lastName: 'Dupont',
-  phone: '0612345678',
-  email: 'client@example.test'
-};
-
 await page.addInitScript(({ storageKey, state }) => {
   localStorage.setItem(storageKey, JSON.stringify(state));
 }, { storageKey: 'edm_auto_site_v4', state: { user, vehicles: [], requests: [] } });
 
-const supabaseStub = `
-(() => {
-  const user = ${JSON.stringify({ id: user.id, email: user.email, user_metadata: { first_name: user.firstName, last_name: user.lastName, phone: user.phone } })};
-  const session = { access_token: 'test-token', user };
-  const localAssetUrl = 'http://127.0.0.1:${port}/logo-edm.svg';
-  const emptyBuilder = () => {
-    const api = { select(){return api}, eq(){return api}, not(){return api}, order(){return Promise.resolve({data:[],error:null})}, limit(){return Promise.resolve({data:[],error:null})}, single(){return Promise.resolve({data:null,error:null})}, maybeSingle(){return Promise.resolve({data:null,error:null})}, then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject)} };
-    return api;
-  };
-  window.supabase = { createClient(){ return {
-    auth: { async getSession(){ return {data:{session},error:null} }, onAuthStateChange(){ return {data:{subscription:{unsubscribe(){}}}} }, async signOut(){ return {error:null} } },
-    from(){ return emptyBuilder() },
-    storage:{ from(){ return { async createSignedUrl(){ return {data:{signedUrl:localAssetUrl},error:null} } } } }
-  } } };
-})();`;
-await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: supabaseStub }));
-
 const targetUrl = `http://127.0.0.1:${port}/`;
-const isReady = () => document.readyState !== 'loading'
-  && Boolean(document.querySelector('[data-page="account"]'))
-  && Boolean(document.getElementById('account'))
-  && Boolean(document.getElementById('accountPageContent'));
+
+async function readinessSnapshot() {
+  return page.evaluate(() => ({
+    url: location.href,
+    readyState: document.readyState,
+    title: document.title,
+    bodyLength: document.body?.innerHTML.length || 0,
+    accountNav: Boolean(document.querySelector('[data-page="account"]')),
+    accountSection: Boolean(document.getElementById('account')),
+    accountContent: Boolean(document.getElementById('accountPageContent'))
+  })).catch((error) => ({ evaluationError: String(error?.message || error), url: page.url() }));
+}
 
 async function openInitialPage() {
   let lastError = null;
+  let lastSnapshot = null;
 
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
-      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await page.goto(targetUrl, { waitUntil: 'commit', timeout: 30000 });
     } catch (error) {
       const message = String(error?.message || error);
       const sameUrlFirefoxReload = browserName === 'firefox'
@@ -145,22 +157,26 @@ async function openInitialPage() {
     }
 
     try {
-      await page.waitForFunction(isReady, undefined, { timeout: 10000 });
+      await page.locator('[data-page="account"]').first().waitFor({ state: 'attached', timeout: 10000 });
+      await page.locator('#account').waitFor({ state: 'attached', timeout: 10000 });
+      await page.locator('#accountPageContent').waitFor({ state: 'attached', timeout: 10000 });
       return;
     } catch (error) {
       lastError = error;
+      lastSnapshot = await readinessSnapshot();
       if (attempt === 3) break;
-      await page.goto('about:blank', { waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => {});
+      await page.goto('about:blank', { waitUntil: 'commit', timeout: 10000 }).catch(() => {});
       await page.waitForTimeout(250);
     }
   }
 
-  throw new Error(`Initial ${browserName} page did not become ready after 3 attempts: ${lastError?.message || lastError}`);
+  throw new Error(`Initial ${browserName} page did not become ready after 3 attempts: ${lastError?.message || lastError}; snapshot=${JSON.stringify(lastSnapshot)}; errors=${errors.slice(-5).join(' | ')}`);
 }
 
 try {
   await openInitialPage();
-  await page.waitForTimeout(1200);
+  await page.waitForFunction(() => document.getElementById('accountPageContent')?.textContent.includes('client@example.test'), undefined, { timeout: 15000 });
+  await page.waitForTimeout(300);
 
   const initialDomCount = await page.locator('*').count();
   for (let i = 0; i < 20; i += 1) {
