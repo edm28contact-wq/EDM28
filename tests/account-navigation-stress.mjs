@@ -125,7 +125,10 @@ const supabaseStub = `
 await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: supabaseStub }));
 
 const targetUrl = `http://127.0.0.1:${port}/`;
-const isReady = () => typeof window.showPage === 'function' && Boolean(document.querySelector('[data-page="account"]'));
+const isReady = () => document.readyState !== 'loading'
+  && Boolean(document.querySelector('[data-page="account"]'))
+  && Boolean(document.getElementById('account'))
+  && Boolean(document.getElementById('accountPageContent'));
 
 async function openInitialPage() {
   let lastError = null;
