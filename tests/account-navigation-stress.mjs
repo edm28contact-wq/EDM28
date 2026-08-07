@@ -23,7 +23,6 @@ const scripts = [
   '/home-premium.js?v=3',
   '/contact-footer.js?v=1',
   '/accessibility-mobile.js?v=1',
-  '/reliability.js?v=1',
   '/white-background.js?v=2',
   '/light-palette-final.js?v=2',
   '/mid-palette-final.js?v=1',
