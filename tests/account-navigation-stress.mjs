@@ -9,7 +9,7 @@ const mobile = process.env.EDM_MOBILE === '1';
 const browserType = { chromium, firefox, webkit }[browserName];
 if (!browserType) throw new Error(`Unsupported browser: ${browserName}`);
 
-const targetOrigin = `http://edm28.test:${port}`;
+const targetOrigin = `http://127.0.0.1:${port}`;
 const targetUrl = `${targetOrigin}/`;
 
 const scripts = [
