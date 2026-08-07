@@ -1,3 +1,4 @@
+# CI retrigger after GitHub Actions incident recovery on 2026-08-07.
 name: Browser Smoke
 
 on:
