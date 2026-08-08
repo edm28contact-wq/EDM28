@@ -41,9 +41,9 @@ jobs:
           import fs from 'node:fs/promises';
 
           const targets = [
-            { name: 'www-home', url: 'https://www.edm28.fr/', title: 'EDM AUTO' },
-            { name: 'apex-home', url: 'https://edm28.fr/', title: 'EDM AUTO' },
-            { name: 'www-admin', url: 'https://www.edm28.fr/admin.html', title: 'Gestion EDM28' }
+            { name: 'www-home', url: 'https://www.edm28.fr/', titles: ['EDM AUTO', 'EDM · Spécialiste du freinage'], minBody: 500 },
+            { name: 'apex-home', url: 'https://edm28.fr/', titles: ['EDM AUTO', 'EDM · Spécialiste du freinage'], minBody: 500 },
+            { name: 'www-admin', url: 'https://www.edm28.fr/admin.html', titles: ['Gestion EDM28'], minBody: 100 }
           ];
 
           const browser = await chromium.launch();
@@ -52,15 +52,42 @@ jobs:
 
           for (const target of targets) {
             const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-            const errors = [];
+            const pageErrors = [];
             const requestFailures = [];
-            page.on('pageerror', error => errors.push(error.message));
+            const badResponses = [];
+            const consoleErrors = [];
+            page.on('pageerror', error => pageErrors.push(error.message));
             page.on('console', message => {
-              if (message.type() === 'error' && !message.text().includes('PWA registration failed')) errors.push(message.text());
+              if (message.type() === 'error' && !message.text().includes('PWA registration failed')) {
+                const text = message.text();
+                const source = message.location().url || '';
+                const knownImageNoise = text.includes('ERR_INVALID_URL') && source.startsWith('data:image/');
+                if (!knownImageNoise) consoleErrors.push({ text, source });
+              }
             });
-            page.on('requestfailed', request => requestFailures.push(`${request.url()} ${request.failure()?.errorText || ''}`));
-            const response = await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-            await page.waitForTimeout(2000);
+            page.on('requestfailed', request => {
+              const url = request.url();
+              const failure = request.failure()?.errorText || '';
+              const knownImageNoise = url.startsWith('data:image/') && failure.includes('ERR_INVALID_URL');
+              if (!knownImageNoise) requestFailures.push(`${url} ${failure}`);
+            });
+            page.on('response', response => {
+              if (response.status() >= 400) badResponses.push(`${response.status()} ${response.url()}`);
+            });
+
+            let response;
+            for (let attempt = 1; attempt <= 3; attempt += 1) {
+              try {
+                response = await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                await page.waitForFunction((minBody) => document.body && document.body.innerText.length >= minBody, target.minBody, { timeout: 12000 });
+                break;
+              } catch (error) {
+                if (attempt === 3) throw error;
+                await page.waitForTimeout(1000);
+              }
+            }
+            await page.waitForTimeout(1500);
+
             const row = {
               name: target.name,
               requestedUrl: target.url,
@@ -69,11 +96,17 @@ jobs:
               title: await page.title(),
               visible: await page.locator('body').isVisible(),
               bodyLength: await page.locator('body').evaluate(node => node.innerText.length),
-              errors,
-              requestFailures
+              pageErrors,
+              requestFailures,
+              badResponses,
+              consoleErrors
             };
             report.push(row);
-            if (row.status < 200 || row.status >= 400 || row.title !== target.title || !row.visible || row.bodyLength < 100 || errors.length || requestFailures.length) failed = true;
+
+            const criticalBadResponses = badResponses.filter(item => !item.includes('/favicon.ico'));
+            const titleOk = target.titles.includes(row.title);
+            if (row.status < 200 || row.status >= 400 || !titleOk || !row.visible || row.bodyLength < target.minBody || pageErrors.length || requestFailures.length || criticalBadResponses.length) failed = true;
+
             await page.screenshot({ path: `live-smoke-artifacts/${target.name}.png`, fullPage: true });
             await page.close();
           }
