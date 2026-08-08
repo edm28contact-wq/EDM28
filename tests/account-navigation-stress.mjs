@@ -1,14 +1,13 @@
 import { chromium, firefox, webkit } from 'playwright';
+import http from 'node:http';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
-const port = Number(process.env.EDM_TEST_PORT || 4190);
-const targetHost = process.env.EDM_TEST_HOST || '127.0.0.1';
 const browserName = process.env.EDM_BROWSER || 'chromium';
 const mobile = process.env.EDM_MOBILE === '1';
 const browserType = { chromium, firefox, webkit }[browserName];
 if (!browserType) throw new Error(`Unsupported browser: ${browserName}`);
 
-const targetOrigin = `http://${targetHost}:${port}`;
-const targetUrl = `${targetOrigin}/`;
 const user = {
   id: 'connected-test-user',
   firstName: 'Jean',
@@ -17,10 +16,23 @@ const user = {
   email: 'client@example.test'
 };
 
-const supabaseStub = `
+const rootDir = process.cwd();
+const indexPath = path.join(rootDir, 'index.html');
+const supabaseCdn = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+const originalHtml = await fs.readFile(indexPath, 'utf8');
+if (!originalHtml.includes(supabaseCdn)) {
+  throw new Error(`Supabase CDN script not found in ${indexPath}`);
+}
+const patchedHtml = originalHtml.replaceAll(supabaseCdn, '/__edm_supabase_stub.js');
+
+let targetOrigin = '';
+
+function makeSupabaseStub() {
+  return `
 (() => {
   const user = ${JSON.stringify({ id: user.id, email: user.email, user_metadata: { first_name: user.firstName, last_name: user.lastName, phone: user.phone } })};
   const session = { access_token: 'test-token', user };
+  const localAssetUrl = '${targetOrigin}/logo-edm.svg';
   const emptyBuilder = () => {
     const api = { select(){return api}, eq(){return api}, not(){return api}, order(){return Promise.resolve({data:[],error:null})}, limit(){return Promise.resolve({data:[],error:null})}, single(){return Promise.resolve({data:null,error:null})}, maybeSingle(){return Promise.resolve({data:null,error:null})}, then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject)} };
     return api;
@@ -28,69 +40,110 @@ const supabaseStub = `
   window.supabase = { createClient(){ return {
     auth: { async getSession(){ return {data:{session},error:null} }, onAuthStateChange(){ return {data:{subscription:{unsubscribe(){}}}} }, async signOut(){ return {error:null} } },
     from(){ return emptyBuilder() },
-    storage:{ from(){ return { async createSignedUrl(){ return {data:{signedUrl:'${targetOrigin}/logo-edm.svg'},error:null} } } } }
+    storage:{ from(){ return { async createSignedUrl(){ return {data:{signedUrl:localAssetUrl},error:null} } } } }
   } } };
 })();`;
-
-// Keep the browser process independent from runner proxy settings. The CI
-// workflow can also supply the runner's private interface instead of loopback,
-// which avoids Firefox-specific localhost networking failures on hosted runners.
-const browserEnv = { ...process.env };
-const proxyKeys = [
-  'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY',
-  'http_proxy', 'https_proxy', 'all_proxy'
-];
-const proxyEnvPresent = proxyKeys.filter((key) => Boolean(process.env[key]));
-for (const key of proxyKeys) delete browserEnv[key];
-
-const existingNoProxy = browserEnv.NO_PROXY || browserEnv.no_proxy || '';
-const noProxyEntries = new Set(
-  existingNoProxy.split(',').map((entry) => entry.trim()).filter(Boolean)
-);
-noProxyEntries.add('127.0.0.1');
-noProxyEntries.add('localhost');
-noProxyEntries.add(targetHost);
-browserEnv.NO_PROXY = [...noProxyEntries].join(',');
-browserEnv.no_proxy = browserEnv.NO_PROXY;
-
-const launchOptions = { env: browserEnv };
-if (browserName === 'firefox') {
-  launchOptions.firefoxUserPrefs = {
-    'network.proxy.type': 0,
-    'network.proxy.no_proxies_on': `localhost, 127.0.0.1, ${targetHost}`
-  };
 }
+
+const mimeTypes = new Map([
+  ['.html', 'text/html; charset=utf-8'],
+  ['.js', 'text/javascript; charset=utf-8'],
+  ['.mjs', 'text/javascript; charset=utf-8'],
+  ['.css', 'text/css; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'],
+  ['.svg', 'image/svg+xml'],
+  ['.png', 'image/png'],
+  ['.jpg', 'image/jpeg'],
+  ['.jpeg', 'image/jpeg'],
+  ['.webp', 'image/webp'],
+  ['.ico', 'image/x-icon'],
+  ['.txt', 'text/plain; charset=utf-8']
+]);
+
+function send(res, status, contentType, body) {
+  res.writeHead(status, {
+    'Content-Type': contentType,
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  res.end(body);
+}
+
+const server = http.createServer(async (req, res) => {
+  try {
+    const requestUrl = new URL(req.url || '/', 'http://127.0.0.1');
+    const pathname = decodeURIComponent(requestUrl.pathname);
+
+    if (pathname === '/' || pathname === '/index.html') {
+      send(res, 200, 'text/html; charset=utf-8', patchedHtml);
+      return;
+    }
+
+    if (pathname === '/__edm_supabase_stub.js') {
+      send(res, 200, 'text/javascript; charset=utf-8', makeSupabaseStub());
+      return;
+    }
+
+    // The account-navigation stress test is not a PWA lifecycle test. Serve a
+    // harmless local worker so the application's registration succeeds without
+    // skipWaiting/clients.claim taking control during the navigation test.
+    if (pathname === '/sw.js') {
+      send(res, 200, 'text/javascript; charset=utf-8', "self.addEventListener('install', () => {}); self.addEventListener('activate', () => {});\n");
+      return;
+    }
+
+    const relativePath = pathname.replace(/^\/+/, '');
+    const filePath = path.resolve(rootDir, relativePath);
+    const rootPrefix = `${path.resolve(rootDir)}${path.sep}`;
+    if (!filePath.startsWith(rootPrefix)) {
+      send(res, 403, 'text/plain; charset=utf-8', 'Forbidden');
+      return;
+    }
+
+    let stat;
+    try {
+      stat = await fs.stat(filePath);
+    } catch {
+      send(res, 404, 'text/plain; charset=utf-8', 'Not found');
+      return;
+    }
+    if (!stat.isFile()) {
+      send(res, 404, 'text/plain; charset=utf-8', 'Not found');
+      return;
+    }
+
+    const body = await fs.readFile(filePath);
+    const contentType = mimeTypes.get(path.extname(filePath).toLowerCase()) || 'application/octet-stream';
+    send(res, 200, contentType, body);
+  } catch (error) {
+    send(res, 500, 'text/plain; charset=utf-8', `Server error: ${error?.message || error}`);
+  }
+});
+
+await new Promise((resolve, reject) => {
+  server.once('error', reject);
+  server.listen(0, '127.0.0.1', resolve);
+});
+
+const address = server.address();
+if (!address || typeof address === 'string') throw new Error('Unable to resolve local stress server address');
+targetOrigin = `http://127.0.0.1:${address.port}`;
+const targetUrl = `${targetOrigin}/`;
 
 console.log(JSON.stringify({
   phase: 'browser-launch',
   browserName,
   mobile,
-  targetHost,
   targetUrl,
-  proxyEnvKeysCleared: proxyEnvPresent
+  server: 'node-http-in-process',
+  networkInterception: false
 }));
 
-const browser = await browserType.launch(launchOptions);
+const browser = await browserType.launch();
 const context = await browser.newContext({
   viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 },
   hasTouch: mobile,
-  isMobile: mobile,
-  serviceWorkers: 'block'
-});
-
-// Let browsers perform a normal HTTP navigation. Intercept only the external
-// Supabase library so the stress test remains deterministic and offline-safe.
-await context.route('https://cdn.jsdelivr.net/**', async (route) => {
-  if (route.request().url().includes('@supabase/supabase-js')) {
-    await route.fulfill({
-      status: 200,
-      contentType: 'text/javascript; charset=utf-8',
-      body: supabaseStub,
-      headers: { 'Cache-Control': 'no-store' }
-    });
-    return;
-  }
-  await route.abort();
+  isMobile: mobile
 });
 
 const page = await context.newPage();
@@ -112,14 +165,21 @@ page.on('console', (message) => {
 page.on('requestfailed', (request) => {
   const url = request.url();
   const failure = request.failure()?.errorText || '';
-  const ignoredCdn = url.startsWith('https://cdn.jsdelivr.net/') && !url.includes('@supabase/supabase-js');
   const knownChromiumImageNoise = browserName === 'chromium'
     && url.startsWith('data:image/jpeg')
     && failure.includes('ERR_INVALID_URL');
-  if (!ignoredCdn && !knownChromiumImageNoise) errors.push(`requestfailed: ${url} ${failure}`);
+  if (!knownChromiumImageNoise) errors.push(`requestfailed: ${url} ${failure}`);
 });
 page.on('response', (response) => {
   if (response.status() >= 400 && !response.url().includes('manifest')) badResponses.push(`${response.status()} ${response.url()}`);
+  if (response.request().resourceType() === 'document') {
+    console.log(JSON.stringify({ phase: 'document-response', browserName, status: response.status(), url: response.url() }));
+  }
+});
+page.on('framenavigated', (frame) => {
+  if (frame === page.mainFrame()) {
+    console.log(JSON.stringify({ phase: 'main-frame-navigated', browserName, url: frame.url() }));
+  }
 });
 
 await page.addInitScript(({ storageKey, state }) => {
@@ -222,4 +282,6 @@ try {
   console.log(JSON.stringify({ success: true, browserName, mobile, initialDomCount, finalDomCount, accountClicks: 20, navigationCycles: 20 }, null, 2));
 } finally {
   await browser.close();
+  server.closeAllConnections?.();
+  await new Promise((resolve) => server.close(resolve));
 }
