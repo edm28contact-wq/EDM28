@@ -1,12 +1,13 @@
 import { chromium, firefox, webkit } from 'playwright';
 
 const port = Number(process.env.EDM_TEST_PORT || 4190);
+const targetHost = process.env.EDM_TEST_HOST || '127.0.0.1';
 const browserName = process.env.EDM_BROWSER || 'chromium';
 const mobile = process.env.EDM_MOBILE === '1';
 const browserType = { chromium, firefox, webkit }[browserName];
 if (!browserType) throw new Error(`Unsupported browser: ${browserName}`);
 
-const targetOrigin = `http://127.0.0.1:${port}`;
+const targetOrigin = `http://${targetHost}:${port}`;
 const targetUrl = `${targetOrigin}/`;
 const user = {
   id: 'connected-test-user',
@@ -31,11 +32,9 @@ const supabaseStub = `
   } } };
 })();`;
 
-// GitHub runners can expose proxy environment variables. Chromium bypasses
-// loopback reliably, while Firefox can inherit proxy state and render its own
-// "Problem loading page" for 127.0.0.1. Launch browsers with an explicit
-// direct loopback configuration so the stress test exercises the application,
-// not runner proxy behavior.
+// Keep the browser process independent from runner proxy settings. The CI
+// workflow can also supply the runner's private interface instead of loopback,
+// which avoids Firefox-specific localhost networking failures on hosted runners.
 const browserEnv = { ...process.env };
 const proxyKeys = [
   'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY',
@@ -50,6 +49,7 @@ const noProxyEntries = new Set(
 );
 noProxyEntries.add('127.0.0.1');
 noProxyEntries.add('localhost');
+noProxyEntries.add(targetHost);
 browserEnv.NO_PROXY = [...noProxyEntries].join(',');
 browserEnv.no_proxy = browserEnv.NO_PROXY;
 
@@ -57,7 +57,7 @@ const launchOptions = { env: browserEnv };
 if (browserName === 'firefox') {
   launchOptions.firefoxUserPrefs = {
     'network.proxy.type': 0,
-    'network.proxy.no_proxies_on': 'localhost, 127.0.0.1'
+    'network.proxy.no_proxies_on': `localhost, 127.0.0.1, ${targetHost}`
   };
 }
 
@@ -65,6 +65,7 @@ console.log(JSON.stringify({
   phase: 'browser-launch',
   browserName,
   mobile,
+  targetHost,
   targetUrl,
   proxyEnvKeysCleared: proxyEnvPresent
 }));
@@ -77,7 +78,7 @@ const context = await browser.newContext({
   serviceWorkers: 'block'
 });
 
-// Let Firefox perform a normal HTTP navigation. Intercept only the external
+// Let browsers perform a normal HTTP navigation. Intercept only the external
 // Supabase library so the stress test remains deterministic and offline-safe.
 await context.route('https://cdn.jsdelivr.net/**', async (route) => {
   if (route.request().url().includes('@supabase/supabase-js')) {
