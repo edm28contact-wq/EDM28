@@ -1,0 +1,2 @@
+Trigger production live smoke after workflow installation.
+Production SHA under test: d373d7074f2e293a9608d218eb0a9ec624a134d2
