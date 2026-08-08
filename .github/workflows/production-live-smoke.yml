@@ -1,0 +1,93 @@
+name: Production Live Smoke
+
+on:
+  push:
+    branches:
+      - test/production-live-smoke-20260808
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Playwright
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Verify production HTTP and browser routes
+        run: |
+          set -euo pipefail
+          mkdir -p live-smoke-artifacts
+          cat > /tmp/live-smoke.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs/promises';
+
+          const targets = [
+            { name: 'www-home', url: 'https://www.edm28.fr/', title: 'EDM AUTO' },
+            { name: 'apex-home', url: 'https://edm28.fr/', title: 'EDM AUTO' },
+            { name: 'www-admin', url: 'https://www.edm28.fr/admin.html', title: 'Gestion EDM28' }
+          ];
+
+          const browser = await chromium.launch();
+          const report = [];
+          let failed = false;
+
+          for (const target of targets) {
+            const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+            const errors = [];
+            const requestFailures = [];
+            page.on('pageerror', error => errors.push(error.message));
+            page.on('console', message => {
+              if (message.type() === 'error' && !message.text().includes('PWA registration failed')) errors.push(message.text());
+            });
+            page.on('requestfailed', request => requestFailures.push(`${request.url()} ${request.failure()?.errorText || ''}`));
+            const response = await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.waitForTimeout(2000);
+            const row = {
+              name: target.name,
+              requestedUrl: target.url,
+              finalUrl: page.url(),
+              status: response?.status() || 0,
+              title: await page.title(),
+              visible: await page.locator('body').isVisible(),
+              bodyLength: await page.locator('body').evaluate(node => node.innerText.length),
+              errors,
+              requestFailures
+            };
+            report.push(row);
+            if (row.status < 200 || row.status >= 400 || row.title !== target.title || !row.visible || row.bodyLength < 100 || errors.length || requestFailures.length) failed = true;
+            await page.screenshot({ path: `live-smoke-artifacts/${target.name}.png`, fullPage: true });
+            await page.close();
+          }
+
+          await browser.close();
+          await fs.writeFile('live-smoke-artifacts/report.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          if (failed) process.exit(1);
+          EOF
+          node /tmp/live-smoke.mjs | tee live-smoke-artifacts/run.log
+
+      - name: Upload live smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-live-smoke
+          path: live-smoke-artifacts
