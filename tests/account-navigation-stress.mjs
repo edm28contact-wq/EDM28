@@ -100,19 +100,43 @@ async function readinessSnapshot() {
   })).catch((error) => ({ evaluationError: String(error?.message || error), url: page.url() }));
 }
 
+async function waitForAccountShell() {
+  await page.locator('[data-page="account"]').first().waitFor({ state: 'attached', timeout: 10000 });
+  await page.locator('#account').waitFor({ state: 'attached', timeout: 10000 });
+  await page.locator('#accountPageContent').waitFor({ state: 'attached', timeout: 10000 });
+}
+
 async function openInitialPage() {
   let lastError = null;
   let lastSnapshot = null;
+  let sameUrlInterruptionAccepted = false;
+
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
       await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.locator('[data-page="account"]').first().waitFor({ state: 'attached', timeout: 10000 });
-      await page.locator('#account').waitFor({ state: 'attached', timeout: 10000 });
-      await page.locator('#accountPageContent').waitFor({ state: 'attached', timeout: 10000 });
+      await waitForAccountShell();
       return;
     } catch (error) {
-      lastError = error;
-      lastSnapshot = await readinessSnapshot();
+      const message = String(error?.message || error);
+      const sameUrlNavigation = browserName === 'firefox'
+        && !sameUrlInterruptionAccepted
+        && message.includes(`Navigation to "${targetUrl}" is interrupted by another navigation to "${targetUrl}"`);
+
+      if (sameUrlNavigation) {
+        sameUrlInterruptionAccepted = true;
+        try {
+          await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+          await waitForAccountShell();
+          return;
+        } catch (followUpError) {
+          lastError = followUpError;
+          lastSnapshot = await readinessSnapshot();
+        }
+      } else {
+        lastError = error;
+        lastSnapshot = await readinessSnapshot();
+      }
+
       if (attempt === 3) break;
       await page.goto('about:blank', { waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => {});
       await page.waitForTimeout(250);
