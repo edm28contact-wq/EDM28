@@ -36,7 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p live-smoke-artifacts
-          cat > /tmp/live-smoke.mjs <<'EOF'
+          cat > live-smoke.mjs <<'EOF'
           import { chromium } from 'playwright';
           import fs from 'node:fs/promises';
 
@@ -83,7 +83,7 @@ jobs:
           console.log(JSON.stringify(report, null, 2));
           if (failed) process.exit(1);
           EOF
-          node /tmp/live-smoke.mjs | tee live-smoke-artifacts/run.log
+          node live-smoke.mjs | tee live-smoke-artifacts/run.log
 
       - name: Upload live smoke report
         if: always()
