@@ -31,7 +31,45 @@ const supabaseStub = `
   } } };
 })();`;
 
-const browser = await browserType.launch();
+// GitHub runners can expose proxy environment variables. Chromium bypasses
+// loopback reliably, while Firefox can inherit proxy state and render its own
+// "Problem loading page" for 127.0.0.1. Launch browsers with an explicit
+// direct loopback configuration so the stress test exercises the application,
+// not runner proxy behavior.
+const browserEnv = { ...process.env };
+const proxyKeys = [
+  'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY',
+  'http_proxy', 'https_proxy', 'all_proxy'
+];
+const proxyEnvPresent = proxyKeys.filter((key) => Boolean(process.env[key]));
+for (const key of proxyKeys) delete browserEnv[key];
+
+const existingNoProxy = browserEnv.NO_PROXY || browserEnv.no_proxy || '';
+const noProxyEntries = new Set(
+  existingNoProxy.split(',').map((entry) => entry.trim()).filter(Boolean)
+);
+noProxyEntries.add('127.0.0.1');
+noProxyEntries.add('localhost');
+browserEnv.NO_PROXY = [...noProxyEntries].join(',');
+browserEnv.no_proxy = browserEnv.NO_PROXY;
+
+const launchOptions = { env: browserEnv };
+if (browserName === 'firefox') {
+  launchOptions.firefoxUserPrefs = {
+    'network.proxy.type': 0,
+    'network.proxy.no_proxies_on': 'localhost, 127.0.0.1'
+  };
+}
+
+console.log(JSON.stringify({
+  phase: 'browser-launch',
+  browserName,
+  mobile,
+  targetUrl,
+  proxyEnvKeysCleared: proxyEnvPresent
+}));
+
+const browser = await browserType.launch(launchOptions);
 const context = await browser.newContext({
   viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 },
   hasTouch: mobile,
