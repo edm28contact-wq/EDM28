@@ -127,13 +127,20 @@ jobs:
       - name: Run connected account stress matrix
         run: |
           set -euo pipefail
-          echo "127.0.0.1 edm28.test" | sudo tee -a /etc/hosts >/dev/null
-          python3 -m http.server 4190 > /tmp/edm28-stress-4190.log 2>&1 &
-          python3 -m http.server 4191 > /tmp/edm28-stress-4191.log 2>&1 &
+          python3 -m http.server 4190 --bind 0.0.0.0 > /tmp/edm28-stress-4190.log 2>&1 &
+          python3 -m http.server 4191 --bind 0.0.0.0 > /tmp/edm28-stress-4191.log 2>&1 &
+
+          STRESS_HOST="$(hostname -I | awk '{print $1}')"
+          if [ -z "$STRESS_HOST" ]; then
+            echo "Unable to resolve runner private IP"
+            exit 1
+          fi
+          echo "Stress host: $STRESS_HOST"
+
           for port in 4190 4191; do
             ready=0
             for attempt in {1..30}; do
-              if curl -fsS --resolve "edm28.test:${port}:127.0.0.1" "http://edm28.test:${port}/" >/dev/null; then
+              if curl -fsS "http://${STRESS_HOST}:${port}/" >/dev/null; then
                 ready=1
                 break
               fi
@@ -144,10 +151,11 @@ jobs:
               exit 1
             fi
           done
+
           for browser in chromium firefox webkit; do
-            EDM_BROWSER="$browser" EDM_TEST_PORT=4190 node tests/account-navigation-stress.mjs 2>&1 | tee "browser-artifacts/account-${browser}-desktop.log"
+            EDM_BROWSER="$browser" EDM_TEST_HOST="$STRESS_HOST" EDM_TEST_PORT=4190 node tests/account-navigation-stress.mjs 2>&1 | tee "browser-artifacts/account-${browser}-desktop.log"
           done
-          EDM_BROWSER=chromium EDM_MOBILE=1 EDM_TEST_PORT=4191 node tests/account-navigation-stress.mjs 2>&1 | tee browser-artifacts/account-chromium-mobile.log
+          EDM_BROWSER=chromium EDM_MOBILE=1 EDM_TEST_HOST="$STRESS_HOST" EDM_TEST_PORT=4191 node tests/account-navigation-stress.mjs 2>&1 | tee browser-artifacts/account-chromium-mobile.log
 
       - name: Upload browser report
         if: always()
