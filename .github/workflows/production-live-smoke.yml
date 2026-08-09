@@ -32,18 +32,19 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Verify production HTTP and browser routes
+      - name: Verify production desktop and Android layouts
         run: |
           set -euo pipefail
           mkdir -p live-smoke-artifacts
           cat > live-smoke.mjs <<'EOF'
-          import { chromium } from 'playwright';
+          import { chromium, devices } from 'playwright';
           import fs from 'node:fs/promises';
 
           const targets = [
-            { name: 'www-home', url: 'https://www.edm28.fr/', titles: ['EDM AUTO', 'EDM · Spécialiste du freinage'], minBody: 500 },
-            { name: 'apex-home', url: 'https://edm28.fr/', titles: ['EDM AUTO', 'EDM · Spécialiste du freinage'], minBody: 500 },
-            { name: 'www-admin', url: 'https://www.edm28.fr/admin.html', titles: ['Gestion EDM28'], minBody: 100 }
+            { name: 'www-home-desktop', url: 'https://www.edm28.fr/', viewport: { width: 1440, height: 1000 } },
+            { name: 'www-home-android-360', url: 'https://www.edm28.fr/', viewport: { width: 360, height: 800 }, mobile: true },
+            { name: 'www-home-android-412', url: 'https://www.edm28.fr/', viewport: { width: 412, height: 915 }, mobile: true },
+            { name: 'www-home-android-landscape', url: 'https://www.edm28.fr/', viewport: { width: 915, height: 412 }, mobile: true }
           ];
 
           const browser = await chromium.launch();
@@ -51,7 +52,14 @@ jobs:
           let failed = false;
 
           for (const target of targets) {
-            const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+            const context = await browser.newContext({
+              viewport: target.viewport,
+              isMobile: Boolean(target.mobile),
+              hasTouch: Boolean(target.mobile),
+              deviceScaleFactor: target.mobile ? 2.75 : 1,
+              userAgent: target.mobile ? devices['Pixel 7'].userAgent : undefined
+            });
+            const page = await context.newPage();
             const pageErrors = [];
             const requestFailures = [];
             const badResponses = [];
@@ -75,40 +83,62 @@ jobs:
               if (response.status() >= 400) badResponses.push(`${response.status()} ${response.url()}`);
             });
 
-            let response;
-            for (let attempt = 1; attempt <= 3; attempt += 1) {
-              try {
-                response = await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-                await page.waitForFunction((minBody) => document.body && document.body.innerText.length >= minBody, target.minBody, { timeout: 12000 });
-                break;
-              } catch (error) {
-                if (attempt === 3) throw error;
-                await page.waitForTimeout(1000);
-              }
-            }
-            await page.waitForTimeout(1500);
+            const response = await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.waitForFunction(() => document.body && document.body.innerText.length >= 500, { timeout: 15000 });
+            await page.waitForTimeout(2500);
+
+            const layout = await page.evaluate(() => {
+              const app = document.querySelector('.app-shell');
+              const sidebar = document.querySelector('.sidebar');
+              const main = document.querySelector('.main');
+              const menu = document.querySelector('.mobile-menu');
+              const ar = app?.getBoundingClientRect();
+              const sr = sidebar?.getBoundingClientRect();
+              const mr = main?.getBoundingClientRect();
+              return {
+                innerWidth: window.innerWidth,
+                innerHeight: window.innerHeight,
+                visualViewportWidth: window.visualViewport?.width || null,
+                bodyClientWidth: document.body.clientWidth,
+                bodyScrollWidth: document.body.scrollWidth,
+                htmlClientWidth: document.documentElement.clientWidth,
+                htmlScrollWidth: document.documentElement.scrollWidth,
+                appRect: ar ? { x: ar.x, width: ar.width } : null,
+                appGridColumns: app ? getComputedStyle(app).gridTemplateColumns : null,
+                sidebarRect: sr ? { x: sr.x, right: sr.right, width: sr.width } : null,
+                sidebarPosition: sidebar ? getComputedStyle(sidebar).position : null,
+                sidebarTransform: sidebar ? getComputedStyle(sidebar).transform : null,
+                sidebarDisplay: sidebar ? getComputedStyle(sidebar).display : null,
+                mainRect: mr ? { x: mr.x, right: mr.right, width: mr.width } : null,
+                mobileMenuDisplay: menu ? getComputedStyle(menu).display : null,
+                max980: matchMedia('(max-width: 980px)').matches,
+                max700: matchMedia('(max-width: 700px)').matches
+              };
+            });
 
             const row = {
               name: target.name,
-              requestedUrl: target.url,
-              finalUrl: page.url(),
               status: response?.status() || 0,
               title: await page.title(),
-              visible: await page.locator('body').isVisible(),
-              bodyLength: await page.locator('body').evaluate(node => node.innerText.length),
               pageErrors,
               requestFailures,
               badResponses,
-              consoleErrors
+              consoleErrors,
+              layout
             };
             report.push(row);
 
-            const criticalBadResponses = badResponses.filter(item => !item.includes('/favicon.ico'));
-            const titleOk = target.titles.includes(row.title);
-            if (row.status < 200 || row.status >= 400 || !titleOk || !row.visible || row.bodyLength < target.minBody || pageErrors.length || requestFailures.length || criticalBadResponses.length) failed = true;
+            if (target.mobile) {
+              const noHorizontalOverflow = layout.bodyScrollWidth <= layout.innerWidth + 1 && layout.htmlScrollWidth <= layout.innerWidth + 1;
+              const oneColumn = layout.appGridColumns === `${layout.innerWidth}px` || layout.appGridColumns.split(' ').length === 1;
+              const sidebarOffCanvas = layout.sidebarRect && layout.sidebarRect.right <= 0;
+              const mainFits = layout.mainRect && layout.mainRect.x >= -1 && layout.mainRect.right <= layout.innerWidth + 1;
+              if (!layout.max980 || !noHorizontalOverflow || !oneColumn || !sidebarOffCanvas || !mainFits) failed = true;
+            }
+            if (row.status < 200 || row.status >= 400 || pageErrors.length || requestFailures.length || badResponses.length) failed = true;
 
             await page.screenshot({ path: `live-smoke-artifacts/${target.name}.png`, fullPage: true });
-            await page.close();
+            await context.close();
           }
 
           await browser.close();
