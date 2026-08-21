@@ -4,23 +4,31 @@
 
   const A = () => window.EDMAdmin;
   const esc = (value) => A()?.esc ? A().esc(value ?? '') : String(value ?? '');
-  const baseStatuses = [
-    ['non_controle', 'Non contrôlé'],
-    ['conforme', 'Conforme'],
-    ['surveiller', 'À surveiller'],
-    ['remplacer', 'À remplacer']
-  ];
+
   const serviceStatuses = [
     ['a_faire', 'À faire'],
     ['fait', 'Fait'],
     ['remplacer', 'Remplacer']
   ];
-  const extraControls = [
+  const levelStatuses = [
+    ['a_faire', 'À faire'],
+    ['fait', 'Fait']
+  ];
+  const conformStatuses = [
+    ['conforme', 'Conforme'],
+    ['non_conforme', 'Non conforme']
+  ];
+
+  const levelControls = [
     ['niveau_huile_moteur', 'Niveau huile moteur'],
     ['niveau_liquide_refroidissement', 'Niveau liquide de refroidissement'],
-    ['niveau_lave_glace', 'Niveau lave-glace'],
+    ['niveau_lave_glace', 'Niveau lave-glace']
+  ];
+
+  const conformityControls = [
     ['essuie_glace_av', 'Essuie-glaces avant'],
     ['essuie_glace_ar', 'Essuie-glace arrière'],
+    ['klaxon', 'Klaxon'],
     ['feu_position_av_g', 'Feu de position avant gauche'],
     ['feu_position_av_d', 'Feu de position avant droit'],
     ['feu_position_ar_g', 'Feu de position arrière gauche'],
@@ -47,6 +55,7 @@
     ['repetiteur_d', 'Répétiteur latéral droit'],
     ['feux_detresse', 'Feux de détresse']
   ];
+
   let activeServicesPromise = null;
 
   async function activeServices() {
@@ -59,16 +68,44 @@
     return activeServicesPromise;
   }
 
-  function statusButtons(key, current, choices) {
+  function statusButtons(current, choices) {
     return choices.map(([value, label]) => `<button type="button" class="btn ${current === value ? 'primary' : 'ghost'}" data-control-status="${value}">${esc(label)}</button>`).join('');
   }
 
   function controlCard(key, label, current, choices) {
     return `<article class="card" data-control="${esc(key)}" data-status="${esc(current)}" style="padding:12px;margin:8px 0">
       <strong>${esc(label)}</strong>
-      <div class="toolbar" style="margin-top:8px">${statusButtons(key, current, choices)}</div>
+      <div class="toolbar" style="margin-top:8px">${statusButtons(current, choices)}</div>
       <input data-control-note type="hidden" value="">
     </article>`;
+  }
+
+  function normalizeStatus(value, choices, fallback = '') {
+    const allowed = new Set(choices.map(([status]) => status));
+    if (allowed.has(value)) return value;
+    if (choices === levelStatuses) {
+      if (value === 'conforme') return 'fait';
+      if (value === 'non_conforme' || value === 'surveiller' || value === 'remplacer') return 'a_faire';
+    }
+    if (choices === conformStatuses) {
+      if (value === 'surveiller' || value === 'remplacer') return 'non_conforme';
+    }
+    return fallback;
+  }
+
+  function reconfigureExistingControl(detail, key, label, choices, checks) {
+    const row = detail.querySelector(`[data-control="${key}"]`);
+    if (!row) return;
+    if (label) {
+      const title = row.querySelector('strong');
+      if (title) title.textContent = label;
+    }
+    const stored = checks?.[key];
+    const raw = row.dataset.status || (typeof stored === 'string' ? stored : stored?.status) || '';
+    const current = normalizeStatus(raw, choices, '');
+    row.dataset.status = current || 'non_controle';
+    const toolbar = row.querySelector('.toolbar');
+    if (toolbar) toolbar.innerHTML = statusButtons(current, choices);
   }
 
   function bindStatusButtons(root) {
@@ -118,25 +155,36 @@
         const measureHeading = [...detail.querySelectorAll('h3')].find((node) => /mesures et contrôles/i.test(node.textContent || ''));
         const section = document.createElement('section');
         section.dataset.edmServiceProgress = 'true';
-        section.innerHTML = `<h3>Prestations EDM28</h3><p class="muted">Le statut « Fait » est réservé aux services proposés par EDM28.</p>${offered.map((service) => {
+        section.innerHTML = `<h3>Prestations EDM28</h3><p class="muted">À faire / Fait / Remplacer uniquement pour les prestations EDM28 demandées.</p>${offered.map((service) => {
           const key = `service_${String(service.id).replace(/[^a-z0-9_-]/gi, '_')}`;
           const stored = checks[key];
-          const current = typeof stored === 'string' ? stored : stored?.status || 'a_faire';
+          const raw = typeof stored === 'string' ? stored : stored?.status || 'a_faire';
+          const current = normalizeStatus(raw, serviceStatuses, 'a_faire');
           return controlCard(key, service.name || servicesMap.get(String(service.id)) || service.id, current, serviceStatuses);
         }).join('')}`;
         if (measureHeading) measureHeading.insertAdjacentElement('beforebegin', section);
         else detail.prepend(section);
       }
 
+      reconfigureExistingControl(detail, 'liquide_frein', 'Niveau liquide de frein', levelStatuses, checks);
+      ['pression_av_g','pression_av_d','pression_ar_g','pression_ar_d'].forEach((key) => reconfigureExistingControl(detail, key, null, conformStatuses, checks));
+
       if (!detail.querySelector('[data-edm-extra-checks]')) {
         const photosHeading = [...detail.querySelectorAll('h3')].find((node) => /photos avant/i.test(node.textContent || ''));
         const section = document.createElement('section');
         section.dataset.edmExtraChecks = 'true';
-        section.innerHTML = `<h3>Contrôles complémentaires</h3><p class="muted">Les pressions des pneus et le liquide de frein sont déjà présents dans les contrôles principaux.</p>${extraControls.map(([key, label]) => {
-          const stored = checks[key];
-          const current = typeof stored === 'string' ? stored : stored?.status || 'non_controle';
-          return controlCard(key, label, current, baseStatuses);
-        }).join('')}`;
+        section.innerHTML = `<h3>Contrôles complémentaires</h3>
+          <p class="muted">Niveaux : À faire / Fait. Pression pneus, essuie-glaces, éclairage et klaxon : Conforme / Non conforme.</p>
+          ${levelControls.map(([key, label]) => {
+            const stored = checks[key];
+            const raw = typeof stored === 'string' ? stored : stored?.status || 'a_faire';
+            return controlCard(key, label, normalizeStatus(raw, levelStatuses, 'a_faire'), levelStatuses);
+          }).join('')}
+          ${conformityControls.map(([key, label]) => {
+            const stored = checks[key];
+            const raw = typeof stored === 'string' ? stored : stored?.status || '';
+            return controlCard(key, label, normalizeStatus(raw, conformStatuses, ''), conformStatuses);
+          }).join('')}`;
         if (photosHeading) photosHeading.insertAdjacentElement('beforebegin', section);
         else detail.appendChild(section);
       }
