@@ -44,7 +44,9 @@ test('account hydration preserves non-empty fields', async () => {
 test('Preview loads protected routes and refreshed password client flow', async () => {
   const source = await read('api/app.js');
   assert.match(source, /client-account-safe\.js\?v=13/);
-  assert.match(source, /client-simple-flow\.js\?v=8/);
+  assert.match(source, /client-simple-flow\.js\?v=9/);
+  assert.match(source, /client-final-experience\.js\?v=2/);
+  assert.match(source, /client-final-patch\.js\?v=1/);
   assert.ok(source.indexOf('accountPrelude') < source.indexOf('integration.js'));
 });
 
@@ -116,13 +118,15 @@ test('submitted requests are loaded and refreshed in client history', async () =
   assert.match(history, /MutationObserver/);
   assert.match(router, /window\.renderRequestHistory/);
   assert.match(app, /request-history\.js\?v=2/);
-  assert.match(app, /client-simple-flow\.js\?v=8/);
+  assert.match(app, /client-simple-flow\.js\?v=9/);
   assert.match(loader, /request-submit-safe\.js\?v=4/);
 });
 
-test('messaging loop uses guarded RPCs and explicit human approval', async () => {
-  const [loader, client, admin, router, ai, migration, hardening] = await Promise.all([
+test('messaging loop uses final inbox with guarded RPCs and explicit human approval', async () => {
+  const [loader, finalInbox, finalPatch, legacyClient, admin, router, ai, migration, hardening] = await Promise.all([
     read('client-simple-flow.js'),
+    read('client-final-experience.js'),
+    read('client-final-patch.js'),
     read('client-messages.js'),
     read('admin-messages.js'),
     read('client-navigation-visible.js'),
@@ -131,12 +135,16 @@ test('messaging loop uses guarded RPCs and explicit human approval', async () =>
     read('supabase/migrations/20260724193000_client_messaging_hardening.sql')
   ]);
 
-  assert.match(loader, /client-messages\.js\?v=1/);
+  assert.doesNotMatch(loader, /client-messages\.js\?v=1/);
   assert.match(router, /'messages'/);
-  assert.match(router, /renderClientMessages/);
-  assert.match(client, /rpc\('client_send_message'/);
-  assert.match(client, /rpc\('client_mark_messages_read'/);
-  assert.match(client, /read_by_admin/);
+  assert.match(finalInbox, /rpc\('client_send_message'/);
+  assert.match(finalInbox, /rpc\('client_mark_messages_read'/);
+  assert.match(finalInbox, /rpc\('client_delete_message'/);
+  assert.match(finalPatch, /rpc\('client_delete_message'/);
+  assert.match(finalPatch, /data-mail-id/);
+  assert.match(legacyClient, /rpc\('client_send_message'/);
+  assert.match(legacyClient, /rpc\('client_mark_messages_read'/);
+  assert.match(legacyClient, /read_by_admin/);
   assert.match(admin, /rpc\('admin_send_message'/);
   assert.match(admin, /Envoyer après validation/);
   assert.match(admin, /if \(!this\.isActive\(\)\) return/);
