@@ -3,208 +3,147 @@
   window.__edmAdminWorkflowImprovementsInstalled = true;
 
   const A = () => window.EDMAdmin;
-  const serviceStatusChoices = [
-    ['todo', 'À faire'],
-    ['done', 'Fait'],
-    ['replace', 'Remplacer']
-  ];
-  const checkStatusChoices = [
-    ['todo', 'À contrôler'],
-    ['ok', 'Conforme'],
-    ['action', 'À corriger'],
-    ['replace', 'Remplacer']
-  ];
-  const workshopChecks = [
-    { key: 'niveau_huile_moteur', label: 'Niveau huile moteur' },
-    { key: 'niveau_liquide_refroidissement', label: 'Niveau liquide de refroidissement' },
-    { key: 'niveau_liquide_frein', label: 'Niveau liquide de frein' },
-    { key: 'niveau_lave_glace', label: 'Niveau lave-glace' },
-    { key: 'pression_pneu_av_g', label: 'Pression pneu avant gauche', unit: 'bar' },
-    { key: 'pression_pneu_av_d', label: 'Pression pneu avant droit', unit: 'bar' },
-    { key: 'pression_pneu_ar_g', label: 'Pression pneu arrière gauche', unit: 'bar' },
-    { key: 'pression_pneu_ar_d', label: 'Pression pneu arrière droit', unit: 'bar' },
-    { key: 'essuie_glace_av', label: 'Essuie-glaces avant' },
-    { key: 'essuie_glace_ar', label: 'Essuie-glace arrière' },
-    { key: 'feux_position', label: 'Feux de position' },
-    { key: 'feux_croisement', label: 'Feux de croisement' },
-    { key: 'feux_route', label: 'Feux de route' },
-    { key: 'feux_stop', label: 'Feux stop' },
-    { key: 'feux_recul', label: 'Feux de recul' },
-    { key: 'feux_antibrouillard_av', label: 'Antibrouillards avant' },
-    { key: 'feux_antibrouillard_ar', label: 'Antibrouillard arrière' },
-    { key: 'feux_plaque', label: 'Éclairage de plaque' },
-    { key: 'clignotant_av_g', label: 'Clignotant avant gauche' },
-    { key: 'clignotant_av_d', label: 'Clignotant avant droit' },
-    { key: 'clignotant_ar_g', label: 'Clignotant arrière gauche' },
-    { key: 'clignotant_ar_d', label: 'Clignotant arrière droit' }
-  ];
-
-  let activeServicePromise = null;
   const esc = (value) => A()?.esc ? A().esc(value ?? '') : String(value ?? '');
-  const normalize = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const baseStatuses = [
+    ['non_controle', 'Non contrôlé'],
+    ['conforme', 'Conforme'],
+    ['surveiller', 'À surveiller'],
+    ['remplacer', 'À remplacer']
+  ];
+  const serviceStatuses = [
+    ['a_faire', 'À faire'],
+    ['fait', 'Fait'],
+    ['remplacer', 'Remplacer']
+  ];
+  const extraControls = [
+    ['niveau_huile_moteur', 'Niveau huile moteur'],
+    ['niveau_liquide_refroidissement', 'Niveau liquide de refroidissement'],
+    ['niveau_lave_glace', 'Niveau lave-glace'],
+    ['essuie_glace_av', 'Essuie-glaces avant'],
+    ['essuie_glace_ar', 'Essuie-glace arrière'],
+    ['feu_position_av_g', 'Feu de position avant gauche'],
+    ['feu_position_av_d', 'Feu de position avant droit'],
+    ['feu_position_ar_g', 'Feu de position arrière gauche'],
+    ['feu_position_ar_d', 'Feu de position arrière droit'],
+    ['feu_croisement_g', 'Feu de croisement gauche'],
+    ['feu_croisement_d', 'Feu de croisement droit'],
+    ['feu_route_g', 'Feu de route gauche'],
+    ['feu_route_d', 'Feu de route droit'],
+    ['feu_stop_g', 'Feu stop gauche'],
+    ['feu_stop_d', 'Feu stop droit'],
+    ['feu_stop_central', 'Troisième feu stop'],
+    ['feu_recul_g', 'Feu de recul gauche'],
+    ['feu_recul_d', 'Feu de recul droit'],
+    ['antibrouillard_av_g', 'Antibrouillard avant gauche'],
+    ['antibrouillard_av_d', 'Antibrouillard avant droit'],
+    ['antibrouillard_ar', 'Antibrouillard arrière'],
+    ['eclairage_plaque_g', 'Éclairage de plaque gauche'],
+    ['eclairage_plaque_d', 'Éclairage de plaque droit'],
+    ['clignotant_av_g', 'Clignotant avant gauche'],
+    ['clignotant_av_d', 'Clignotant avant droit'],
+    ['clignotant_ar_g', 'Clignotant arrière gauche'],
+    ['clignotant_ar_d', 'Clignotant arrière droit'],
+    ['repetiteur_g', 'Répétiteur latéral gauche'],
+    ['repetiteur_d', 'Répétiteur latéral droit'],
+    ['feux_detresse', 'Feux de détresse']
+  ];
+  let activeServicesPromise = null;
 
   async function activeServices() {
-    if (!activeServicePromise) {
-      activeServicePromise = A().db.from('site_services')
-        .select('external_service_id,name,slug,category')
-        .eq('active', true)
-        .then(({ data, error }) => {
-          if (error) throw error;
-          return new Map((data || []).filter((service) => service.external_service_id).map((service) => [service.external_service_id, service]));
-        })
-        .catch(() => new Map());
+    if (!activeServicesPromise) {
+      activeServicesPromise = A().db.from('site_services').select('external_service_id,name').eq('active', true).then(({ data, error }) => {
+        if (error) throw error;
+        return new Map((data || []).filter((row) => row.external_service_id).map((row) => [row.external_service_id, row.name]));
+      }).catch(() => new Map());
     }
-    return activeServicePromise;
+    return activeServicesPromise;
   }
 
-  function selectHtml(attribute, key, current, choices) {
-    const allowed = new Set(choices.map(([value]) => value));
-    let selected = allowed.has(current) ? current : choices[0][0];
-    if (choices === checkStatusChoices && current === 'done') selected = 'ok';
-    if (choices === serviceStatusChoices && current === 'ok') selected = 'done';
-    return `<select ${attribute}="${esc(key)}">${choices.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`;
+  function statusButtons(key, current, choices) {
+    return choices.map(([value, label]) => `<button type="button" class="btn ${current === value ? 'primary' : 'ghost'}" data-control-status="${value}">${esc(label)}</button>`).join('');
   }
 
-  function checklistHtml(values = {}) {
-    return `<section data-workshop-checks class="card" style="margin-top:12px;padding:12px">
-      <h4>Contrôles complémentaires</h4>
-      <p class="muted">Ces points ne sont pas des prestations EDM28 : ils sont notés À contrôler, Conforme, À corriger ou Remplacer.</p>
-      <div class="grid2">${workshopChecks.map((item) => {
-        const value = values?.[item.key] || {};
-        const status = typeof value === 'string' ? value : value.status || 'todo';
-        const measure = typeof value === 'object' ? value.measure ?? '' : '';
-        return `<label>${esc(item.label)}${item.unit ? `<div class="toolbar"><input data-workshop-measure="${item.key}" type="number" min="0" step="0.1" value="${esc(measure)}" placeholder="${item.unit}" style="min-width:0"><span class="muted">${item.unit}</span></div>` : ''}${selectHtml('data-workshop-status', item.key, status, checkStatusChoices)}</label>`;
-      }).join('')}</div>
-    </section>`;
+  function controlCard(key, label, current, choices) {
+    return `<article class="card" data-control="${esc(key)}" data-status="${esc(current)}" style="padding:12px;margin:8px 0">
+      <strong>${esc(label)}</strong>
+      <div class="toolbar" style="margin-top:8px">${statusButtons(key, current, choices)}</div>
+      <input data-control-note type="hidden" value="">
+    </article>`;
   }
 
-  function serviceEntries(row, activeMap) {
-    const requested = Array.isArray(row.service_requests?.services) ? row.service_requests.services : [];
-    const exact = requested
-      .map((service) => {
-        const id = String(service?.id || '');
-        const active = activeMap.get(id);
-        if (!active) return null;
-        return { id, name: service?.name || active.name || id };
-      })
-      .filter(Boolean);
-    if (exact.length) return exact;
-
-    const work = Array.isArray(row.authorized_work) ? row.authorized_work : [];
-    const found = [];
-    for (const active of activeMap.values()) {
-      const serviceName = normalize(active.name);
-      if (!serviceName) continue;
-      const matched = work.some((item) => {
-        const text = normalize(`${item?.designation || item?.name || ''} ${item?.description || ''}`);
-        if (!text) return false;
-        if (text.includes(serviceName) || serviceName.includes(text)) return true;
-        if (/plaquette/.test(serviceName) && /plaquette/.test(text)) return true;
-        if (/disque/.test(serviceName) && /disque/.test(text)) return true;
-        if (/purge|liquide de frein/.test(serviceName) && /purge|liquide de frein/.test(text)) return true;
-        if (/triangle/.test(serviceName) && /triangle/.test(text)) return true;
-        if (/rotule|direction/.test(serviceName) && /rotule|direction/.test(text)) return true;
-        if (/stabilis/.test(serviceName) && /stabilis/.test(text)) return true;
-        return false;
+  function bindStatusButtons(root) {
+    root.querySelectorAll('[data-control-status]').forEach((button) => {
+      if (button.dataset.workflowBound === 'true') return;
+      button.dataset.workflowBound = 'true';
+      button.addEventListener('click', () => {
+        const row = button.closest('[data-control]');
+        row.dataset.status = button.dataset.controlStatus;
+        row.querySelectorAll('[data-control-status]').forEach((choice) => {
+          choice.className = `btn ${choice === button ? 'primary' : 'ghost'}`;
+        });
       });
-      if (matched) found.push({ id: active.external_service_id, name: active.name });
-    }
-    return found;
-  }
-
-  function serviceStatusHtml(entries, values = {}) {
-    if (!entries.length) return '';
-    return `<section data-service-statuses class="card" style="margin-top:12px;padding:12px">
-      <h4>Suivi des prestations EDM28</h4>
-      <p class="muted">Le statut « Fait » est disponible uniquement pour les services actuellement proposés par EDM28.</p>
-      <div class="grid2">${entries.map((service) => {
-        const stored = values?.[service.id];
-        const status = typeof stored === 'string' ? stored : stored?.status || 'todo';
-        return `<label><strong>${esc(service.name)}</strong>${selectHtml('data-service-status', service.id, status, serviceStatusChoices)}</label>`;
-      }).join('')}</div>
-    </section>`;
-  }
-
-  function readChecklist(card) {
-    const result = {};
-    workshopChecks.forEach((item) => {
-      const status = card.querySelector(`[data-workshop-status="${item.key}"]`)?.value || 'todo';
-      const measureInput = card.querySelector(`[data-workshop-measure="${item.key}"]`);
-      result[item.key] = {
-        status,
-        measure: measureInput && measureInput.value !== '' ? Number(measureInput.value) : null
-      };
     });
-    const serviceStatuses = {};
-    card.querySelectorAll('[data-service-status]').forEach((select) => {
-      serviceStatuses[select.dataset.serviceStatus] = { status: select.value };
-    });
-    result.service_statuses = serviceStatuses;
-    return result;
   }
 
-  async function decorateOrders() {
+  async function enhanceInterventions() {
     const app = A();
-    const host = document.getElementById('repairOrderList');
+    const host = document.getElementById('interventionList');
     if (!app?.db || !host) return;
-    const cards = [...host.querySelectorAll('[data-repair-order]')];
-    if (!cards.length) return;
-    const ids = cards.map((card) => card.dataset.repairOrder).filter(Boolean);
-    if (!ids.length) return;
-    const [result, activeMap] = await Promise.all([
-      app.db.from('repair_orders').select('id,internal_saved_at,workshop_checks,authorized_work,service_request_id,service_requests(services)').in('id', ids),
+    const opened = [...host.querySelectorAll('[data-order]')].filter((card) => {
+      const detail = card.querySelector('[data-detail]');
+      return detail && !detail.classList.contains('hidden') && !detail.dataset.workflowEnhanced;
+    });
+    if (!opened.length) return;
+
+    const ids = opened.map((card) => card.dataset.order).filter(Boolean);
+    const [ordersResult, reportsResult, servicesMap] = await Promise.all([
+      app.db.from('repair_orders').select('id,service_request_id,service_requests(services)').in('id', ids),
+      app.db.from('inspection_reports').select('repair_order_id,checks').in('repair_order_id', ids),
       activeServices()
     ]);
-    if (result.error) return;
-    const rows = new Map((result.data || []).map((row) => [row.id, row]));
+    if (ordersResult.error || reportsResult.error) return;
+    const orders = new Map((ordersResult.data || []).map((row) => [row.id, row]));
+    const reports = new Map((reportsResult.data || []).map((row) => [row.repair_order_id, row]));
 
-    cards.forEach((card) => {
-      const row = rows.get(card.dataset.repairOrder);
-      if (!row) return;
-      if (row.internal_saved_at) {
-        card.remove();
-        return;
+    opened.forEach((card) => {
+      const order = orders.get(card.dataset.order);
+      const report = reports.get(card.dataset.order);
+      const detail = card.querySelector('[data-detail]');
+      if (!order || !detail) return;
+      const checks = report?.checks || {};
+      const requested = Array.isArray(order.service_requests?.services) ? order.service_requests.services : [];
+      const offered = requested.filter((service) => servicesMap.has(String(service?.id || '')));
+
+      if (offered.length && !detail.querySelector('[data-edm-service-progress]')) {
+        const measureHeading = [...detail.querySelectorAll('h3')].find((node) => /mesures et contrôles/i.test(node.textContent || ''));
+        const section = document.createElement('section');
+        section.dataset.edmServiceProgress = 'true';
+        section.innerHTML = `<h3>Prestations EDM28</h3><p class="muted">Le statut « Fait » est réservé aux services proposés par EDM28.</p>${offered.map((service) => {
+          const key = `service_${String(service.id).replace(/[^a-z0-9_-]/gi, '_')}`;
+          const stored = checks[key];
+          const current = typeof stored === 'string' ? stored : stored?.status || 'a_faire';
+          return controlCard(key, service.name || servicesMap.get(String(service.id)) || service.id, current, serviceStatuses);
+        }).join('')}`;
+        if (measureHeading) measureHeading.insertAdjacentElement('beforebegin', section);
+        else detail.prepend(section);
       }
 
-      const totals = card.querySelector('[data-order-total]')?.closest('.grid2');
-      const saveButton = card.querySelector('[data-save-order]');
-      const anchor = totals || saveButton;
-      const entries = serviceEntries(row, activeMap);
-      if (!card.querySelector('[data-service-statuses]') && entries.length && anchor) {
-        anchor.insertAdjacentHTML('beforebegin', serviceStatusHtml(entries, row.workshop_checks?.service_statuses || {}));
-      }
-      if (!card.querySelector('[data-workshop-checks]') && anchor) {
-        anchor.insertAdjacentHTML('beforebegin', checklistHtml(row.workshop_checks || {}));
+      if (!detail.querySelector('[data-edm-extra-checks]')) {
+        const photosHeading = [...detail.querySelectorAll('h3')].find((node) => /photos avant/i.test(node.textContent || ''));
+        const section = document.createElement('section');
+        section.dataset.edmExtraChecks = 'true';
+        section.innerHTML = `<h3>Contrôles complémentaires</h3><p class="muted">Les pressions des pneus et le liquide de frein sont déjà présents dans les contrôles principaux.</p>${extraControls.map(([key, label]) => {
+          const stored = checks[key];
+          const current = typeof stored === 'string' ? stored : stored?.status || 'non_controle';
+          return controlCard(key, label, current, baseStatuses);
+        }).join('')}`;
+        if (photosHeading) photosHeading.insertAdjacentElement('beforebegin', section);
+        else detail.appendChild(section);
       }
 
-      if (!saveButton || saveButton.dataset.workflowBound === 'true') return;
-      saveButton.dataset.workflowBound = 'true';
-      saveButton.addEventListener('click', () => {
-        const snapshot = readChecklist(card);
-        const statusNode = document.getElementById('repairOrderStatus');
-        if (!statusNode) return;
-        const observer = new MutationObserver(async () => {
-          const message = String(statusNode.textContent || '');
-          if (!/enregistré en interne/i.test(message) || statusNode.classList.contains('error')) return;
-          observer.disconnect();
-          const now = new Date().toISOString();
-          const updated = await app.db.from('repair_orders').update({ workshop_checks: snapshot, internal_saved_at: now, updated_at: now }).eq('id', card.dataset.repairOrder).select('id');
-          if (updated.error) {
-            app.status('repairOrderStatus', `Ordre enregistré, mais suivi atelier non sauvegardé : ${updated.error.message}`, true);
-            return;
-          }
-          card.remove();
-          if (!host.querySelector('[data-repair-order]')) host.innerHTML = '<p class="muted">Aucun ordre de réparation à enregistrer en interne.</p>';
-          await app.overview();
-        });
-        observer.observe(statusNode, { childList: true, subtree: true, attributes: true });
-        window.setTimeout(() => observer.disconnect(), 15000);
-      });
+      bindStatusButtons(detail);
+      detail.dataset.workflowEnhanced = 'true';
     });
-
-    if (!host.querySelector('[data-repair-order]')) {
-      host.innerHTML = '<p class="muted">Aucun ordre de réparation à enregistrer en interne.</p>';
-    }
   }
 
   async function refreshWorkflowKpis() {
@@ -224,7 +163,6 @@
     const requestsProcessed = activeRequests.filter((request) => quoteRequestIds.has(request.id) || ['quoted','closed','completed'].includes(request.status)).length;
     const quotesCreated = quotes.length;
     const quotesToCreate = activeRequests.filter((request) => !quoteRequestIds.has(request.id)).length;
-
     host.querySelectorAll('[data-workflow-kpi]').forEach((node) => node.remove());
     const cards = [
       ['Demandes à traiter', requestsToTreat],
@@ -254,19 +192,18 @@
     let attempts = 0;
     const timer = window.setInterval(() => {
       attempts += 1;
-      const installed = installOverviewWrapper();
-      if (installed || attempts > 80) window.clearInterval(timer);
+      if (installOverviewWrapper() || attempts > 80) window.clearInterval(timer);
     }, 100);
 
-    const rootObserver = new MutationObserver(() => decorateOrders().catch(() => {}));
+    const observer = new MutationObserver(() => enhanceInterventions().catch(() => {}));
     const dashboard = document.getElementById('dashboard');
-    if (dashboard) rootObserver.observe(dashboard, { childList: true, subtree: true });
+    if (dashboard) observer.observe(dashboard, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
     document.addEventListener('click', (event) => {
-      if (event.target.closest('[data-page="repair-orders"],#repairOrderRefresh')) {
-        window.setTimeout(() => decorateOrders().catch(() => {}), 100);
+      if (event.target.closest('[data-page="interventions"],#interventionRefresh,[data-open]')) {
+        window.setTimeout(() => enhanceInterventions().catch(() => {}), 150);
+        window.setTimeout(() => enhanceInterventions().catch(() => {}), 700);
       }
     });
-    window.setTimeout(() => decorateOrders().catch(() => {}), 300);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });
