@@ -3,14 +3,17 @@
   window.__edmClientFinalPatchInstalled = true;
 
   const BUCKET = 'repair-documents';
+  const HOME_TITLE_COLOR = '#2b3032';
   const style = document.createElement('style');
   style.id = 'edm-client-final-patch-style';
   style.textContent = `
     .nav [data-page="home"],
     .nav [data-page="home"].active,
     .nav [data-page="home"] * { color:#050505 !important; }
+    #home h1,
+    #home h1::first-line,
     #home h1 [data-edm-votre-force],
-    #home h1 .edm-votre-black { color:inherit !important; text-shadow:inherit !important; }
+    #home h1 .edm-votre-black { color:${HOME_TITLE_COLOR} !important; text-shadow:none !important; }
     .edm-mail-row-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
     .edm-mail-row-actions .btn{min-height:34px;padding:7px 10px;font-size:.84rem}
   `;
@@ -35,9 +38,11 @@
   function normalizeVotreColor() {
     const h1 = document.querySelector('#home h1');
     if (!h1) return;
+    h1.style.setProperty('color', HOME_TITLE_COLOR, 'important');
+    h1.style.setProperty('text-shadow', 'none', 'important');
     h1.querySelectorAll('[data-edm-votre-force], .edm-votre-black').forEach((word) => {
-      word.style.setProperty('color', 'inherit', 'important');
-      word.style.setProperty('text-shadow', 'inherit', 'important');
+      word.style.setProperty('color', HOME_TITLE_COLOR, 'important');
+      word.style.setProperty('text-shadow', 'none', 'important');
     });
   }
 
