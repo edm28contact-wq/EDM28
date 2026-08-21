@@ -9,6 +9,8 @@
     .nav [data-page="home"],
     .nav [data-page="home"].active,
     .nav [data-page="home"] * { color:#050505 !important; }
+    #home h1 [data-edm-votre-force],
+    #home h1 .edm-votre-black { color:#050505 !important; text-shadow:none !important; }
     .edm-mail-row-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
     .edm-mail-row-actions .btn{min-height:34px;padding:7px 10px;font-size:.84rem}
   `;
@@ -28,6 +30,23 @@
       node.style.setProperty('color', '#050505', 'important');
       node.querySelectorAll('*').forEach((child) => child.style.setProperty('color', '#050505', 'important'));
     });
+  }
+
+  function keepVotreBlack() {
+    const h1 = document.querySelector('#home h1');
+    if (!h1) return;
+    const text = String(h1.textContent || '').trim().replace(/\s+/g, ' ');
+    if (text.toLowerCase() !== 'votre sécurité, notre expertise.'.toLowerCase()) return;
+
+    let word = h1.querySelector('[data-edm-votre-force], .edm-votre-black');
+    if (!word) {
+      h1.innerHTML = '<span data-edm-votre-force="1">Votre</span> sécurité, notre expertise.';
+      word = h1.querySelector('[data-edm-votre-force]');
+    }
+    if (word) {
+      word.style.setProperty('color', '#050505', 'important');
+      word.style.setProperty('text-shadow', 'none', 'important');
+    }
   }
 
   async function currentUser() {
@@ -224,7 +243,10 @@
 
   function install() {
     keepHomeBlack();
+    keepVotreBlack();
     enhanceRows();
+
+    window.addEventListener('load', () => window.setTimeout(keepVotreBlack, 0), { once: true });
 
     document.addEventListener('click', (event) => {
       const row = event.target.closest('#edmMailList [data-mail-id]');
@@ -237,6 +259,7 @@
 
     const observer = new MutationObserver(() => {
       keepHomeBlack();
+      keepVotreBlack();
       enhanceRows();
     });
     observer.observe(document.body, { childList: true, subtree: true });
