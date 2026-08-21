@@ -11,6 +11,7 @@
     { src: '/client-inspections.js?v=1', attr: 'data-edm-inspections' },
     { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' },
     { src: '/client-document-download.js?v=1', attr: 'data-edm-document-downloads' },
+    { src: '/client-messages.js?v=1', attr: 'data-edm-messages' },
     { src: '/combo-suspended.js?v=1', attr: 'data-edm-combo-policy' },
     { src: '/client-basket-pricing.js?v=1', attr: 'data-edm-basket-pricing' },
     { src: '/client-note-guidance.js?v=1', attr: 'data-edm-note-guidance' },
