@@ -122,11 +122,9 @@ test('submitted requests are loaded and refreshed in client history', async () =
   assert.match(loader, /request-submit-safe\.js\?v=4/);
 });
 
-test('messaging loop uses final inbox with guarded RPCs and explicit human approval', async () => {
-  const [loader, finalInbox, finalPatch, legacyClient, admin, router, ai, migration, hardening] = await Promise.all([
+test('messaging loop restores stable inbox with guarded RPCs and delete support', async () => {
+  const [loader, client, admin, router, ai, migration, hardening] = await Promise.all([
     read('client-simple-flow.js'),
-    read('client-final-experience.js'),
-    read('client-final-patch.js'),
     read('client-messages.js'),
     read('admin-messages.js'),
     read('client-navigation-visible.js'),
@@ -135,16 +133,16 @@ test('messaging loop uses final inbox with guarded RPCs and explicit human appro
     read('supabase/migrations/20260724193000_client_messaging_hardening.sql')
   ]);
 
-  assert.doesNotMatch(loader, /client-messages\.js\?v=1/);
+  assert.match(loader, /client-messages\.js\?v=2/);
+  assert.match(loader, /__edmClientFinalExperienceInstalled\s*=\s*true/);
+  assert.match(loader, /data-edm-votre-black/);
   assert.match(router, /'messages'/);
-  assert.match(finalInbox, /rpc\('client_send_message'/);
-  assert.match(finalInbox, /rpc\('client_mark_messages_read'/);
-  assert.match(finalInbox, /rpc\('client_delete_message'/);
-  assert.match(finalPatch, /rpc\('client_delete_message'/);
-  assert.match(finalPatch, /data-mail-id/);
-  assert.match(legacyClient, /rpc\('client_send_message'/);
-  assert.match(legacyClient, /rpc\('client_mark_messages_read'/);
-  assert.match(legacyClient, /read_by_admin/);
+  assert.match(client, /rpc\('client_send_message'/);
+  assert.match(client, /rpc\('client_mark_messages_read'/);
+  assert.match(client, /rpc\('client_delete_message'/);
+  assert.match(client, /data-delete-message/);
+  assert.match(client, /Nouveau message/);
+  assert.match(client, /read_by_admin/);
   assert.match(admin, /rpc\('admin_send_message'/);
   assert.match(admin, /Envoyer après validation/);
   assert.match(admin, /if \(!this\.isActive\(\)\) return/);
