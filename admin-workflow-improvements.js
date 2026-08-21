@@ -19,6 +19,8 @@
     ['non_conforme', 'Non conforme']
   ];
 
+  const pressureKeys = ['pression_av_g', 'pression_av_d', 'pression_ar_g', 'pression_ar_d'];
+
   const levelControls = [
     ['niveau_huile_moteur', 'Niveau huile moteur'],
     ['niveau_liquide_refroidissement', 'Niveau liquide de refroidissement'],
@@ -56,6 +58,16 @@
     ['feux_detresse', 'Feux de détresse']
   ];
 
+  const serviceControlMap = {
+    FR_PLAQ_AV: ['plaquettes_av_g', 'plaquettes_av_d'],
+    FR_PLAQ_AR: ['plaquettes_ar_g', 'plaquettes_ar_d'],
+    FR_PLAQ_AV_AR: ['plaquettes_av_g', 'plaquettes_av_d', 'plaquettes_ar_g', 'plaquettes_ar_d'],
+    FR_DISC_PLAQ_AV: ['disque_av_g', 'disque_av_d', 'plaquettes_av_g', 'plaquettes_av_d'],
+    FR_DISC_PLAQ_AR: ['disque_ar_g', 'disque_ar_d', 'plaquettes_ar_g', 'plaquettes_ar_d'],
+    FR_DISC_PLAQ_AV_AR: ['disque_av_g', 'disque_av_d', 'disque_ar_g', 'disque_ar_d', 'plaquettes_av_g', 'plaquettes_av_d', 'plaquettes_ar_g', 'plaquettes_ar_d'],
+    FR_PURGE: ['liquide_frein']
+  };
+
   let activeServicesPromise = null;
 
   async function activeServices() {
@@ -72,8 +84,8 @@
     return choices.map(([value, label]) => `<button type="button" class="btn ${current === value ? 'primary' : 'ghost'}" data-control-status="${value}">${esc(label)}</button>`).join('');
   }
 
-  function controlCard(key, label, current, choices) {
-    return `<article class="card" data-control="${esc(key)}" data-status="${esc(current)}" style="padding:12px;margin:8px 0">
+  function controlCard(key, label, current, choices, attrs = '') {
+    return `<article class="card" data-control="${esc(key)}" data-status="${esc(current)}" ${attrs} style="padding:12px;margin:8px 0">
       <strong>${esc(label)}</strong>
       <div class="toolbar" style="margin-top:8px">${statusButtons(current, choices)}</div>
       <input data-control-note type="hidden" value="">
@@ -93,9 +105,17 @@
     return fallback;
   }
 
+  function setRowStatus(row, status) {
+    if (!row) return;
+    row.dataset.status = status;
+    row.querySelectorAll('[data-control-status]').forEach((button) => {
+      button.className = `btn ${button.dataset.controlStatus === status ? 'primary' : 'ghost'}`;
+    });
+  }
+
   function reconfigureExistingControl(detail, key, label, choices, checks) {
     const row = detail.querySelector(`[data-control="${key}"]`);
-    if (!row) return;
+    if (!row) return null;
     if (label) {
       const title = row.querySelector('strong');
       if (title) title.textContent = label;
@@ -106,6 +126,39 @@
     row.dataset.status = current || 'non_controle';
     const toolbar = row.querySelector('.toolbar');
     if (toolbar) toolbar.innerHTML = statusButtons(current, choices);
+    return row;
+  }
+
+  function applyServiceVisibility(detail) {
+    const serviceRows = [...detail.querySelectorAll('[data-service-id]')];
+    const statusByService = new Map(serviceRows.map((row) => [row.dataset.serviceId, row.dataset.status || 'a_faire']));
+    const controlsToServices = new Map();
+
+    serviceRows.forEach((row) => {
+      const serviceId = row.dataset.serviceId;
+      (serviceControlMap[serviceId] || []).forEach((controlKey) => {
+        if (!controlsToServices.has(controlKey)) controlsToServices.set(controlKey, []);
+        controlsToServices.get(controlKey).push(serviceId);
+      });
+    });
+
+    controlsToServices.forEach((serviceIds, controlKey) => {
+      const row = detail.querySelector(`[data-control="${controlKey}"]`);
+      if (!row) return;
+      const completed = serviceIds.length > 0 && serviceIds.every((serviceId) => statusByService.get(serviceId) === 'fait');
+      if (completed) {
+        if (!row.dataset.statusBeforeService) row.dataset.statusBeforeService = row.dataset.status || 'non_controle';
+        row.hidden = true;
+        setRowStatus(row, controlKey === 'liquide_frein' ? 'fait' : 'conforme');
+      } else if (row.dataset.statusBeforeService) {
+        row.hidden = false;
+        const previous = row.dataset.statusBeforeService;
+        delete row.dataset.statusBeforeService;
+        setRowStatus(row, previous);
+      } else {
+        row.hidden = false;
+      }
+    });
   }
 
   function bindStatusButtons(root) {
@@ -114,10 +167,8 @@
       button.dataset.workflowBound = 'true';
       button.addEventListener('click', () => {
         const row = button.closest('[data-control]');
-        row.dataset.status = button.dataset.controlStatus;
-        row.querySelectorAll('[data-control-status]').forEach((choice) => {
-          choice.className = `btn ${choice === button ? 'primary' : 'ghost'}`;
-        });
+        setRowStatus(row, button.dataset.controlStatus);
+        if (row?.dataset.serviceId) applyServiceVisibility(root);
       });
     });
   }
@@ -155,19 +206,20 @@
         const measureHeading = [...detail.querySelectorAll('h3')].find((node) => /mesures et contrôles/i.test(node.textContent || ''));
         const section = document.createElement('section');
         section.dataset.edmServiceProgress = 'true';
-        section.innerHTML = `<h3>Prestations EDM28</h3><p class="muted">À faire / Fait / Remplacer uniquement pour les prestations EDM28 demandées.</p>${offered.map((service) => {
-          const key = `service_${String(service.id).replace(/[^a-z0-9_-]/gi, '_')}`;
+        section.innerHTML = `<h3>Prestations EDM28</h3><p class="muted">Quand une prestation passe à « Fait », ses mesures correspondantes disparaissent automatiquement.</p>${offered.map((service) => {
+          const serviceId = String(service.id || '');
+          const key = `service_${serviceId.replace(/[^a-z0-9_-]/gi, '_')}`;
           const stored = checks[key];
           const raw = typeof stored === 'string' ? stored : stored?.status || 'a_faire';
           const current = normalizeStatus(raw, serviceStatuses, 'a_faire');
-          return controlCard(key, service.name || servicesMap.get(String(service.id)) || service.id, current, serviceStatuses);
+          return controlCard(key, service.name || servicesMap.get(serviceId) || serviceId, current, serviceStatuses, `data-service-id="${esc(serviceId)}"`);
         }).join('')}`;
         if (measureHeading) measureHeading.insertAdjacentElement('beforebegin', section);
         else detail.prepend(section);
       }
 
       reconfigureExistingControl(detail, 'liquide_frein', 'Niveau liquide de frein', levelStatuses, checks);
-      ['pression_av_g','pression_av_d','pression_ar_g','pression_ar_d'].forEach((key) => reconfigureExistingControl(detail, key, null, conformStatuses, checks));
+      pressureKeys.forEach((key) => reconfigureExistingControl(detail, key, null, conformStatuses, checks));
 
       if (!detail.querySelector('[data-edm-extra-checks]')) {
         const photosHeading = [...detail.querySelectorAll('h3')].find((node) => /photos avant/i.test(node.textContent || ''));
@@ -175,21 +227,29 @@
         section.dataset.edmExtraChecks = 'true';
         section.innerHTML = `<h3>Contrôles complémentaires</h3>
           <p class="muted">Niveaux : À faire / Fait. Pression pneus, essuie-glaces, éclairage et klaxon : Conforme / Non conforme.</p>
-          ${levelControls.map(([key, label]) => {
+          <h4>Pression des pneus</h4><div data-edm-pressure-checks></div>
+          <h4>Niveaux</h4>${levelControls.map(([key, label]) => {
             const stored = checks[key];
             const raw = typeof stored === 'string' ? stored : stored?.status || 'a_faire';
             return controlCard(key, label, normalizeStatus(raw, levelStatuses, 'a_faire'), levelStatuses);
           }).join('')}
-          ${conformityControls.map(([key, label]) => {
+          <h4>Équipements et éclairage</h4>${conformityControls.map(([key, label]) => {
             const stored = checks[key];
             const raw = typeof stored === 'string' ? stored : stored?.status || '';
             return controlCard(key, label, normalizeStatus(raw, conformStatuses, ''), conformStatuses);
           }).join('')}`;
         if (photosHeading) photosHeading.insertAdjacentElement('beforebegin', section);
         else detail.appendChild(section);
+
+        const pressureHost = section.querySelector('[data-edm-pressure-checks]');
+        pressureKeys.forEach((key) => {
+          const row = detail.querySelector(`[data-control="${key}"]`);
+          if (row && pressureHost) pressureHost.appendChild(row);
+        });
       }
 
       bindStatusButtons(detail);
+      applyServiceVisibility(detail);
       detail.dataset.workflowEnhanced = 'true';
     });
   }
