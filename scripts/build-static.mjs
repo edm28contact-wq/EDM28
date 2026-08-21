@@ -32,12 +32,10 @@ const scripts = [
   '/white-background.js?v=2',
   '/light-palette-final.js?v=2',
   '/mid-palette-final.js?v=1',
-  '/client-simple-flow.js?v=9',
-  '/combo-suspended.js?v=1',
-  '/client-final-experience.js?v=2',
-  '/client-final-patch.js?v=1'
+  '/client-simple-flow.js?v=10',
+  '/combo-suspended.js?v=1'
 ];
-const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var scripts=${JSON.stringify(scripts)};scripts.reduce(function(p,src){return p.then(function(){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.body.appendChild(s);});});},Promise.resolve()).catch(function(error){console.error('EDM module load error',error);});});<\/script>`;
+const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var scripts=${JSON.stringify(scripts)};scripts.reduce(function(p,src){return p.then(function(){return new Promise(function(resolve){var s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=function(){console.error('EDM module load error',src);resolve();};document.body.appendChild(s);});});},Promise.resolve());});<\/script>`;
 html = html.replace('</body>', `${loader}</body>`);
 await writeFile(join(output, 'index.html'), html);
 
