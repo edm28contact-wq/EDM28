@@ -2,6 +2,24 @@
   if (window.__edmClientFlowLoader) return;
   window.__edmClientFlowLoader = true;
 
+  // Keep the stable client pages and prevent the experimental replacement modules
+  // from taking over history/messaging/home when they are loaded later by the shell.
+  window.__edmClientFinalExperienceInstalled = true;
+  window.__edmClientFinalPatchInstalled = true;
+
+  function forceVotreBlack() {
+    const h1 = document.querySelector('#home h1');
+    if (!h1) return;
+    const existing = h1.querySelector('[data-edm-votre-black]');
+    if (existing) {
+      existing.style.setProperty('color', '#050505', 'important');
+      existing.style.setProperty('text-shadow', 'none', 'important');
+      return;
+    }
+    if (!/\bVOTRE\b/i.test(h1.textContent || '')) return;
+    h1.innerHTML = h1.innerHTML.replace(/\b(VOTRE|Votre)\b/, '<span data-edm-votre-black style="color:#050505!important;text-shadow:none!important">$1</span>');
+  }
+
   const scripts = [
     { src: '/client-password-flow.js?v=2', attr: 'data-edm-password' },
     { src: '/client-step3-fixes.js?v=2', attr: 'data-edm-step3' },
@@ -11,6 +29,7 @@
     { src: '/client-inspections.js?v=1', attr: 'data-edm-inspections' },
     { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' },
     { src: '/client-document-download.js?v=1', attr: 'data-edm-document-downloads' },
+    { src: '/client-messages.js?v=2', attr: 'data-edm-messages' },
     { src: '/combo-suspended.js?v=1', attr: 'data-edm-combo-policy' },
     { src: '/client-basket-pricing.js?v=1', attr: 'data-edm-basket-pricing' },
     { src: '/client-note-guidance.js?v=1', attr: 'data-edm-note-guidance' },
@@ -35,6 +54,12 @@
     script.addEventListener('error', () => reject(new Error(`Module indisponible : ${src}`)), { once: true });
     document.body.appendChild(script);
   });
+
+  const observer = new MutationObserver(forceVotreBlack);
+  if (document.documentElement) observer.observe(document.documentElement, { childList: true, subtree: true });
+  forceVotreBlack();
+  window.setTimeout(forceVotreBlack, 200);
+  window.setTimeout(forceVotreBlack, 1000);
 
   scripts.reduce((chain, item) => chain.then(() => loadScript(item)), Promise.resolve())
     .catch((error) => console.error('EDM client flow loader:', error));
