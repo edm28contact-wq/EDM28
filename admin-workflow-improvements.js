@@ -3,9 +3,15 @@
   window.__edmAdminWorkflowImprovementsInstalled = true;
 
   const A = () => window.EDMAdmin;
-  const statusChoices = [
+  const serviceStatusChoices = [
     ['todo', 'À faire'],
     ['done', 'Fait'],
+    ['replace', 'Remplacer']
+  ];
+  const checkStatusChoices = [
+    ['todo', 'À contrôler'],
+    ['ok', 'Conforme'],
+    ['action', 'À corriger'],
     ['replace', 'Remplacer']
   ];
   const workshopChecks = [
@@ -33,21 +39,88 @@
     { key: 'clignotant_ar_d', label: 'Clignotant arrière droit' }
   ];
 
+  let activeServicePromise = null;
   const esc = (value) => A()?.esc ? A().esc(value ?? '') : String(value ?? '');
+  const normalize = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-  function selectHtml(key, current) {
-    return `<select data-workshop-status="${key}">${statusChoices.map(([value, label]) => `<option value="${value}" ${current === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`;
+  async function activeServices() {
+    if (!activeServicePromise) {
+      activeServicePromise = A().db.from('site_services')
+        .select('external_service_id,name,slug,category')
+        .eq('active', true)
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return new Map((data || []).filter((service) => service.external_service_id).map((service) => [service.external_service_id, service]));
+        })
+        .catch(() => new Map());
+    }
+    return activeServicePromise;
+  }
+
+  function selectHtml(attribute, key, current, choices) {
+    const allowed = new Set(choices.map(([value]) => value));
+    let selected = allowed.has(current) ? current : choices[0][0];
+    if (choices === checkStatusChoices && current === 'done') selected = 'ok';
+    if (choices === serviceStatusChoices && current === 'ok') selected = 'done';
+    return `<select ${attribute}="${esc(key)}">${choices.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`;
   }
 
   function checklistHtml(values = {}) {
     return `<section data-workshop-checks class="card" style="margin-top:12px;padding:12px">
-      <h4>Contrôles atelier complémentaires</h4>
-      <p class="muted">Renseigner chaque point : à faire, fait ou à remplacer.</p>
+      <h4>Contrôles complémentaires</h4>
+      <p class="muted">Ces points ne sont pas des prestations EDM28 : ils sont notés À contrôler, Conforme, À corriger ou Remplacer.</p>
       <div class="grid2">${workshopChecks.map((item) => {
         const value = values?.[item.key] || {};
         const status = typeof value === 'string' ? value : value.status || 'todo';
         const measure = typeof value === 'object' ? value.measure ?? '' : '';
-        return `<label>${esc(item.label)}${item.unit ? `<div class="toolbar"><input data-workshop-measure="${item.key}" type="number" min="0" step="0.1" value="${esc(measure)}" placeholder="${item.unit}" style="min-width:0"><span class="muted">${item.unit}</span></div>` : ''}${selectHtml(item.key, status)}</label>`;
+        return `<label>${esc(item.label)}${item.unit ? `<div class="toolbar"><input data-workshop-measure="${item.key}" type="number" min="0" step="0.1" value="${esc(measure)}" placeholder="${item.unit}" style="min-width:0"><span class="muted">${item.unit}</span></div>` : ''}${selectHtml('data-workshop-status', item.key, status, checkStatusChoices)}</label>`;
+      }).join('')}</div>
+    </section>`;
+  }
+
+  function serviceEntries(row, activeMap) {
+    const requested = Array.isArray(row.service_requests?.services) ? row.service_requests.services : [];
+    const exact = requested
+      .map((service) => {
+        const id = String(service?.id || '');
+        const active = activeMap.get(id);
+        if (!active) return null;
+        return { id, name: service?.name || active.name || id };
+      })
+      .filter(Boolean);
+    if (exact.length) return exact;
+
+    const work = Array.isArray(row.authorized_work) ? row.authorized_work : [];
+    const found = [];
+    for (const active of activeMap.values()) {
+      const serviceName = normalize(active.name);
+      if (!serviceName) continue;
+      const matched = work.some((item) => {
+        const text = normalize(`${item?.designation || item?.name || ''} ${item?.description || ''}`);
+        if (!text) return false;
+        if (text.includes(serviceName) || serviceName.includes(text)) return true;
+        if (/plaquette/.test(serviceName) && /plaquette/.test(text)) return true;
+        if (/disque/.test(serviceName) && /disque/.test(text)) return true;
+        if (/purge|liquide de frein/.test(serviceName) && /purge|liquide de frein/.test(text)) return true;
+        if (/triangle/.test(serviceName) && /triangle/.test(text)) return true;
+        if (/rotule|direction/.test(serviceName) && /rotule|direction/.test(text)) return true;
+        if (/stabilis/.test(serviceName) && /stabilis/.test(text)) return true;
+        return false;
+      });
+      if (matched) found.push({ id: active.external_service_id, name: active.name });
+    }
+    return found;
+  }
+
+  function serviceStatusHtml(entries, values = {}) {
+    if (!entries.length) return '';
+    return `<section data-service-statuses class="card" style="margin-top:12px;padding:12px">
+      <h4>Suivi des prestations EDM28</h4>
+      <p class="muted">Le statut « Fait » est disponible uniquement pour les services actuellement proposés par EDM28.</p>
+      <div class="grid2">${entries.map((service) => {
+        const stored = values?.[service.id];
+        const status = typeof stored === 'string' ? stored : stored?.status || 'todo';
+        return `<label><strong>${esc(service.name)}</strong>${selectHtml('data-service-status', service.id, status, serviceStatusChoices)}</label>`;
       }).join('')}</div>
     </section>`;
   }
@@ -62,6 +135,11 @@
         measure: measureInput && measureInput.value !== '' ? Number(measureInput.value) : null
       };
     });
+    const serviceStatuses = {};
+    card.querySelectorAll('[data-service-status]').forEach((select) => {
+      serviceStatuses[select.dataset.serviceStatus] = { status: select.value };
+    });
+    result.service_statuses = serviceStatuses;
     return result;
   }
 
@@ -73,7 +151,10 @@
     if (!cards.length) return;
     const ids = cards.map((card) => card.dataset.repairOrder).filter(Boolean);
     if (!ids.length) return;
-    const result = await app.db.from('repair_orders').select('id,internal_saved_at,workshop_checks').in('id', ids);
+    const [result, activeMap] = await Promise.all([
+      app.db.from('repair_orders').select('id,internal_saved_at,workshop_checks,authorized_work,service_request_id,service_requests(services)').in('id', ids),
+      activeServices()
+    ]);
     if (result.error) return;
     const rows = new Map((result.data || []).map((row) => [row.id, row]));
 
@@ -84,13 +165,18 @@
         card.remove();
         return;
       }
-      if (!card.querySelector('[data-workshop-checks]')) {
-        const saveButton = card.querySelector('[data-save-order]');
-        const totals = card.querySelector('[data-order-total]')?.closest('.grid2');
-        if (totals) totals.insertAdjacentHTML('beforebegin', checklistHtml(row.workshop_checks || {}));
-        else if (saveButton) saveButton.insertAdjacentHTML('beforebegin', checklistHtml(row.workshop_checks || {}));
-      }
+
+      const totals = card.querySelector('[data-order-total]')?.closest('.grid2');
       const saveButton = card.querySelector('[data-save-order]');
+      const anchor = totals || saveButton;
+      const entries = serviceEntries(row, activeMap);
+      if (!card.querySelector('[data-service-statuses]') && entries.length && anchor) {
+        anchor.insertAdjacentHTML('beforebegin', serviceStatusHtml(entries, row.workshop_checks?.service_statuses || {}));
+      }
+      if (!card.querySelector('[data-workshop-checks]') && anchor) {
+        anchor.insertAdjacentHTML('beforebegin', checklistHtml(row.workshop_checks || {}));
+      }
+
       if (!saveButton || saveButton.dataset.workflowBound === 'true') return;
       saveButton.dataset.workflowBound = 'true';
       saveButton.addEventListener('click', () => {
@@ -104,12 +190,11 @@
           const now = new Date().toISOString();
           const updated = await app.db.from('repair_orders').update({ workshop_checks: snapshot, internal_saved_at: now, updated_at: now }).eq('id', card.dataset.repairOrder).select('id');
           if (updated.error) {
-            app.status('repairOrderStatus', `Ordre enregistré, mais checklist non sauvegardée : ${updated.error.message}`, true);
+            app.status('repairOrderStatus', `Ordre enregistré, mais suivi atelier non sauvegardé : ${updated.error.message}`, true);
             return;
           }
-          await decorateOrders();
-          const remaining = host.querySelectorAll('[data-repair-order]').length;
-          if (!remaining) host.innerHTML = '<p class="muted">Aucun ordre de réparation à enregistrer en interne.</p>';
+          card.remove();
+          if (!host.querySelector('[data-repair-order]')) host.innerHTML = '<p class="muted">Aucun ordre de réparation à enregistrer en interne.</p>';
           await app.overview();
         });
         observer.observe(statusNode, { childList: true, subtree: true, attributes: true });
