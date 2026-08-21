@@ -44,9 +44,10 @@ test('account hydration preserves non-empty fields', async () => {
 test('Preview loads protected routes and refreshed password client flow', async () => {
   const source = await read('api/app.js');
   assert.match(source, /client-account-safe\.js\?v=13/);
-  assert.match(source, /client-simple-flow\.js\?v=9/);
-  assert.match(source, /client-final-experience\.js\?v=2/);
-  assert.match(source, /client-final-patch\.js\?v=1/);
+  assert.match(source, /client-simple-flow\.js\?v=10/);
+  assert.doesNotMatch(source, /client-final-experience\.js/);
+  assert.doesNotMatch(source, /client-final-patch\.js/);
+  assert.doesNotMatch(source, /body\{visibility:hidden\}/);
   assert.ok(source.indexOf('accountPrelude') < source.indexOf('integration.js'));
 });
 
@@ -118,7 +119,7 @@ test('submitted requests are loaded and refreshed in client history', async () =
   assert.match(history, /MutationObserver/);
   assert.match(router, /window\.renderRequestHistory/);
   assert.match(app, /request-history\.js\?v=2/);
-  assert.match(app, /client-simple-flow\.js\?v=9/);
+  assert.match(app, /client-simple-flow\.js\?v=10/);
   assert.match(loader, /request-submit-safe\.js\?v=4/);
 });
 
