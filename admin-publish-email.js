@@ -86,7 +86,6 @@
     const current = await A().db.from('quotes').select('id,user_id,status,quote_number,pdf_path,profiles(email)').eq('id', quoteId).maybeSingle();
     if (current.error) throw current.error;
     if (!current.data || current.data.status !== 'draft') throw new Error('Seul un devis brouillon peut être publié.');
-    if (!current.data.profiles?.email) throw new Error('Le client ne possède pas d’adresse email.');
 
     let quoteNumber = root.querySelector('[data-field="number"]')?.value.trim() || '';
     if (!quoteNumber) {
@@ -121,23 +120,28 @@
     const pdfPath = await window.EDMAdminDocumentPdf?.generateFor('quote', complete.data);
     if (!pdfPath) throw new Error('Le PDF du devis n’a pas pu être généré.');
 
-    try {
-      await sendNotification({
-        userId: current.data.user_id,
-        templateKey: 'quote_sent',
-        relatedType: 'quote',
-        relatedId: quoteId,
-        attachmentPath: pdfPath,
-        attachmentName: `devis-${quoteNumber}.pdf`,
-        values: { quote_number: quoteNumber, total: A().money(totals.total), valid_until: validUntil }
-      });
-    } catch (error) {
-      await A().db.from('quotes').update({ status: 'draft', visible_to_client: false }).eq('id', quoteId).eq('status', 'sent');
-      throw new Error(`Le devis n’a pas été publié car l’email a échoué : ${error.message}`);
+    let emailWarning = '';
+    if (!current.data.profiles?.email) {
+      emailWarning = 'Devis publié dans l’espace client. Aucun email n’a été envoyé car aucune adresse email client n’est renseignée.';
+    } else {
+      try {
+        await sendNotification({
+          userId: current.data.user_id,
+          templateKey: 'quote_sent',
+          relatedType: 'quote',
+          relatedId: quoteId,
+          attachmentPath: pdfPath,
+          attachmentName: `devis-${quoteNumber}.pdf`,
+          values: { quote_number: quoteNumber, total: A().money(totals.total), valid_until: validUntil }
+        });
+      } catch (error) {
+        console.warn('EDM quote email unavailable', error);
+        emailWarning = `Devis publié dans l’espace client, mais l’email n’a pas été envoyé : ${error.message}`;
+      }
     }
 
     if (current.data.pdf_path) A().db.storage.from('repair-documents').remove([current.data.pdf_path]).catch(() => {});
-    setStatus('quoteStatus', 'Devis publié et email envoyé au client avec le PDF.');
+    setStatus('quoteStatus', emailWarning || 'Devis publié et email envoyé au client avec le PDF.');
     await window.EDMAdminQuotes?.load();
     await A().overview();
   }
