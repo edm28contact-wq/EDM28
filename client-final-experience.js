@@ -265,20 +265,34 @@
     const reader = $('#edmMailReader');
     if (!reader) return;
     reader.innerHTML = `<div class="edm-mail-reader-head"><strong>Nouveau message</strong><button class="btn btn-ghost" id="edmComposeClose" type="button">Fermer</button></div><div class="edm-compose"><label>Objet<input id="edmComposeSubject" maxlength="160" placeholder="Objet du message"></label><label style="margin-top:12px">Message<textarea id="edmComposeBody" maxlength="4000" rows="10" placeholder="Écrivez votre message à EDM28..."></textarea></label><div class="btn-row"><button id="edmComposeSend" class="btn btn-primary" type="button">Envoyer</button></div><div id="edmComposeStatus" class="small"></div></div>`;
-    $('#edmComposeClose')?.addEventListener('click', () => { reader.innerHTML = '<div class="empty" style="margin:18px">Cliquez sur un message pour l’ouvrir.</div>'; });
+    $('#edmComposeClose')?.addEventListener('click', () => {
+      const liveReader = $('#edmMailReader');
+      if (liveReader) liveReader.innerHTML = '<div class="empty" style="margin:18px">Cliquez sur un message pour l’ouvrir.</div>';
+    });
     $('#edmComposeSend')?.addEventListener('click', async () => {
       const body = $('#edmComposeBody')?.value.trim() || '';
       const subject = $('#edmComposeSubject')?.value.trim() || '';
-      if (!body) return ($('#edmComposeStatus').textContent = 'Écrivez un message.');
+      const status = $('#edmComposeStatus');
+      if (!body) {
+        if (status) status.textContent = 'Écrivez un message.';
+        return;
+      }
       const button = $('#edmComposeSend');
+      if (!button) return;
       button.disabled = true;
       try {
         const { error } = await supabaseClient.rpc('client_send_message', { p_body:body, p_service_request_id:null, p_subject:subject || null });
         if (error) throw error;
-        reader.innerHTML = '<div class="okbox" style="margin:18px">Message envoyé à EDM28.</div>';
+        const liveReader = $('#edmMailReader');
+        if (liveReader) liveReader.innerHTML = '<div class="okbox" style="margin:18px">Message envoyé à EDM28.</div>';
         await loadMailbox(true);
-      } catch (error) { $('#edmComposeStatus').textContent = error.message || 'Envoi impossible.'; }
-      finally { if (button.isConnected) button.disabled = false; }
+      } catch (error) {
+        const liveStatus = $('#edmComposeStatus');
+        if (liveStatus) liveStatus.textContent = error.message || 'Envoi impossible.';
+        else console.warn('EDM compose unavailable', error);
+      } finally {
+        if (button.isConnected) button.disabled = false;
+      }
     });
   }
 
@@ -288,49 +302,68 @@
     reader.innerHTML = '<div class="notice" style="margin:18px">Ouverture du message…</div>';
     try {
       const docs = await relatedDocuments(message.service_request_id, userId);
-      reader.innerHTML = `<div class="edm-mail-reader-head"><div><strong>${esc(message.subject || 'Message EDM28')}</strong><div class="small">${esc(message.direction === 'inbound' ? 'Vous → EDM28' : 'EDM28 → Vous')} · ${esc(dateTime(message.created_at))}</div></div><button class="btn btn-danger" id="edmDeleteMessage" type="button">Supprimer</button></div><div class="edm-reader-body">${esc(message.body || '')}${docs.length ? `<div style="margin-top:22px"><h3>Pièces jointes / documents liés</h3><div class="edm-job-tools">${docs.map((doc) => `<button class="btn btn-ghost" type="button" data-mail-doc="${esc(doc.path)}">Ouvrir ${esc(doc.label)}</button><button class="btn btn-secondary" type="button" data-mail-download="${esc(doc.path)}" data-mail-name="${esc(doc.label)}.pdf">Télécharger</button>`).join('')}</div></div>` : ''}</div>`;
-      $$('[data-mail-doc]', reader).forEach((button) => button.addEventListener('click', () => void openPath(button.dataset.mailDoc).catch((e) => toast?.(e.message))));
-      $$('[data-mail-download]', reader).forEach((button) => button.addEventListener('click', () => void downloadPath(button.dataset.mailDownload, button.dataset.mailName).catch((e) => toast?.(e.message))));
+      const liveReader = $('#edmMailReader');
+      if (!liveReader) return;
+      liveReader.innerHTML = `<div class="edm-mail-reader-head"><div><strong>${esc(message.subject || 'Message EDM28')}</strong><div class="small">${esc(message.direction === 'inbound' ? 'Vous → EDM28' : 'EDM28 → Vous')} · ${esc(dateTime(message.created_at))}</div></div><button class="btn btn-danger" id="edmDeleteMessage" type="button">Supprimer</button></div><div class="edm-reader-body">${esc(message.body || '')}${docs.length ? `<div style="margin-top:22px"><h3>Pièces jointes / documents liés</h3><div class="edm-job-tools">${docs.map((doc) => `<button class="btn btn-ghost" type="button" data-mail-doc="${esc(doc.path)}">Ouvrir ${esc(doc.label)}</button><button class="btn btn-secondary" type="button" data-mail-download="${esc(doc.path)}" data-mail-name="${esc(doc.label)}.pdf">Télécharger</button>`).join('')}</div></div>` : ''}</div>`;
+      $$('[data-mail-doc]', liveReader).forEach((button) => button.addEventListener('click', () => void openPath(button.dataset.mailDoc).catch((e) => toast?.(e.message))));
+      $$('[data-mail-download]', liveReader).forEach((button) => button.addEventListener('click', () => void downloadPath(button.dataset.mailDownload, button.dataset.mailName).catch((e) => toast?.(e.message))));
       $('#edmDeleteMessage')?.addEventListener('click', async () => {
         if (!window.confirm('Supprimer ce message de votre boîte ?')) return;
         const { data, error } = await supabaseClient.rpc('client_delete_message', { p_message_id:message.id });
         if (error || !data) return toast?.(error?.message || 'Suppression impossible.');
-        reader.innerHTML = '<div class="empty" style="margin:18px">Message supprimé de votre boîte.</div>';
+        const currentReader = $('#edmMailReader');
+        if (currentReader) currentReader.innerHTML = '<div class="empty" style="margin:18px">Message supprimé de votre boîte.</div>';
         await loadMailbox(true);
       });
       if (message.direction !== 'inbound' && !message.read_by_client) {
         await supabaseClient.rpc('client_mark_messages_read', { p_message_ids:[message.id] }).catch(() => {});
       }
     } catch (error) {
-      reader.innerHTML = `<div class="errorbox" style="margin:18px">${esc(error.message || 'Message indisponible.')}</div>`;
+      const liveReader = $('#edmMailReader');
+      if (liveReader) liveReader.innerHTML = `<div class="errorbox" style="margin:18px">${esc(error.message || 'Message indisponible.')}</div>`;
+      else console.warn('EDM message reader unavailable', error);
     }
   }
 
   async function loadMailbox(force = false) {
-    if (messagesLoading && !force) return;
-    messagesShell();
-    const list = $('#edmMailList');
-    const user = await currentUser();
-    if (!user) {
-      if (list) list.innerHTML = '<div class="empty">Connectez-vous pour consulter vos messages.</div>';
-      return;
-    }
+    if (messagesLoading) return;
     messagesLoading = true;
-    if (list) list.innerHTML = '<div class="notice">Chargement…</div>';
     try {
+      const page = messagesShell();
+      let list = $('#edmMailList');
+      if (!page || !list) return;
+
+      const user = await currentUser();
+      list = $('#edmMailList');
+      if (!list) return;
+      if (!user) {
+        list.innerHTML = '<div class="empty">Connectez-vous pour consulter vos messages.</div>';
+        return;
+      }
+
+      list.innerHTML = '<div class="notice">Chargement…</div>';
       const { data, error } = await supabaseClient.from('client_messages').select('id,service_request_id,direction,subject,body,channel,read_by_client,read_by_admin,created_at,deleted_by_client_at').eq('user_id', user.id).eq('visible_to_client', true).is('deleted_by_client_at', null).order('created_at', { ascending:false }).limit(100);
       if (error) throw error;
+
+      list = $('#edmMailList');
+      if (!list) return;
       const messages = data || [];
-      $('#edmMailCount').textContent = `${messages.length}`;
+      const count = $('#edmMailCount');
+      if (count) count.textContent = `${messages.length}`;
       list.innerHTML = messages.length ? messages.map((message) => `<article class="edm-mail-row ${message.direction !== 'inbound' && !message.read_by_client ? 'unread' : ''}" data-mail-id="${esc(message.id)}"><div class="edm-mail-subject"><span>${esc(message.subject || (message.direction === 'inbound' ? 'Message envoyé' : 'Message EDM28'))}</span><span class="small">${esc(new Date(message.created_at).toLocaleDateString('fr-FR'))}</span></div><div class="edm-mail-preview">${esc(message.body || '')}</div></article>`).join('') : '<div class="empty">Aucun message.</div>';
       $$('[data-mail-id]', list).forEach((row) => row.addEventListener('click', () => {
         const message = messages.find((item) => item.id === row.dataset.mailId);
         if (message) void openMessage(message, user.id);
       }));
-      $('#edmMailStatus').textContent = 'Boîte à jour.';
+      const status = $('#edmMailStatus');
+      if (status) status.textContent = 'Boîte à jour.';
     } catch (error) {
-      list.innerHTML = `<div class="errorbox">${esc(error.message || 'Messagerie indisponible.')}</div>`;
-    } finally { messagesLoading = false; }
+      const list = $('#edmMailList');
+      if (list) list.innerHTML = `<div class="errorbox">${esc(error.message || 'Messagerie indisponible.')}</div>`;
+      else console.warn('EDM mailbox unavailable', error);
+    } finally {
+      messagesLoading = false;
+    }
   }
 
   function installNavigationHooks() {
