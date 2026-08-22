@@ -38,10 +38,10 @@ function createAdminIcon(size) {
   const stripeTop = Math.round(size * 0.65);
   const stripeBottom = Math.round(size * 0.85);
 
-  for (let y = 0; y < size; y += 1) {
+  for (let y = 0; y < size; y++) {
     const row = y * stride;
     raw[row] = 0;
-    for (let x = 0; x < size; x += 1) {
+    for (let x = 0; x < size; x++) {
       let color = [17, 24, 39, 255];
       const insideOuter = x >= outer && x < size - outer && y >= outer && y < size - outer;
       const insideInner = x >= inner && x < size - inner && y >= inner && y < size - inner;
@@ -130,7 +130,8 @@ export default function handler(req, res) {
 
     html = html
       .replace('</head>', `<meta name="edm-environment" content="${supabase.environment}"><meta name="edm-build" content="${build}"></head>`)
-      .replaceAll('__EDM_BUILD__', build);
+      .replaceAll('__EDM_BUILD__', build)
+      .replace(/<script src="\/admin-publish-email\.js\?v=[^"]+"><\/script>/, `<script src="/admin-quote-message-notify.js?v=${build}"><\/script><script src="/admin-publish-email.js?v=${build}"><\/script>`);
 
     const encodedCore = Buffer.from(adminCore, 'utf8').toString('base64');
     const encodedTransactional = Buffer.from(adminTransactional, 'utf8').toString('base64');
