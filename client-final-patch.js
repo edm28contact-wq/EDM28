@@ -211,12 +211,17 @@
       });
     }
 
-    return [
-      ...quotes.filter((row) => row.pdf_path).map((row) => ({ label: row.quote_number || 'Devis', path: row.pdf_path })),
-      ...orders.filter((row) => row.pdf_path).map((row) => ({ label: row.order_number || 'Ordre de réparation', path: row.pdf_path })),
-      ...inspections.filter((row) => row.pdf_path).map((row) => ({ label: row.report_number || 'Fiche de contrôle', path: row.pdf_path })),
-      ...invoices.filter((row) => row.pdf_path).map((row) => ({ label: row.invoice_number || 'Facture', path: row.pdf_path }))
-    ];
+    const quoteDocs = quotes.filter((row) => row.pdf_path).map((row) => ({ label: row.quote_number || 'Devis', path: row.pdf_path }));
+    const orderDocs = orders.filter((row) => row.pdf_path).map((row) => ({ label: row.order_number || 'Ordre de réparation', path: row.pdf_path }));
+    const inspectionDocs = inspections.filter((row) => row.pdf_path).map((row) => ({ label: row.report_number || 'Fiche de contrôle', path: row.pdf_path }));
+    const invoiceDocs = invoices.filter((row) => row.pdf_path).map((row) => ({ label: row.invoice_number || 'Facture', path: row.pdf_path }));
+    const interventionMessage = /^Intervention\b/i.test(String(message.subject || '')) || /ordre\s+OR-/i.test(String(message.body || ''));
+
+    if (interventionMessage && orderDocs.length) {
+      return [...orderDocs, ...inspectionDocs, ...invoiceDocs];
+    }
+
+    return [...quoteDocs, ...orderDocs, ...inspectionDocs, ...invoiceDocs];
   }
 
   async function openMessage(messageId) {
