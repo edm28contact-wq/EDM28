@@ -10,14 +10,19 @@
       const [invoiceResult, paymentResult, expenseResult] = await Promise.all([
         app.db.from('invoices').select('id,invoice_number,status,title,total,amount_paid,payment_method,issued_at,due_at,paid_at,created_at,user_id').order('created_at', { ascending: false }),
         app.db.from('payments').select('id,invoice_id,amount,payment_method,reference,paid_at,created_at').order('paid_at', { ascending: false }),
-        app.db.from('business_expenses').select('id,category,description,amount,expense_date,payment_method,document_path,notes,created_at').order('expense_date', { ascending: false })
+        app.db.from('purchases').select('id,supplier,category,amount,purchase_date,payment_method,proof_path,notes,created_at,purchase_mode').eq('purchase_mode', 'business_purchase').order('purchase_date', { ascending: false })
       ]);
       if (invoiceResult.error) throw invoiceResult.error;
       if (paymentResult.error) throw paymentResult.error;
       if (expenseResult.error) throw expenseResult.error;
       this.rows = invoiceResult.data || [];
       this.payments = paymentResult.data || [];
-      this.expenses = expenseResult.data || [];
+      this.expenses = (expenseResult.data || []).map((row) => ({
+        ...row,
+        description: row.supplier,
+        expense_date: row.purchase_date,
+        document_path: row.proof_path
+      }));
       this.installExpenseUi();
       const filter = app.$('accountingFilter');
       const exportButton = app.$('accountingExport');
@@ -46,7 +51,7 @@
           <div class="grid2">
             <label>Catégorie<select id="expenseCategory"><option value="pieces">Pièces</option><option value="consommables">Consommables</option><option value="outillage">Outillage</option><option value="assurance">Assurance</option><option value="carburant">Carburant</option><option value="local">Local</option><option value="telecom">Télécom</option><option value="comptabilite">Comptabilité</option><option value="autre">Autre</option></select></label>
             <label>Date<input id="expenseDate" type="date"></label>
-            <label>Description<input id="expenseDescription" placeholder="Ex. Jeu de plaquettes fournisseur"></label>
+            <label>Fournisseur / bénéficiaire<input id="expenseDescription" placeholder="Ex. Fournisseur pièces, assurance, carburant"></label>
             <label>Montant TTC<input id="expenseAmount" type="number" min="0.01" step="0.01"></label>
             <label>Mode de paiement<select id="expenseMethod"><option value="card">Carte</option><option value="transfer">Virement</option><option value="cash">Espèces</option><option value="check">Chèque</option><option value="direct_debit">Prélèvement</option></select></label>
             <label>Justificatif<input id="expenseDocument" type="file" accept="application/pdf,image/*"></label>
@@ -68,10 +73,10 @@
     async saveExpense() {
       const app = window.EDMAdmin;
       const button = app.$('saveExpenseBtn');
-      const description = app.$('expenseDescription').value.trim();
+      const supplier = app.$('expenseDescription').value.trim();
       const amount = Number(app.$('expenseAmount').value || 0);
       const expenseDate = app.$('expenseDate').value;
-      if (!description) return app.status('expenseStatus', 'Description obligatoire.', true);
+      if (!supplier) return app.status('expenseStatus', 'Fournisseur ou bénéficiaire obligatoire.', true);
       if (!(amount > 0)) return app.status('expenseStatus', 'Montant positif obligatoire.', true);
       if (!expenseDate) return app.status('expenseStatus', 'Date obligatoire.', true);
       button.disabled = true;
@@ -85,15 +90,15 @@
           const upload = await app.db.storage.from('repair-documents').upload(documentPath, file, { contentType: file.type || 'application/octet-stream' });
           if (upload.error) throw upload.error;
         }
-        const inserted = await app.db.from('business_expenses').insert({
+        const inserted = await app.db.from('purchases').insert({
+          supplier,
           category: app.$('expenseCategory').value,
-          description,
           amount,
-          expense_date: expenseDate,
+          purchase_date: expenseDate,
           payment_method: app.$('expenseMethod').value,
-          document_path: documentPath,
+          proof_path: documentPath,
           notes: app.$('expenseNotes').value.trim() || null,
-          created_by: app.profile.id
+          purchase_mode: 'business_purchase'
         }).select('id').single();
         if (inserted.error) throw inserted.error;
         app.$('expenseDescription').value = '';
@@ -156,7 +161,7 @@
       }).join('')}</tbody></table></div>` : '<div class="status">Aucune facture pour ce filtre.</div>';
 
       const expenseHost = app.$('expenseTable');
-      if (expenseHost) expenseHost.innerHTML = this.expenses.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Catégorie</th><th>Description</th><th>Montant</th><th>Paiement</th><th>Justificatif</th><th></th></tr></thead><tbody>${this.expenses.map((row) => `<tr><td>${this.date(row.expense_date)}</td><td>${app.esc(row.category)}</td><td>${app.esc(row.description)}</td><td>${app.money(row.amount)}</td><td>${app.esc(row.payment_method || '—')}</td><td>${row.document_path ? `<button class="btn ghost" data-open-expense="${app.esc(row.document_path)}">Ouvrir</button>` : '—'}</td><td><button class="btn ghost" data-delete-expense="${row.id}">Supprimer</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Aucune dépense enregistrée.</p>';
+      if (expenseHost) expenseHost.innerHTML = this.expenses.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Catégorie</th><th>Fournisseur / bénéficiaire</th><th>Montant</th><th>Paiement</th><th>Justificatif</th><th></th></tr></thead><tbody>${this.expenses.map((row) => `<tr><td>${this.date(row.expense_date)}</td><td>${app.esc(row.category)}</td><td>${app.esc(row.description)}</td><td>${app.money(row.amount)}</td><td>${app.esc(row.payment_method || '—')}</td><td>${row.document_path ? `<button class="btn ghost" data-open-expense="${app.esc(row.document_path)}">Ouvrir</button>` : '—'}</td><td><button class="btn ghost" data-delete-expense="${row.id}">Supprimer</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Aucune dépense enregistrée.</p>';
       expenseHost?.querySelectorAll('[data-open-expense]').forEach((button) => button.onclick = async () => {
         const { data, error } = await app.db.storage.from('repair-documents').createSignedUrl(button.dataset.openExpense, 120);
         if (error) return app.status('expenseStatus', error.message, true);
@@ -167,7 +172,7 @@
         if (!row || !confirm('Supprimer cette dépense ?')) return;
         button.disabled = true;
         try {
-          const removed = await app.db.from('business_expenses').delete().eq('id', row.id).select('id');
+          const removed = await app.db.from('purchases').delete().eq('id', row.id).select('id');
           if (removed.error) throw removed.error;
           if (row.document_path) await app.db.storage.from('repair-documents').remove([row.document_path]);
           await this.load();
