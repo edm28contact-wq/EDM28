@@ -1,58 +1,16 @@
 (() => {
   const A = () => window.EDMAdmin;
 
-  async function ensureInvoice(order, invoiceNumber, dueDays) {
-    const db = A().db;
-    const externalId = `repair-order/${order.id}`;
-    let { data: rows, error } = await db.from('invoices').select('id').eq('external_invoice_id', externalId).limit(1);
-    if (error) throw error;
-    let invoiceId = rows?.[0]?.id;
-
-    if (!invoiceId) {
-      const quoteResult = await db.from('quotes').select('id,title,description,subtotal,discount,total').eq('id', order.quote_id).single();
-      if (quoteResult.error) throw quoteResult.error;
-      const issuedAt = new Date();
-      const dueAt = new Date(issuedAt.getTime() + dueDays * 86400000);
-      const created = await db.from('invoices').insert({
-        user_id: order.user_id,
-        vehicle_id: order.vehicle_id,
-        quote_id: order.quote_id,
-        external_invoice_id: externalId,
-        invoice_number: invoiceNumber,
-        status: 'draft',
-        title: quoteResult.data.title || 'Facture EDM AUTO',
-        description: quoteResult.data.description,
-        subtotal: Number(quoteResult.data.subtotal || 0),
-        discount: Number(quoteResult.data.discount || 0),
-        total: Number(quoteResult.data.total || 0),
-        issued_at: issuedAt.toISOString(),
-        due_at: dueAt.toISOString(),
-        visible_to_client: false
-      }).select('id').single();
-      if (created.error) throw created.error;
-      invoiceId = created.data.id;
+  async function generateInvoicePdf(invoiceId) {
+    if (!window.EDMAdminDocumentPdf?.generateFor) {
+      throw new Error('Le générateur PDF de facture n’est pas chargé. Rechargez le back-office.');
     }
-
-    const itemCount = await db.from('invoice_items').select('id', { count: 'exact', head: true }).eq('invoice_id', invoiceId);
-    if (itemCount.error) throw itemCount.error;
-    if (!itemCount.count) {
-      const quoteItems = await db.from('quote_items').select('id,item_type,description,quantity,unit_price,total,display_order').eq('quote_id', order.quote_id).order('display_order');
-      if (quoteItems.error) throw quoteItems.error;
-      const items = (quoteItems.data || []).map((item) => ({
-        invoice_id: invoiceId,
-        item_type: ['labor','part','delivery','discount','disbursement','other'].includes(item.item_type) ? item.item_type : 'other',
-        description: item.description,
-        quantity: Number(item.quantity || 1),
-        unit_price: Number(item.unit_price || 0),
-        line_total: Number(item.total ?? Number(item.quantity || 1) * Number(item.unit_price || 0)),
-        source_quote_item_id: item.id,
-        display_order: item.display_order || 0
-      }));
-      if (!items.length) items.push({ invoice_id: invoiceId, item_type: 'labor', description: 'Prestations selon devis accepté', quantity: 1, unit_price: Number(order.quotes?.total || 0), line_total: Number(order.quotes?.total || 0), display_order: 0 });
-      const inserted = await db.from('invoice_items').insert(items);
-      if (inserted.error) throw inserted.error;
-    }
-    return invoiceId;
+    const invoiceResult = await A().db.from('invoices')
+      .select('id,user_id,vehicle_id,quote_id,repair_order_id,invoice_number,status,title,description,subtotal,discount,total,amount_paid,issued_at,due_at,pdf_path,created_at')
+      .eq('id', invoiceId)
+      .single();
+    if (invoiceResult.error) throw invoiceResult.error;
+    return window.EDMAdminDocumentPdf.generateFor('invoice', invoiceResult.data);
   }
 
   async function finalize(order, root) {
@@ -60,18 +18,20 @@
     const dueDays = Number(root.querySelector('[data-field="dueDays"]').value || 30);
     if (!invoiceNumber) throw new Error('Numéro de facture obligatoire.');
     if (!Number.isFinite(dueDays) || dueDays < 0 || dueDays > 365) throw new Error('Échéance comprise entre 0 et 365 jours.');
-    if (!['ready','signed','in_progress','completed'].includes(order.status)) throw new Error('Ordre non clôturable.');
+    if (!['ready','signed','in_progress','completed','invoiced'].includes(order.status)) throw new Error('Ordre non clôturable.');
 
-    if (order.status !== 'completed') {
-      const completed = await A().db.from('repair_orders').update({ status: 'completed' }).eq('id', order.id).in('status', ['ready','signed','in_progress']).select('id');
-      if (completed.error) throw completed.error;
-      if (!completed.data?.length) throw new Error('L’ordre a déjà changé de statut.');
-    }
+    const finalized = await A().db.rpc('admin_finalize_repair_order', {
+      p_order_id: order.id,
+      p_invoice_number: invoiceNumber,
+      p_due_days: dueDays
+    });
+    if (finalized.error) throw finalized.error;
+    const invoiceId = finalized.data;
+    if (!invoiceId) throw new Error('La facture a été créée sans identifiant.');
 
-    await ensureInvoice(order, invoiceNumber, dueDays);
-    const invoiced = await A().db.from('repair_orders').update({ status: 'invoiced' }).eq('id', order.id).eq('status', 'completed').select('id');
-    if (invoiced.error) throw invoiced.error;
-    if (!invoiced.data?.length) throw new Error('Facture créée, mais statut atelier déjà modifié.');
+    const pdfPath = await generateInvoicePdf(invoiceId);
+    if (!pdfPath) throw new Error('La facture a été créée, mais son PDF n’a pas pu être généré.');
+    return { invoiceId, pdfPath };
   }
 
   function render(rows) {
@@ -79,9 +39,22 @@
     host.innerHTML = rows.length ? rows.map((o) => `<article class="card" data-finalization-id="${o.id}" style="margin:12px 0"><div class="top"><div><span class="pill">${A().esc(o.status)}</span><h3>${A().esc(o.order_number || 'Ordre de réparation')}</h3></div><strong>${A().money(o.quotes?.total || 0)}</strong></div><p>${A().esc(o.profiles?.email || 'Client')} · ${A().esc(o.vehicles?.plate || 'Véhicule')}</p><label>Numéro de facture<input data-field="invoiceNumber" value="FAC-${A().esc((o.order_number || o.id).replace(/[^a-z0-9-]/gi, '-'))}"></label><label>Échéance (jours)<input data-field="dueDays" type="number" min="0" max="365" value="30"></label><button class="btn primary" data-finalize="${o.id}">Clôturer et créer la facture</button></article>`).join('') : '<p class="muted">Aucun ordre à facturer.</p>';
     host.querySelectorAll('[data-finalize]').forEach((button) => button.onclick = async () => {
       button.disabled = true;
-      try { const order = rows.find((row) => row.id === button.dataset.finalize); await finalize(order, button.closest('article')); A().status('finalizationStatus', 'Intervention clôturée et facture brouillon créée.'); await load(); await A().overview(); window.EDMAdminAccounting?.load(); }
-      catch (error) { A().status('finalizationStatus', error.message || 'Clôture impossible.', true); }
-      finally { button.disabled = false; }
+      const original = button.textContent;
+      button.textContent = 'Clôture et génération PDF…';
+      try {
+        const order = rows.find((row) => row.id === button.dataset.finalize);
+        await finalize(order, button.closest('article'));
+        A().status('finalizationStatus', 'Intervention clôturée. Facture brouillon créée et PDF généré automatiquement.');
+        await load();
+        await A().overview();
+        window.EDMAdminAccounting?.load();
+        window.EDMAdminInvoiceActions?.load();
+      } catch (error) {
+        A().status('finalizationStatus', error.message || 'Clôture impossible.', true);
+      } finally {
+        button.disabled = false;
+        button.textContent = original;
+      }
     });
   }
 
