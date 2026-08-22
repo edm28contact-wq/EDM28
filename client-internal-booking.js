@@ -4,212 +4,215 @@
 
   const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
   const money = (value) => Number(value || 0).toLocaleString('fr-FR', { style:'currency', currency:'EUR' });
-  const durationText = (minutes) => {
-    const value = Number(minutes || 0);
-    const h = Math.floor(value / 60);
-    const m = value % 60;
-    return `${h ? `${h} h` : ''}${h && m ? ' ' : ''}${m ? `${m} min` : ''}` || 'Durée non renseignée';
-  };
-
-  let selectedQuoteId = '';
+  const dateTime = (value) => value ? new Date(value).toLocaleString('fr-FR', { dateStyle:'full', timeStyle:'short' }) : '';
   let selectedSlot = '';
-  let quotes = [];
+  let currentState = null;
 
-  async function sessionUser() {
+  async function user() {
     const { data, error } = await supabaseClient.auth.getSession();
     if (error) throw error;
     return data?.session?.user || null;
   }
 
-  function host() {
-    return document.getElementById('booking');
+  function section() { return document.getElementById('booking'); }
+  function content() { return document.getElementById('prepareRdvContent'); }
+  function status(message, error = false) {
+    const host = document.getElementById('prepareRdvStatus');
+    if (!host) return;
+    host.innerHTML = message ? `<div class="${error ? 'errorbox' : 'okbox'}">${esc(message)}</div>` : '';
   }
 
   function installShell() {
-    const section = host();
-    if (!section || section.dataset.internalBooking === 'true') return;
-    section.dataset.internalBooking = 'true';
-    section.innerHTML = `
-      <div class="panel">
-        <div class="section-title">
-          <div><h2>Choisir mon rendez-vous</h2><p>Choisissez un devis accepté, puis un créneau calculé selon la durée de main-d’œuvre, les horaires du garage et les rendez-vous déjà pris.</p></div>
-          <span class="pill blue">Planning EDM28</span>
-        </div>
-        <div id="internalBookingStatus"></div>
-        <div id="internalBookingContent"><div class="notice">Chargement du planning…</div></div>
-      </div>`;
+    document.querySelectorAll('[data-page="booking"]').forEach((button) => { button.innerHTML = '📅 Préparer mon RDV'; });
+    const host = section();
+    if (!host) return;
+    host.dataset.internalBooking = 'true';
+    host.innerHTML = `<div class="panel"><div class="section-title"><div><h2>Préparer mon RDV</h2><p>Votre devis, votre décision puis votre rendez-vous au même endroit.</p></div><span class="pill blue">Parcours client</span></div><div id="prepareRdvStatus"></div><div id="prepareRdvContent"><div class="notice">Chargement de votre dossier…</div></div></div>`;
   }
 
-  function status(message, error = false) {
-    const box = document.getElementById('internalBookingStatus');
-    if (!box) return;
-    box.innerHTML = message ? `<div class="${error ? 'errorbox' : 'okbox'}" style="margin-bottom:14px">${esc(message)}</div>` : '';
+  async function openPdf(path) {
+    const { data, error } = await supabaseClient.storage.from('repair-documents').createSignedUrl(path, 180);
+    if (error || !data?.signedUrl) throw error || new Error('Devis indisponible.');
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   }
 
-  function quoteLabel(row) {
-    const vehicle = row.vehicles ? [row.vehicles.plate, row.vehicles.brand, row.vehicles.model].filter(Boolean).join(' · ') : 'Véhicule';
-    return `${row.quote_number || row.title || 'Devis'} · ${vehicle} · ${money(row.total)}`;
-  }
+  async function loadState() {
+    const currentUser = await user();
+    if (!currentUser) return { user:null };
 
-  async function loadQuotes() {
-    const user = await sessionUser();
-    const content = document.getElementById('internalBookingContent');
-    if (!content) return;
-    if (!user) {
-      content.innerHTML = '<div class="empty">Connectez-vous pour choisir un rendez-vous.</div>';
-      return;
-    }
+    const requestResult = await supabaseClient.from('service_requests')
+      .select('id,status,created_at,submitted_at,vehicle_id,vehicles(plate,brand,model)')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending:false })
+      .limit(1)
+      .maybeSingle();
+    if (requestResult.error) throw requestResult.error;
+    const request = requestResult.data;
+    if (!request) return { user:currentUser, request:null };
 
-    const { data, error } = await supabaseClient
-      .from('quotes')
-      .select('id,quote_number,status,title,description,total,labor_duration_minutes,vehicle_id,vehicles(plate,brand,model)')
-      .eq('user_id', user.id)
+    const quoteResult = await supabaseClient.from('quotes')
+      .select('id,service_request_id,quote_number,status,title,description,total,valid_until,pdf_path,labor_duration_minutes,created_at')
+      .eq('user_id', currentUser.id)
+      .eq('service_request_id', request.id)
       .eq('visible_to_client', true)
-      .eq('status', 'accepted')
-      .not('labor_duration_minutes', 'is', null)
-      .order('created_at', { ascending:false });
-    if (error) throw error;
+      .order('created_at', { ascending:false })
+      .limit(1)
+      .maybeSingle();
+    if (quoteResult.error) throw quoteResult.error;
+    const quote = quoteResult.data;
 
-    quotes = data || [];
-    if (!quotes.length) {
-      content.innerHTML = '<div class="empty">Aucun devis accepté disponible. Le devis doit être accepté et contenir une durée de main-d’œuvre avant la prise de rendez-vous.</div>';
-      return;
+    let appointment = null;
+    let order = null;
+    if (quote?.id) {
+      const orderResult = await supabaseClient.from('repair_orders')
+        .select('id,order_number,status,appointment_id,created_at')
+        .eq('user_id', currentUser.id)
+        .eq('quote_id', quote.id)
+        .neq('status', 'cancelled')
+        .order('created_at', { ascending:false })
+        .limit(1)
+        .maybeSingle();
+      if (orderResult.error) throw orderResult.error;
+      order = orderResult.data;
+      if (order?.appointment_id) {
+        const appointmentResult = await supabaseClient.from('appointments')
+          .select('id,starts_at,ends_at,status')
+          .eq('id', order.appointment_id)
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+        if (appointmentResult.error) throw appointmentResult.error;
+        appointment = appointmentResult.data;
+      }
     }
-
-    selectedQuoteId = selectedQuoteId && quotes.some((row) => row.id === selectedQuoteId) ? selectedQuoteId : quotes[0].id;
-    content.innerHTML = `
-      <div class="card">
-        <label>Devis accepté à planifier
-          <select id="bookingQuoteSelect">${quotes.map((row) => `<option value="${esc(row.id)}">${esc(quoteLabel(row))}</option>`).join('')}</select>
-        </label>
-        <div id="bookingQuoteSummary" class="notice" style="margin-top:12px"></div>
-      </div>
-      <div class="card" style="margin-top:14px">
-        <div class="section-title"><div><h3>Créneaux disponibles</h3><p>Les 30 minutes entre deux clients sont ajoutées automatiquement.</p></div><button class="btn btn-ghost" id="bookingRefresh" type="button">Actualiser</button></div>
-        <div id="bookingSlots"><div class="notice">Chargement des créneaux…</div></div>
-      </div>
-      <div class="card" id="bookingConfirmation" style="margin-top:14px">
-        <h3>Confirmation</h3>
-        <div id="bookingSelection" class="empty" style="margin-top:12px">Sélectionnez un créneau.</div>
-        <div class="btn-row"><button class="btn btn-primary" id="bookingConfirm" type="button" disabled>Confirmer mon rendez-vous</button></div>
-      </div>`;
-
-    const select = document.getElementById('bookingQuoteSelect');
-    select.value = selectedQuoteId;
-    select.onchange = () => {
-      selectedQuoteId = select.value;
-      selectedSlot = '';
-      renderQuoteSummary();
-      loadSlots().catch((error) => status(error.message || 'Créneaux indisponibles.', true));
-    };
-    document.getElementById('bookingRefresh').onclick = () => loadSlots().catch((error) => status(error.message || 'Créneaux indisponibles.', true));
-    document.getElementById('bookingConfirm').onclick = () => confirmBooking().catch((error) => status(error.message || 'Réservation impossible.', true));
-    renderQuoteSummary();
-    await loadSlots();
+    return { user:currentUser, request, quote, order, appointment };
   }
 
-  function renderQuoteSummary() {
-    const quote = quotes.find((row) => row.id === selectedQuoteId);
-    const box = document.getElementById('bookingQuoteSummary');
-    if (!quote || !box) return;
-    box.innerHTML = `<strong>${esc(quote.quote_number || quote.title || 'Devis')}</strong><br>${esc(quote.description || '')}<br>Durée de main-d’œuvre : <b>${esc(durationText(quote.labor_duration_minutes))}</b> · Créneau occupé avec marge : <b>${esc(durationText(Number(quote.labor_duration_minutes) + 30))}</b>`;
+  function waitingView(state) {
+    const vehicle = state.request?.vehicles;
+    const vehicleText = vehicle ? [vehicle.plate, vehicle.brand, vehicle.model].filter(Boolean).join(' · ') : '';
+    return `<div class="card"><span class="pill orange">En attente du devis</span><h3 style="margin-top:12px">Votre demande est bien enregistrée</h3><p>EDM28 étudie votre demande. Dès que le devis est publié, il apparaîtra ici et dans votre messagerie.</p>${vehicleText ? `<p class="small">${esc(vehicleText)}</p>` : ''}</div>`;
   }
 
-  async function loadSlots() {
-    const box = document.getElementById('bookingSlots');
-    if (!box || !selectedQuoteId) return;
-    box.innerHTML = '<div class="notice">Calcul des créneaux disponibles…</div>';
-    selectedSlot = '';
-    updateSelection();
+  function refusedView() {
+    return `<div class="card"><span class="pill">Devis refusé</span><h3 style="margin-top:12px">Aucun rendez-vous à préparer</h3><p>Le devis a été refusé. Si EDM28 publie une nouvelle proposition, elle apparaîtra automatiquement ici.</p></div>`;
+  }
 
+  function quoteView(state) {
+    const q = state.quote;
+    const expired = q.valid_until && q.valid_until < new Date().toISOString().slice(0,10);
+    return `<div class="card"><div class="section-title"><div><span class="pill orange">Devis à valider</span><h3 style="margin-top:10px">${esc(q.quote_number || q.title || 'Devis EDM28')}</h3></div><strong>${money(q.total)}</strong></div><p>${esc(q.description || 'Votre devis est disponible.')}</p><p class="small">${q.valid_until ? `Valable jusqu’au ${new Date(q.valid_until + 'T00:00:00').toLocaleDateString('fr-FR')}` : ''}${expired ? ' · Expiré' : ''}</p><div class="btn-row">${q.pdf_path ? '<button id="prepareOpenQuote" class="btn btn-ghost" type="button">Ouvrir le devis</button>' : ''}<button id="prepareAcceptQuote" class="btn btn-success" type="button" ${expired ? 'disabled' : ''}>Accepter le devis</button><button id="prepareRefuseQuote" class="btn btn-danger" type="button">Refuser le devis</button></div></div>`;
+  }
+
+  async function slotsView(state) {
+    const q = state.quote;
+    const host = content();
+    host.innerHTML = `<div class="card"><span class="pill green">Devis accepté</span><h3 style="margin-top:12px">Choisissez votre rendez-vous</h3><p>Le planning affiche uniquement les créneaux compatibles avec la durée prévue de votre intervention.</p></div><div class="card" style="margin-top:14px"><div id="prepareSlots"><div class="notice">Calcul des créneaux disponibles…</div></div><div id="prepareSelection" class="empty" style="margin-top:14px">Sélectionnez un créneau.</div><div class="btn-row"><button id="prepareConfirmSlot" class="btn btn-primary" type="button" disabled>Confirmer mon rendez-vous</button></div></div>`;
     const today = new Date();
     const from = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    const { data, error } = await supabaseClient.rpc('get_available_booking_slots', { p_quote_id:selectedQuoteId, p_from:from, p_days:30 });
+    const { data, error } = await supabaseClient.rpc('get_available_booking_slots', { p_quote_id:q.id, p_from:from, p_days:30 });
     if (error) throw error;
     const rows = data || [];
-    if (!rows.length) {
-      box.innerHTML = '<div class="empty">Aucun créneau disponible dans les 30 prochains jours.</div>';
-      return;
-    }
-
+    const slotHost = document.getElementById('prepareSlots');
+    if (!slotHost) return;
+    if (!rows.length) { slotHost.innerHTML = '<div class="empty">Aucun créneau disponible dans les 30 prochains jours.</div>'; return; }
     const groups = new Map();
     rows.forEach((row) => {
-      const start = new Date(row.starts_at);
-      const key = start.toLocaleDateString('fr-FR', { weekday:'long', day:'2-digit', month:'long' });
+      const d = new Date(row.starts_at);
+      const key = d.toLocaleDateString('fr-FR', { weekday:'long', day:'2-digit', month:'long' });
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(row);
     });
-
-    box.innerHTML = `<div style="display:grid;gap:14px">${[...groups.entries()].map(([day, slots]) => `
-      <section class="card" style="margin:0">
-        <h3 style="text-transform:capitalize">${esc(day)}</h3>
-        <div class="btn-row">${slots.map((slot) => {
-          const start = new Date(slot.starts_at);
-          const end = new Date(slot.ends_at);
-          return `<button class="btn btn-secondary" type="button" data-booking-slot="${esc(slot.starts_at)}">${start.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})} – ${end.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</button>`;
-        }).join('')}</div>
-      </section>`).join('')}</div>`;
-
-    box.querySelectorAll('[data-booking-slot]').forEach((button) => button.onclick = () => {
-      selectedSlot = button.dataset.bookingSlot;
-      box.querySelectorAll('[data-booking-slot]').forEach((node) => node.classList.toggle('btn-blue', node === button));
-      updateSelection();
+    slotHost.innerHTML = [...groups.entries()].map(([day, slots]) => `<section class="card" style="margin:10px 0"><h3 style="text-transform:capitalize">${esc(day)}</h3><div class="btn-row">${slots.map((slot) => `<button type="button" class="btn btn-secondary" data-prepare-slot="${esc(slot.starts_at)}">${new Date(slot.starts_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</button>`).join('')}</div></section>`).join('');
+    slotHost.querySelectorAll('[data-prepare-slot]').forEach((button) => button.onclick = () => {
+      selectedSlot = button.dataset.prepareSlot;
+      slotHost.querySelectorAll('[data-prepare-slot]').forEach((node) => node.classList.toggle('btn-blue', node === button));
+      const start = new Date(selectedSlot);
+      document.getElementById('prepareSelection').innerHTML = `<strong>${esc(dateTime(start))}</strong>`;
+      document.getElementById('prepareSelection').className = 'notice';
+      document.getElementById('prepareConfirmSlot').disabled = false;
     });
+    document.getElementById('prepareConfirmSlot').onclick = async () => {
+      if (!selectedSlot) return;
+      const button = document.getElementById('prepareConfirmSlot');
+      button.disabled = true;
+      button.textContent = 'Confirmation…';
+      try {
+        const { error: bookingError } = await supabaseClient.rpc('book_quote_appointment', { p_quote_id:q.id, p_starts_at:selectedSlot });
+        if (bookingError) throw bookingError;
+        selectedSlot = '';
+        await load();
+      } catch (error) { status(error.message || 'Réservation impossible.', true); }
+    };
   }
 
-  function updateSelection() {
-    const box = document.getElementById('bookingSelection');
-    const button = document.getElementById('bookingConfirm');
-    const quote = quotes.find((row) => row.id === selectedQuoteId);
-    if (!box || !button) return;
-    if (!selectedSlot || !quote) {
-      box.className = 'empty';
-      box.textContent = 'Sélectionnez un créneau.';
-      button.disabled = true;
+  function confirmedView(state) {
+    return `<div class="card"><span class="pill green">Rendez-vous confirmé</span><h3 style="margin-top:12px">Intervention ${esc(state.order?.order_number || '')}</h3><div class="summary" style="margin-top:14px"><div class="summary-line"><span>Date et heure</span><strong>${esc(dateTime(state.appointment?.starts_at))}</strong></div></div><div class="btn-row" style="margin-top:18px"><button id="prepareCancelRequest" class="btn btn-danger" type="button">Annuler ma demande</button></div><p class="small">L’annulation supprime la demande, le devis, le rendez-vous et l’intervention préparée tant qu’aucun travail, achat ou facture n’a commencé.</p></div>`;
+  }
+
+  async function respondQuote(response) {
+    const q = currentState?.quote;
+    if (!q) return;
+    const label = response === 'accepted' ? 'accepter' : 'refuser';
+    if (!window.confirm(`Confirmer : ${label} ce devis ?`)) return;
+    const { error } = await supabaseClient.rpc('client_respond_quote', { p_quote_id:q.id, p_response:response });
+    if (error) throw error;
+    selectedSlot = '';
+    await load();
+  }
+
+  async function cancelRequest() {
+    const requestId = currentState?.request?.id;
+    if (!requestId) return;
+    if (!window.confirm('Annuler cette demande ? Cette action supprimera le devis, le rendez-vous et l’intervention préparée.')) return;
+    if (!window.confirm('Dernière confirmation : supprimer définitivement cette demande de A à Z ?')) return;
+    const button = document.getElementById('prepareCancelRequest');
+    if (button) { button.disabled = true; button.textContent = 'Suppression…'; }
+    const { error } = await supabaseClient.rpc('client_cancel_request', { p_service_request_id:requestId });
+    if (error) throw error;
+    currentState = null;
+    selectedSlot = '';
+    await load();
+    status('Votre demande a été annulée et supprimée.');
+  }
+
+  async function render() {
+    const host = content();
+    if (!host) return;
+    currentState = await loadState();
+    if (!currentState.user) { host.innerHTML = '<div class="empty">Connectez-vous pour préparer votre rendez-vous.</div>'; return; }
+    if (!currentState.request) { host.innerHTML = '<div class="card"><span class="pill">Aucune demande en cours</span><h3 style="margin-top:12px">Votre prochain dossier apparaîtra ici</h3><p>Après l’envoi d’une demande, cette page suivra automatiquement le devis puis le rendez-vous.</p></div>'; return; }
+    if (currentState.appointment && currentState.order) {
+      host.innerHTML = confirmedView(currentState);
+      document.getElementById('prepareCancelRequest')?.addEventListener('click', () => cancelRequest().catch((error) => status(error.message || 'Annulation impossible.', true)));
       return;
     }
-    const start = new Date(selectedSlot);
-    const end = new Date(start.getTime() + Number(quote.labor_duration_minutes) * 60000);
-    box.className = 'notice';
-    box.innerHTML = `<strong>${esc(quote.quote_number || quote.title || 'Devis')}</strong><br>${start.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})} de ${start.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})} à ${end.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}.`;
-    button.disabled = false;
-  }
-
-  async function confirmBooking() {
-    if (!selectedQuoteId || !selectedSlot) throw new Error('Sélectionnez un créneau.');
-    const button = document.getElementById('bookingConfirm');
-    button.disabled = true;
-    button.textContent = 'Confirmation…';
-    try {
-      const { data, error } = await supabaseClient.rpc('book_quote_appointment', { p_quote_id:selectedQuoteId, p_starts_at:selectedSlot });
-      if (error) throw error;
-      status('Rendez-vous confirmé. L’intervention et l’ordre de réparation ont été créés dans votre dossier et dans le planning EDM28.');
-      selectedSlot = '';
-      await loadQuotes();
-      if (typeof window.renderVehicleHistory === 'function') window.renderVehicleHistory().catch(() => {});
-      return data;
-    } finally {
-      button.textContent = 'Confirmer mon rendez-vous';
-      button.disabled = !selectedSlot;
+    if (!currentState.quote) { host.innerHTML = waitingView(currentState); return; }
+    if (currentState.quote.status === 'refused') { host.innerHTML = refusedView(); return; }
+    if (currentState.quote.status === 'sent') {
+      host.innerHTML = quoteView(currentState);
+      document.getElementById('prepareOpenQuote')?.addEventListener('click', () => openPdf(currentState.quote.pdf_path).catch((error) => status(error.message || 'Devis indisponible.', true)));
+      document.getElementById('prepareAcceptQuote')?.addEventListener('click', () => respondQuote('accepted').catch((error) => status(error.message || 'Réponse impossible.', true)));
+      document.getElementById('prepareRefuseQuote')?.addEventListener('click', () => respondQuote('refused').catch((error) => status(error.message || 'Réponse impossible.', true)));
+      return;
     }
+    if (currentState.quote.status === 'accepted') { await slotsView(currentState); return; }
+    host.innerHTML = waitingView(currentState);
   }
 
   async function load() {
     installShell();
     status('');
-    await loadQuotes();
+    await render();
   }
 
   function install() {
     installShell();
     document.addEventListener('click', (event) => {
-      if (event.target.closest?.('[data-page="booking"]')) setTimeout(() => load().catch((error) => status(error.message || 'Planning indisponible.', true)), 80);
+      if (event.target.closest?.('[data-page="booking"]')) setTimeout(() => load().catch((error) => status(error.message || 'Dossier indisponible.', true)), 60);
     });
-    if (typeof supabaseClient !== 'undefined') {
-      supabaseClient.auth.onAuthStateChange(() => {
-        if (document.getElementById('booking')?.classList.contains('active')) setTimeout(() => load().catch(() => {}), 100);
-      });
-    }
+    supabaseClient?.auth?.onAuthStateChange?.(() => {
+      if (section()?.classList.contains('active')) setTimeout(() => load().catch(() => {}), 80);
+    });
   }
 
   window.EDMInternalBooking = { load };
