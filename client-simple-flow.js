@@ -2,6 +2,15 @@
   if (window.__edmClientFlowLoader) return;
   window.__edmClientFlowLoader = true;
 
+  const legacyRenderHistory = typeof window.renderHistory === 'function' ? window.renderHistory : null;
+  if (legacyRenderHistory && !window.__edmLegacyHistoryGuard) {
+    window.__edmLegacyHistoryGuard = true;
+    window.renderHistory = function guardedRenderHistory(...args) {
+      if (!document.getElementById('historyList')) return;
+      return legacyRenderHistory.apply(this, args);
+    };
+  }
+
   const scripts = [
     { src: '/client-password-flow.js?v=2', attr: 'data-edm-password' },
     { src: '/client-step3-fixes.js?v=2', attr: 'data-edm-step3' },
