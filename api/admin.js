@@ -132,7 +132,7 @@ export default function handler(req, res) {
       .replace('</head>', `<meta name="edm-environment" content="${supabase.environment}"><meta name="edm-build" content="${build}"></head>`)
       .replaceAll('__EDM_BUILD__', build)
       .replace(/<script src="\/admin-publish-email\.js\?v=[^"]+"><\/script>/, `<script src="/admin-quote-message-notify.js?v=${build}"><\/script><script src="/admin-publish-email.js?v=${build}"><\/script>`)
-      .replace('</body>', `<script src="/admin-intervention-order-publish.js?v=${build}"><\/script></body>`);
+      .replace('</body>', `<script src="/admin-intervention-order-publish.js?v=${build}"><\/script><script src="/admin-invoice-auto-pdf.js?v=${build}"><\/script></body>`);
 
     const encodedCore = Buffer.from(adminCore, 'utf8').toString('base64');
     const encodedTransactional = Buffer.from(adminTransactional, 'utf8').toString('base64');
