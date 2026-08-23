@@ -32,8 +32,9 @@
       button.className = 'btn ghost';
       button.dataset.page = 'collections';
       button.textContent = 'Encaissement';
-      const accountingButton = nav.querySelector('[data-page="accounting"]');
-      nav.insertBefore(button, accountingButton || null);
+      const invoiceButton = nav.querySelector('[data-page="invoice-actions"]');
+      if (invoiceButton?.nextSibling) nav.insertBefore(button, invoiceButton.nextSibling);
+      else nav.appendChild(button);
       button.addEventListener('click', () => {
         A()?.page('collections');
         load().catch((error) => A()?.status('collectionStatus', error.message || 'Encaissements indisponibles.', true));
@@ -54,8 +55,9 @@
         <div id="collectionStatus" class="status hidden"></div>
         <div id="collectionList" style="margin-top:14px"></div>
       </div>`;
-      const accounting = document.getElementById('accounting');
-      dashboard.insertBefore(section, accounting || null);
+      const invoiceSection = document.getElementById('invoice-actions');
+      if (invoiceSection?.nextSibling) dashboard.insertBefore(section, invoiceSection.nextSibling);
+      else dashboard.appendChild(section);
       section.querySelector('#collectionRefresh').addEventListener('click', () => load().catch((error) => A()?.status('collectionStatus', error.message || 'Actualisation impossible.', true)));
     }
     return section;
