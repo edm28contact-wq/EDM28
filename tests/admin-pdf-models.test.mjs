@@ -33,7 +33,7 @@ test('PDF modules load before quote and invoice publication', async () => {
 
 test('repair orders are personalized from the accepted quote lines', async () => {
   const source = await read('admin-order-personalized-pdf.js');
-  assert.match(source, /from\('quote_items'\)/);
+  assert.match(source, /many\('quote_items', 'quote_id', base\.quote_id\)/);
   assert.match(source, /Devis accepté/);
   assert.match(source, /TRAVAUX ET PIÈCES AUTORISÉS PAR LE DEVIS ACCEPTÉ/);
   assert.match(source, /supplier_reference/);
