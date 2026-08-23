@@ -19,10 +19,49 @@
     .map((service) => typeof service === 'string' ? service : service?.name || service?.label || service?.id)
     .filter(Boolean);
   const itemType = (value) => ({ labor: 'Main-d’œuvre', part: 'Pièce', delivery: 'Livraison', other: 'Autre' }[value] || 'Prestation');
+  const CONTROL_STATUS_LABELS = {
+    non_controle: 'Non contrôlé',
+    conforme: 'Conforme',
+    surveiller: 'À surveiller',
+    remplacer: 'À remplacer'
+  };
+  const CONTROLS = [
+    { key: 'plaquettes_av_g', label: 'Plaquettes avant gauche', unit: 'mm', group: 'FREINAGE' },
+    { key: 'plaquettes_av_d', label: 'Plaquettes avant droite', unit: 'mm', group: 'FREINAGE' },
+    { key: 'plaquettes_ar_g', label: 'Plaquettes arrière gauche', unit: 'mm', group: 'FREINAGE' },
+    { key: 'plaquettes_ar_d', label: 'Plaquettes arrière droite', unit: 'mm', group: 'FREINAGE' },
+    { key: 'disque_av_g', label: 'Disque avant gauche', unit: 'mm', group: 'FREINAGE' },
+    { key: 'disque_av_d', label: 'Disque avant droit', unit: 'mm', group: 'FREINAGE' },
+    { key: 'disque_ar_g', label: 'Disque arrière gauche', unit: 'mm', group: 'FREINAGE' },
+    { key: 'disque_ar_d', label: 'Disque arrière droit', unit: 'mm', group: 'FREINAGE' },
+    { key: 'liquide_frein', label: 'Liquide de frein', unit: '', group: 'FREINAGE' },
+    { key: 'flexibles', label: 'Flexibles de frein', unit: '', group: 'FREINAGE' },
+    { key: 'pneu_av_g', label: 'Pneu avant gauche', unit: 'mm', group: 'PNEUMATIQUES' },
+    { key: 'pneu_av_d', label: 'Pneu avant droit', unit: 'mm', group: 'PNEUMATIQUES' },
+    { key: 'pneu_ar_g', label: 'Pneu arrière gauche', unit: 'mm', group: 'PNEUMATIQUES' },
+    { key: 'pneu_ar_d', label: 'Pneu arrière droit', unit: 'mm', group: 'PNEUMATIQUES' },
+    { key: 'pression_av_g', label: 'Pression avant gauche', unit: 'bar', group: 'PNEUMATIQUES' },
+    { key: 'pression_av_d', label: 'Pression avant droite', unit: 'bar', group: 'PNEUMATIQUES' },
+    { key: 'pression_ar_g', label: 'Pression arrière gauche', unit: 'bar', group: 'PNEUMATIQUES' },
+    { key: 'pression_ar_d', label: 'Pression arrière droite', unit: 'bar', group: 'PNEUMATIQUES' },
+    { key: 'amortisseurs', label: 'Amortisseurs', unit: '', group: 'LIAISON AU SOL' },
+    { key: 'rotules', label: 'Rotules', unit: '', group: 'LIAISON AU SOL' },
+    { key: 'silentblocs', label: 'Silentblocs', unit: '', group: 'LIAISON AU SOL' },
+    { key: 'roulements', label: 'Roulements', unit: '', group: 'LIAISON AU SOL' },
+    { key: 'soufflets', label: 'Soufflets', unit: '', group: 'LIAISON AU SOL' },
+    { key: 'geometrie', label: 'Géométrie', unit: '', group: 'LIAISON AU SOL' }
+  ];
 
   async function one(table, id) {
     if (!id) return null;
     const result = await A().db.from(table).select('*').eq('id', id).maybeSingle();
+    if (result.error) throw result.error;
+    return result.data || null;
+  }
+
+  async function oneBy(table, column, value) {
+    if (!value) return null;
+    const result = await A().db.from(table).select('*').eq(column, value).maybeSingle();
     if (result.error) throw result.error;
     return result.data || null;
   }
@@ -42,12 +81,13 @@
 
   async function hydrate(seed) {
     const base = await one('repair_orders', seed?.id) || seed || {};
-    const [profile, vehicle, request, appointment, quote] = await Promise.all([
+    const [profile, vehicle, request, appointment, quote, inspection] = await Promise.all([
       one('profiles', base.user_id),
       one('vehicles', base.vehicle_id),
       one('service_requests', base.service_request_id),
       one('appointments', base.appointment_id),
-      one('quotes', base.quote_id)
+      one('quotes', base.quote_id),
+      oneBy('inspection_reports', 'repair_order_id', base.id)
     ]);
     const quoteItems = base.quote_id ? await many('quote_items', 'quote_id', base.quote_id) : [];
     return {
@@ -57,7 +97,8 @@
       service_requests: request,
       appointments: appointment,
       quotes: quote,
-      quote_items: quoteItems
+      quote_items: quoteItems,
+      inspection_report: inspection
     };
   }
 
@@ -104,6 +145,17 @@
     });
   }
 
+  function controlValue(report, control) {
+    const raw = report?.checks?.[control.key];
+    if (typeof raw === 'string') return { status: raw, measure: null, note: null };
+    if (!raw || typeof raw !== 'object') return { status: 'non_controle', measure: null, note: null };
+    return {
+      status: raw.status || 'non_controle',
+      measure: raw.measure ?? null,
+      note: raw.note || null
+    };
+  }
+
   function drawBox(doc, x, y, w, h, title, lines) {
     doc.setDrawColor(185, 190, 197);
     doc.setFillColor(247, 248, 250);
@@ -120,6 +172,100 @@
       doc.text(wrapped, x + 10, cursor);
       cursor += wrapped.length * 10 + 2;
     });
+  }
+
+  function drawInterventionControls(doc, row) {
+    const report = row.inspection_report || {};
+    const appointment = row.appointments || {};
+    const checks = CONTROLS.map((control) => {
+      const value = controlValue(report, control);
+      const measure = value.measure != null ? `${Number(value.measure).toLocaleString('fr-FR')} ${control.unit}`.trim() : '';
+      return [
+        control.group,
+        control.label,
+        CONTROL_STATUS_LABELS[value.status] || value.status || 'Non contrôlé',
+        measure || '—',
+        clean(value.note) || '—'
+      ];
+    });
+
+    doc.addPage();
+    doc.setTextColor(23, 27, 33);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('INTERVENTION ET CONTRÔLES', 32, 43);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`OR ${clean(row.order_number || '')}${report.report_number ? ` · Fiche ${clean(report.report_number)}` : ''}`, 32, 58);
+    doc.setDrawColor(210, 13, 22);
+    doc.setLineWidth(1.2);
+    doc.line(32, 70, 563, 70);
+
+    drawBox(doc, 32, 88, 255, 92, 'DONNÉES INTERVENTION', [
+      `Statut OR : ${clean(row.status || 'ready')}`,
+      `Kilométrage entrée : ${Number(report.mileage ?? row.mileage_in ?? row.vehicles?.mileage ?? 0).toLocaleString('fr-FR')} km`,
+      `Technicien : ${clean(report.technician_name) || 'À renseigner'}`,
+      appointment.starts_at ? `Rendez-vous : ${dateTime(appointment.starts_at)}` : 'Rendez-vous : à renseigner'
+    ]);
+    drawBox(doc, 308, 88, 255, 92, 'RÉCEPTION / TRAÇABILITÉ', [
+      `Fiche de contrôle : ${clean(report.report_number) || 'À créer'}`,
+      `Statut contrôle : ${clean(report.status) || 'Brouillon / à renseigner'}`,
+      report.completed_at ? `Contrôle terminé : ${dateTime(report.completed_at)}` : 'Contrôle terminé : non',
+      `Photos avant / après : ${Array.isArray(report.photo_paths) ? report.photo_paths.length : 0} photo(s)`,
+      `Signature contrôle : ${report.signature_path ? 'enregistrée' : 'non enregistrée'}`
+    ]);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(23, 27, 33);
+    doc.text('MESURES ET CONTRÔLES', 32, 202);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    doc.setTextColor(78, 82, 88);
+    doc.text('Les valeurs enregistrées dans la rubrique « Interventions et contrôles » sont reprises automatiquement lors d’une régénération de l’OR.', 32, 215);
+
+    doc.autoTable({
+      startY: 227,
+      margin: { left: 32, right: 32 },
+      head: [['Famille', 'Point contrôlé', 'Statut', 'Mesure', 'Observation']],
+      body: checks,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 6.2, cellPadding: 2.7, valign: 'middle', textColor: [35, 38, 43], lineColor: [205, 209, 215], lineWidth: 0.35 },
+      headStyles: { fillColor: [31, 35, 41], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+      columnStyles: {
+        0: { cellWidth: 76, fontStyle: 'bold' },
+        1: { cellWidth: 142 },
+        2: { cellWidth: 80, halign: 'center' },
+        3: { cellWidth: 58, halign: 'center' },
+        4: { cellWidth: 175 }
+      }
+    });
+
+    let y = doc.lastAutoTable.finalY + 13;
+    if (y > 720) {
+      doc.addPage();
+      y = 42;
+    }
+    doc.setTextColor(23, 27, 33);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('OBSERVATIONS GÉNÉRALES', 32, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    const observations = clean(report.observations) || 'À renseigner pendant ou après le contrôle.';
+    doc.text(doc.splitTextToSize(observations, 531).slice(0, 5), 32, y + 13);
+    y += 60;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('ÉTAT DU VÉHICULE / OBJETS CLIENT', 32, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    const reception = [
+      row.visible_condition ? `État visible : ${clean(row.visible_condition)}` : '',
+      row.customer_items ? `Objets laissés dans le véhicule : ${clean(row.customer_items)}` : ''
+    ].filter(Boolean).join(' — ') || 'À renseigner à la réception du véhicule.';
+    doc.text(doc.splitTextToSize(reception, 531).slice(0, 4), 32, y + 13);
   }
 
   function buildOrderPdf(row, cfg) {
@@ -281,6 +427,8 @@
     doc.text(`Réception prévue : ${appointment.starts_at ? dateTime(appointment.starts_at) : date(row.created_at)}`, 319, y + 40);
     doc.text('Nom / signature :', 319, y + 63);
 
+    drawInterventionControls(doc, row);
+
     const pageCount = doc.getNumberOfPages();
     for (let pageNo = 1; pageNo <= pageCount; pageNo += 1) {
       doc.setPage(pageNo);
@@ -290,7 +438,7 @@
       doc.setFontSize(6.5);
       doc.setTextColor(105, 108, 113);
       doc.text(`${company} · OR ${clean(row.order_number || '')} · page ${pageNo}/${pageCount}`, 32, 826);
-      doc.text('Ordre de réparation personnalisé à partir du devis accepté.', 563, 826, { align: 'right' });
+      doc.text('Ordre de réparation personnalisé · devis accepté · intervention et contrôles.', 563, 826, { align: 'right' });
     }
 
     return doc.output('blob');
