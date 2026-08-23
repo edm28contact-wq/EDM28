@@ -70,23 +70,6 @@
       await A().overview();
       return;
     }
-    if (button.dataset.prepare) {
-      const root = button.closest('article');
-      const startsAt = root.querySelector('[data-field="startsAt"]').value;
-      if (!startsAt) throw new Error('Date et heure du rendez-vous obligatoires.');
-      const orderNumber = await documentNumber('order', root.querySelector('[data-field="orderNumber"]').value);
-      root.querySelector('[data-field="orderNumber"]').value = orderNumber;
-      await rpc('admin_prepare_quote', {
-        p_quote_id: button.dataset.prepare,
-        p_starts_at: new Date(startsAt).toISOString(),
-        p_duration_minutes: Number(root.querySelector('[data-field="duration"]').value || 60),
-        p_order_number: orderNumber
-      });
-      A().status('operationStatus', 'Rendez-vous et ordre créés dans une transaction unique.');
-      await window.EDMAdminOperations?.load();
-      await A().overview();
-      return;
-    }
     if (button.dataset.finalize) {
       const root = button.closest('article');
       const invoiceNumber = await documentNumber('invoice', root.querySelector('[data-field="invoiceNumber"]').value);
@@ -115,14 +98,14 @@
   }
 
   document.addEventListener('click', async (event) => {
-    const button = event.target.closest('[data-invoice-action] [data-save],[data-action="quote"],[data-prepare],[data-finalize],[data-pay]');
+    const button = event.target.closest('[data-invoice-action] [data-save],[data-action="quote"],[data-finalize],[data-pay]');
     if (!button || !A()?.profile) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     button.disabled = true;
     try { await run(button); }
     catch (error) {
-      const target = button.matches('[data-invoice-action] [data-save]') || button.dataset.pay ? 'invoiceActionStatus' : button.dataset.action === 'quote' ? 'requestStatus' : button.dataset.prepare ? 'operationStatus' : 'finalizationStatus';
+      const target = button.matches('[data-invoice-action] [data-save]') || button.dataset.pay ? 'invoiceActionStatus' : button.dataset.action === 'quote' ? 'requestStatus' : 'finalizationStatus';
       A().status(target, error.message || 'Opération transactionnelle impossible.', true);
     } finally { button.disabled = false; }
   }, true);
