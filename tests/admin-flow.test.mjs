@@ -36,7 +36,7 @@ test('localized draft quote labels remain visible in the active quote queue', as
   assert.match(visibility, /!\['draft', 'brouillon'\]\.includes\(status\)/);
 });
 
-test('accepted quotes use the atomic planning RPC and stored duration', async () => {
+test('accepted quotes use the workshop module for planning and keep unpublished ready orders actionable', async () => {
   const source = await read('admin-operations.js');
   assert.match(source, /if \(!future\(startsAt\)\)/);
   assert.match(source, /duration < 15 \|\| duration > 480/);
@@ -45,6 +45,10 @@ test('accepted quotes use the atomic planning RPC and stored duration', async ()
   assert.match(source, /p_quote_id: q\.id/);
   assert.match(source, /p_starts_at: new Date\(startsAt\)\.toISOString\(\)/);
   assert.match(source, /p_order_number: orderNumber/);
+  assert.match(source, /data-publish-ready/);
+  assert.match(source, /order\.status !== 'ready'/);
+  assert.match(source, /!order\.visible_to_client \|\| !order\.pdf_path/);
+  assert.match(source, /generateFor\('order', current\.data\)/);
 });
 
 test('finalization uses the atomic RPC and automatically generates the draft invoice PDF', async () => {
