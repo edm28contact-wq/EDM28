@@ -38,11 +38,13 @@ test('accepted quotes use the atomic planning RPC and stored duration', async ()
   assert.match(source, /p_order_number: orderNumber/);
 });
 
-test('finalization creates one draft invoice and advances guarded statuses', async () => {
+test('finalization uses the atomic RPC and automatically generates the draft invoice PDF', async () => {
   const source = await read('admin-finalization.js');
-  assert.match(source, /external_invoice_id', externalId/);
-  assert.match(source, /status:\s*'draft'/);
-  assert.match(source, /visible_to_client:\s*false/);
-  assert.match(source, /status:\s*'completed'/);
-  assert.match(source, /status:\s*'invoiced'/);
+  assert.match(source, /rpc\('admin_finalize_repair_order'/);
+  assert.match(source, /p_order_id:\s*order\.id/);
+  assert.match(source, /p_invoice_number:\s*invoiceNumber/);
+  assert.match(source, /p_due_days:\s*dueDays/);
+  assert.match(source, /generateInvoicePdf\(invoiceId\)/);
+  assert.match(source, /generateFor\('invoice', invoiceResult\.data\)/);
+  assert.match(source, /Facture brouillon créée et PDF généré automatiquement/);
 });
