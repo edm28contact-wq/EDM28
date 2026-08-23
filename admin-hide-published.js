@@ -19,7 +19,7 @@
       if (!status) return;
 
       const hide = page === 'quotes'
-        ? status !== 'draft'
+        ? !['draft', 'brouillon'].includes(status)
         : page === 'invoice-actions'
           ? status !== 'draft'
           : page === 'interventions'
