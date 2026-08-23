@@ -27,6 +27,15 @@ test('quotes stay private until guarded publication', async () => {
   assert.match(source, /Seul un brouillon peut être modifié ou publié/);
 });
 
+test('localized draft quote labels remain visible in the active quote queue', async () => {
+  const [visibility, workflow] = await Promise.all([
+    read('admin-hide-published.js'),
+    read('admin-quote-workflow.js')
+  ]);
+  assert.match(workflow, /pill\.textContent = 'Brouillon'/);
+  assert.match(visibility, /!\['draft', 'brouillon'\]\.includes\(status\)/);
+});
+
 test('accepted quotes use the atomic planning RPC and stored duration', async () => {
   const source = await read('admin-operations.js');
   assert.match(source, /if \(!future\(startsAt\)\)/);
