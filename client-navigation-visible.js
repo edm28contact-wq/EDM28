@@ -3,8 +3,8 @@
   window.__edmMenuRouterV7 = true;
   window.__edmConnectedRouter = true;
 
-  const allPages = new Set(['home', 'appointment', 'account', 'garage', 'history', 'messages', 'about']);
-  const privatePages = new Set(['account', 'garage', 'history', 'messages']);
+  const allPages = new Set(['home', 'appointment', 'account', 'garage', 'request-status', 'history', 'messages', 'about']);
+  const privatePages = new Set(['account', 'garage', 'request-status', 'history', 'messages']);
 
   let sessionUser = null;
   let sessionKnown = false;
@@ -47,7 +47,9 @@
         ? 'garageList'
         : id === 'messages'
           ? 'clientMessageThread'
-          : 'historyList';
+          : id === 'request-status'
+            ? 'requestStatusList'
+            : 'historyList';
     const host = document.getElementById(hostId);
     if (host && !host.textContent.trim()) {
       host.innerHTML = '<div class="notice">La page est ouverte. Les informations du compte sont en cours de chargement.</div>';
@@ -63,8 +65,14 @@
       showFallback(id, error);
     }
 
+    if (id === 'request-status' && typeof window.renderRequestStatus === 'function') {
+      void window.renderRequestStatus().catch((error) => showFallback(id, error));
+    }
     if (id === 'history' && typeof window.renderRequestHistory === 'function') {
       void window.renderRequestHistory().catch((error) => console.warn('EDM request history unavailable', error));
+    }
+    if (id === 'history' && typeof window.renderCompletedInterventionHistory === 'function') {
+      void window.renderCompletedInterventionHistory().catch((error) => console.warn('EDM intervention archive unavailable', error));
     }
     if (id === 'messages' && typeof window.renderClientMessages === 'function') {
       void window.renderClientMessages().catch((error) => console.warn('EDM client messaging unavailable', error));
