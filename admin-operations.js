@@ -30,6 +30,27 @@
     return result.data;
   }
 
+  async function notifyPublishedOrder(order) {
+    const subject = `Ordre de réparation ${order.order_number || 'EDM28'} disponible`;
+    const existing = await A().db.from('client_messages')
+      .select('id')
+      .eq('user_id', order.user_id)
+      .eq('service_request_id', order.service_request_id)
+      .eq('subject', subject)
+      .limit(1);
+    if (existing.error) throw existing.error;
+    if (existing.data?.length) return;
+
+    const sent = await A().db.rpc('admin_send_message', {
+      p_user_id: order.user_id,
+      p_body: `Votre ordre de réparation ${order.order_number || 'EDM28'} est disponible dans votre espace client. Vous pouvez le consulter dans le suivi de votre demande et dans votre historique de documents.`,
+      p_service_request_id: order.service_request_id,
+      p_subject: subject,
+      p_ai_draft_id: null
+    });
+    if (sent.error) throw sent.error;
+  }
+
   async function publishPreparedOrder(orderId) {
     if (!orderId) throw new Error('Ordre de réparation introuvable après préparation.');
     const current = await A().db.from('repair_orders')
@@ -51,6 +72,8 @@
       .eq('status', 'ready')
       .select('id');
     if (visible.error || !visible.data?.length) throw visible.error || new Error('Publication de l’OR impossible.');
+
+    await notifyPublishedOrder({ ...current.data, pdf_path: pdfPath, visible_to_client: true });
     return pdfPath;
   }
 
@@ -75,7 +98,7 @@
         const q = rows.find((row) => row.id === button.dataset.prepare);
         const prepared = await prepare(q, button.closest('article'));
         await publishPreparedOrder(prepared?.repair_order_id);
-        A().status('operationStatus', 'Rendez-vous confirmé, ordre de réparation préparé et PDF publié au client.');
+        A().status('operationStatus', 'Rendez-vous confirmé, ordre de réparation préparé, PDF publié et message OR envoyé au client.');
         await load();
         await A().overview();
       } catch (e) {
@@ -89,7 +112,7 @@
       button.disabled = true;
       try {
         await publishPreparedOrder(button.dataset.publishReady);
-        A().status('operationStatus', 'Ordre de réparation finalisé et PDF publié au client.');
+        A().status('operationStatus', 'Ordre de réparation finalisé, PDF publié et message OR envoyé au client.');
         await load();
         await A().overview();
       } catch (e) {
