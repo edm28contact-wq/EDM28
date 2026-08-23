@@ -43,6 +43,26 @@ test('repair orders are personalized from the accepted quote lines', async () =>
   assert.doesNotMatch(source, /Lavage|Vidange moteur|Graissages|Niveaux/);
 });
 
+test('personalized repair order includes intervention and control data', async () => {
+  const source = await read('admin-order-personalized-pdf.js');
+  assert.match(source, /oneBy\('inspection_reports', 'repair_order_id', base\.id\)/);
+  assert.match(source, /INTERVENTION ET CONTRÔLES/);
+  assert.match(source, /MESURES ET CONTRÔLES/);
+  assert.match(source, /OBSERVATIONS GÉNÉRALES/);
+  assert.match(source, /ÉTAT DU VÉHICULE \/ OBJETS CLIENT/);
+  assert.match(source, /Technicien/);
+  assert.match(source, /Photos avant \/ après/);
+  assert.match(source, /Signature contrôle/);
+  for (const key of [
+    'plaquettes_av_g','plaquettes_av_d','plaquettes_ar_g','plaquettes_ar_d',
+    'disque_av_g','disque_av_d','disque_ar_g','disque_ar_d',
+    'liquide_frein','flexibles',
+    'pneu_av_g','pneu_av_d','pneu_ar_g','pneu_ar_d',
+    'pression_av_g','pression_av_d','pression_ar_g','pression_ar_d',
+    'amortisseurs','rotules','silentblocs','roulements','soufflets','geometrie'
+  ]) assert.match(source, new RegExp(key));
+});
+
 test('completed inspections generate a PDF before final client availability', async () => {
   const source = await read('admin-inspection-pdf.js');
   assert.match(source, /generateFor\('inspection', report\)/);
