@@ -22,12 +22,25 @@ test('the validated EDM28 layouts are used for every business PDF', async () => 
 });
 
 test('PDF modules load before quote and invoice publication', async () => {
-  const html = await read('admin.html');
+  const [html, adminRoute] = await Promise.all([read('admin.html'), read('api/admin.js')]);
   const engine = html.indexOf('/pdf-lite.js');
   const generator = html.indexOf('/admin-document-pdf.js');
   const publisher = html.indexOf('/admin-publish-email.js');
   assert.ok(engine >= 0 && generator > engine && publisher > generator);
   assert.match(html, /admin-inspection-pdf\.js/);
+  assert.match(adminRoute, /admin-order-personalized-pdf\.js/);
+});
+
+test('repair orders are personalized from the accepted quote lines', async () => {
+  const source = await read('admin-order-personalized-pdf.js');
+  assert.match(source, /from\('quote_items'\)/);
+  assert.match(source, /Devis accepté/);
+  assert.match(source, /TRAVAUX ET PIÈCES AUTORISÉS PAR LE DEVIS ACCEPTÉ/);
+  assert.match(source, /supplier_reference/);
+  assert.match(source, /quantity/);
+  assert.match(source, /MONTANT AUTORISÉ/);
+  assert.match(source, /type === 'order' \? generatePersonalizedOrder\(row\)/);
+  assert.doesNotMatch(source, /Lavage|Vidange moteur|Graissages|Niveaux/);
 });
 
 test('completed inspections generate a PDF before final client availability', async () => {
