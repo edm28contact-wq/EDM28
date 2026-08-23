@@ -23,6 +23,29 @@
     return result.data;
   }
 
+  async function publishPreparedOrder(orderId) {
+    if (!orderId) throw new Error('Ordre de réparation introuvable après préparation.');
+    const current = await A().db.from('repair_orders')
+      .select('id,user_id,vehicle_id,service_request_id,quote_id,appointment_id,order_number,status,pdf_path,visible_to_client,mileage_in,visible_condition,customer_items,authorized_work')
+      .eq('id', orderId)
+      .maybeSingle();
+    if (current.error) throw current.error;
+    if (!current.data) throw new Error('Ordre de réparation introuvable après préparation.');
+
+    let pdfPath = current.data.pdf_path || '';
+    if (!pdfPath) {
+      pdfPath = await window.EDMAdminDocumentPdf?.generateFor('order', current.data);
+      if (!pdfPath) throw new Error('Le PDF de l’ordre de réparation n’a pas pu être généré.');
+    }
+
+    const visible = await A().db.from('repair_orders')
+      .update({ visible_to_client: true, pdf_path: pdfPath, updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+      .select('id');
+    if (visible.error || !visible.data?.length) throw visible.error || new Error('Publication de l’OR impossible.');
+    return pdfPath;
+  }
+
   function render(rows) {
     const host = A().$('operationList');
     host.innerHTML = rows.length ? rows.map((q) => `<article class="card" data-operation-id="${q.id}" style="margin:12px 0"><div class="top"><div><span class="pill">Devis accepté</span><h3>${A().esc(q.quote_number || 'Devis')}</h3></div><strong>${A().money(q.total)}</strong></div><p>${A().esc(q.profiles?.email || 'Client')} · ${A().esc(q.vehicles?.plate || 'Véhicule')}</p><label>Date et heure<input data-field="startsAt" type="datetime-local"></label><label>Durée du devis<input data-field="duration" type="number" min="15" max="480" step="15" value="${Number(q.labor_duration_minutes || 0)}" readonly></label><p class="muted">Temps bloqué : ${Number(q.labor_duration_minutes || 0) + 30} minutes, marge comprise.</p><label>Numéro d’ordre<input data-field="orderNumber" placeholder="Généré automatiquement"></label><button class="btn primary" data-prepare="${q.id}">Planifier et préparer l’ordre</button></article>`).join('') : '<p class="muted">Aucun devis accepté à préparer.</p>';
@@ -30,8 +53,13 @@
       button.disabled = true;
       try {
         const q = rows.find((row) => row.id === button.dataset.prepare);
-        await prepare(q, button.closest('article'));
-        A().status('operationStatus', 'Rendez-vous confirmé et ordre de réparation préparé.');
+        const prepared = await prepare(q, button.closest('article'));
+        try {
+          await publishPreparedOrder(prepared?.repair_order_id);
+          A().status('operationStatus', 'Rendez-vous confirmé, ordre de réparation préparé et PDF publié au client.');
+        } catch (publishError) {
+          A().status('operationStatus', `Rendez-vous et ordre créés, mais publication de l’OR impossible : ${publishError.message || publishError}`, true);
+        }
         await load();
         await A().overview();
       } catch (e) {
