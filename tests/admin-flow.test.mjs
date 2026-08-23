@@ -51,6 +51,14 @@ test('accepted quotes use the workshop module for planning and keep unpublished 
   assert.match(source, /generateFor\('order', current\.data\)/);
 });
 
+test('publishing a repair order creates an OR-specific client message after PDF publication', async () => {
+  const source = await read('admin-operations.js');
+  assert.match(source, /notifyPublishedOrder/);
+  assert.match(source, /Ordre de réparation \$\{order\.order_number \|\| 'EDM28'\} disponible/);
+  assert.match(source, /rpc\('admin_send_message'/);
+  assert.match(source, /await notifyPublishedOrder\(\{ \.\.\.current\.data, pdf_path: pdfPath, visible_to_client: true \}\)/);
+});
+
 test('finalization uses the atomic RPC and automatically generates the draft invoice PDF', async () => {
   const source = await read('admin-finalization.js');
   assert.match(source, /rpc\('admin_finalize_repair_order'/);
