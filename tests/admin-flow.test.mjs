@@ -69,3 +69,24 @@ test('finalization uses the atomic RPC and automatically generates the draft inv
   assert.match(source, /generateFor\('invoice', invoiceResult\.data\)/);
   assert.match(source, /Facture brouillon créée et PDF généré automatiquement/);
 });
+
+test('admin reset is red, requires an exact phrase and preserves administrators and configuration', async () => {
+  const [reset, route, migration] = await Promise.all([
+    read('admin-reset-data.js'),
+    read('api/admin.js'),
+    read('supabase/migrations/20260823234500_admin_reset_operational_data.sql')
+  ]);
+  assert.match(route, /admin-reset-data\.js/);
+  assert.match(reset, /className = 'btn danger'/);
+  assert.match(reset, /REINITIALISER EDM28/);
+  assert.match(reset, /insertBefore\(button, logout\)/);
+  assert.match(reset, /admin_reset_storage_paths/);
+  assert.match(reset, /admin_reset_operational_data/);
+  assert.match(migration, /if not private\.is_admin\(\)/);
+  assert.match(migration, /profile\.role, 'customer'\) <> 'admin'/);
+  assert.match(migration, /delete from auth\.users/);
+  assert.match(migration, /delete from public\.document_sequences/);
+  assert.doesNotMatch(migration, /delete from public\.business_configuration/);
+  assert.doesNotMatch(migration, /delete from public\.site_services/);
+  assert.doesNotMatch(migration, /delete from public\.automation_settings/);
+});
