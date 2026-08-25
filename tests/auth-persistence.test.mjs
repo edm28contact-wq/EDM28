@@ -55,5 +55,6 @@ test('changing remember preference migrates the active session between storage m
 test('persistence wrappers load before each Supabase client is created', async () => {
   const [adminHtml, appRoute] = await Promise.all([read('admin.html'), read('api/app.js')]);
   assert.ok(adminHtml.indexOf('/admin-auth-persistence.js') < adminHtml.indexOf('/admin-core.js'));
-  assert.match(appRoute, /supabase-js@2<\/script><script src="\/client-auth-persistence\.js\?v=1"/);
+  assert.match(appRoute, /client-auth-persistence\.js\?v=1/);
+  assert.ok(appRoute.indexOf('client-auth-persistence.js?v=1') < appRoute.indexOf('const accountPrelude'));
 });
