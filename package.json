@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npm run check:syntax",
     "check:syntax": "find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check",
-    "test:client": "node --test tests/client-flow.test.mjs tests/client-request-status.test.mjs tests/ai-message-draft.test.mjs",
+    "test:client": "node --test tests/client-flow.test.mjs tests/client-request-status.test.mjs tests/ai-message-draft.test.mjs tests/auth-persistence.test.mjs",
     "test:admin": "node --test tests/admin-flow.test.mjs tests/admin-transactional.test.mjs tests/admin-pwa.test.mjs tests/admin-pdf-models.test.mjs",
     "test": "npm run check:syntax && npm run test:client && npm run test:admin",
     "dev": "vercel dev"
