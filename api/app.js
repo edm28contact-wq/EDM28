@@ -35,7 +35,7 @@ export default function handler(req, res) {
 
     html = html.replace(
       '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>',
-      '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/client-auth-persistence.js?v=1"></script>'
+      '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/client-auth-persistence.js?v=2"></script>'
     );
 
     const accountPrelude = '<script src="/client-account-safe.js?v=13"><\/script>';
