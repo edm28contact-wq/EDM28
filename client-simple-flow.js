@@ -13,6 +13,7 @@
 
   const scripts = [
     { src: '/client-password-flow.js?v=2', attr: 'data-edm-password' },
+    { src: '/client-vehicle-required-fields.js?v=1', attr: 'data-edm-vehicle-required-fields' },
     { src: '/client-step3-fixes.js?v=2', attr: 'data-edm-step3' },
     { src: '/request-submit-safe.js?v=4', attr: 'data-edm-submit' },
     { src: '/client-quotes.js?v=1', attr: 'data-edm-quotes' },
