@@ -133,7 +133,7 @@ export default function handler(req, res) {
       .replaceAll('__EDM_BUILD__', build)
       .replace(/<script src="\/admin-document-pdf\.js\?v=[^"]+"><\/script>/, `<script src="/admin-document-pdf.js?v=${build}"><\/script><script src="/admin-order-personalized-pdf.js?v=${build}"><\/script>`)
       .replace(/<script src="\/admin-publish-email\.js\?v=[^"]+"><\/script>/, `<script src="/admin-quote-message-notify.js?v=${build}"><\/script><script src="/admin-publish-email.js?v=${build}"><\/script>`)
-      .replace('</body>', `<script src="/admin-awaiting-acceptance.js?v=${build}"><\/script><script src="/admin-intervention-order-publish.js?v=${build}"><\/script><script src="/admin-invoice-auto-pdf.js?v=${build}"><\/script><script src="/admin-published-payments.js?v=${build}"><\/script><script src="/admin-hide-published.js?v=${build}"><\/script><script src="/admin-reset-data.js?v=${build}"><\/script></body>`);
+      .replace('</body>', `<script src="/admin-awaiting-acceptance.js?v=${build}"><\/script><script src="/admin-disbursements.js?v=${build}"><\/script><script src="/admin-disbursement-invoice-lock.js?v=${build}"><\/script><script src="/admin-intervention-order-publish.js?v=${build}"><\/script><script src="/admin-invoice-auto-pdf.js?v=${build}"><\/script><script src="/admin-published-payments.js?v=${build}"><\/script><script src="/admin-hide-published.js?v=${build}"><\/script><script src="/admin-reset-data.js?v=${build}"><\/script></body>`);
 
     const encodedCore = Buffer.from(adminCore, 'utf8').toString('base64');
     const encodedTransactional = Buffer.from(adminTransactional, 'utf8').toString('base64');

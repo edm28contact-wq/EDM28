@@ -3,20 +3,24 @@
     rows: [],
     payments: [],
     expenses: [],
+    disbursements: [],
 
     async load() {
       const app = window.EDMAdmin;
       if (!app?.$('accountingTable')) return;
-      const [invoiceResult, paymentResult, expenseResult] = await Promise.all([
-        app.db.from('invoices').select('id,invoice_number,status,title,total,amount_paid,payment_method,issued_at,due_at,paid_at,created_at,user_id').order('created_at', { ascending: false }),
+      const [invoiceResult, paymentResult, expenseResult, disbursementResult] = await Promise.all([
+        app.db.from('invoices').select('id,invoice_number,status,title,total,disbursement_total,amount_paid,payment_method,issued_at,due_at,paid_at,created_at,user_id').order('created_at', { ascending: false }),
         app.db.from('payments').select('id,invoice_id,amount,payment_method,reference,paid_at,created_at').order('paid_at', { ascending: false }),
-        app.db.from('purchases').select('id,supplier,category,amount,purchase_date,payment_method,proof_path,notes,created_at,purchase_mode').eq('purchase_mode', 'business_purchase').order('purchase_date', { ascending: false })
+        app.db.from('purchases').select('id,supplier,category,amount,purchase_date,payment_method,proof_path,notes,created_at,purchase_mode').eq('purchase_mode', 'business_purchase').order('purchase_date', { ascending: false }),
+        app.db.from('disbursements').select('id,amount,status,reimbursed_at,invoice_id').in('status', ['eligible', 'reimbursed']).order('created_at', { ascending: false })
       ]);
       if (invoiceResult.error) throw invoiceResult.error;
       if (paymentResult.error) throw paymentResult.error;
       if (expenseResult.error) throw expenseResult.error;
+      if (disbursementResult.error) throw disbursementResult.error;
       this.rows = invoiceResult.data || [];
       this.payments = paymentResult.data || [];
+      this.disbursements = disbursementResult.data || [];
       this.expenses = (expenseResult.data || []).map((row) => ({
         ...row,
         description: row.supplier,
@@ -35,7 +39,7 @@
         exportButton.addEventListener('click', () => this.exportCsv());
       }
       this.render();
-      app.status('accountingStatus', `${this.rows.length} facture(s) et ${this.expenses.length} dépense(s) chargées.`);
+      app.status('accountingStatus', `${this.rows.length} facture(s), ${this.disbursements.length} débours et ${this.expenses.length} dépense(s) chargés.`);
     },
 
     installExpenseUi() {
@@ -46,7 +50,7 @@
       panel.id = 'expensePanel';
       panel.className = 'card';
       panel.style.marginTop = '14px';
-      panel.innerHTML = `<div class="top"><div><h2>Dépenses professionnelles</h2><p class="muted">Achats de pièces, consommables, outils, assurance, carburant et autres charges.</p></div><button id="newExpenseBtn" class="btn primary" type="button">Ajouter une dépense</button></div>
+      panel.innerHTML = `<div class="top"><div><h2>Dépenses professionnelles</h2><p class="muted">Achats de pièces, consommables, outils, assurance, carburant et autres charges. Les débours client sont suivis séparément et ne doivent pas être enregistrés ici.</p></div><button id="newExpenseBtn" class="btn primary" type="button">Ajouter une dépense</button></div>
         <div id="expenseEditor" class="hidden" style="margin-top:12px">
           <div class="grid2">
             <label>Catégorie<select id="expenseCategory"><option value="pieces">Pièces</option><option value="consommables">Consommables</option><option value="outillage">Outillage</option><option value="assurance">Assurance</option><option value="carburant">Carburant</option><option value="local">Local</option><option value="telecom">Télécom</option><option value="comptabilite">Comptabilité</option><option value="autre">Autre</option></select></label>
@@ -133,31 +137,35 @@
       const rows = this.filteredRows();
       const totals = this.rows.reduce((acc, row) => {
         const total = Number(row.total || 0);
+        const disbursement = Number(row.disbursement_total || 0);
         const paid = Number(row.amount_paid || 0);
-        acc.billed += total;
-        acc.paid += paid;
+        acc.billedServices += Math.max(0, total - disbursement);
+        acc.paidGross += paid;
         acc.outstanding += Math.max(0, total - paid);
         if (this.state(row) === 'overdue') acc.overdue += Math.max(0, total - paid);
         return acc;
-      }, { billed: 0, paid: 0, outstanding: 0, overdue: 0 });
+      }, { billedServices: 0, paidGross: 0, outstanding: 0, overdue: 0 });
       const expenseTotal = this.expenses.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-      const cashMargin = totals.paid - expenseTotal;
+      const reimbursedDisbursements = this.disbursements.filter((row) => row.status === 'reimbursed').reduce((sum, row) => sum + Number(row.amount || 0), 0);
+      const cashMargin = totals.paidGross - reimbursedDisbursements - expenseTotal;
 
       app.$('accountingKpis').innerHTML = [
-        ['Facturé', totals.billed],
-        ['Encaissé', totals.paid],
+        ['Prestations facturées', totals.billedServices],
+        ['Encaissé brut', totals.paidGross],
+        ['Débours remboursés', reimbursedDisbursements],
         ['Dépenses', expenseTotal],
-        ['Marge de trésorerie', cashMargin],
+        ['Marge de trésorerie hors débours', cashMargin],
         ['À encaisser', totals.outstanding],
         ['Échu', totals.overdue]
       ].map(([label, value]) => `<article class="card kpi"><span>${app.esc(label)}</span><strong>${app.money(value)}</strong></article>`).join('');
 
-      app.$('accountingTable').innerHTML = rows.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Facture</th><th>Date</th><th>Échéance</th><th>Statut</th><th>Total</th><th>Payé</th><th>Reste</th><th>Paiement</th></tr></thead><tbody>${rows.map((row) => {
+      app.$('accountingTable').innerHTML = rows.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Facture</th><th>Date</th><th>Échéance</th><th>Statut</th><th>Total</th><th>Dont débours</th><th>Payé</th><th>Reste</th><th>Paiement</th></tr></thead><tbody>${rows.map((row) => {
         const total = Number(row.total || 0);
+        const disbursement = Number(row.disbursement_total || 0);
         const paid = Number(row.amount_paid || 0);
         const state = this.state(row);
         const labels = { paid: 'Soldée', unpaid: 'À encaisser', overdue: 'Échue' };
-        return `<tr><td>${app.esc(row.invoice_number || row.title || row.id)}</td><td>${this.date(row.issued_at || row.created_at)}</td><td>${this.date(row.due_at)}</td><td>${app.esc(labels[state])}</td><td>${app.money(total)}</td><td>${app.money(paid)}</td><td>${app.money(Math.max(0, total - paid))}</td><td>${app.esc(row.payment_method || '—')}</td></tr>`;
+        return `<tr><td>${app.esc(row.invoice_number || row.title || row.id)}</td><td>${this.date(row.issued_at || row.created_at)}</td><td>${this.date(row.due_at)}</td><td>${app.esc(labels[state])}</td><td>${app.money(total)}</td><td>${app.money(disbursement)}</td><td>${app.money(paid)}</td><td>${app.money(Math.max(0, total - paid))}</td><td>${app.esc(row.payment_method || '—')}</td></tr>`;
       }).join('')}</tbody></table></div>` : '<div class="status">Aucune facture pour ce filtre.</div>';
 
       const expenseHost = app.$('expenseTable');
@@ -191,13 +199,15 @@
       const rows = this.filteredRows();
       const quote = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
       const lines = [
-        ['TYPE', 'Référence', 'Date', 'Échéance', 'Statut/Catégorie', 'Montant', 'Payé', 'Reste', 'Mode de paiement', 'Description'],
+        ['TYPE', 'Référence', 'Date', 'Échéance', 'Statut/Catégorie', 'Montant', 'Dont débours', 'Payé', 'Reste', 'Mode de paiement', 'Description'],
         ...rows.map((row) => {
           const total = Number(row.total || 0);
+          const disbursement = Number(row.disbursement_total || 0);
           const paid = Number(row.amount_paid || 0);
-          return ['FACTURE', row.invoice_number || row.title || row.id, this.date(row.issued_at || row.created_at), this.date(row.due_at), this.state(row), total.toFixed(2), paid.toFixed(2), Math.max(0, total - paid).toFixed(2), row.payment_method || '', row.title || ''];
+          return ['FACTURE', row.invoice_number || row.title || row.id, this.date(row.issued_at || row.created_at), this.date(row.due_at), this.state(row), total.toFixed(2), disbursement.toFixed(2), paid.toFixed(2), Math.max(0, total - paid).toFixed(2), row.payment_method || '', row.title || ''];
         }),
-        ...this.expenses.map((row) => ['DÉPENSE', row.id, this.date(row.expense_date), '', row.category, Number(row.amount || 0).toFixed(2), '', '', row.payment_method || '', row.description || ''])
+        ...this.expenses.map((row) => ['DÉPENSE', row.id, this.date(row.expense_date), '', row.category, Number(row.amount || 0).toFixed(2), '', '', '', row.payment_method || '', row.description || '']),
+        ...this.disbursements.map((row) => ['DÉBOURS', row.id, this.date(row.reimbursed_at), '', row.status, Number(row.amount || 0).toFixed(2), Number(row.amount || 0).toFixed(2), row.status === 'reimbursed' ? Number(row.amount || 0).toFixed(2) : '', '', '', 'Remboursement exact hors prestations EDM'])
       ];
       const csv = '\uFEFF' + lines.map((line) => line.map(quote).join(';')).join('\n');
       const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
