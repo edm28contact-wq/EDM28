@@ -17,6 +17,7 @@
     { src: '/client-step3-fixes.js?v=2', attr: 'data-edm-step3' },
     { src: '/request-submit-safe.js?v=4', attr: 'data-edm-submit' },
     { src: '/client-quotes.js?v=1', attr: 'data-edm-quotes' },
+    { src: '/client-disbursements.js?v=1', attr: 'data-edm-disbursements' },
     { src: '/client-operations.js?v=1', attr: 'data-edm-operations' },
     { src: '/client-inspections.js?v=1', attr: 'data-edm-inspections' },
     { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' },
