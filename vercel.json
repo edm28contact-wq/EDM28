@@ -3,7 +3,7 @@
   "buildCommand": "npm test",
   "env": {
     "RESEND_FROM_EMAIL": "EDM28 <onboarding@resend.dev>",
-    "RESEND_TO_EMAIL": "edm28.contact@gmail.com"
+    "RESEND_TO_EMAIL": "contact@edm28.fr"
   },
   "functions": {
     "api/app.js": {

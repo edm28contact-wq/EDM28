@@ -67,7 +67,7 @@
   function renderContact() {
     const grid = document.getElementById('edmContactGrid');
     if (!grid) return;
-    const email = getSetting('business_email', getSetting('email', 'edm28.contact@gmail.com'));
+    const email = getSetting('business_email', getSetting('email', 'contact@edm28.fr'));
     const phone = getSetting('business_phone', getSetting('phone', ''));
     const address = [getSetting('address_line1', ''), getSetting('postal_code', ''), getSetting('city', '')].filter(Boolean).join(' ');
     grid.innerHTML = [
