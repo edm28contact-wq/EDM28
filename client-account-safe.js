@@ -33,7 +33,8 @@
     if (typeof saveState === 'function') saveState();
   };
 
-  const protectedPages = new Set(['account', 'garage', 'history', 'messages', 'disbursements']);
+  const protectedPages = new Set(['account', 'garage', 'history', 'messages']);
+  protectedPages.add('disbursements');
   const baseShowPage = window.showPage;
   if (typeof baseShowPage === 'function') {
     window.showPage = function (pageId) {
