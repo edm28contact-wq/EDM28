@@ -41,7 +41,10 @@ test('admin disbursement flow blocks over-limit purchases and requires proof', a
 });
 
 test('database migration enforces exact no-margin disbursements end to end', async () => {
-  const migration = await read('supabase/migrations/20260826150638_client_disbursement_workflow.sql');
+  const [migration, indexes] = await Promise.all([
+    read('supabase/migrations/20260826150638_client_disbursement_workflow.sql'),
+    read('supabase/migrations/20260826153500_client_disbursement_indexes.sql')
+  ]);
   assert.match(migration, /guard_disbursement_integrity/);
   assert.match(migration, /client_choose_disbursement/);
   assert.match(migration, /no_margin is not true/);
@@ -56,4 +59,18 @@ test('database migration enforces exact no-margin disbursements end to end', asy
   assert.match(migration, /margin_amount/);
   assert.match(migration, /status = 'reimbursed', exact_reimbursement = true/);
   assert.match(migration, /revoke all on function public\.client_choose_disbursement/);
+  for (const column of ['user_id', 'vehicle_id', 'service_request_id', 'quote_id', 'invoice_id']) {
+    assert.match(indexes, new RegExp(`disbursements_${column}_idx`));
+  }
+});
+
+test('accounting keeps reimbursed disbursements separate from EDM service revenue', async () => {
+  const accounting = await read('admin-accounting.js');
+  assert.match(accounting, /disbursement_total/);
+  assert.match(accounting, /billedServices \+= Math\.max\(0, total - disbursement\)/);
+  assert.match(accounting, /reimbursedDisbursements/);
+  assert.match(accounting, /paidGross - reimbursedDisbursements - expenseTotal/);
+  assert.match(accounting, /Prestations facturées/);
+  assert.match(accounting, /Débours remboursés/);
+  assert.match(accounting, /Marge de trésorerie hors débours/);
 });
