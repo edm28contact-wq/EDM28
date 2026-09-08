@@ -1,11 +1,94 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveSupabasePublicConfig } from './supabase-config.js';
+import publicSeoHandler from '../public-seo.js';
 
 const INDEX_PATH = join(process.cwd(), 'index.html');
 const ROUTER_PATH = join(process.cwd(), 'client-navigation-visible.js');
+const PUBLIC_EMAIL = 'contact@edm28.fr';
+
+const PUBLIC_PATHS = [
+  '/',
+  '/freinage',
+  '/freinage/plaquettes-de-frein',
+  '/freinage/disques-de-frein',
+  '/freinage/liquide-de-frein',
+  '/liaison-au-sol',
+  '/liaison-au-sol/triangles',
+  '/liaison-au-sol/direction',
+  '/prestations',
+  '/tarifs',
+  '/fonctionnement',
+  '/transparence',
+  '/a-propos',
+  '/contact'
+];
+
+const PRIVATE_PATHS = [
+  '/admin', '/admin.html', '/app.html', '/account', '/garage', '/history', '/messages',
+  '/request-status', '/documents', '/devis', '/factures', '/api/'
+];
+
+function getSeoMode(req) {
+  if (typeof req.query?.seo === 'string') return req.query.seo;
+  try {
+    return new URL(req.url || '', 'http://localhost').searchParams.get('seo') || '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function xmlEscape(value) {
+  return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+}
+
+function getOrigin(req) {
+  const forwarded = String(req.headers?.['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
+  const protocol = forwarded === 'http' ? 'http' : 'https';
+  const host = String(req.headers?.host || '').trim().toLowerCase();
+  if (!/^[a-z0-9.-]+(?::\d+)?$/.test(host)) return `${protocol}://localhost`;
+  return `${protocol}://${host}`;
+}
+
+function handleSitemap(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
+    return res.status(405).end();
+  }
+  const origin = getOrigin(req);
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${PUBLIC_PATHS.map((path) => `  <url><loc>${xmlEscape(`${origin}${path}`)}</loc></url>`).join('\n')}
+</urlset>
+`;
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  if (req.method === 'HEAD') return res.status(200).end();
+  return res.status(200).send(body);
+}
+
+function handleRobots(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
+    return res.status(405).end();
+  }
+  const body = ['User-agent: *', 'Allow: /', ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`), `Sitemap: ${getOrigin(req)}/sitemap.xml`, ''].join('\n');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  if (req.method === 'HEAD') return res.status(200).end();
+  return res.status(200).send(body);
+}
 
 export default function handler(req, res) {
+  const seoMode = getSeoMode(req);
+  if (seoMode === 'page') return publicSeoHandler(req, res);
+  if (seoMode === 'robots') return handleRobots(req, res);
+  if (seoMode === 'sitemap') return handleSitemap(req, res);
+  if (seoMode) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1></main></body></html>');
+  }
+
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).end();
@@ -15,6 +98,7 @@ export default function handler(req, res) {
     let html = readFileSync(INDEX_PATH, 'utf8');
     const criticalRouter = readFileSync(ROUTER_PATH, 'utf8').replace(/<\/script/gi, '<\\/script');
     const supabase = resolveSupabasePublicConfig();
+    const origin = getOrigin(req);
 
     if (!supabase.url || !supabase.key) {
       throw new Error(`Configuration Supabase ${supabase.environment} absente.`);
@@ -23,14 +107,38 @@ export default function handler(req, res) {
     html = html
       .replace(/const SUPABASE_URL = "[^"]+";/, `const SUPABASE_URL = ${JSON.stringify(supabase.url)};`)
       .replace(/const SUPABASE_ANON_KEY = "[^"]+";/, `const SUPABASE_ANON_KEY = ${JSON.stringify(supabase.key)};`)
-      .replace('<title>EDM AUTO</title>', '<title>EDM · Spécialiste du freinage</title>')
-      .replace('content="EDM AUTO - Demande mécanique simple, estimation claire et reprise manuelle."', 'content="EDM, spécialiste du freinage et de l’entretien automobile. Préparez votre demande et consultez une estimation indicative."')
+      .replace('<title>EDM AUTO</title>', '<title>EDM28 | Spécialiste freinage et liaison au sol</title>')
+      .replace('content="EDM AUTO - Demande mécanique simple, estimation claire et reprise manuelle."', 'content="EDM28 est spécialisé dans le freinage et la liaison au sol : plaquettes, disques, liquide de frein et train roulant, avec devis et suivi transparents."')
       .replace('<meta name="theme-color" content="#111827">', '<meta name="theme-color" content="#cec7c0">')
       .replace('<link rel="icon" href="/icon.svg" type="image/svg+xml">', '<link rel="icon" href="/logo-edm.svg" type="image/svg+xml">')
       .replace('<link rel="apple-touch-icon" href="/icon.svg">', '<link rel="apple-touch-icon" href="/logo-edm.svg">')
-      .replace('<meta name="apple-mobile-web-app-title" content="EDM AUTO">', '<meta name="apple-mobile-web-app-title" content="EDM">');
+      .replace('<meta name="apple-mobile-web-app-title" content="EDM AUTO">', '<meta name="apple-mobile-web-app-title" content="EDM28">')
+      .replace('<div class="eyebrow">Demande simple · estimation claire · reprise manuelle</div>', '<div class="eyebrow">Freinage · liaison au sol · parcours transparent</div>')
+      .replace('<h1>Préparez votre demande mécanique en quelques minutes.</h1>', '<h1>Garage automobile spécialisé freinage et liaison au sol.</h1>');
 
-    const socialMeta = `<meta name="edm-environment" content="${supabase.environment}"><meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:title" content="EDM · Spécialiste du freinage"><meta property="og:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><meta property="og:image" content="/logo-edm.svg"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="EDM · Spécialiste du freinage"><meta name="twitter:description" content="Préparez votre demande d'entretien automobile et consultez une estimation indicative."><style id="edm-boot-style">html{background:#cec7c0}body{visibility:hidden}</style><script>${criticalRouter}<\/script>`;
+    const structuredData = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': `${origin}/#organization`,
+          name: 'EDM28',
+          url: `${origin}/`,
+          email: PUBLIC_EMAIL,
+          description: 'Garage automobile spécialisé freinage et liaison au sol, avec parcours client transparent, devis avant intervention et historique des documents.'
+        },
+        {
+          '@type': 'AutoRepair',
+          '@id': `${origin}/#autorepair`,
+          name: 'EDM28',
+          url: `${origin}/`,
+          email: PUBLIC_EMAIL,
+          description: 'Garage automobile spécialisé freinage et liaison au sol.'
+        }
+      ]
+    }).replaceAll('<', '\\u003c');
+
+    const socialMeta = `<meta name="edm-environment" content="${supabase.environment}"><meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href="${origin}/"><meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:site_name" content="EDM28"><meta property="og:title" content="EDM28 | Spécialiste freinage et liaison au sol"><meta property="og:description" content="Freinage, liaison au sol, devis avant intervention et suivi client transparent."><meta property="og:url" content="${origin}/"><meta property="og:image" content="${origin}/logo-edm.svg"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="EDM28 | Spécialiste freinage et liaison au sol"><meta name="twitter:description" content="Freinage, liaison au sol, devis avant intervention et suivi client transparent."><script type="application/ld+json">${structuredData}<\/script><style id="edm-boot-style">html{background:#cec7c0}body{visibility:hidden}</style><script>${criticalRouter}<\/script>`;
     html = html.replace('</head>', `${socialMeta}</head>`);
 
     html = html.replace(
@@ -38,9 +146,10 @@ export default function handler(req, res) {
       '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/client-auth-persistence.js?v=2"></script>'
     );
 
+    const publicHub = `<section aria-labelledby="edm-public-services" style="max-width:1100px;margin:24px auto;padding:24px;border:1px solid #ded8d1;border-radius:24px;background:#fff"><h2 id="edm-public-services">Freinage et liaison au sol</h2><p>Consultez les pages publiques EDM28 pour comprendre les contrôles, les prestations, les tarifs et le fonctionnement avant de préparer votre demande.</p><nav aria-label="Services et informations EDM28" style="display:flex;flex-wrap:wrap;gap:12px"><a href="/freinage">Freinage</a><a href="/freinage/plaquettes-de-frein">Plaquettes</a><a href="/freinage/disques-de-frein">Disques</a><a href="/freinage/liquide-de-frein">Liquide de frein</a><a href="/liaison-au-sol">Liaison au sol</a><a href="/prestations">Prestations</a><a href="/tarifs">Tarifs</a><a href="/fonctionnement">Fonctionnement</a><a href="/transparence">Transparence</a></nav></section>`;
     const accountPrelude = '<script src="/client-account-safe.js?v=13"><\/script>';
     const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var scripts=['/integration.js?v=5','/final-system.js?v=2','/request-history.js?v=2','/client-request-status-history.js?v=1','/service-details.js?v=1','/ui-final.js?v=6','/theme-light.js?v=4','/home-premium.js?v=3','/contact-footer.js?v=1','/accessibility-mobile.js?v=1','/reliability.js?v=1','/white-background.js?v=2','/light-palette-final.js?v=2','/mid-palette-final.js?v=1','/client-simple-flow.js?v=9','/palette-edm-reference.js?v=1','/combo-suspended.js?v=1','/client-booking-vehicle-history.js?v=2','/client-booking-history-router.js?v=1','/client-backoffice-sync.js?v=1','/client-internal-booking.js?v=2','/client-final-experience.js?v=2','/client-final-patch.js?v=5','/client-history-invoice-archive.js?v=1'];var reveal=function(){var style=document.getElementById('edm-boot-style');if(style)style.remove();document.body.style.visibility='visible';};var timeout=setTimeout(reveal,4000);scripts.reduce(function(p,src){return p.then(function(){return new Promise(function(resolve){var s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=function(){console.error('EDM optional module unavailable',src);resolve();};document.body.appendChild(s);});});},Promise.resolve()).finally(function(){clearTimeout(timeout);reveal();});});<\/script>`;
-    html = html.replace('</body>', `${accountPrelude}${loader}</body>`);
+    html = html.replace('</body>', `${publicHub}${accountPrelude}${loader}</body>`);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -49,6 +158,6 @@ export default function handler(req, res) {
     return res.status(200).send(html);
   } catch (error) {
     console.error('app loader error', error);
-    return res.status(500).send('<h1>EDM</h1><p>Application temporairement indisponible.</p>');
+    return res.status(500).send('<h1>EDM28</h1><p>Application temporairement indisponible.</p>');
   }
 }
