@@ -79,8 +79,24 @@ test('le sitemap ne contient que les pages publiques prévues', async () => {
 test('robots bloque les zones privées et référence le sitemap', async () => {
   const source = await read('api/app.js');
   for (const path of PRIVATE_PATHS) assert.match(source, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
-  assert.match(source, /Sitemap: \$\{getOrigin\(req\)\}\/sitemap\.xml/);
+  assert.match(source, /`Sitemap: \$\{origin\}\/sitemap\.xml`/);
   assert.match(source, /'Allow: \/'/);
+});
+
+test('canonical et sitemap utilisent une origine de production stable', async () => {
+  const source = await read('api/app.js');
+  assert.match(source, /process\.env\.PUBLIC_SITE_ORIGIN/);
+  assert.match(source, /process\.env\.VERCEL_PROJECT_PRODUCTION_URL/);
+  assert.match(source, /const origin = getOrigin\(req\)/);
+  assert.match(source, /canonicalSeoRequest\(req\)/);
+});
+
+test('les previews Vercel sont explicitement non indexables', async () => {
+  const source = await read('api/app.js');
+  assert.match(source, /process\.env\.VERCEL_ENV/);
+  assert.match(source, /noindex, nofollow, noarchive/);
+  assert.match(source, /\['User-agent: \*', 'Disallow: \/'/);
+  assert.match(source, /X-Robots-Tag', 'noindex, nofollow, noarchive'/);
 });
 
 test('admin et app.html sont explicitement noindex', async () => {
