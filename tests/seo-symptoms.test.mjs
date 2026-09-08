@@ -15,17 +15,18 @@ const SYMPTOM_PATHS = [
   '/liaison-au-sol/claquement-train-avant'
 ];
 
-test('Vercel expose toutes les pages de symptômes et le sitemap étendu', async () => {
+test('Vercel expose toutes les pages de symptômes via la fonction app existante', async () => {
   const config = JSON.parse(await read('vercel.json'));
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
-  assert.equal(routes.get('/sitemap.xml'), '/api/symptoms?mode=sitemap');
+  assert.equal(routes.get('/sitemap.xml'), '/api/app?seo=sitemap');
   for (const path of SYMPTOM_PATHS) {
-    assert.match(routes.get(path) || '', /^\/api\/symptoms\?slug=/, path);
+    assert.match(routes.get(path) || '', /^\/api\/app\?seo=symptom&slug=/, path);
   }
+  assert.doesNotMatch(await read('vercel.json'), /\/api\/symptoms/);
 });
 
 test('chaque intention symptôme possède title, description, H1 et contenu propre', async () => {
-  const source = await read('api/symptoms.js');
+  const source = await read('public-seo-symptoms.js');
   for (const path of SYMPTOM_PATHS) {
     assert.match(source, new RegExp(`path: '${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
   }
@@ -39,7 +40,7 @@ test('chaque intention symptôme possède title, description, H1 et contenu prop
 });
 
 test('les pages symptômes sont reliées aux prestations sans diagnostic automatique', async () => {
-  const source = await read('api/symptoms.js');
+  const source = await read('public-seo-symptoms.js');
   assert.match(source, /\/freinage\/plaquettes-de-frein/);
   assert.match(source, /\/freinage\/disques-de-frein/);
   assert.match(source, /\/freinage\/liquide-de-frein/);
@@ -50,7 +51,7 @@ test('les pages symptômes sont reliées aux prestations sans diagnostic automat
 });
 
 test('les pages symptômes rendent canonical, Open Graph, breadcrumbs et données structurées', async () => {
-  const source = await read('api/symptoms.js');
+  const source = await read('public-seo-symptoms.js');
   assert.match(source, /<link rel="canonical" href=/);
   assert.match(source, /<meta property="og:title"/);
   assert.match(source, /'@type': 'WebPage'/);
@@ -59,20 +60,23 @@ test('les pages symptômes rendent canonical, Open Graph, breadcrumbs et donnée
   assert.match(source, /'@type': 'FAQPage'/);
 });
 
-test('le sitemap regroupe le socle public et les nouvelles intentions', async () => {
-  const source = await read('api/symptoms.js');
-  assert.match(source, /const ALL_PUBLIC_PATHS = \[\.\.\.CORE_PATHS/);
-  assert.match(source, /'\/freinage'/);
-  assert.match(source, /'\/contact'/);
+test('le sitemap app regroupe le socle public et les nouvelles intentions', async () => {
+  const source = await read('api/app.js');
+  const sitemapList = source.split('const PUBLIC_PATHS = [')[1].split('];')[0];
+  assert.match(sitemapList, /'\/freinage'/);
+  assert.match(sitemapList, /'\/contact'/);
   for (const path of SYMPTOM_PATHS) {
-    assert.match(source, new RegExp(`path: '${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
+    assert.match(sitemapList, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
   }
-  assert.doesNotMatch(source, /'\/admin'/);
-  assert.doesNotMatch(source, /'\/account'/);
+  assert.doesNotMatch(sitemapList, /'\/admin'/);
+  assert.doesNotMatch(sitemapList, /'\/account'/);
 });
 
-test('canonical et previews restent durcis sur la nouvelle fonction', async () => {
-  const source = await read('api/symptoms.js');
+test('canonical et previews restent durcis sur le cluster symptômes', async () => {
+  const source = await read('public-seo-symptoms.js');
+  const app = await read('api/app.js');
+  assert.match(app, /symptomSeoHandler/);
+  assert.match(app, /seoMode === 'symptom'/);
   assert.match(source, /process\.env\.PUBLIC_SITE_ORIGIN/);
   assert.match(source, /process\.env\.VERCEL_PROJECT_PRODUCTION_URL/);
   assert.match(source, /process\.env\.VERCEL_ENV/);
@@ -81,6 +85,6 @@ test('canonical et previews restent durcis sur la nouvelle fonction', async () =
 });
 
 test('aucune donnée locale non vérifiée n’est inventée', async () => {
-  const source = await read('api/symptoms.js');
+  const source = await read('public-seo-symptoms.js');
   assert.doesNotMatch(source, /streetAddress|postalCode|telephone|GeoCoordinates|addressLocality/);
 });
