@@ -28,7 +28,7 @@ const PRIVATE_PATHS = ['/admin', '/account', '/garage', '/history', '/messages',
 test('Vercel expose les routes SEO publiques, sitemap et robots', async () => {
   const config = JSON.parse(await read('vercel.json'));
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
-  assert.equal(routes.get('/sitemap.xml'), '/api/app?seo=sitemap');
+  assert.equal(routes.get('/sitemap.xml'), '/api/symptoms?mode=sitemap');
   assert.equal(routes.get('/robots.txt'), '/api/app?seo=robots');
   for (const path of PUBLIC_PATHS) assert.match(routes.get(path) || '', /^\/api\/app\?seo=page&slug=/, path);
   assert.equal(routes.get('/'), '/api/app');
@@ -68,7 +68,7 @@ test('la page tarifs charge site_services au lieu de recopier les prix', async (
   assert.doesNotMatch(source, />99 €</);
 });
 
-test('le sitemap ne contient que les pages publiques prévues', async () => {
+test('la liste SEO historique ne contient que les pages publiques prévues', async () => {
   const source = await read('api/app.js');
   const sitemapList = source.split('const PUBLIC_PATHS = [')[1].split('];')[0];
   assert.match(sitemapList, /'\/freinage'/);
