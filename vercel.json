@@ -7,7 +7,7 @@
   },
   "functions": {
     "api/app.js": {
-      "includeFiles": "{index.html,client-navigation-visible.js}"
+      "includeFiles": "index.html"
     },
     "api/admin.js": {
       "includeFiles": "{admin.html,admin-core.js,admin-transactional.js}"
@@ -21,18 +21,6 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" }
-      ]
-    },
-    {
-      "source": "/admin(.*)",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
-      ]
-    },
-    {
-      "source": "/app.html",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
       ]
     },
     {

@@ -83,11 +83,10 @@ test('robots bloque les zones privées et référence le sitemap', async () => {
 });
 
 test('admin et app.html sont explicitement noindex', async () => {
-  const [admin, appHtml, vercel] = await Promise.all([read('api/admin.js'), read('app.html'), read('vercel.json')]);
+  const [admin, appHtml] = await Promise.all([read('api/admin.js'), read('app.html')]);
   assert.match(admin, /X-Robots-Tag', 'noindex, nofollow, noarchive'/);
   assert.match(admin, /meta name="robots" content="noindex,nofollow,noarchive"/);
   assert.match(appHtml, /meta name="robots" content="noindex,nofollow,noarchive"/);
-  assert.match(vercel, /"source": "\/admin\(\.\*\)"/);
 });
 
 test('la page d’accueil reçoit le positionnement SEO et le maillage interne', async () => {
