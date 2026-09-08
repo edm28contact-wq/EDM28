@@ -1,0 +1,31 @@
+name: IndexNow
+
+on:
+  push:
+    branches: [pwa-edm28]
+    paths:
+      - 'api/app.js'
+      - 'public-seo.js'
+      - 'public-seo-symptoms.js'
+      - 'garage-freinage-saint-lubin-de-la-haye.html'
+      - 'vercel.json'
+      - '2a42e34bf6be46998222361affe1b1d0.txt'
+      - 'scripts/submit-indexnow.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for production deployment
+        run: sleep 120
+      - name: Notify IndexNow
+        run: node scripts/submit-indexnow.js
