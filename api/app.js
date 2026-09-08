@@ -42,12 +42,48 @@ function xmlEscape(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 }
 
+function normalizeConfiguredOrigin(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (!/^[a-z0-9.-]+(?::\d+)?$/i.test(url.host)) return '';
+    return `${url.protocol}//${url.host}`.replace(/\/$/, '');
+  } catch (_) {
+    return '';
+  }
+}
+
 function getOrigin(req) {
+  const explicit = normalizeConfiguredOrigin(process.env.PUBLIC_SITE_ORIGIN);
+  if (explicit) return explicit;
+
+  const production = normalizeConfiguredOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+  if (production) return production;
+
   const forwarded = String(req.headers?.['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
   const protocol = forwarded === 'http' ? 'http' : 'https';
   const host = String(req.headers?.host || '').trim().toLowerCase();
   if (!/^[a-z0-9.-]+(?::\d+)?$/.test(host)) return `${protocol}://localhost`;
   return `${protocol}://${host}`;
+}
+
+function isPreviewDeployment() {
+  return String(process.env.VERCEL_ENV || '').trim().toLowerCase() === 'preview';
+}
+
+function canonicalSeoRequest(req) {
+  const origin = new URL(getOrigin(req));
+  return {
+    method: req.method,
+    url: req.url,
+    query: req.query,
+    headers: {
+      ...(req.headers || {}),
+      host: origin.host,
+      'x-forwarded-proto': origin.protocol.replace(':', '')
+    }
+  };
 }
 
 function handleSitemap(req, res) {
@@ -63,6 +99,7 @@ ${PUBLIC_PATHS.map((path) => `  <url><loc>${xmlEscape(`${origin}${path}`)}</loc>
 `;
   res.setHeader('Content-Type', 'application/xml; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
   if (req.method === 'HEAD') return res.status(200).end();
   return res.status(200).send(body);
 }
@@ -72,16 +109,23 @@ function handleRobots(req, res) {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).end();
   }
-  const body = ['User-agent: *', 'Allow: /', ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`), `Sitemap: ${getOrigin(req)}/sitemap.xml`, ''].join('\n');
+  const origin = getOrigin(req);
+  const body = isPreviewDeployment()
+    ? ['User-agent: *', 'Disallow: /', `Sitemap: ${origin}/sitemap.xml`, ''].join('\n')
+    : ['User-agent: *', 'Allow: /', ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`), `Sitemap: ${origin}/sitemap.xml`, ''].join('\n');
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
   if (req.method === 'HEAD') return res.status(200).end();
   return res.status(200).send(body);
 }
 
 export default function handler(req, res) {
   const seoMode = getSeoMode(req);
-  if (seoMode === 'page') return publicSeoHandler(req, res);
+  if (seoMode === 'page') {
+    if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    return publicSeoHandler(canonicalSeoRequest(req), res);
+  }
   if (seoMode === 'robots') return handleRobots(req, res);
   if (seoMode === 'sitemap') return handleSitemap(req, res);
   if (seoMode) {
@@ -99,6 +143,7 @@ export default function handler(req, res) {
     const criticalRouter = readFileSync(ROUTER_PATH, 'utf8').replace(/<\/script/gi, '<\\/script');
     const supabase = resolveSupabasePublicConfig();
     const origin = getOrigin(req);
+    const robotsMeta = isPreviewDeployment() ? 'noindex,nofollow,noarchive' : 'index,follow,max-image-preview:large';
 
     if (!supabase.url || !supabase.key) {
       throw new Error(`Configuration Supabase ${supabase.environment} absente.`);
@@ -138,7 +183,7 @@ export default function handler(req, res) {
       ]
     }).replaceAll('<', '\\u003c');
 
-    const socialMeta = `<meta name="edm-environment" content="${supabase.environment}"><meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href="${origin}/"><meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:site_name" content="EDM28"><meta property="og:title" content="EDM28 | Spécialiste freinage et liaison au sol"><meta property="og:description" content="Freinage, liaison au sol, devis avant intervention et suivi client transparent."><meta property="og:url" content="${origin}/"><meta property="og:image" content="${origin}/logo-edm.svg"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="EDM28 | Spécialiste freinage et liaison au sol"><meta name="twitter:description" content="Freinage, liaison au sol, devis avant intervention et suivi client transparent."><script type="application/ld+json">${structuredData}<\/script><style id="edm-boot-style">html{background:#cec7c0}body{visibility:hidden}</style><script>${criticalRouter}<\/script>`;
+    const socialMeta = `<meta name="edm-environment" content="${supabase.environment}"><meta name="robots" content="${robotsMeta}"><link rel="canonical" href="${origin}/"><meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:site_name" content="EDM28"><meta property="og:title" content="EDM28 | Spécialiste freinage et liaison au sol"><meta property="og:description" content="Freinage, liaison au sol, devis avant intervention et suivi client transparent."><meta property="og:url" content="${origin}/"><meta property="og:image" content="${origin}/logo-edm.svg"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="EDM28 | Spécialiste freinage et liaison au sol"><meta name="twitter:description" content="Freinage, liaison au sol, devis avant intervention et suivi client transparent."><script type="application/ld+json">${structuredData}<\/script><style id="edm-boot-style">html{background:#cec7c0}body{visibility:hidden}</style><script>${criticalRouter}<\/script>`;
     html = html.replace('</head>', `${socialMeta}</head>`);
 
     html = html.replace(
@@ -154,6 +199,7 @@ export default function handler(req, res) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     res.setHeader('X-EDM-Environment', supabase.environment);
+    if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     if (req.method === 'HEAD') return res.status(200).end();
     return res.status(200).send(html);
   } catch (error) {
