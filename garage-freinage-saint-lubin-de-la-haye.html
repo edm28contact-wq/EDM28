@@ -33,7 +33,14 @@
       "name":"EDM28",
       "alternateName":"EDM 28",
       "url":"https://edm28.fr/",
+      "logo":"https://edm28.fr/logo-edm.svg",
       "email":"contact@edm28.fr",
+      "contactPoint":{
+        "@type":"ContactPoint",
+        "contactType":"service client",
+        "email":"contact@edm28.fr",
+        "availableLanguage":["fr"]
+      },
       "description":"Garage automobile situé à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et liaison au sol, avec devis avant intervention et suivi transparent."
     },
     {
@@ -42,8 +49,8 @@
       "name":"EDM28",
       "alternateName":"EDM 28",
       "url":"https://edm28.fr/",
+      "image":"https://edm28.fr/logo-edm.svg",
       "email":"contact@edm28.fr",
-      "description":"Garage automobile spécialisé en freinage et prestations ciblées de liaison au sol.",
       "address":{
         "@type":"PostalAddress",
         "addressLocality":"Saint-Lubin-de-la-Haye",
@@ -54,7 +61,21 @@
         "@type":"Place",
         "name":"Saint-Lubin-de-la-Haye et alentours"
       },
-      "knowsAbout":["freinage automobile","plaquettes de frein","disques de frein","liquide de frein","liaison au sol","train roulant","direction"]
+      "knowsAbout":["freinage automobile","plaquettes de frein","disques de frein","liquide de frein","liaison au sol","train roulant","triangles de suspension","direction"],
+      "hasOfferCatalog":{
+        "@type":"OfferCatalog",
+        "name":"Prestations EDM28",
+        "itemListElement":[
+          {"@type":"Offer","itemOffered":{"@type":"Service","name":"Freinage automobile","url":"https://edm28.fr/freinage"}},
+          {"@type":"Offer","itemOffered":{"@type":"Service","name":"Plaquettes de frein","url":"https://edm28.fr/freinage/plaquettes-de-frein"}},
+          {"@type":"Offer","itemOffered":{"@type":"Service","name":"Disques de frein","url":"https://edm28.fr/freinage/disques-de-frein"}},
+          {"@type":"Offer","itemOffered":{"@type":"Service","name":"Liquide de frein","url":"https://edm28.fr/freinage/liquide-de-frein"}},
+          {"@type":"Offer","itemOffered":{"@type":"Service","name":"Liaison au sol","url":"https://edm28.fr/liaison-au-sol"}},
+          {"@type":"Offer","itemOffered":{"@type":"Service","name":"Triangles de suspension","url":"https://edm28.fr/liaison-au-sol/triangles"}},
+          {"@type":"Offer","itemOffered":{"@type":"Service","name":"Direction","url":"https://edm28.fr/liaison-au-sol/direction"}}
+        ]
+      },
+      "description":"Garage automobile spécialisé en freinage et prestations ciblées de liaison au sol."
     },
     {
       "@type":"WebPage",
@@ -77,6 +98,7 @@
         {"@type":"Question","name":"Qu’est-ce qu’EDM28 ?","acceptedAnswer":{"@type":"Answer","text":"EDM28 est un garage automobile situé à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et intervenant aussi sur des prestations ciblées de liaison au sol et de train roulant."}},
         {"@type":"Question","name":"Où se situe EDM28 ?","acceptedAnswer":{"@type":"Answer","text":"EDM28 se situe à Saint-Lubin-de-la-Haye, 28410."}},
         {"@type":"Question","name":"Quelle est la spécialité d’EDM28 ?","acceptedAnswer":{"@type":"Answer","text":"Le freinage est la spécialité principale d’EDM28. Le garage intervient aussi sur des prestations ciblées de liaison au sol et de train roulant."}},
+        {"@type":"Question","name":"Quels services EDM28 présente-t-il en ligne ?","acceptedAnswer":{"@type":"Answer","text":"EDM28 présente notamment le freinage, les plaquettes, les disques, le liquide de frein, la liaison au sol, les triangles de suspension et la direction."}},
         {"@type":"Question","name":"Comment fonctionne EDM28 ?","acceptedAnswer":{"@type":"Answer","text":"EDM28 privilégie un parcours transparent : contrôle du besoin, devis avant intervention et validation du client avant d’étendre les travaux."}}
       ]
     }
@@ -84,7 +106,7 @@
 }
 </script>
 <style>
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171717;background:#f5f2ee;line-height:1.6}*{box-sizing:border-box}body{margin:0}.wrap{width:min(1080px,calc(100% - 32px));margin:auto}.top{background:#111827;color:#fff}.top .wrap{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-weight:900;letter-spacing:.08em;text-decoration:none;color:#fff}.nav{display:flex;flex-wrap:wrap;gap:14px}.nav a{color:#e5e7eb;text-decoration:none}.hero{padding:68px 0 52px;background:linear-gradient(135deg,#fff,#ede7e0)}.crumbs{font-size:.9rem;color:#5d6470;margin-bottom:20px}.crumbs a{color:#374151}h1{font-size:clamp(2.2rem,6vw,4.5rem);line-height:1.02;letter-spacing:-.05em;max-width:900px;margin:0}.lead{max-width:760px;font-size:1.14rem;color:#4b5563;margin:22px 0}.cta{display:inline-block;background:#111827;color:#fff;text-decoration:none;padding:13px 18px;border-radius:999px;font-weight:800}.content{padding:48px 0 76px}.content section{background:#fff;border:1px solid #ded8d1;border-radius:24px;padding:28px;margin-bottom:18px}.content h2{margin:0 0 10px;font-size:1.6rem}.content p{margin:0;color:#535b66}.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:16px}.fact{border:1px solid #e4ded7;border-radius:18px;padding:18px;background:#faf8f5}.fact strong{display:block;margin-bottom:6px}.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:28px}.links a{display:flex;justify-content:space-between;background:#111827;color:#fff;text-decoration:none;border-radius:18px;padding:18px;font-weight:800}.footer{border-top:1px solid #d8d2ca;padding:28px 0 42px;color:#5d6470}@media(max-width:760px){.top .wrap{align-items:flex-start;flex-direction:column;padding:18px 0}.hero{padding-top:44px}.content section{padding:22px}}
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171717;background:#f5f2ee;line-height:1.6}*{box-sizing:border-box}body{margin:0}.wrap{width:min(1080px,calc(100% - 32px));margin:auto}.top{background:#111827;color:#fff}.top .wrap{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-weight:900;letter-spacing:.08em;text-decoration:none;color:#fff}.nav{display:flex;flex-wrap:wrap;gap:14px}.nav a{color:#e5e7eb;text-decoration:none}.hero{padding:68px 0 52px;background:linear-gradient(135deg,#fff,#ede7e0)}.crumbs{font-size:.9rem;color:#5d6470;margin-bottom:20px}.crumbs a{color:#374151}h1{font-size:clamp(2.2rem,6vw,4.5rem);line-height:1.02;letter-spacing:-.05em;max-width:900px;margin:0}.lead{max-width:760px;font-size:1.14rem;color:#4b5563;margin:22px 0}.cta{display:inline-block;background:#111827;color:#fff;text-decoration:none;padding:13px 18px;border-radius:999px;font-weight:800}.content{padding:48px 0 76px}.content section{background:#fff;border:1px solid #ded8d1;border-radius:24px;padding:28px;margin-bottom:18px}.content h2{margin:0 0 10px;font-size:1.6rem}.content p{margin:0;color:#535b66}.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:16px}.fact{border:1px solid #e4ded7;border-radius:18px;padding:18px;background:#faf8f5}.fact strong{display:block;margin-bottom:6px}.service-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:16px}.service-list a{display:block;border:1px solid #e4ded7;border-radius:18px;padding:16px;background:#faf8f5;color:#171717;text-decoration:none;font-weight:750}.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:28px}.links a{display:flex;justify-content:space-between;background:#111827;color:#fff;text-decoration:none;border-radius:18px;padding:18px;font-weight:800}.footer{border-top:1px solid #d8d2ca;padding:28px 0 42px;color:#5d6470}@media(max-width:760px){.top .wrap{align-items:flex-start;flex-direction:column;padding:18px 0}.hero{padding-top:44px}.content section{padding:22px}}
 </style>
 </head>
 <body>
@@ -93,6 +115,7 @@
 <div class="hero"><div class="wrap"><div class="crumbs"><a href="/">Accueil</a> › Saint-Lubin-de-la-Haye</div><h1>Garage spécialisé freinage à Saint-Lubin-de-la-Haye (28410)</h1><p class="lead">EDM28 est un garage automobile situé à Saint-Lubin-de-la-Haye, dans le 28410. Le freinage constitue le cœur de son activité, complété par des interventions ciblées de liaison au sol et de train roulant.</p><a class="cta" href="/">Préparer une demande de rendez-vous</a></div></div>
 <div class="wrap content">
 <section><h2>EDM28 en bref</h2><p>Ces informations résument l’identité publique d’EDM28 afin qu’un client, un moteur de recherche ou un assistant IA puisse comprendre rapidement l’activité du garage.</p><div class="facts"><div class="fact"><strong>Activité</strong>Garage automobile</div><div class="fact"><strong>Localisation</strong>Saint-Lubin-de-la-Haye, 28410</div><div class="fact"><strong>Spécialité principale</strong>Freinage automobile</div><div class="fact"><strong>Autres interventions</strong>Liaison au sol et train roulant ciblés</div><div class="fact"><strong>Méthode</strong>Contrôle, devis avant intervention et validation du client</div><div class="fact"><strong>Site officiel</strong>edm28.fr</div><div class="fact"><strong>Contact public</strong>contact@edm28.fr</div></div></section>
+<section><h2>Prestations présentées par EDM28</h2><p>Le site officiel détaille les principaux domaines sur lesquels EDM28 communique publiquement.</p><div class="service-list"><a href="/freinage">Freinage automobile</a><a href="/freinage/plaquettes-de-frein">Plaquettes de frein</a><a href="/freinage/disques-de-frein">Disques de frein</a><a href="/freinage/liquide-de-frein">Liquide de frein</a><a href="/liaison-au-sol">Liaison au sol</a><a href="/liaison-au-sol/triangles">Triangles de suspension</a><a href="/liaison-au-sol/direction">Direction</a></div></section>
 <section><h2>Spécialiste freinage à Saint-Lubin-de-la-Haye</h2><p>EDM28 prend en charge des prestations de freinage telles que le contrôle et le remplacement de plaquettes, de disques et le renouvellement du liquide de frein lorsque l’état réel du véhicule le justifie. Un bruit, une vibration ou une sensation inhabituelle sert à orienter le contrôle mais ne remplace pas le diagnostic mécanique.</p></section>
 <section><h2>Liaison au sol et train roulant</h2><p>Le garage intervient aussi sur des prestations ciblées concernant notamment triangles de suspension, biellettes et rotules de direction ou biellettes de barre stabilisatrice. L’élément en cause est recherché avant de retenir une réparation.</p></section>
 <section><h2>Un parcours client transparent</h2><p>La demande est étudiée avant travaux et le périmètre prévu est formalisé dans un devis. Si un besoin supplémentaire apparaît, il doit être expliqué et validé avant d’être ajouté à l’intervention.</p></section>
