@@ -95,6 +95,7 @@ export default function handler(req, res) {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).end();
   }
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
 
   const iconSize = requestedIconSize(req);
   if (iconSize) {
@@ -129,7 +130,7 @@ export default function handler(req, res) {
       .replace(/'sb_publishable_[^']+'/, JSON.stringify(supabase.key));
 
     html = html
-      .replace('</head>', `<meta name="edm-environment" content="${supabase.environment}"><meta name="edm-build" content="${build}"></head>`)
+      .replace('</head>', `<meta name="robots" content="noindex,nofollow,noarchive"><meta name="edm-environment" content="${supabase.environment}"><meta name="edm-build" content="${build}"></head>`)
       .replaceAll('__EDM_BUILD__', build)
       .replace(/<script src="\/admin-document-pdf\.js\?v=[^"]+"><\/script>/, `<script src="/admin-document-pdf.js?v=${build}"><\/script><script src="/admin-order-personalized-pdf.js?v=${build}"><\/script>`)
       .replace(/<script src="\/admin-publish-email\.js\?v=[^"]+"><\/script>/, `<script src="/admin-quote-message-notify.js?v=${build}"><\/script><script src="/admin-publish-email.js?v=${build}"><\/script>`)
