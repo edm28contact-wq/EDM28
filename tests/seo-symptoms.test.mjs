@@ -27,11 +27,12 @@ test('Vercel expose toutes les pages de symptômes via la fonction app existante
 
 test('chaque intention symptôme possède title, description, H1 et contenu propre', async () => {
   const source = await read('public-seo-symptoms.js');
+  const dataSection = source.split('const ALL_PUBLIC_PATHS')[0];
   for (const path of SYMPTOM_PATHS) {
-    assert.match(source, new RegExp(`path: '${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
+    assert.match(dataSection, new RegExp(`path: '${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
   }
-  const titles = [...source.matchAll(/\n\s+title: '([^']+)'/g)].map((match) => match[1]);
-  const descriptions = [...source.matchAll(/\n\s+description: '([^']+)'/g)].map((match) => match[1]);
+  const titles = [...dataSection.matchAll(/\n\s+title: '([^']+)'/g)].map((match) => match[1]);
+  const descriptions = [...dataSection.matchAll(/\n\s+description: '([^']+)'/g)].map((match) => match[1]);
   assert.equal(titles.length, SYMPTOM_PATHS.length);
   assert.equal(descriptions.length, SYMPTOM_PATHS.length);
   assert.equal(new Set(titles).size, titles.length);
