@@ -62,6 +62,11 @@
   "routes": [
     { "src": "/robots.txt", "dest": "/api/app?seo=robots" },
     { "src": "/sitemap.xml", "dest": "/api/app?seo=sitemap" },
+    { "src": "/symptomes", "dest": "/api/app?seo=symptom&slug=symptomes" },
+    { "src": "/freinage/freins-qui-grincent", "dest": "/api/app?seo=symptom&slug=freinage/freins-qui-grincent" },
+    { "src": "/freinage/vibrations-au-freinage", "dest": "/api/app?seo=symptom&slug=freinage/vibrations-au-freinage" },
+    { "src": "/freinage/pedale-de-frein-molle", "dest": "/api/app?seo=symptom&slug=freinage/pedale-de-frein-molle" },
+    { "src": "/liaison-au-sol/claquement-train-avant", "dest": "/api/app?seo=symptom&slug=liaison-au-sol/claquement-train-avant" },
     { "src": "/freinage", "dest": "/api/app?seo=page&slug=freinage" },
     { "src": "/freinage/plaquettes-de-frein", "dest": "/api/app?seo=page&slug=freinage/plaquettes-de-frein" },
     { "src": "/freinage/disques-de-frein", "dest": "/api/app?seo=page&slug=freinage/disques-de-frein" },

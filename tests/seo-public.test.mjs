@@ -68,7 +68,7 @@ test('la page tarifs charge site_services au lieu de recopier les prix', async (
   assert.doesNotMatch(source, />99 €</);
 });
 
-test('le sitemap ne contient que les pages publiques prévues', async () => {
+test('la liste SEO publique reste séparée des routes privées', async () => {
   const source = await read('api/app.js');
   const sitemapList = source.split('const PUBLIC_PATHS = [')[1].split('];')[0];
   assert.match(sitemapList, /'\/freinage'/);
@@ -113,6 +113,7 @@ test('la page d’accueil reçoit le positionnement SEO et le maillage interne',
   assert.match(source, /Garage automobile spécialisé freinage et liaison au sol\./);
   assert.match(source, /href="\/freinage"/);
   assert.match(source, /href="\/liaison-au-sol"/);
+  assert.match(source, /href="\/symptomes"/);
   assert.match(source, /href="\/tarifs"/);
   assert.match(source, /'@type': 'Organization'/);
   assert.match(source, /'@type': 'AutoRepair'/);

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveSupabasePublicConfig } from './supabase-config.js';
 import publicSeoHandler from '../public-seo.js';
+import symptomSeoHandler from '../public-seo-symptoms.js';
 
 const INDEX_PATH = join(process.cwd(), 'index.html');
 const ROUTER_PATH = join(process.cwd(), 'client-navigation-visible.js');
@@ -21,7 +22,12 @@ const PUBLIC_PATHS = [
   '/fonctionnement',
   '/transparence',
   '/a-propos',
-  '/contact'
+  '/contact',
+  '/symptomes',
+  '/freinage/freins-qui-grincent',
+  '/freinage/vibrations-au-freinage',
+  '/freinage/pedale-de-frein-molle',
+  '/liaison-au-sol/claquement-train-avant'
 ];
 
 const PRIVATE_PATHS = [
@@ -126,6 +132,10 @@ export default function handler(req, res) {
     if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     return publicSeoHandler(canonicalSeoRequest(req), res);
   }
+  if (seoMode === 'symptom') {
+    if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    return symptomSeoHandler(canonicalSeoRequest(req), res);
+  }
   if (seoMode === 'robots') return handleRobots(req, res);
   if (seoMode === 'sitemap') return handleSitemap(req, res);
   if (seoMode) {
@@ -191,7 +201,7 @@ export default function handler(req, res) {
       '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/client-auth-persistence.js?v=2"></script>'
     );
 
-    const publicHub = `<section aria-labelledby="edm-public-services" style="max-width:1100px;margin:24px auto;padding:24px;border:1px solid #ded8d1;border-radius:24px;background:#fff"><h2 id="edm-public-services">Freinage et liaison au sol</h2><p>Consultez les pages publiques EDM28 pour comprendre les contrôles, les prestations, les tarifs et le fonctionnement avant de préparer votre demande.</p><nav aria-label="Services et informations EDM28" style="display:flex;flex-wrap:wrap;gap:12px"><a href="/freinage">Freinage</a><a href="/freinage/plaquettes-de-frein">Plaquettes</a><a href="/freinage/disques-de-frein">Disques</a><a href="/freinage/liquide-de-frein">Liquide de frein</a><a href="/liaison-au-sol">Liaison au sol</a><a href="/prestations">Prestations</a><a href="/tarifs">Tarifs</a><a href="/fonctionnement">Fonctionnement</a><a href="/transparence">Transparence</a></nav></section>`;
+    const publicHub = `<section aria-labelledby="edm-public-services" style="max-width:1100px;margin:24px auto;padding:24px;border:1px solid #ded8d1;border-radius:24px;background:#fff"><h2 id="edm-public-services">Freinage et liaison au sol</h2><p>Consultez les pages publiques EDM28 pour comprendre les contrôles, les prestations, les tarifs, les symptômes et le fonctionnement avant de préparer votre demande.</p><nav aria-label="Services et informations EDM28" style="display:flex;flex-wrap:wrap;gap:12px"><a href="/freinage">Freinage</a><a href="/freinage/plaquettes-de-frein">Plaquettes</a><a href="/freinage/disques-de-frein">Disques</a><a href="/freinage/liquide-de-frein">Liquide de frein</a><a href="/liaison-au-sol">Liaison au sol</a><a href="/symptomes">Symptômes</a><a href="/prestations">Prestations</a><a href="/tarifs">Tarifs</a><a href="/fonctionnement">Fonctionnement</a><a href="/transparence">Transparence</a></nav></section>`;
     const accountPrelude = '<script src="/client-account-safe.js?v=13"><\/script>';
     const loader = `<script>window.addEventListener('DOMContentLoaded',function(){var scripts=['/integration.js?v=5','/final-system.js?v=2','/request-history.js?v=2','/client-request-status-history.js?v=1','/service-details.js?v=1','/ui-final.js?v=6','/theme-light.js?v=4','/home-premium.js?v=3','/contact-footer.js?v=1','/accessibility-mobile.js?v=1','/reliability.js?v=1','/white-background.js?v=2','/light-palette-final.js?v=2','/mid-palette-final.js?v=1','/client-simple-flow.js?v=9','/palette-edm-reference.js?v=1','/combo-suspended.js?v=1','/client-booking-vehicle-history.js?v=2','/client-booking-history-router.js?v=1','/client-backoffice-sync.js?v=1','/client-internal-booking.js?v=2','/client-final-experience.js?v=2','/client-final-patch.js?v=5','/client-history-invoice-archive.js?v=1'];var reveal=function(){var style=document.getElementById('edm-boot-style');if(style)style.remove();document.body.style.visibility='visible';};var timeout=setTimeout(reveal,4000);scripts.reduce(function(p,src){return p.then(function(){return new Promise(function(resolve){var s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=function(){console.error('EDM optional module unavailable',src);resolve();};document.body.appendChild(s);});});},Promise.resolve()).finally(function(){clearTimeout(timeout);reveal();});});<\/script>`;
     html = html.replace('</body>', `${publicHub}${accountPrelude}${loader}</body>`);
