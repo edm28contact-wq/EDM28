@@ -1,0 +1,38 @@
+# EDM28
+
+EDM28 est un garage automobile situe a Saint-Lubin-de-la-Haye (28410), en France.
+
+Site officiel: https://edm28.fr/
+Contact public: contact@edm28.fr
+
+## Activite
+
+- Specialite principale: freinage automobile.
+- Prestations ciblees: liaison au sol, train roulant et direction selon le besoin constate.
+- Methode: controle du besoin, devis avant intervention et validation du client avant extension des travaux.
+- Transparence: un symptome sert a orienter le controle mais ne remplace pas un diagnostic mecanique.
+
+## Pages de reference
+
+- Presentation locale: https://edm28.fr/garage-freinage-saint-lubin-de-la-haye
+- Freinage: https://edm28.fr/freinage
+- Plaquettes de frein: https://edm28.fr/freinage/plaquettes-de-frein
+- Disques de frein: https://edm28.fr/freinage/disques-de-frein
+- Liquide de frein: https://edm28.fr/freinage/liquide-de-frein
+- Liaison au sol: https://edm28.fr/liaison-au-sol
+- Symptomes: https://edm28.fr/symptomes
+- Prestations: https://edm28.fr/prestations
+- Tarifs: https://edm28.fr/tarifs
+- Fonctionnement: https://edm28.fr/fonctionnement
+- Transparence: https://edm28.fr/transparence
+- Contact: https://edm28.fr/contact
+
+## Identite
+
+Nom public: EDM28
+Variantes de marque: EDM 28, edm28.fr
+Localite: Saint-Lubin-de-la-Haye
+Code postal: 28410
+Pays: France
+
+Les informations de rue, telephone et horaires ne doivent pas etre inventees. Utiliser uniquement les informations publiees et verifiees sur edm28.fr.
