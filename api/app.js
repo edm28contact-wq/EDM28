@@ -1,10 +1,46 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveSupabasePublicConfig } from './supabase-config.js';
+import publicSeoHandler from '../public-seo.js';
 
 const INDEX_PATH = join(process.cwd(), 'index.html');
 const ROUTER_PATH = join(process.cwd(), 'client-navigation-visible.js');
 const PUBLIC_EMAIL = 'contact@edm28.fr';
+
+const PUBLIC_PATHS = [
+  '/',
+  '/freinage',
+  '/freinage/plaquettes-de-frein',
+  '/freinage/disques-de-frein',
+  '/freinage/liquide-de-frein',
+  '/liaison-au-sol',
+  '/liaison-au-sol/triangles',
+  '/liaison-au-sol/direction',
+  '/prestations',
+  '/tarifs',
+  '/fonctionnement',
+  '/transparence',
+  '/a-propos',
+  '/contact'
+];
+
+const PRIVATE_PATHS = [
+  '/admin', '/admin.html', '/app.html', '/account', '/garage', '/history', '/messages',
+  '/request-status', '/documents', '/devis', '/factures', '/api/'
+];
+
+function getSeoMode(req) {
+  if (typeof req.query?.seo === 'string') return req.query.seo;
+  try {
+    return new URL(req.url || '', 'http://localhost').searchParams.get('seo') || '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function xmlEscape(value) {
+  return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+}
 
 function getOrigin(req) {
   const forwarded = String(req.headers?.['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
@@ -14,7 +50,45 @@ function getOrigin(req) {
   return `${protocol}://${host}`;
 }
 
+function handleSitemap(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
+    return res.status(405).end();
+  }
+  const origin = getOrigin(req);
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${PUBLIC_PATHS.map((path) => `  <url><loc>${xmlEscape(`${origin}${path}`)}</loc></url>`).join('\n')}
+</urlset>
+`;
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  if (req.method === 'HEAD') return res.status(200).end();
+  return res.status(200).send(body);
+}
+
+function handleRobots(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
+    return res.status(405).end();
+  }
+  const body = ['User-agent: *', 'Allow: /', ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`), `Sitemap: ${getOrigin(req)}/sitemap.xml`, ''].join('\n');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  if (req.method === 'HEAD') return res.status(200).end();
+  return res.status(200).send(body);
+}
+
 export default function handler(req, res) {
+  const seoMode = getSeoMode(req);
+  if (seoMode === 'page') return publicSeoHandler(req, res);
+  if (seoMode === 'robots') return handleRobots(req, res);
+  if (seoMode === 'sitemap') return handleSitemap(req, res);
+  if (seoMode) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1></main></body></html>');
+  }
+
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).end();

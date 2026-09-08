@@ -28,14 +28,14 @@ const PRIVATE_PATHS = ['/admin', '/account', '/garage', '/history', '/messages',
 test('Vercel expose les routes SEO publiques, sitemap et robots', async () => {
   const config = JSON.parse(await read('vercel.json'));
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
-  assert.equal(routes.get('/sitemap.xml'), '/api/sitemap');
-  assert.equal(routes.get('/robots.txt'), '/api/robots');
-  for (const path of PUBLIC_PATHS) assert.match(routes.get(path) || '', /^\/api\/public-page\?slug=/, path);
+  assert.equal(routes.get('/sitemap.xml'), '/api/app?seo=sitemap');
+  assert.equal(routes.get('/robots.txt'), '/api/app?seo=robots');
+  for (const path of PUBLIC_PATHS) assert.match(routes.get(path) || '', /^\/api\/app\?seo=page&slug=/, path);
   assert.equal(routes.get('/'), '/api/app');
 });
 
 test('chaque page SEO possède une URL, un title et une description uniques', async () => {
-  const source = await read('api/public-page.js');
+  const source = await read('public-seo.js');
   const dataSection = source.split('function esc')[0];
   for (const path of PUBLIC_PATHS) assert.match(dataSection, new RegExp(`path: '${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
   const titles = [...dataSection.matchAll(/\n\s+title: '([^']+)'/g)].map((match) => match[1]);
@@ -47,7 +47,7 @@ test('chaque page SEO possède une URL, un title et une description uniques', as
 });
 
 test('les pages SEO rendent canonical, H1, Open Graph et structured data', async () => {
-  const source = await read('api/public-page.js');
+  const source = await read('public-seo.js');
   assert.match(source, /<link rel="canonical" href=/);
   assert.match(source, /<meta property="og:title"/);
   assert.match(source, /<h1>\$\{esc\(page\.h1\)\}<\/h1>/);
@@ -59,7 +59,7 @@ test('les pages SEO rendent canonical, H1, Open Graph et structured data', async
 });
 
 test('la page tarifs charge site_services au lieu de recopier les prix', async () => {
-  const source = await read('api/public-page.js');
+  const source = await read('public-seo.js');
   assert.match(source, /rest\/v1\/site_services/);
   assert.match(source, /published_at: 'not\.is\.null'/);
   assert.match(source, /active: 'eq\.true'/);
@@ -69,14 +69,15 @@ test('la page tarifs charge site_services au lieu de recopier les prix', async (
 });
 
 test('le sitemap ne contient que les pages publiques prévues', async () => {
-  const source = await read('api/sitemap.js');
-  assert.match(source, /'\/freinage'/);
-  assert.match(source, /'\/contact'/);
-  for (const path of PRIVATE_PATHS) assert.doesNotMatch(source, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
+  const source = await read('api/app.js');
+  const sitemapList = source.split('const PUBLIC_PATHS = [')[1].split('];')[0];
+  assert.match(sitemapList, /'\/freinage'/);
+  assert.match(sitemapList, /'\/contact'/);
+  for (const path of PRIVATE_PATHS) assert.doesNotMatch(sitemapList, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
 });
 
 test('robots bloque les zones privées et référence le sitemap', async () => {
-  const source = await read('api/robots.js');
+  const source = await read('api/app.js');
   for (const path of PRIVATE_PATHS) assert.match(source, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
   assert.match(source, /Sitemap: \$\{getOrigin\(req\)\}\/sitemap\.xml/);
   assert.match(source, /'Allow: \/'/);
