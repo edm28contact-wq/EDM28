@@ -106,16 +106,19 @@ test('admin et app.html sont explicitement noindex', async () => {
   assert.match(appHtml, /meta name="robots" content="noindex,nofollow,noarchive"/);
 });
 
-test('la page d’accueil reçoit le positionnement SEO et le maillage interne', async () => {
+test('la page d’accueil reçoit le positionnement local SEO et le maillage interne', async () => {
   const source = await read('api/app.js');
-  assert.match(source, /EDM28 \| Spécialiste freinage et liaison au sol/);
+  assert.match(source, /EDM28 \| Garage freinage à Saint-Lubin-de-la-Haye \(28410\)/);
   assert.match(source, /link rel="canonical" href="\$\{origin\}\//);
-  assert.match(source, /Garage automobile spécialisé freinage et liaison au sol\./);
+  assert.match(source, /Garage automobile situé à Saint-Lubin-de-la-Haye \(28410\)/);
+  assert.match(source, /href="\/garage-freinage-saint-lubin-de-la-haye"/);
   assert.match(source, /href="\/freinage"/);
   assert.match(source, /href="\/liaison-au-sol"/);
   assert.match(source, /href="\/symptomes"/);
   assert.match(source, /href="\/tarifs"/);
   assert.match(source, /'@type': 'Organization'/);
   assert.match(source, /'@type': 'AutoRepair'/);
-  assert.doesNotMatch(source, /streetAddress|postalCode|telephone/);
+  assert.match(source, /addressLocality: PUBLIC_LOCALITY/);
+  assert.match(source, /postalCode: PUBLIC_POSTAL_CODE/);
+  assert.doesNotMatch(source, /streetAddress|telephone|openingHours/);
 });

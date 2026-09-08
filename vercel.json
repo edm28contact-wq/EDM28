@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm test",
   "env": {
+    "PUBLIC_SITE_ORIGIN": "https://edm28.fr",
     "RESEND_FROM_EMAIL": "EDM28 <onboarding@resend.dev>",
     "RESEND_TO_EMAIL": "contact@edm28.fr"
   },
@@ -62,6 +63,7 @@
   "routes": [
     { "src": "/robots.txt", "dest": "/api/app?seo=robots" },
     { "src": "/sitemap.xml", "dest": "/api/app?seo=sitemap" },
+    { "src": "/garage-freinage-saint-lubin-de-la-haye", "dest": "/garage-freinage-saint-lubin-de-la-haye.html" },
     { "src": "/symptomes", "dest": "/api/app?seo=symptom&slug=symptomes" },
     { "src": "/freinage/freins-qui-grincent", "dest": "/api/app?seo=symptom&slug=freinage/freins-qui-grincent" },
     { "src": "/freinage/vibrations-au-freinage", "dest": "/api/app?seo=symptom&slug=freinage/vibrations-au-freinage" },
