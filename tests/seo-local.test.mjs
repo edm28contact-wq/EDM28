@@ -24,7 +24,7 @@ test('la page locale possède canonical, H1 et données locales vérifiées', as
   const html = await read('garage-freinage-saint-lubin-de-la-haye.html');
   assert.match(html, /<link rel="canonical" href="https:\/\/edm28\.fr\/garage-freinage-saint-lubin-de-la-haye">/);
   assert.match(html, /<h1>Garage spécialisé freinage à Saint-Lubin-de-la-Haye \(28410\)<\/h1>/);
-  assert.match(html, /"streetAddress":"17 bis rue du Vilaret"/);
+  assert.match(html, /"streetAddress":"17 bis route du Videlet"/);
   assert.match(html, /"addressLocality":"Saint-Lubin-de-la-Haye"/);
   assert.match(html, /"postalCode":"28410"/);
   assert.match(html, /"openingHoursSpecification"/);
@@ -43,8 +43,10 @@ test('le sitemap principal contient la page locale', async () => {
 
 test('la page d’accueil expose la localisation vérifiée et le maillage local', async () => {
   const source = await read('api/app.js');
+  assert.match(source, /const PUBLIC_STREET_ADDRESS = '17 bis route du Videlet'/);
   assert.match(source, /const PUBLIC_LOCALITY = 'Saint-Lubin-de-la-Haye'/);
   assert.match(source, /const PUBLIC_POSTAL_CODE = '28410'/);
+  assert.match(source, /streetAddress: PUBLIC_STREET_ADDRESS/);
   assert.match(source, /addressLocality: PUBLIC_LOCALITY/);
   assert.match(source, /postalCode: PUBLIC_POSTAL_CODE/);
   assert.match(source, /href="\/garage-freinage-saint-lubin-de-la-haye"/);
