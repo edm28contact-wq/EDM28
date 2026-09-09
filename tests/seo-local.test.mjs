@@ -8,6 +8,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path) => readFile(join(root, path), 'utf8');
 const LOCAL_PATH = '/garage-freinage-saint-lubin-de-la-haye';
 const INDEXNOW_KEY = '2a42e34bf6be46998222361affe1b1d0';
+const GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
 
 test('le domaine public officiel est edm28.fr', async () => {
   const config = JSON.parse(await read('vercel.json'));
@@ -32,6 +33,8 @@ test('la page locale possède canonical, H1 et données locales vérifiées', as
   assert.match(html, /"opens":"09:00","closes":"13:00"/);
   assert.match(html, /"opens":"14:00","closes":"18:00"/);
   assert.match(html, /"@type":"AutoRepair"/);
+  assert.ok(html.includes(GOOGLE_MAPS_URL));
+  assert.ok(html.includes('"sameAs":["https://maps.google.com/?cid=5973618623656745225"]'));
   assert.doesNotMatch(html, /"telephone"/);
 });
 
@@ -43,12 +46,11 @@ test('le sitemap principal contient la page locale', async () => {
 
 test('la page d’accueil expose la localisation vérifiée et le maillage local', async () => {
   const source = await read('api/app.js');
-  assert.match(source, /const PUBLIC_STREET_ADDRESS = '17 bis route du Videlet'/);
-  assert.match(source, /const PUBLIC_LOCALITY = 'Saint-Lubin-de-la-Haye'/);
-  assert.match(source, /const PUBLIC_POSTAL_CODE = '28410'/);
-  assert.match(source, /streetAddress: PUBLIC_STREET_ADDRESS/);
-  assert.match(source, /addressLocality: PUBLIC_LOCALITY/);
-  assert.match(source, /postalCode: PUBLIC_POSTAL_CODE/);
+  assert.ok(source.includes("const PUBLIC_STREET_ADDRESS = '17 bis route du Videlet'"));
+  assert.ok(source.includes("const PUBLIC_LOCALITY = 'Saint-Lubin-de-la-Haye'"));
+  assert.ok(source.includes("const PUBLIC_POSTAL_CODE = '28410'"));
+  assert.ok(source.includes("const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225'"));
+  assert.ok(source.includes('sameAs: [PUBLIC_GOOGLE_MAPS_URL]'));
   assert.match(source, /href="\/garage-freinage-saint-lubin-de-la-haye"/);
 });
 

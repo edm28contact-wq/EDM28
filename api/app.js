@@ -10,6 +10,7 @@ const PUBLIC_EMAIL = 'contact@edm28.fr';
 const PUBLIC_STREET_ADDRESS = '17 bis route du Videlet';
 const PUBLIC_LOCALITY = 'Saint-Lubin-de-la-Haye';
 const PUBLIC_POSTAL_CODE = '28410';
+const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
 
 const PUBLIC_PATHS = [
   '/',
@@ -226,6 +227,7 @@ export default function handler(req, res) {
           name: 'EDM28',
           alternateName: ['EDM 28', 'edm28.fr'],
           url: `${origin}/`,
+          sameAs: [PUBLIC_GOOGLE_MAPS_URL],
           logo: `${origin}/logo-edm.svg`,
           email: PUBLIC_EMAIL,
           address: localAddress,
@@ -244,6 +246,7 @@ export default function handler(req, res) {
           name: 'EDM28',
           alternateName: ['EDM 28', 'edm28.fr'],
           url: `${origin}/`,
+          sameAs: [PUBLIC_GOOGLE_MAPS_URL],
           image: `${origin}/logo-edm.svg`,
           email: PUBLIC_EMAIL,
           address: localAddress,

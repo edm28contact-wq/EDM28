@@ -16,6 +16,8 @@ Cette fiche sert de source de vérité pour Google Business Profile, Bing Places
 - Téléphone professionnel : À COMPLÉTER — non communiqué à ce jour
 - Horaires habituels : dimanche 09:00–13:00 et 14:00–18:00 ; fermé du lundi au samedi
 - Fuseau horaire : Europe/Paris
+- Google Business Profile : https://maps.google.com/?cid=5973618623656745225
+- Lien officiel de demande d’avis Google : https://g.page/r/CQnZtxZ9juZSEBM/review
 
 ## Positionnement
 
@@ -68,12 +70,13 @@ Pages de référence :
 5. Ne jamais publier de téléphone tant qu’un numéro professionnel n’a pas été confirmé.
 6. Ne pas annoncer de services non documentés sur le site.
 7. Ne pas utiliser de faux avis, de fausses photos, de faux labels ou de fausses certifications.
-8. Dès qu’une fiche externe officielle est créée et vérifiée, ajouter son URL à cette fiche puis au balisage `sameAs` du site.
+8. Utiliser `https://maps.google.com/?cid=5973618623656745225` comme URL publique stable de la fiche Google EDM28 dans `sameAs`.
+9. Utiliser `https://g.page/r/CQnZtxZ9juZSEBM/review` uniquement pour les demandes d’avis clients réels.
+10. Dès qu’une fiche Bing ou Apple officielle est créée et vérifiée, ajouter son URL ici puis au balisage `sameAs` du site.
 
 ## Reste à compléter
 
 - Téléphone professionnel :
-- URL Google Business Profile :
 - URL Bing Places :
 - URL Apple Business :
 
