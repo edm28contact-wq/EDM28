@@ -25,6 +25,15 @@
       ]
     },
     {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</integration.js?v=5>; rel=preload; as=script, </final-system.js?v=2>; rel=preload; as=script, </request-history.js?v=2>; rel=preload; as=script, </client-request-status-history.js?v=1>; rel=preload; as=script, </service-details.js?v=1>; rel=preload; as=script, </ui-final.js?v=6>; rel=preload; as=script, <https://cdn.jsdelivr.net>; rel=preconnect; crossorigin"
+        }
+      ]
+    },
+    {
       "source": "/sw.js",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
