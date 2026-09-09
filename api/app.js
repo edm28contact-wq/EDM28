@@ -74,7 +74,7 @@ function getOrigin(req) {
   const forwarded = String(req.headers?.['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
   const protocol = forwarded === 'http' ? 'http' : 'https';
   const host = String(req.headers?.host || '').trim().toLowerCase();
-  if (!/^[a-z0-9.-]+(?::\d+)?$/.test(host)) return `${protocol}://${host}`;
+  if (!/^[a-z0-9.-]+(?::\d+)?$/.test(host)) return `${protocol}://localhost`;
   return `${protocol}://${host}`;
 }
 
