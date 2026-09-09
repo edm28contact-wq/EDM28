@@ -1,6 +1,6 @@
 # EDM28
 
-EDM28 est le site et l’outil de gestion d’un garage automobile situé au **17 bis rue du Vilaret, 28410 Saint-Lubin-de-la-Haye (France)**.
+EDM28 est le site et l’outil de gestion d’un garage automobile situé au **17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye (France)**.
 
 Le garage est spécialisé dans le **freinage automobile** et intervient aussi sur des prestations ciblées de **liaison au sol / train roulant**.
 
