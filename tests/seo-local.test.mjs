@@ -20,14 +20,19 @@ test('la route locale Saint-Lubin-de-la-Haye est publique et stable', async () =
   assert.equal(routes.get(LOCAL_PATH), '/garage-freinage-saint-lubin-de-la-haye.html');
 });
 
-test('la page locale possède canonical, H1 et métadonnées locales vérifiées', async () => {
+test('la page locale possède canonical, H1 et données locales vérifiées', async () => {
   const html = await read('garage-freinage-saint-lubin-de-la-haye.html');
   assert.match(html, /<link rel="canonical" href="https:\/\/edm28\.fr\/garage-freinage-saint-lubin-de-la-haye">/);
   assert.match(html, /<h1>Garage spécialisé freinage à Saint-Lubin-de-la-Haye \(28410\)<\/h1>/);
+  assert.match(html, /"streetAddress":"17 bis rue du Vilaret"/);
   assert.match(html, /"addressLocality":"Saint-Lubin-de-la-Haye"/);
   assert.match(html, /"postalCode":"28410"/);
+  assert.match(html, /"openingHoursSpecification"/);
+  assert.match(html, /"dayOfWeek":"https:\/\/schema\.org\/Sunday"/);
+  assert.match(html, /"opens":"09:00","closes":"13:00"/);
+  assert.match(html, /"opens":"14:00","closes":"18:00"/);
   assert.match(html, /"@type":"AutoRepair"/);
-  assert.doesNotMatch(html, /streetAddress|telephone|openingHours/);
+  assert.doesNotMatch(html, /"telephone"/);
 });
 
 test('le sitemap principal contient la page locale', async () => {
