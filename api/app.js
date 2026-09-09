@@ -177,26 +177,63 @@ export default function handler(req, res) {
       addressCountry: 'FR'
     };
 
+    const serviceCatalog = {
+      '@type': 'OfferCatalog',
+      name: 'Prestations EDM28',
+      itemListElement: [
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Freinage automobile', url: `${origin}/freinage` } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Plaquettes de frein', url: `${origin}/freinage/plaquettes-de-frein` } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Disques de frein', url: `${origin}/freinage/disques-de-frein` } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Liquide de frein', url: `${origin}/freinage/liquide-de-frein` } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Liaison au sol', url: `${origin}/liaison-au-sol` } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Triangles de suspension', url: `${origin}/liaison-au-sol/triangles` } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Direction', url: `${origin}/liaison-au-sol/direction` } }
+      ]
+    };
+
     const structuredData = JSON.stringify({
       '@context': 'https://schema.org',
       '@graph': [
         {
+          '@type': 'WebSite',
+          '@id': `${origin}/#website`,
+          url: `${origin}/`,
+          name: 'EDM28',
+          alternateName: ['EDM 28', 'edm28.fr'],
+          inLanguage: 'fr-FR',
+          publisher: { '@id': `${origin}/#organization` }
+        },
+        {
           '@type': 'Organization',
           '@id': `${origin}/#organization`,
           name: 'EDM28',
+          alternateName: ['EDM 28', 'edm28.fr'],
           url: `${origin}/`,
+          logo: `${origin}/logo-edm.svg`,
           email: PUBLIC_EMAIL,
           address: localAddress,
+          contactPoint: {
+            '@type': 'ContactPoint',
+            contactType: 'service client',
+            email: PUBLIC_EMAIL,
+            availableLanguage: ['fr']
+          },
+          knowsAbout: ['freinage automobile', 'plaquettes de frein', 'disques de frein', 'liquide de frein', 'liaison au sol', 'train roulant', 'triangles de suspension', 'direction'],
           description: 'Garage automobile situé à Saint-Lubin-de-la-Haye (28410), spécialisé freinage et liaison au sol, avec parcours client transparent, devis avant intervention et historique des documents.'
         },
         {
           '@type': 'AutoRepair',
           '@id': `${origin}/#autorepair`,
           name: 'EDM28',
+          alternateName: ['EDM 28', 'edm28.fr'],
           url: `${origin}/`,
+          image: `${origin}/logo-edm.svg`,
           email: PUBLIC_EMAIL,
           address: localAddress,
           areaServed: { '@type': 'Place', name: 'Saint-Lubin-de-la-Haye et alentours' },
+          knowsAbout: ['freinage automobile', 'plaquettes de frein', 'disques de frein', 'liquide de frein', 'liaison au sol', 'train roulant', 'triangles de suspension', 'direction'],
+          hasOfferCatalog: serviceCatalog,
+          parentOrganization: { '@id': `${origin}/#organization` },
           description: 'Garage automobile spécialisé freinage et liaison au sol à Saint-Lubin-de-la-Haye (28410).'
         }
       ]
