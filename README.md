@@ -1,78 +1,93 @@
-# EDM AUTO V8 - Paniers pieces Motointegrator
+# EDM28
 
-Version sans API plaque obligatoire.
+EDM28 est le site et l’outil de gestion d’un garage automobile situé au **17 bis rue du Vilaret, 28410 Saint-Lubin-de-la-Haye (France)**.
 
-Objectif : le client renseigne le vehicule et les prestations, puis le site prepare des paniers ECO / STANDARD / PREMIUM avec :
-- familles de pieces a chercher ;
-- marques conseillees par gamme ;
-- liens Motointegrator / categories ;
-- requetes a copier ;
-- validation obligatoire EDM AUTO avant achat.
+Le garage est spécialisé dans le **freinage automobile** et intervient aussi sur des prestations ciblées de **liaison au sol / train roulant**.
 
-## Structure Vercel
+Site officiel : https://edm28.fr/
 
-Mettre ces fichiers a la racine du projet :
+Contact public : contact@edm28.fr
 
-```txt
-index.html
-package.json
-vercel.json
-README.md
-api/
-  _utils.cjs
-  health.js
-  plate.js
-  vin.js
-  ai-basket.js
-  parts-basket.js
-  submit-request.js
-```
+## Activité publique
 
-## Reglages Vercel
+Les principales prestations présentées sur le site sont :
 
-Build Command :
+- freinage automobile ;
+- plaquettes de frein ;
+- disques de frein ;
+- liquide de frein ;
+- liaison au sol ;
+- triangles de suspension ;
+- direction.
 
-```txt
-echo "No build needed"
-```
+Pages de référence :
 
-Output Directory :
+- https://edm28.fr/garage-freinage-saint-lubin-de-la-haye
+- https://edm28.fr/freinage
+- https://edm28.fr/liaison-au-sol
+- https://edm28.fr/symptomes
+- https://edm28.fr/prestations
+- https://edm28.fr/tarifs
+- https://edm28.fr/fonctionnement
+- https://edm28.fr/transparence
 
-```txt
-.
-```
+## Fonctionnement EDM28
 
-## Variables optionnelles
+Le parcours client vise à rester simple et traçable :
 
-Pour l'envoi vers Google Sheets / Apps Script :
+1. le client décrit son véhicule et son besoin ;
+2. EDM28 contrôle le besoin réel ;
+3. un devis est présenté avant intervention ;
+4. tout besoin supplémentaire doit être expliqué et validé avant d’être ajouté ;
+5. les documents et l’historique sont conservés dans le parcours client.
 
-```txt
-APPS_SCRIPT_WEBAPP_URL
-APPS_SCRIPT_API_KEY
-```
+Une description de symptôme ne remplace jamais un diagnostic mécanique.
 
-ou :
+## Horaires publics actuels
 
-```txt
-EDM28_BACKEND_URL
-EDM28_API_KEY
-EDM28_SUBMIT_MODE=auto
-```
+Les horaires actuellement publiés par la configuration de production sont :
 
-Aucune cle IA n'est obligatoire pour creer les paniers Motointegrator. La route `/api/ai-basket` utilise des regles EDM AUTO.
+- lundi : fermé ;
+- mardi : fermé ;
+- mercredi : fermé ;
+- jeudi : fermé ;
+- vendredi : fermé ;
+- samedi : fermé ;
+- dimanche : 09:00–13:00 et 14:00–18:00.
 
-## Test
+Les horaires affichés sur le site de production restent la source de vérité opérationnelle.
 
-Apres redeploiement :
+## Architecture
 
-```txt
-/api/health
-```
+Le projet regroupe notamment :
 
-Puis :
+- le site public EDM28 ;
+- le parcours de demande / rendez-vous client ;
+- l’espace client ;
+- le back-office administrateur ;
+- la gestion des devis, ordres de réparation et factures ;
+- les notifications transactionnelles ;
+- Supabase pour les données et l’authentification ;
+- Vercel pour le déploiement ;
+- les pages SEO publiques, le sitemap et les données structurées ;
+- une notification IndexNow automatisée des URL publiques après les changements SEO pertinents.
 
-```txt
-Prendre RDV -> remplir client -> remplir vehicule -> choisir prestations -> Creer les paniers pieces Motointegrator
-```
+## Référencement
 
-Important : les liens Motointegrator sont des recherches preparees. Ce ne sont pas des references garanties. EDM AUTO doit verifier VIN/type mine, dimensions, cote et accessoires avant commande.
+Le domaine canonique est :
+
+`https://edm28.fr`
+
+Le sitemap public est disponible sur :
+
+`https://edm28.fr/sitemap.xml`
+
+Le projet conserve une identité publique cohérente autour des noms : **EDM28**, **EDM 28** et **edm28.fr**.
+
+## Données publiques vérifiées
+
+Les informations de rue, horaires et contact présentes dans ce README correspondent aux données actuellement vérifiées pour EDM28.
+
+Le **numéro de téléphone professionnel n’est pas encore publié** et ne doit pas être inventé.
+
+De même, aucune identité juridique, certification, avis client ou prestation non confirmée ne doit être ajoutée comme un fait public sans vérification préalable.
