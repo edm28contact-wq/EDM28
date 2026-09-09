@@ -110,7 +110,7 @@ test('la page d’accueil reçoit le positionnement local SEO et le maillage int
   const source = await read('api/app.js');
   assert.match(source, /EDM28 \| Garage freinage à Saint-Lubin-de-la-Haye \(28410\)/);
   assert.match(source, /link rel="canonical" href="\$\{origin\}\//);
-  assert.match(source, /Garage automobile situé à Saint-Lubin-de-la-Haye \(28410\)/);
+  assert.match(source, /Garage automobile situé au 17 bis rue du Vilaret à Saint-Lubin-de-la-Haye \(28410\)/);
   assert.match(source, /href="\/garage-freinage-saint-lubin-de-la-haye"/);
   assert.match(source, /href="\/freinage"/);
   assert.match(source, /href="\/liaison-au-sol"/);
@@ -118,7 +118,14 @@ test('la page d’accueil reçoit le positionnement local SEO et le maillage int
   assert.match(source, /href="\/tarifs"/);
   assert.match(source, /'@type': 'Organization'/);
   assert.match(source, /'@type': 'AutoRepair'/);
+  assert.match(source, /streetAddress: PUBLIC_STREET_ADDRESS/);
   assert.match(source, /addressLocality: PUBLIC_LOCALITY/);
   assert.match(source, /postalCode: PUBLIC_POSTAL_CODE/);
-  assert.doesNotMatch(source, /streetAddress|telephone|openingHours/);
+  assert.match(source, /openingHoursSpecification: openingHours/);
+  assert.match(source, /dayOfWeek: 'https:\/\/schema\.org\/Sunday'/);
+  assert.match(source, /opens: '09:00'/);
+  assert.match(source, /closes: '13:00'/);
+  assert.match(source, /opens: '14:00'/);
+  assert.match(source, /closes: '18:00'/);
+  assert.doesNotMatch(source, /telephone/);
 });
