@@ -8,7 +8,7 @@ Ce document sert de brouillon pour créer ou revendiquer la fiche Google Busines
 - Site officiel : https://edm28.fr/
 - Email public : contact@edm28.fr
 - Téléphone : à laisser vide tant qu’un numéro professionnel n’a pas été confirmé
-- Adresse : 17 bis rue du Vilaret
+- Adresse : 17 bis route du Videlet
 - Code postal : 28410
 - Ville : Saint-Lubin-de-la-Haye
 - Pays : France
@@ -41,11 +41,11 @@ Ne pas inventer de catégorie personnalisée.
 
 ## Description courte de référence
 
-EDM28 est un garage automobile situé au 17 bis rue du Vilaret à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et prestations ciblées de liaison au sol, avec devis avant intervention et suivi client transparent.
+EDM28 est un garage automobile situé au 17 bis route du Videlet à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et prestations ciblées de liaison au sol, avec devis avant intervention et suivi client transparent.
 
 ## Description longue de référence
 
-EDM28 est un garage automobile situé au 17 bis rue du Vilaret à Saint-Lubin-de-la-Haye (28410). Le freinage constitue le cœur de son activité, avec des prestations autour des plaquettes, disques et liquide de frein lorsque l’état réel du véhicule le justifie. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant, notamment triangles de suspension et direction. Le fonctionnement repose sur un contrôle du besoin, un devis avant intervention et une validation du client avant d’ajouter d’éventuels travaux supplémentaires.
+EDM28 est un garage automobile situé au 17 bis route du Videlet à Saint-Lubin-de-la-Haye (28410). Le freinage constitue le cœur de son activité, avec des prestations autour des plaquettes, disques et liquide de frein lorsque l’état réel du véhicule le justifie. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant, notamment triangles de suspension et direction. Le fonctionnement repose sur un contrôle du besoin, un devis avant intervention et une validation du client avant d’ajouter d’éventuels travaux supplémentaires.
 
 ## Services à renseigner si Google les propose
 
