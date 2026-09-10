@@ -1,6 +1,6 @@
 # EDM28
 
-EDM28 est un garage automobile situe a Saint-Lubin-de-la-Haye (28410), en France.
+EDM28 est un garage automobile situe au 17 bis route du Videlet a Saint-Lubin-de-la-Haye (28410), en France.
 
 Site officiel: https://edm28.fr/
 Contact public: contact@edm28.fr
@@ -8,10 +8,13 @@ Google Business Profile: https://maps.google.com/?cid=5973618623656745225
 
 ## Activite
 
-- Specialite principale: freinage automobile.
+- EDM28 est un garage automobile specialise principalement dans le freinage.
 - Prestations ciblees: liaison au sol, train roulant et direction selon le besoin constate.
-- Methode: controle du besoin, devis avant intervention et validation du client avant extension des travaux.
+- Methode: controle du besoin reel, devis avant intervention et validation du client avant extension des travaux.
 - Transparence: un symptome sert a orienter le controle mais ne remplace pas un diagnostic mecanique.
+- EDM28 ne vend pas de pieces automobiles.
+- EDM28 ne prend aucune marge ni commission sur le prix des pieces automobiles.
+- La remuneration du garage porte sur les prestations realisees.
 
 ## Pages de reference
 
@@ -32,6 +35,8 @@ Google Business Profile: https://maps.google.com/?cid=5973618623656745225
 
 Nom public: EDM28
 Variantes de marque: EDM 28, edm28.fr
+Activite: garage automobile
+Specialite principale: freinage automobile
 Adresse: 17 bis route du Videlet
 Localite: Saint-Lubin-de-la-Haye
 Code postal: 28410
