@@ -70,7 +70,7 @@
     }
   ],
   "routes": [
-    { "src": "/robots.txt", "dest": "/api/app?seo=robots" },
+    { "src": "/robots.txt", "dest": "/api/robots" },
     { "src": "/sitemap.xml", "dest": "/api/app?seo=sitemap" },
     { "src": "/garage-freinage-saint-lubin-de-la-haye", "dest": "/garage-freinage-saint-lubin-de-la-haye.html" },
     { "src": "/symptomes", "dest": "/api/app?seo=symptom&slug=symptomes" },
