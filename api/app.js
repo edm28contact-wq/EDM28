@@ -119,7 +119,7 @@ function handleRobots(req, res) {
   const origin = getOrigin(req);
   const body = isPreviewDeployment()
     ? ['User-agent: *', 'Disallow: /', `Sitemap: ${origin}/sitemap.xml`, ''].join('\n')
-    : ['User-agent: *', 'Allow: /', ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`), `Sitemap: ${origin}/sitemap.xml`, ''].join('\n');
+    : ['User-agent: *', 'Allow: /', 'Allow: /garage-freinage-saint-lubin-de-la-haye', ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`), `Sitemap: ${origin}/sitemap.xml`, ''].join('\n');
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
   if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');

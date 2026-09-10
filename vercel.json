@@ -7,67 +7,39 @@
     "RESEND_TO_EMAIL": "contact@edm28.fr"
   },
   "functions": {
-    "api/app.js": {
-      "includeFiles": "index.html"
-    },
-    "api/admin.js": {
-      "includeFiles": "{admin.html,admin-core.js,admin-transactional.js}"
-    }
+    "api/app.js": { "includeFiles": "index.html" },
+    "api/admin.js": { "includeFiles": "{admin.html,admin-core.js,admin-transactional.js}" }
   },
   "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" }
-      ]
-    },
-    {
-      "source": "/",
-      "headers": [
-        {
-          "key": "Link",
-          "value": "</integration.js?v=5>; rel=preload; as=script, </final-system.js?v=2>; rel=preload; as=script, </request-history.js?v=2>; rel=preload; as=script, </client-request-status-history.js?v=1>; rel=preload; as=script, </service-details.js?v=1>; rel=preload; as=script, </ui-final.js?v=6>; rel=preload; as=script, <https://cdn.jsdelivr.net>; rel=preconnect; crossorigin"
-        }
-      ]
-    },
-    {
-      "source": "/sw.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
-      ]
-    },
-    {
-      "source": "/admin-sw.js",
-      "headers": [
-        { "key": "Content-Type", "value": "text/javascript; charset=utf-8" },
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/admin" }
-      ]
-    },
-    {
-      "source": "/manifest.json",
-      "headers": [
-        { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" },
-        { "key": "Cache-Control", "value": "public, max-age=300" }
-      ]
-    },
-    {
-      "source": "/admin-manifest.webmanifest",
-      "headers": [
-        { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" },
-        { "key": "Cache-Control", "value": "public, max-age=300" }
-      ]
-    },
-    {
-      "source": "/admin-offline.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=300" }
-      ]
-    }
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "X-Frame-Options", "value": "DENY" },
+      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+      { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" }
+    ]},
+    { "source": "/", "headers": [
+      { "key": "Link", "value": "</integration.js?v=5>; rel=preload; as=script, </final-system.js?v=2>; rel=preload; as=script, </request-history.js?v=2>; rel=preload; as=script, </client-request-status-history.js?v=1>; rel=preload; as=script, </service-details.js?v=1>; rel=preload; as=script, </ui-final.js?v=6>; rel=preload; as=script, <https://cdn.jsdelivr.net>; rel=preconnect; crossorigin" }
+    ]},
+    { "source": "/sw.js", "headers": [
+      { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+      { "key": "Service-Worker-Allowed", "value": "/" }
+    ]},
+    { "source": "/admin-sw.js", "headers": [
+      { "key": "Content-Type", "value": "text/javascript; charset=utf-8" },
+      { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+      { "key": "Service-Worker-Allowed", "value": "/admin" }
+    ]},
+    { "source": "/manifest.json", "headers": [
+      { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" },
+      { "key": "Cache-Control", "value": "public, max-age=300" }
+    ]},
+    { "source": "/admin-manifest.webmanifest", "headers": [
+      { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" },
+      { "key": "Cache-Control", "value": "public, max-age=300" }
+    ]},
+    { "source": "/admin-offline.html", "headers": [
+      { "key": "Cache-Control", "value": "public, max-age=300" }
+    ]}
   ],
   "routes": [
     { "src": "/robots.txt", "dest": "/api/app?seo=robots" },

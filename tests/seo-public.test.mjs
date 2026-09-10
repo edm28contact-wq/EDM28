@@ -76,9 +76,10 @@ test('la liste SEO publique reste séparée des routes privées', async () => {
   for (const path of PRIVATE_PATHS) assert.doesNotMatch(sitemapList, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
 });
 
-test('robots bloque les zones privées et référence le sitemap', async () => {
+test('robots bloque les zones privées et autorise explicitement la page garage locale publique', async () => {
   const source = await read('api/app.js');
   for (const path of PRIVATE_PATHS) assert.match(source, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
+  assert.match(source, /'Allow: \/garage-freinage-saint-lubin-de-la-haye'/);
   assert.match(source, /`Sitemap: \$\{origin\}\/sitemap\.xml`/);
   assert.match(source, /'Allow: \/'/);
 });
