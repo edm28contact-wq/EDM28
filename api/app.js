@@ -97,6 +97,120 @@ function canonicalSeoRequest(req) {
   };
 }
 
+function getSeoSlug(req) {
+  if (typeof req.query?.slug === 'string') return req.query.slug.replace(/^\/+|\/+$/g, '');
+  try {
+    return new URL(req.url || '', 'http://localhost').searchParams.get('slug')?.replace(/^\/+|\/+$/g, '') || '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function buildSecondaryEntityStructuredData(origin) {
+  const address = {
+    '@type': 'PostalAddress',
+    streetAddress: PUBLIC_STREET_ADDRESS,
+    addressLocality: PUBLIC_LOCALITY,
+    postalCode: PUBLIC_POSTAL_CODE,
+    addressCountry: 'FR'
+  };
+  const openingHours = [
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: 'https://schema.org/Sunday',
+      opens: '09:00',
+      closes: '13:00'
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: 'https://schema.org/Sunday',
+      opens: '14:00',
+      closes: '18:00'
+    }
+  ];
+  const knowsAbout = ['freinage automobile', 'plaquettes de frein', 'disques de frein', 'liquide de frein', 'liaison au sol', 'train roulant', 'triangles de suspension', 'direction'];
+
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${origin}/#organization`,
+        name: 'EDM28',
+        alternateName: ['EDM 28', 'edm28.fr'],
+        url: `${origin}/`,
+        sameAs: [PUBLIC_GOOGLE_MAPS_URL],
+        logo: `${origin}/logo-edm.svg`,
+        email: PUBLIC_EMAIL,
+        address,
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'service client',
+          email: PUBLIC_EMAIL,
+          availableLanguage: ['fr']
+        },
+        knowsAbout,
+        description: 'EDM28 est un garage automobile situé au 17 bis route du Videlet à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et liaison au sol. EDM28 ne vend pas les pièces automobiles et ne prend aucune marge ni commission sur leur prix.'
+      },
+      {
+        '@type': 'AutoRepair',
+        '@id': `${origin}/#autorepair`,
+        name: 'EDM28',
+        alternateName: ['EDM 28', 'edm28.fr'],
+        url: `${origin}/`,
+        sameAs: [PUBLIC_GOOGLE_MAPS_URL],
+        image: `${origin}/logo-edm.svg`,
+        email: PUBLIC_EMAIL,
+        address,
+        openingHoursSpecification: openingHours,
+        areaServed: { '@type': 'Place', name: 'Saint-Lubin-de-la-Haye et alentours' },
+        knowsAbout,
+        parentOrganization: { '@id': `${origin}/#organization` },
+        description: 'Garage automobile spécialisé en freinage et interventions ciblées de liaison au sol et de train roulant au 17 bis route du Videlet à Saint-Lubin-de-la-Haye (28410).'
+      }
+    ]
+  }).replaceAll('<', '\\u003c');
+}
+
+function enrichSeoHtml(html, req) {
+  if (typeof html !== 'string' || !html.includes('</head>') || html.includes('noindex,nofollow')) return html;
+
+  const origin = getOrigin(req);
+  const entityJson = buildSecondaryEntityStructuredData(origin);
+  let output = html.replace('</head>', `<script id="edm-entity-identity" type="application/ld+json">${entityJson}</script></head>`);
+  const slug = getSeoSlug(req);
+
+  if (slug === 'contact') {
+    output = output.replace(
+      'Aucune adresse postale ni aucun numéro de téléphone n’est publié ici tant que ces informations ne sont pas renseignées dans la configuration publique.',
+      'Adresse du garage : 17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye. Aucun numéro de téléphone professionnel n’est publié pour le moment.'
+    );
+  }
+
+  if (slug === 'a-propos') {
+    output = output
+      .replace('<h2>Pas de localisation inventée</h2>', '<h2>Identité locale vérifiée</h2>')
+      .replace(
+        'Les informations locales ne sont publiées que lorsqu’elles sont réellement renseignées dans la configuration EDM28.',
+        'EDM28 est un garage automobile situé au 17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye. Cette adresse correspond à l’identité publique actuellement confirmée du garage.'
+      );
+  }
+
+  if (slug === 'transparence') {
+    const marker = '<div class="links" aria-label="Pages liées">';
+    const partsSection = '<section><h2>Pièces automobiles sans marge ni commission</h2><p>EDM28 ne vend pas les pièces automobiles et ne prend aucune marge ni commission sur leur prix. La rémunération du garage porte sur les prestations réalisées.</p></section>';
+    output = output.replace(marker, `${partsSection}${marker}`);
+  }
+
+  return output;
+}
+
+function handleSeoDocument(delegate, req, res) {
+  const originalSend = res.send.bind(res);
+  res.send = (body) => originalSend(enrichSeoHtml(body, req));
+  return delegate(canonicalSeoRequest(req), res);
+}
+
 function handleSitemap(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
@@ -131,11 +245,11 @@ export default function handler(req, res) {
   const seoMode = getSeoMode(req);
   if (seoMode === 'page') {
     if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-    return publicSeoHandler(canonicalSeoRequest(req), res);
+    return handleSeoDocument(publicSeoHandler, req, res);
   }
   if (seoMode === 'symptom') {
     if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-    return symptomSeoHandler(canonicalSeoRequest(req), res);
+    return handleSeoDocument(symptomSeoHandler, req, res);
   }
   if (seoMode === 'robots') return handleRobots(req, res);
   if (seoMode === 'sitemap') return handleSitemap(req, res);
