@@ -29,7 +29,7 @@ test('Vercel expose les routes SEO publiques, sitemap et robots', async () => {
   const config = JSON.parse(await read('vercel.json'));
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
   assert.equal(routes.get('/sitemap.xml'), '/api/app?seo=sitemap');
-  assert.equal(routes.get('/robots.txt'), '/api/app?seo=robots');
+  assert.equal(routes.get('/robots.txt'), '/api/robots');
   for (const path of PUBLIC_PATHS) assert.match(routes.get(path) || '', /^\/api\/app\?seo=page&slug=/, path);
   assert.equal(routes.get('/'), '/api/app');
 });
@@ -76,10 +76,13 @@ test('la liste SEO publique reste séparée des routes privées', async () => {
   for (const path of PRIVATE_PATHS) assert.doesNotMatch(sitemapList, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
 });
 
-test('robots bloque les zones privées et référence le sitemap', async () => {
-  const source = await read('api/app.js');
+test('robots bloque les zones privées sans bloquer la page garage locale publique', async () => {
+  const source = await read('api/robots.js');
+  assert.match(source, /const LOCAL_PUBLIC_PATH = '\/garage-freinage-saint-lubin-de-la-haye'/);
+  assert.match(source, /`Allow: \$\{LOCAL_PUBLIC_PATH\}`/);
+  assert.match(source, /'\/garage'/);
   for (const path of PRIVATE_PATHS) assert.match(source, new RegExp(`'${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`));
-  assert.match(source, /`Sitemap: \$\{origin\}\/sitemap\.xml`/);
+  assert.match(source, /Sitemap:/);
   assert.match(source, /'Allow: \/'/);
 });
 
@@ -92,11 +95,11 @@ test('canonical et sitemap utilisent une origine de production stable', async ()
 });
 
 test('les previews Vercel sont explicitement non indexables', async () => {
-  const source = await read('api/app.js');
+  const [source, robots] = await Promise.all([read('api/app.js'), read('api/robots.js')]);
   assert.match(source, /process\.env\.VERCEL_ENV/);
   assert.match(source, /noindex, nofollow, noarchive/);
-  assert.match(source, /\['User-agent: \*', 'Disallow: \/'/);
-  assert.match(source, /X-Robots-Tag', 'noindex, nofollow, noarchive'/);
+  assert.match(robots, /\['User-agent: \*', 'Disallow: \/'/);
+  assert.match(robots, /X-Robots-Tag', 'noindex, nofollow, noarchive'/);
 });
 
 test('admin et app.html sont explicitement noindex', async () => {
