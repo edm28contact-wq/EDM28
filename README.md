@@ -43,6 +43,10 @@ Le parcours client vise à rester simple et traçable :
 
 Une description de symptôme ne remplace jamais un diagnostic mécanique.
 
+### Pièces automobiles
+
+EDM28 **ne vend pas les pièces automobiles** et **ne prend aucune marge ni commission sur leur prix**. La rémunération du garage porte sur les prestations réalisées. Lorsqu’une pièce est nécessaire à une intervention, son traitement doit rester distinct de la rémunération de la prestation afin de conserver ce principe de transparence.
+
 ## Horaires publics actuels
 
 Les horaires actuellement publiés par la configuration de production sont :
