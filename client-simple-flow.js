@@ -28,7 +28,8 @@
     { src: '/client-basket-pricing.js?v=1', attr: 'data-edm-basket-pricing' },
     { src: '/client-note-guidance.js?v=1', attr: 'data-edm-note-guidance' },
     { src: '/client-labor-pricing.js?v=2', attr: 'data-edm-labor-pricing' },
-    { src: '/client-workflow-adjustments.js?v=1', attr: 'data-edm-workflow-adjustments' }
+    { src: '/client-workflow-adjustments.js?v=1', attr: 'data-edm-workflow-adjustments' },
+    { src: '/client-history-visibility.js?v=1', attr: 'data-edm-history-visibility' }
   ];
 
   const loadScript = ({ src, attr }) => new Promise((resolve, reject) => {
