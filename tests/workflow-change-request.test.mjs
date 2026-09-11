@@ -32,11 +32,13 @@ test('quote decisions stay in request status and booking starts after acceptance
 test('request status and documents follow the requested display rules', async () => {
   const adjustments = await read('client-workflow-adjustments.js');
   assert.match(adjustments, /\.edm-status-step\.current.*color:#050505/s);
+  assert.match(adjustments, /\.edm-status-card>\.section-title \.pill\.orange\{color:#050505!important\}/);
   assert.match(adjustments, /data-temp-order-doc/);
   assert.match(adjustments, /invoicedOrders/);
   assert.match(adjustments, /data-go-booking/);
   assert.match(adjustments, /rememberHistoryState/);
   assert.match(adjustments, /restoreHistoryState/);
+  assert.match(adjustments, /keepFullHistoryVisible/);
   assert.match(adjustments, /refreshGarageFromDb/);
 });
 
@@ -48,6 +50,15 @@ test('admin enforces direct-purchase references and hides published ORs', async 
   assert.match(adjustments, /dataset\.publishedHidden/);
   assert.match(adjustments, /data-control="geometrie"/);
   assert.match(adjustments, /data-control-measure/);
+});
+
+test('quote and business PDFs contain the selected parts purchase rule', async () => {
+  const pdf = await read('admin-document-pdf.js');
+  assert.match(pdf, /request\.parts_purchase_mode === 'client_direct'/);
+  assert.match(pdf, /EDM28 fournit les références à acheter sur le devis/);
+  assert.match(pdf, /responsabilité d’EDM28 ne peut pas être engagée pour cette erreur d’achat/);
+  assert.match(pdf, /request\.parts_purchase_mode === 'edm_disbursement'/);
+  assert.match(pdf, /remboursement correspond exactement au justificatif fournisseur, sans marge ni commission/);
 });
 
 test('personalized OR no longer contains geometry or measurement column', async () => {
