@@ -60,7 +60,7 @@
     try {
       if (id === 'account' && typeof renderAccountPage === 'function') renderAccountPage();
       if (id === 'garage' && typeof renderGarage === 'function') renderGarage();
-      if (id === 'history' && typeof renderHistory === 'function') renderHistory();
+      if (id === 'history' && typeof window.renderRequestHistory !== 'function' && typeof renderHistory === 'function') renderHistory();
     } catch (error) {
       showFallback(id, error);
     }
