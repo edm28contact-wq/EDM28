@@ -14,7 +14,7 @@ appHandler({ method: 'GET' }, {
 });
 if (!html.includes('client-account-safe.js?v=13')) throw new Error('Preview account asset mismatch');
 if (!html.includes('request-history.js?v=2')) throw new Error('Preview history asset mismatch');
-if (!html.includes('client-simple-flow.js?v=8')) throw new Error('Preview password flow asset mismatch');
+if (!html.includes('client-simple-flow.js?v=9')) throw new Error('Preview password flow asset mismatch');
 
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
@@ -95,6 +95,7 @@ const stub = `
   window.supabase={createClient(){return{
     auth:{
       async getSession(){return {data:{session},error:null}},
+      async getUser(){return {data:{user:session?.user || null},error:null}},
       async signUp({email,password,options}){
         if(email!==user.email)return {data:{user:null,session:null},error:new Error('unexpected email')};
         accountPassword=password;
@@ -177,6 +178,8 @@ try {
 
   await page.click('[data-select-pack="freinage"]');
   for (const basket of ['eco','standard','premium']) await page.click(`[data-basket="${basket}"]`);
+  await page.waitForSelector('#edmPartsPurchaseChoice input[value="client_direct"]', { state:'attached' });
+  await page.check('#edmPartsPurchaseChoice input[value="client_direct"]');
   await page.click('#j7Accepted');
   await page.click('#refuseControl');
   await page.fill('#clientNotes','Bruit au freinage');
@@ -197,7 +200,7 @@ try {
   await page.waitForFunction(() => !state?.user?.id);
 
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('password signup, one-time verification, password login, buttons and history ok');
+  console.log('password signup, one-time verification, password login, parts choice, buttons and history ok');
 } finally {
   await context.close();
   await browser.close();
