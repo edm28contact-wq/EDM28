@@ -45,7 +45,7 @@ test('admin enforces direct-purchase references and hides published ORs', async 
   assert.match(adjustments, /Achat direct par le client/);
   assert.match(adjustments, /Renseignez la référence de chaque pièce avant publication/);
   assert.match(adjustments, /visible_to_client && row\.pdf_path/);
-  assert.match(adjustments, /data\.publishedHidden/);
+  assert.match(adjustments, /dataset\.publishedHidden/);
   assert.match(adjustments, /data-control="geometrie"/);
   assert.match(adjustments, /data-control-measure/);
 });
