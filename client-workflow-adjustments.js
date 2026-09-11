@@ -13,6 +13,7 @@
     style.id = 'edm-workflow-adjustments-style';
     style.textContent = `
       .edm-status-step.current,.edm-status-step.current .edm-status-label{color:#050505!important}
+      .edm-status-card>.section-title .pill.orange{color:#050505!important}
       [data-prepare-slot].edm-slot-selected{background:var(--green)!important;border-color:var(--green)!important;color:#fff!important;box-shadow:0 0 0 3px rgba(22,163,74,.18)!important}
       .edm-parts-choice{margin-top:18px;padding:16px;border:1px solid var(--border);border-radius:18px;background:#fff}
       .edm-parts-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
