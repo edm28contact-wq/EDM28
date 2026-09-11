@@ -194,14 +194,24 @@ try {
   try {
     await page.waitForSelector('#historyList [data-service-request-id="request-e2e-1"]', { timeout:5000 });
   } catch (error) {
-    const diagnostic = await page.evaluate(() => ({
-      historyActive: document.getElementById('history')?.classList.contains('active'),
-      historyHtml: document.getElementById('historyList')?.innerHTML || '',
-      hasRequestRenderer: typeof window.renderRequestHistory === 'function',
-      hasVehicleRenderer: typeof window.renderVehicleHistory === 'function',
-      requestSectionPresent: Boolean(document.querySelector('#historyList [data-request-history]')),
-      vehicleSectionPresent: Boolean(document.querySelector('#historyList [data-vehicle-history]'))
-    }));
+    const diagnostic = await page.evaluate(async () => {
+      const sessionResult = await supabaseClient.auth.getSession();
+      const before = document.getElementById('historyList')?.innerHTML || '';
+      let directError = '';
+      try { await window.renderRequestHistory(); } catch (renderError) { directError = renderError?.message || String(renderError); }
+      return {
+        historyActive: document.getElementById('history')?.classList.contains('active'),
+        historyBeforeDirectRender: before,
+        historyAfterDirectRender: document.getElementById('historyList')?.innerHTML || '',
+        stateUserId: state?.user?.id || null,
+        sessionUserId: sessionResult.data?.session?.user?.id || null,
+        directError,
+        hasRequestRenderer: typeof window.renderRequestHistory === 'function',
+        hasVehicleRenderer: typeof window.renderVehicleHistory === 'function',
+        requestSectionPresent: Boolean(document.querySelector('#historyList [data-request-history]')),
+        vehicleSectionPresent: Boolean(document.querySelector('#historyList [data-vehicle-history]'))
+      };
+    });
     console.error(`HISTORY_DEBUG ${JSON.stringify(diagnostic)}`);
     throw error;
   }
