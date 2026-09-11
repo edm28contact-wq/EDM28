@@ -32,7 +32,7 @@
       .contact-card{padding:20px;border:1px solid var(--border);border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018))}
       .contact-card h3{margin-bottom:8px}.contact-card a{color:#e5a77d;font-weight:900;text-decoration:none}.contact-card a:hover{text-decoration:underline}
       .site-footer{margin-top:18px;padding:22px;border:1px solid var(--border);border-radius:22px;background:linear-gradient(145deg,#171f24,#0e1519);display:flex;justify-content:space-between;gap:18px;align-items:center}
-      .site-footer img{width:54px;height:54px;border-radius:14px;object-fit:cover}.site-footer-brand{display:flex;align-items:center;gap:14px}.site-footer p{margin:3px 0 0}.site-footer-links{display:flex;flex-wrap:wrap;gap:12px}.site-footer button{background:none;border:0;color:#111827;font-weight:900;cursor:pointer}
+      .site-footer img{width:54px;height:54px;border-radius:14px;object-fit:cover}.site-footer-brand{display:flex;align-items:center;gap:14px}.site-footer p{margin:3px 0 0}.site-footer-links{display:flex;flex-wrap:wrap;gap:12px}.site-footer button{background:none;border:0;color:#e2a77f;font-weight:900;cursor:pointer}
       @media(max-width:850px){.contact-grid{grid-template-columns:1fr}.site-footer{align-items:flex-start;flex-direction:column}.site-footer-links{width:100%}}
     `;
     document.head.appendChild(style);

@@ -42,12 +42,6 @@
     const names = serviceNames(request);
     if (names.length) parts.push(`Prestations demandées : ${names.join(', ')}`);
     if (request.selected_basket) parts.push(`Gamme choisie : ${String(request.selected_basket).toUpperCase()}`);
-    if (request.parts_purchase_mode === 'client_direct') {
-      parts.push('Pièces : achat direct par le client. EDM28 fournit les références à acheter sur le devis. Si le client achète une autre référence que celle indiquée, la responsabilité d’EDM28 ne peut pas être engagée pour cette erreur d’achat.');
-    }
-    if (request.parts_purchase_mode === 'edm_disbursement') {
-      parts.push('Pièces : débours EDM28. EDM28 avance l’achat au nom et pour le compte du client, dans la limite autorisée. Le remboursement correspond exactement au justificatif fournisseur, sans marge ni commission.');
-    }
     if (request.j7_accepted === true) parts.push('Contrôle complémentaire accepté');
     if (request.refuse_control === true) parts.push('Contrôle complémentaire refusé');
     return [...new Set(parts.filter(Boolean))].join(' — ');

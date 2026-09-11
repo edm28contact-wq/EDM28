@@ -11,7 +11,6 @@
   const writePending = (value) => value ? localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) : localStorage.removeItem(STORAGE_KEY);
   const intOrNull = (value) => { const number = Number.parseInt(String(value || '').replace(/\D/g, ''), 10); return Number.isFinite(number) ? number : null; };
   const field = (id) => document.getElementById(id)?.value?.trim() || '';
-  const partsPurchaseMode = () => document.querySelector('input[name="partsPurchaseMode"]:checked')?.value || '';
 
   async function currentSession() {
     const { data, error } = await supabaseClient.auth.getSession();
@@ -67,7 +66,6 @@
       vehicle_id: vehicleId,
       status: 'draft',
       selected_basket: selectedBasket,
-      parts_purchase_mode: payload.partsPurchaseMode,
       services: totals.selected,
       notes: payload.notes || null,
       totals,
@@ -90,16 +88,10 @@
   async function submitRequest() {
     const totals = calculateTotals(true);
     if (!totals) return;
-    const purchaseMode = partsPurchaseMode();
-    if (!purchaseMode) {
-      const choice = document.getElementById('edmPartsPurchaseChoice');
-      choice?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      throw new Error('Choisissez comment les pièces seront achetées : achat direct par vous ou débours EDM28.');
-    }
     const button = document.getElementById('btnSubmit');
     const status = document.getElementById('submitStatus');
     setButtonBusy(button, true, 'Envoi...');
-    status.innerHTML = '<div class="notice">Enregistrement et envoi vers EDM28...</div>';
+    status.innerHTML = '<div class="notice">Enregistrement et envoi vers EDM AUTO...</div>';
     try {
       const session = await currentSession();
       const client = await syncProfile(session);
@@ -109,7 +101,6 @@
         vehicle: getVehicle(),
         services: totals.selected,
         selectedBasket,
-        partsPurchaseMode: purchaseMode,
         j7Accepted: document.getElementById('j7Accepted').checked,
         refuseControl: document.getElementById('refuseControl').checked,
         notes: document.getElementById('clientNotes').value.trim(),
@@ -134,7 +125,7 @@
         status.innerHTML = `<div class="notice"><strong>Demande enregistrée.</strong><br>${escapeHtml(warning)}</div>`;
         toast('Demande enregistrée dans le back-office.');
       } else {
-        status.innerHTML = '<div class="okbox"><strong>Demande transmise.</strong><br>Votre demande est enregistrée et EDM28 reviendra vers vous après étude.</div>';
+        status.innerHTML = '<div class="okbox"><strong>Demande transmise.</strong><br>Votre demande est enregistrée et EDM AUTO reviendra vers vous après étude.</div>';
         toast('Demande enregistrée et notification envoyée.');
       }
       window.dispatchEvent(new CustomEvent('edm:request-submitted', {
@@ -157,10 +148,7 @@
     const oldButton = document.getElementById('btnSubmit');
     const button = oldButton.cloneNode(true);
     oldButton.replaceWith(button);
-    button.addEventListener('click', () => submitRequest().catch((error) => {
-      const status = document.getElementById('submitStatus');
-      if (status) status.innerHTML = `<div class="errorbox"><strong>Envoi non terminé.</strong><br>${escapeHtml(error.message || 'Réessayez plus tard.')}</div>`;
-    }));
+    button.addEventListener('click', submitRequest);
     supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') writePending(null); });
   }
 
