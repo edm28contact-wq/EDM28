@@ -191,7 +191,20 @@ try {
     await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), id);
   }
 
-  await page.waitForSelector('#historyList [data-service-request-id="request-e2e-1"]', { timeout:5000 });
+  try {
+    await page.waitForSelector('#historyList [data-service-request-id="request-e2e-1"]', { timeout:5000 });
+  } catch (error) {
+    const diagnostic = await page.evaluate(() => ({
+      historyActive: document.getElementById('history')?.classList.contains('active'),
+      historyHtml: document.getElementById('historyList')?.innerHTML || '',
+      hasRequestRenderer: typeof window.renderRequestHistory === 'function',
+      hasVehicleRenderer: typeof window.renderVehicleHistory === 'function',
+      requestSectionPresent: Boolean(document.querySelector('#historyList [data-request-history]')),
+      vehicleSectionPresent: Boolean(document.querySelector('#historyList [data-vehicle-history]'))
+    }));
+    console.error(`HISTORY_DEBUG ${JSON.stringify(diagnostic)}`);
+    throw error;
+  }
   const historyText = await page.locator('#historyList [data-service-request-id="request-e2e-1"]').textContent();
   if (!historyText?.includes('AA-123-BC') || (!historyText.includes('Transmise') && !historyText.includes('Enregistrée'))) throw new Error(`Submitted request is missing from history: ${historyText}`);
 
