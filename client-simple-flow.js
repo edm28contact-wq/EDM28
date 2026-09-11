@@ -7,6 +7,7 @@
     window.__edmLegacyHistoryGuard = true;
     window.renderHistory = function guardedRenderHistory(...args) {
       if (!document.getElementById('historyList')) return;
+      if (typeof window.renderRequestHistory === 'function') return;
       return legacyRenderHistory.apply(this, args);
     };
   }
