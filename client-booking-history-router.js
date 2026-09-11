@@ -2,10 +2,6 @@
   if (window.__edmBookingHistoryRouterInstalled) return;
   window.__edmBookingHistoryRouterInstalled = true;
 
-  // The dedicated history and messaging modules own those client pages.
-  // Prevent the legacy final-experience shell from replacing them after auth/navigation.
-  window.__edmClientFinalExperienceInstalled = true;
-
   let observedHistoryHost = null;
   let historyHostObserver = null;
 
