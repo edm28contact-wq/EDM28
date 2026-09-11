@@ -20,11 +20,6 @@
 
   function installHistoryHook() {
     if (window.__edmVehicleHistoryHookInstalled) return;
-    const original = window.renderRequestHistory;
-    window.renderRequestHistory = async function renderCombinedHistory(...args) {
-      if (typeof original === 'function') await original(...args);
-      if (typeof window.renderVehicleHistory === 'function') await window.renderVehicleHistory();
-    };
     window.__edmVehicleHistoryHookInstalled = true;
   }
 
