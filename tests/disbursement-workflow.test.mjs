@@ -65,21 +65,23 @@ test('database migration enforces prepayment, billing and no-margin disbursement
   }
 });
 
-test('payment endpoints keep Stripe secret server-side and verify before paid state', async () => {
-  const [create, status, refund] = await Promise.all([
-    read('api/disbursement-payment-create.js'),
-    read('api/disbursement-payment-status.js'),
-    read('api/disbursement-payment-refund.js')
+test('payment routes share one Vercel function and keep Stripe verification server-side', async () => {
+  const [payment, vercel] = await Promise.all([
+    read('api/disbursement-payment.js'),
+    read('vercel.json')
   ]);
-  assert.match(create, /process\.env\.STRIPE_SECRET_KEY/);
-  assert.match(create, /https:\/\/api\.stripe\.com\/v1\/checkout\/sessions/);
-  assert.match(create, /metadata\[disbursement_id\]/);
-  assert.match(status, /session\.status === 'complete'/);
-  assert.match(status, /session\.payment_status === 'paid'/);
-  assert.match(status, /payment_intent_id/);
-  assert.match(refund, /https:\/\/api\.stripe\.com\/v1\/refunds/);
-  assert.match(refund, /Accès administrateur requis/);
-  assert.doesNotMatch(create, /STRIPE_PUBLISHABLE_KEY/);
+  assert.match(payment, /process\.env\.STRIPE_SECRET_KEY/);
+  assert.match(payment, /https:\/\/api\.stripe\.com\/v1\/checkout\/sessions/);
+  assert.match(payment, /metadata\[disbursement_id\]/);
+  assert.match(payment, /session\.status === 'complete'/);
+  assert.match(payment, /session\.payment_status === 'paid'/);
+  assert.match(payment, /payment_intent_id/);
+  assert.match(payment, /https:\/\/api\.stripe\.com\/v1\/refunds/);
+  assert.match(payment, /Accès administrateur requis/);
+  assert.doesNotMatch(payment, /STRIPE_PUBLISHABLE_KEY/);
+  assert.match(vercel, /disbursement-payment-create[^\n]+disbursement-payment\?action=create/);
+  assert.match(vercel, /disbursement-payment-status[^\n]+disbursement-payment\?action=status/);
+  assert.match(vercel, /disbursement-payment-refund[^\n]+disbursement-payment\?action=refund/);
 });
 
 test('accounting keeps reimbursed disbursements separate from EDM service revenue', async () => {
