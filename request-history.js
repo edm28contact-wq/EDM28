@@ -11,6 +11,7 @@
     cancelled: 'Annulée'
   };
 
+  let renderSequence = 0;
   let scheduledTimer = null;
 
   const safeHtml = (value) => {
@@ -77,7 +78,10 @@
     if (!host) return;
     installHostObserver();
 
+    const sequence = ++renderSequence;
     const userId = await currentUserId();
+    if (sequence !== renderSequence) return;
+
     if (!userId) {
       host.querySelector('[data-request-history]')?.remove();
       return;
@@ -104,10 +108,9 @@
         .eq('user_id', userId)
     ]);
 
+    if (sequence !== renderSequence) return;
     if (requestsError) throw requestsError;
     if (vehiclesError) throw vehiclesError;
-    if (await currentUserId() !== userId) return;
-    if (!section.isConnected || section.parentElement !== host) return;
 
     const vehicleMap = new Map((vehicles || []).map((vehicle) => [vehicle.id, vehicle]));
     const cards = (requests || []).map((request) => {
