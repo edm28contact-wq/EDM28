@@ -7,6 +7,7 @@
     window.__edmLegacyHistoryGuard = true;
     window.renderHistory = function guardedRenderHistory(...args) {
       if (!document.getElementById('historyList')) return;
+      if (typeof window.renderRequestHistory === 'function') return;
       return legacyRenderHistory.apply(this, args);
     };
   }
@@ -28,7 +29,8 @@
     { src: '/client-note-guidance.js?v=1', attr: 'data-edm-note-guidance' },
     { src: '/client-labor-pricing.js?v=2', attr: 'data-edm-labor-pricing' },
     { src: '/client-workflow-adjustments.js?v=1', attr: 'data-edm-workflow-adjustments' },
-    { src: '/client-disbursement-entry.js?v=1', attr: 'data-edm-disbursement-entry' }
+    { src: '/client-disbursement-entry.js?v=1', attr: 'data-edm-disbursement-entry' },
+    { src: '/client-history-visibility.js?v=1', attr: 'data-edm-history-visibility' }
   ];
 
   const loadScript = ({ src, attr }) => new Promise((resolve, reject) => {
