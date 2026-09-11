@@ -26,30 +26,29 @@
     remplacer: 'À remplacer'
   };
   const CONTROLS = [
-    { key: 'plaquettes_av_g', label: 'Plaquettes avant gauche', unit: 'mm', group: 'FREINAGE' },
-    { key: 'plaquettes_av_d', label: 'Plaquettes avant droite', unit: 'mm', group: 'FREINAGE' },
-    { key: 'plaquettes_ar_g', label: 'Plaquettes arrière gauche', unit: 'mm', group: 'FREINAGE' },
-    { key: 'plaquettes_ar_d', label: 'Plaquettes arrière droite', unit: 'mm', group: 'FREINAGE' },
-    { key: 'disque_av_g', label: 'Disque avant gauche', unit: 'mm', group: 'FREINAGE' },
-    { key: 'disque_av_d', label: 'Disque avant droit', unit: 'mm', group: 'FREINAGE' },
-    { key: 'disque_ar_g', label: 'Disque arrière gauche', unit: 'mm', group: 'FREINAGE' },
-    { key: 'disque_ar_d', label: 'Disque arrière droit', unit: 'mm', group: 'FREINAGE' },
-    { key: 'liquide_frein', label: 'Liquide de frein', unit: '', group: 'FREINAGE' },
-    { key: 'flexibles', label: 'Flexibles de frein', unit: '', group: 'FREINAGE' },
-    { key: 'pneu_av_g', label: 'Pneu avant gauche', unit: 'mm', group: 'PNEUMATIQUES' },
-    { key: 'pneu_av_d', label: 'Pneu avant droit', unit: 'mm', group: 'PNEUMATIQUES' },
-    { key: 'pneu_ar_g', label: 'Pneu arrière gauche', unit: 'mm', group: 'PNEUMATIQUES' },
-    { key: 'pneu_ar_d', label: 'Pneu arrière droit', unit: 'mm', group: 'PNEUMATIQUES' },
-    { key: 'pression_av_g', label: 'Pression avant gauche', unit: 'bar', group: 'PNEUMATIQUES' },
-    { key: 'pression_av_d', label: 'Pression avant droite', unit: 'bar', group: 'PNEUMATIQUES' },
-    { key: 'pression_ar_g', label: 'Pression arrière gauche', unit: 'bar', group: 'PNEUMATIQUES' },
-    { key: 'pression_ar_d', label: 'Pression arrière droite', unit: 'bar', group: 'PNEUMATIQUES' },
-    { key: 'amortisseurs', label: 'Amortisseurs', unit: '', group: 'LIAISON AU SOL' },
-    { key: 'rotules', label: 'Rotules', unit: '', group: 'LIAISON AU SOL' },
-    { key: 'silentblocs', label: 'Silentblocs', unit: '', group: 'LIAISON AU SOL' },
-    { key: 'roulements', label: 'Roulements', unit: '', group: 'LIAISON AU SOL' },
-    { key: 'soufflets', label: 'Soufflets', unit: '', group: 'LIAISON AU SOL' },
-    { key: 'geometrie', label: 'Géométrie', unit: '', group: 'LIAISON AU SOL' }
+    { key: 'plaquettes_av_g', label: 'Plaquettes avant gauche', group: 'FREINAGE' },
+    { key: 'plaquettes_av_d', label: 'Plaquettes avant droite', group: 'FREINAGE' },
+    { key: 'plaquettes_ar_g', label: 'Plaquettes arrière gauche', group: 'FREINAGE' },
+    { key: 'plaquettes_ar_d', label: 'Plaquettes arrière droite', group: 'FREINAGE' },
+    { key: 'disque_av_g', label: 'Disque avant gauche', group: 'FREINAGE' },
+    { key: 'disque_av_d', label: 'Disque avant droit', group: 'FREINAGE' },
+    { key: 'disque_ar_g', label: 'Disque arrière gauche', group: 'FREINAGE' },
+    { key: 'disque_ar_d', label: 'Disque arrière droit', group: 'FREINAGE' },
+    { key: 'liquide_frein', label: 'Liquide de frein', group: 'FREINAGE' },
+    { key: 'flexibles', label: 'Flexibles de frein', group: 'FREINAGE' },
+    { key: 'pneu_av_g', label: 'Pneu avant gauche', group: 'PNEUMATIQUES' },
+    { key: 'pneu_av_d', label: 'Pneu avant droit', group: 'PNEUMATIQUES' },
+    { key: 'pneu_ar_g', label: 'Pneu arrière gauche', group: 'PNEUMATIQUES' },
+    { key: 'pneu_ar_d', label: 'Pneu arrière droit', group: 'PNEUMATIQUES' },
+    { key: 'pression_av_g', label: 'Pression avant gauche', group: 'PNEUMATIQUES' },
+    { key: 'pression_av_d', label: 'Pression avant droite', group: 'PNEUMATIQUES' },
+    { key: 'pression_ar_g', label: 'Pression arrière gauche', group: 'PNEUMATIQUES' },
+    { key: 'pression_ar_d', label: 'Pression arrière droite', group: 'PNEUMATIQUES' },
+    { key: 'amortisseurs', label: 'Amortisseurs', group: 'LIAISON AU SOL' },
+    { key: 'rotules', label: 'Rotules', group: 'LIAISON AU SOL' },
+    { key: 'silentblocs', label: 'Silentblocs', group: 'LIAISON AU SOL' },
+    { key: 'roulements', label: 'Roulements', group: 'LIAISON AU SOL' },
+    { key: 'soufflets', label: 'Soufflets', group: 'LIAISON AU SOL' }
   ];
 
   async function one(table, id) {
@@ -147,13 +146,9 @@
 
   function controlValue(report, control) {
     const raw = report?.checks?.[control.key];
-    if (typeof raw === 'string') return { status: raw, measure: null, note: null };
-    if (!raw || typeof raw !== 'object') return { status: 'non_controle', measure: null, note: null };
-    return {
-      status: raw.status || 'non_controle',
-      measure: raw.measure ?? null,
-      note: raw.note || null
-    };
+    if (typeof raw === 'string') return { status: raw, note: null };
+    if (!raw || typeof raw !== 'object') return { status: 'non_controle', note: null };
+    return { status: raw.status || 'non_controle', note: raw.note || null };
   }
 
   function drawBox(doc, x, y, w, h, title, lines) {
@@ -179,12 +174,10 @@
     const appointment = row.appointments || {};
     const checks = CONTROLS.map((control) => {
       const value = controlValue(report, control);
-      const measure = value.measure != null ? `${Number(value.measure).toLocaleString('fr-FR')} ${control.unit}`.trim() : '';
       return [
         control.group,
         control.label,
         CONTROL_STATUS_LABELS[value.status] || value.status || 'Non contrôlé',
-        measure || '—',
         clean(value.note) || '—'
       ];
     });
@@ -218,26 +211,25 @@
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(23, 27, 33);
-    doc.text('MESURES ET CONTRÔLES', 32, 202);
+    doc.text('CONTRÔLES', 32, 202);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.2);
     doc.setTextColor(78, 82, 88);
-    doc.text('Les valeurs enregistrées dans la rubrique « Interventions et contrôles » sont reprises automatiquement lors d’une régénération de l’OR.', 32, 215);
+    doc.text('Les contrôles enregistrés dans la rubrique « Interventions et contrôles » sont repris automatiquement lors d’une régénération de l’OR.', 32, 215);
 
     doc.autoTable({
       startY: 227,
       margin: { left: 32, right: 32 },
-      head: [['Famille', 'Point contrôlé', 'Statut', 'Mesure', 'Observation']],
+      head: [['Famille', 'Point contrôlé', 'Statut', 'Observation']],
       body: checks,
       theme: 'grid',
-      styles: { font: 'helvetica', fontSize: 6.2, cellPadding: 2.7, valign: 'middle', textColor: [35, 38, 43], lineColor: [205, 209, 215], lineWidth: 0.35 },
+      styles: { font: 'helvetica', fontSize: 6.4, cellPadding: 2.8, valign: 'middle', textColor: [35, 38, 43], lineColor: [205, 209, 215], lineWidth: 0.35 },
       headStyles: { fillColor: [31, 35, 41], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
       columnStyles: {
-        0: { cellWidth: 76, fontStyle: 'bold' },
-        1: { cellWidth: 142 },
-        2: { cellWidth: 80, halign: 'center' },
-        3: { cellWidth: 58, halign: 'center' },
-        4: { cellWidth: 175 }
+        0: { cellWidth: 88, fontStyle: 'bold' },
+        1: { cellWidth: 160 },
+        2: { cellWidth: 92, halign: 'center' },
+        3: { cellWidth: 191 }
       }
     });
 

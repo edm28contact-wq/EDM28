@@ -117,7 +117,8 @@ test('submitted requests are loaded and refreshed in client history', async () =
   assert.match(router, /window\.renderRequestHistory/);
   assert.match(app, /request-history\.js\?v=2/);
   assert.match(app, /client-simple-flow\.js\?v=9/);
-  assert.match(loader, /request-submit-safe\.js\?v=4/);
+  assert.match(loader, /request-submit-safe\.js\?v=5/);
+  assert.match(loader, /client-workflow-adjustments\.js\?v=1/);
 });
 
 test('messaging loop uses guarded RPCs and explicit human approval', async () => {
