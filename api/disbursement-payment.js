@@ -1,4 +1,5 @@
 import { resolveSupabaseServiceConfig } from './supabase-config.js';
+import { handleSendNotification } from '../lib/send-notification.js';
 
 const supabase = resolveSupabaseServiceConfig();
 const SUPABASE_URL = supabase.url;
@@ -64,6 +65,17 @@ async function stripeSession(id) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error('Vérification du paiement impossible.');
   return body;
+}
+
+async function handleHealth(req, res) {
+  if (req.method === 'POST') return handleSendNotification(req, res);
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD, POST');
+    return json(res, 405, { success: false, error: 'Méthode non autorisée.' });
+  }
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  return res.status(200).json({ success: true, app: 'EDM AUTO', api: 'health', time: new Date().toISOString() });
 }
 
 async function handleCreate(req, res, user) {
@@ -249,6 +261,8 @@ async function handleRefund(req, res, user) {
 }
 
 export default async function handler(req, res) {
+  const action = clean(req.query?.action, 20);
+  if (action === 'health') return handleHealth(req, res);
   if (req.method !== 'POST') return json(res, 405, { success: false, error: 'Méthode non autorisée.' });
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY || !stripeKey()) {
     return json(res, 503, { success: false, configured: false, error: 'Le paiement en ligne des débours n’est pas encore configuré.' });
@@ -257,7 +271,6 @@ export default async function handler(req, res) {
   try {
     const user = await authenticatedUser(req);
     if (!user?.id) return json(res, 401, { success: false, error: 'Connexion requise.' });
-    const action = clean(req.query?.action, 20);
     if (action === 'create') return await handleCreate(req, res, user);
     if (action === 'status') return await handleStatus(req, res, user);
     if (action === 'refund') return await handleRefund(req, res, user);
