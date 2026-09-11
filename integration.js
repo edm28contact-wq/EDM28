@@ -168,8 +168,14 @@
   }
 
   async function renderHistoryRemote() {
+    if (typeof window.renderRequestHistory === 'function') {
+      await window.renderRequestHistory();
+      if (typeof window.renderVehicleHistory === 'function') await window.renderVehicleHistory();
+      if (typeof window.renderCompletedInterventionHistory === 'function') await window.renderCompletedInterventionHistory();
+      return;
+    }
+
     const host = document.getElementById('historyList');
-    if (!host) return;
     if (!state.user?.id) {
       host.innerHTML = '<div class="empty">Connectez-vous pour consulter votre historique.</div>';
       return;
@@ -188,9 +194,9 @@
       return;
     }
 
-    host.innerHTML = `<div class="grid" data-vehicle-history-primary>${vehicles.map((vehicle) => {
+    host.innerHTML = `<div class="grid">${vehicles.map((vehicle) => {
       const vehicleRepairs = (repairs || []).filter((repair) => repair.vehicle_id === vehicle.id);
-      return `<section class="card" data-vehicle-id="${escapeHtml(vehicle.id)}">
+      return `<section class="card">
         <span class="pill blue">${escapeHtml(vehicle.plate)}</span>
         <h3 style="margin-top:12px">${escapeHtml(`${vehicle.brand || ''} ${vehicle.model || ''}`.trim() || 'Véhicule')}</h3>
         <p>${escapeHtml(vehicle.energy || '-')} · ${escapeHtml(vehicle.year || '-')} · ${escapeHtml(vehicle.mileage || '-')} km</p>
@@ -262,8 +268,7 @@
 
     document.querySelectorAll('[data-page="garage"]').forEach((button) => button.addEventListener('click', () => loadVehiclesFromSupabase().catch((error) => toast(error.message))));
     document.querySelectorAll('[data-page="history"]').forEach((button) => button.addEventListener('click', () => renderHistoryRemote().catch((error) => {
-      const historyHost = document.getElementById('historyList');
-      if (historyHost) historyHost.innerHTML = `<div class="errorbox">${escapeHtml(error.message)}</div>`;
+      document.getElementById('historyList').innerHTML = `<div class="errorbox">${escapeHtml(error.message)}</div>`;
     })));
 
     supabaseClient.auth.onAuthStateChange((_event, session) => {
