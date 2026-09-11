@@ -3,6 +3,8 @@
   window.__edmDisbursementEntryInstalled = true;
 
   const BILLING_KEY = 'edm28_disbursement_billing';
+  const DISBURSEMENT_COPY = 'Vous mandatez EDM28 pour acheter les pièces en votre nom et pour votre compte. Après validation du plafond, vous payez une provision en ligne avant toute commande. Le débours définitif correspond au justificatif fournisseur exact, sans marge ni commission ; tout trop-perçu est remboursé.';
+  const NOTICE_HTML = '<strong>Débours :</strong> après ce choix, vous accédez à la page dédiée pour renseigner vos coordonnées. Le paiement n’est demandé qu’après validation du devis et du mandat.';
 
   function navigate() {
     if (typeof window.__edmNavigate === 'function') return window.__edmNavigate('disbursements');
@@ -14,9 +16,9 @@
   function normalizeCopy() {
     const option = document.querySelector('.edm-parts-option input[value="edm_disbursement"]')?.closest('.edm-parts-option');
     const paragraph = option?.querySelector('p');
-    if (paragraph) paragraph.textContent = 'Vous mandatez EDM28 pour acheter les pièces en votre nom et pour votre compte. Après validation du plafond, vous payez une provision en ligne avant toute commande. Le débours définitif correspond au justificatif fournisseur exact, sans marge ni commission ; tout trop-perçu est remboursé.';
+    if (paragraph && paragraph.textContent !== DISBURSEMENT_COPY) paragraph.textContent = DISBURSEMENT_COPY;
     const notice = document.querySelector('#edmPartsPurchaseChoice .notice');
-    if (notice) notice.innerHTML = '<strong>Débours :</strong> après ce choix, vous accédez à la page dédiée pour renseigner vos coordonnées. Le paiement n’est demandé qu’après validation du devis et du mandat.';
+    if (notice && notice.innerHTML !== NOTICE_HTML) notice.innerHTML = NOTICE_HTML;
   }
 
   async function persistBillingAfterSubmission(requestId) {
