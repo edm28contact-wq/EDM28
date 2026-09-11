@@ -71,6 +71,9 @@
     if (id === 'history' && typeof window.renderRequestHistory === 'function') {
       void window.renderRequestHistory().catch((error) => console.warn('EDM request history unavailable', error));
     }
+    if (id === 'history' && typeof window.renderVehicleHistory === 'function') {
+      void window.renderVehicleHistory().catch((error) => console.warn('EDM vehicle history unavailable', error));
+    }
     if (id === 'history' && typeof window.renderCompletedInterventionHistory === 'function') {
       void window.renderCompletedInterventionHistory().catch((error) => console.warn('EDM intervention archive unavailable', error));
     }
