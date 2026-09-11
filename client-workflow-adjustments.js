@@ -3,6 +3,8 @@
   window.__edmWorkflowAdjustmentsInstalled = true;
 
   const MODE_KEY = 'edm28_parts_purchase_mode';
+  const DISBURSEMENT_LEAD = 'EDM28 ne vend pas de pièces. Un débours est une avance faite par EDM28 au nom et pour le compte du client, remboursée exactement sur justificatif, sans marge ni commission.';
+  const BOOKING_LEAD = 'Le devis se consulte et se valide dans « Statut de ma demande ». Après acceptation, cette page sert uniquement à choisir votre rendez-vous.';
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
   function installStyles() {
@@ -54,19 +56,19 @@
     if (!section) return;
     const intro = section.querySelector('.panel');
     const lead = intro?.querySelector('.section-title p');
-    if (lead) lead.textContent = 'EDM28 ne vend pas de pièces. Un débours est une avance faite par EDM28 au nom et pour le compte du client, remboursée exactement sur justificatif, sans marge ni commission.';
+    if (lead && lead.textContent !== DISBURSEMENT_LEAD) lead.textContent = DISBURSEMENT_LEAD;
     intro?.querySelectorAll('.grid-3 article').forEach((card) => {
       if (/vente de pièce/i.test(card.textContent || '')) card.remove();
     });
     const grid = intro?.querySelector('.grid-3');
-    if (grid) grid.style.gridTemplateColumns = 'repeat(2,minmax(0,1fr))';
+    if (grid && grid.style.gridTemplateColumns !== 'repeat(2, minmax(0px, 1fr))') grid.style.gridTemplateColumns = 'repeat(2,minmax(0,1fr))';
   }
 
   function normalizeBookingPage() {
     const booking = document.getElementById('booking');
     if (!booking) return;
     const subtitle = booking.querySelector('.section-title p');
-    if (subtitle) subtitle.textContent = 'Le devis se consulte et se valide dans « Statut de ma demande ». Après acceptation, cette page sert uniquement à choisir votre rendez-vous.';
+    if (subtitle && subtitle.textContent !== BOOKING_LEAD) subtitle.textContent = BOOKING_LEAD;
     const accept = document.getElementById('prepareAcceptQuote');
     const refuse = document.getElementById('prepareRefuseQuote');
     if ((accept || refuse) && document.getElementById('prepareRdvContent')) {
@@ -95,14 +97,20 @@
     sessionStorage.setItem('edm28_history_open', JSON.stringify({ vehicles:openVehicles, entries:openEntries }));
   }
 
+  function keepFullHistoryVisible() {
+    const vehicleHistory = document.querySelector('#historyList [data-vehicle-history]');
+    if (vehicleHistory) vehicleHistory.hidden = false;
+  }
+
   function restoreHistoryState() {
-    let state;
-    try { state = JSON.parse(sessionStorage.getItem('edm28_history_open') || '{}'); } catch (_) { state = {}; }
-    (state.vehicles || []).forEach((id) => {
+    keepFullHistoryVisible();
+    let savedState;
+    try { savedState = JSON.parse(sessionStorage.getItem('edm28_history_open') || '{}'); } catch (_) { savedState = {}; }
+    (savedState.vehicles || []).forEach((id) => {
       document.querySelector(`#history [data-vehicle-details="${CSS.escape(id)}"]`)?.classList.remove('hidden');
       document.querySelector(`#history [data-archive-vehicle="${CSS.escape(id)}"] [data-archive-vehicle-details]`)?.classList.remove('hidden');
     });
-    (state.entries || []).forEach((id) => {
+    (savedState.entries || []).forEach((id) => {
       document.querySelector(`#history [data-service-details="${CSS.escape(id)}"]`)?.classList.remove('hidden');
       document.querySelector(`#history [data-archive-order="${CSS.escape(id)}"] [data-archive-order-details]`)?.classList.remove('hidden');
     });
@@ -127,8 +135,9 @@
   }
 
   async function annotateRequestStatus() {
+    const statusPage = document.getElementById('request-status');
     const host = document.getElementById('requestStatusList');
-    if (!host || typeof supabaseClient === 'undefined') return;
+    if (!host || !statusPage?.classList.contains('active') || typeof supabaseClient === 'undefined') return;
     const session = await supabaseClient.auth.getSession();
     const user = session.data?.session?.user;
     if (!user) return;
@@ -163,6 +172,7 @@
       if (event.target.closest?.('[data-vehicle-doc],[data-archive-doc]')) rememberHistoryState();
       if (event.target.closest?.('[data-page="garage"]')) setTimeout(() => refreshGarageFromDb().catch(() => {}), 80);
       if (event.target.closest?.('[data-page="history"]')) setTimeout(restoreHistoryState, 180);
+      if (event.target.closest?.('[data-page="request-status"]')) setTimeout(() => annotateRequestStatus().catch(() => {}), 180);
       if (event.target.closest?.('[data-prepare-slot]')) setTimeout(() => markSelectedSlot(event.target), 0);
 
       const accepted = event.target.closest?.('[data-status-quote][data-response="accepted"]');
@@ -178,6 +188,7 @@
     window.addEventListener('pageshow', () => {
       if (document.getElementById('garage')?.classList.contains('active')) refreshGarageFromDb().catch(() => {});
       if (document.getElementById('history')?.classList.contains('active')) setTimeout(restoreHistoryState, 100);
+      if (document.getElementById('request-status')?.classList.contains('active')) setTimeout(() => annotateRequestStatus().catch(() => {}), 100);
     });
   }
 
@@ -185,6 +196,7 @@
     ensurePartsChoice();
     normalizeDisbursementPage();
     normalizeBookingPage();
+    keepFullHistoryVisible();
     restoreHistoryState();
     annotateRequestStatus().catch(() => {});
   }
