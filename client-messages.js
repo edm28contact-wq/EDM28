@@ -6,7 +6,6 @@
   const REFRESH_INTERVAL_MS = 15000;
   let refreshTimer = null;
   let loading = null;
-  let messagesObserver = null;
 
   const safe = (value) => {
     try {
@@ -26,59 +25,6 @@
     return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('fr-FR');
   };
 
-  function messagingMarkup() {
-    return `<div class="panel">
-      <div class="section-title">
-        <div>
-          <h2>Messagerie</h2>
-          <p>Échangez avec EDM28 au sujet de votre demande. Les réponses sont rédigées ou validées par l’équipe avant envoi.</p>
-        </div>
-        <button id="clientMessageRefresh" class="btn btn-ghost" type="button">Actualiser</button>
-      </div>
-      <div id="clientMessageStatus" class="small" aria-live="polite"></div>
-      <div id="clientMessageThread" class="card" aria-live="polite" style="min-height:260px;max-height:560px;overflow:auto;display:grid;gap:10px"></div>
-      <div class="card" style="margin-top:14px">
-        <div class="grid">
-          <label>Demande liée
-            <select id="clientMessageRequest"><option value="">Conversation générale</option></select>
-          </label>
-          <label>Objet
-            <input id="clientMessageSubject" maxlength="160" placeholder="Question sur ma demande">
-          </label>
-        </div>
-        <label style="margin-top:12px">Message
-          <textarea id="clientMessageBody" maxlength="4000" placeholder="Écrivez votre message à EDM28..."></textarea>
-        </label>
-        <div class="btn-row">
-          <button id="clientMessageSend" class="btn btn-primary" type="button">Envoyer le message</button>
-          <span class="small">Réponse non instantanée. Aucun diagnostic ou tarif définitif n’est validé automatiquement.</span>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  function bindUiEvents() {
-    const refresh = $('clientMessageRefresh');
-    if (refresh && refresh.dataset.edmBound !== '1') {
-      refresh.dataset.edmBound = '1';
-      refresh.addEventListener('click', () => void loadMessages(true));
-    }
-
-    const send = $('clientMessageSend');
-    if (send && send.dataset.edmBound !== '1') {
-      send.dataset.edmBound = '1';
-      send.addEventListener('click', () => void sendMessage());
-    }
-
-    const body = $('clientMessageBody');
-    if (body && body.dataset.edmBound !== '1') {
-      body.dataset.edmBound = '1';
-      body.addEventListener('keydown', (event) => {
-        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') void sendMessage();
-      });
-    }
-  }
-
   function ensureUi() {
     const historyButton = document.querySelector('[data-page="history"]');
     if (historyButton && !document.querySelector('[data-page="messages"]')) {
@@ -86,30 +32,39 @@
     }
 
     const aboutPage = $('about');
-    let page = $('messages');
-    if (!page && aboutPage) {
-      aboutPage.insertAdjacentHTML('beforebegin', '<section id="messages" class="page"></section>');
-      page = $('messages');
+    if (aboutPage && !$('messages')) {
+      aboutPage.insertAdjacentHTML('beforebegin', `
+        <section id="messages" class="page">
+          <div class="panel">
+            <div class="section-title">
+              <div>
+                <h2>Messagerie</h2>
+                <p>Échangez avec EDM28 au sujet de votre demande. Les réponses sont rédigées ou validées par l’équipe avant envoi.</p>
+              </div>
+              <button id="clientMessageRefresh" class="btn btn-ghost" type="button">Actualiser</button>
+            </div>
+            <div id="clientMessageStatus" class="small" aria-live="polite"></div>
+            <div id="clientMessageThread" class="card" aria-live="polite" style="min-height:260px;max-height:560px;overflow:auto;display:grid;gap:10px"></div>
+            <div class="card" style="margin-top:14px">
+              <div class="grid">
+                <label>Demande liée
+                  <select id="clientMessageRequest"><option value="">Conversation générale</option></select>
+                </label>
+                <label>Objet
+                  <input id="clientMessageSubject" maxlength="160" placeholder="Question sur ma demande">
+                </label>
+              </div>
+              <label style="margin-top:12px">Message
+                <textarea id="clientMessageBody" maxlength="4000" placeholder="Écrivez votre message à EDM28..."></textarea>
+              </label>
+              <div class="btn-row">
+                <button id="clientMessageSend" class="btn btn-primary" type="button">Envoyer le message</button>
+                <span class="small">Réponse non instantanée. Aucun diagnostic ou tarif définitif n’est validé automatiquement.</span>
+              </div>
+            </div>
+          </div>
+        </section>`);
     }
-
-    if (page && !$('clientMessageThread')) {
-      page.innerHTML = messagingMarkup();
-    }
-
-    bindUiEvents();
-    return page;
-  }
-
-  function observeMessagingPage() {
-    const page = $('messages');
-    if (!page || messagesObserver) return;
-    messagesObserver = new MutationObserver(() => {
-      if (!$('clientMessageThread')) {
-        ensureUi();
-        if (page.classList.contains('active')) void loadMessages(true);
-      }
-    });
-    messagesObserver.observe(page, { childList: true, subtree: false });
   }
 
   async function currentUserId() {
@@ -176,7 +131,6 @@
 
   async function loadMessages(force = false) {
     ensureUi();
-    observeMessagingPage();
     if (loading) {
       if (!force) return loading;
       await loading;
@@ -211,7 +165,6 @@
       if (messagesError) throw messagesError;
       if (requestsError) throw requestsError;
 
-      ensureUi();
       const rows = messages || [];
       renderRequests(requests || []);
       renderMessages(rows);
@@ -259,17 +212,15 @@
         p_subject: subject || null
       });
       if (error) throw error;
-      const liveBody = $('clientMessageBody');
-      if (liveBody) liveBody.value = '';
+      $('clientMessageBody').value = '';
       setStatus('Message envoyé à EDM28.');
       await loadMessages(true);
     } catch (error) {
       setStatus(error.message || 'Envoi impossible.', true);
     } finally {
-      const liveButton = $('clientMessageSend');
-      if (liveButton) {
-        liveButton.disabled = false;
-        liveButton.textContent = 'Envoyer le message';
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Envoyer le message';
       }
     }
   }
@@ -283,7 +234,11 @@
 
   function install() {
     ensureUi();
-    observeMessagingPage();
+    $('clientMessageRefresh')?.addEventListener('click', () => void loadMessages(true));
+    $('clientMessageSend')?.addEventListener('click', () => void sendMessage());
+    $('clientMessageBody')?.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') void sendMessage();
+    });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') void loadMessages(true);
     });
@@ -294,7 +249,6 @@
       supabaseClient.auth.onAuthStateChange((_event, session) => {
         if (session?.user) void loadMessages(true);
         else {
-          ensureUi();
           renderMessages([]);
           updateUnreadBadge(0);
         }
