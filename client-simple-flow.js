@@ -30,7 +30,7 @@
     { src: '/client-labor-pricing.js?v=2', attr: 'data-edm-labor-pricing' },
     { src: '/client-workflow-adjustments.js?v=1', attr: 'data-edm-workflow-adjustments' },
     { src: '/client-disbursement-entry.js?v=1', attr: 'data-edm-disbursement-entry' },
-    { src: '/client-history-visibility.js?v=1', attr: 'data-edm-history-visibility' }
+    { src: '/client-account-disbursement-flow.js?v=1', attr: 'data-edm-account-disbursement-flow' }
   ];
 
   const loadScript = ({ src, attr }) => new Promise((resolve, reject) => {
