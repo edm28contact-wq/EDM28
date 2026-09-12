@@ -5,6 +5,7 @@
   const BILLING_KEY = 'edm28_disbursement_billing';
   const MODE_KEY = 'edm28_parts_purchase_mode';
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  let accountRenderedFor = '';
 
   function readBilling() {
     try { return JSON.parse(localStorage.getItem(BILLING_KEY) || '{}') || {}; }
@@ -36,7 +37,8 @@
     const text = document.getElementById('edmConnectedAccountText');
     if (text && connected) {
       const user = window.state?.user || {};
-      text.textContent = [user.firstName, user.lastName].filter(Boolean).join(' ') + (user.email ? ` · ${user.email}` : '');
+      const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Compte connecté';
+      text.textContent = name + (user.email ? ` · ${user.email}` : '');
     }
   }
 
@@ -49,16 +51,18 @@
     </div>`;
   }
 
-  async function renderAccountEditor() {
+  async function renderAccountEditor(force = false) {
     const host = document.getElementById('accountPageContent');
     if (!host || !document.getElementById('account')?.classList.contains('active')) return;
     const user = await sessionUser();
     if (!user) return;
+    if (!force && accountRenderedFor === user.id && document.getElementById('accountSaveProfile')) return;
 
     const profileResult = await supabaseClient.from('profiles').select('first_name,last_name,phone,email').eq('id', user.id).maybeSingle();
     const profile = profileResult.data || {};
     const current = window.state?.user || {};
     const billing = readBilling();
+    accountRenderedFor = user.id;
 
     host.innerHTML = `
       <div class="grid">
@@ -90,10 +94,20 @@
         </div>
       </div>`;
 
-    document.getElementById('accountSaveProfile')?.addEventListener('click', saveProfile);
-    document.getElementById('accountSaveBilling')?.addEventListener('click', saveAccountBilling);
+    document.getElementById('accountSaveProfile')?.addEventListener('click', () => void saveProfile().catch(showAccountError));
+    document.getElementById('accountSaveBilling')?.addEventListener('click', () => void saveAccountBilling().catch(showBillingError));
     document.getElementById('accountSignOutBtn')?.addEventListener('click', () => window.signOutFromSupabase?.());
     document.getElementById('accountDeleteBtn')?.addEventListener('click', () => window.deleteCurrentAccount?.());
+  }
+
+  function showAccountError(error) {
+    const status = document.getElementById('accountProfileStatus');
+    if (status) status.innerHTML = `<div class="errorbox">${esc(error?.message || 'Enregistrement impossible.')}</div>`;
+  }
+
+  function showBillingError(error) {
+    const status = document.getElementById('accountBillingStatus');
+    if (status) status.innerHTML = `<div class="errorbox">${esc(error?.message || 'Enregistrement impossible.')}</div>`;
   }
 
   async function saveProfile() {
@@ -103,11 +117,8 @@
     const lastName = document.getElementById('accountLastName')?.value.trim() || '';
     const phone = document.getElementById('accountPhone')?.value.trim() || '';
     const email = document.getElementById('accountEmail')?.value.trim().toLowerCase() || '';
-    const status = document.getElementById('accountProfileStatus');
-    if (!firstName || !lastName || !phone || !email) {
-      if (status) status.innerHTML = '<div class="errorbox">Prénom, nom, téléphone et email sont obligatoires.</div>';
-      return;
-    }
+    if (!firstName || !lastName || !phone || !email) throw new Error('Prénom, nom, téléphone et email sont obligatoires.');
+
     const updated = await supabaseClient.from('profiles').update({ first_name:firstName, last_name:lastName, phone }).eq('id', user.id).select('id').maybeSingle();
     if (updated.error) throw updated.error;
     let emailMessage = '';
@@ -121,8 +132,10 @@
       window.saveState?.();
     }
     for (const [id, value] of [['firstName',firstName],['lastName',lastName],['phone',phone],['email',email]]) {
-      const input = document.getElementById(id); if (input) input.value = value;
+      const input = document.getElementById(id);
+      if (input) input.value = value;
     }
+    const status = document.getElementById('accountProfileStatus');
     if (status) status.innerHTML = `<div class="okbox">Informations enregistrées.${esc(emailMessage)}</div>`;
     accountGate();
   }
@@ -134,20 +147,21 @@
       city: document.getElementById('accountBillingCity')?.value.trim() || '',
       country: document.getElementById('accountBillingCountry')?.value.trim() || 'France'
     };
-    const status = document.getElementById('accountBillingStatus');
-    if (!billing.address || !billing.postal_code || !billing.city || !billing.country) {
-      if (status) status.innerHTML = '<div class="errorbox">Adresse, code postal, ville et pays sont obligatoires.</div>';
-      return;
-    }
+    if (!billing.address || !billing.postal_code || !billing.city || !billing.country) throw new Error('Adresse, code postal, ville et pays sont obligatoires.');
     localStorage.setItem(BILLING_KEY, JSON.stringify(billing));
+
     const user = await sessionUser();
     if (user) {
       const requests = await supabaseClient.from('service_requests').select('id').eq('user_id', user.id).eq('parts_purchase_mode','edm_disbursement').neq('status','cancelled');
-      if (!requests.error) {
-        for (const request of requests.data || []) await supabaseClient.rpc('client_save_disbursement_billing', { p_request_id:request.id, p_billing:billing });
+      if (requests.error) throw requests.error;
+      for (const request of requests.data || []) {
+        const result = await supabaseClient.rpc('client_save_disbursement_billing', { p_request_id:request.id, p_billing:billing });
+        if (result.error) throw result.error;
       }
     }
+    const status = document.getElementById('accountBillingStatus');
     if (status) status.innerHTML = '<div class="okbox">Coordonnées de débours enregistrées.</div>';
+    syncBillingInputs();
   }
 
   function enhanceDisbursementPage() {
@@ -161,13 +175,15 @@
       if (identityButton) identityButton.textContent = 'Modifier mes informations dans Mon compte';
     }
     if (!document.getElementById('edmContinueRequestFromDisbursement')) {
-      const intro = section.querySelector('.panel');
       const box = document.createElement('div');
       box.className = 'panel';
       box.id = 'edmContinueRequestFromDisbursement';
-      box.innerHTML = '<div class="section-title"><div><h2>Continuer ma demande</h2><p>Enregistrez vos coordonnées ci-dessus, puis revenez à votre demande pour choisir vos prestations et l’envoyer à EDM28.</p></div><button class="btn btn-primary" type="button" data-edm-continue-request>Continuer ma demande</button></div>';
-      intro?.insertAdjacentElement('afterend', box);
-      box.querySelector('[data-edm-continue-request]')?.addEventListener('click', () => window.showPage?.('appointment'));
+      box.innerHTML = '<div class="section-title"><div><h2>Continuer ma demande</h2><p>Enregistrez vos coordonnées de débours, puis revenez à votre demande pour choisir vos prestations et l’envoyer à EDM28.</p></div><button class="btn btn-primary" type="button" data-edm-continue-request>Continuer ma demande</button></div>';
+      billingPanel?.insertAdjacentElement('afterend', box);
+      box.querySelector('[data-edm-continue-request]')?.addEventListener('click', () => {
+        window.showPage?.('appointment');
+        setTimeout(() => document.getElementById('servicesArea')?.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
+      });
     }
   }
 
@@ -185,11 +201,14 @@
 
   function persistMode() {
     const selected = document.querySelector('input[name="partsPurchaseMode"]:checked');
-    if (selected) localStorage.setItem(MODE_KEY, selected.value);
-    else {
-      const saved = localStorage.getItem(MODE_KEY);
-      if (saved) document.querySelector(`input[name="partsPurchaseMode"][value="${CSS.escape(saved)}"]`)?.click();
+    if (selected) {
+      localStorage.setItem(MODE_KEY, selected.value);
+      return;
     }
+    const saved = localStorage.getItem(MODE_KEY);
+    if (!saved) return;
+    const input = document.querySelector(`input[name="partsPurchaseMode"][value="${CSS.escape(saved)}"]`);
+    if (input) input.checked = true;
   }
 
   function refresh() {
@@ -197,11 +216,10 @@
     enhanceDisbursementPage();
     syncBillingInputs();
     persistMode();
-    if (document.getElementById('account')?.classList.contains('active')) void renderAccountEditor().catch(() => {});
   }
 
   document.addEventListener('click', (event) => {
-    if (event.target.closest?.('[data-page="account"]')) setTimeout(() => void renderAccountEditor().catch(() => {}), 80);
+    if (event.target.closest?.('[data-page="account"]')) setTimeout(() => void renderAccountEditor(true).catch(showAccountError), 80);
     if (event.target.closest?.('[data-page="disbursements"]')) setTimeout(() => { enhanceDisbursementPage(); syncBillingInputs(); }, 80);
   }, true);
 
@@ -212,7 +230,10 @@
 
   function install() {
     refresh();
-    if (typeof supabaseClient !== 'undefined') supabaseClient.auth.onAuthStateChange(() => setTimeout(refresh, 0));
+    if (typeof supabaseClient !== 'undefined') supabaseClient.auth.onAuthStateChange(() => {
+      accountRenderedFor = '';
+      setTimeout(refresh, 0);
+    });
     const observer = new MutationObserver(() => setTimeout(refresh, 0));
     observer.observe(document.body, { childList:true, subtree:true });
   }
