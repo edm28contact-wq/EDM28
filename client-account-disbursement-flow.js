@@ -7,6 +7,19 @@
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   let accountRenderedFor = '';
 
+  const appUser = () => {
+    try { return typeof state !== 'undefined' ? state?.user || null : null; }
+    catch (_) { return null; }
+  };
+
+  function updateAppUser(next) {
+    try {
+      if (typeof state === 'undefined') return;
+      state.user = { ...(state.user || {}), ...next };
+      if (typeof saveState === 'function') saveState();
+    } catch (_) {}
+  }
+
   function readBilling() {
     try { return JSON.parse(localStorage.getItem(BILLING_KEY) || '{}') || {}; }
     catch (_) { return {}; }
@@ -14,14 +27,16 @@
 
   async function sessionUser() {
     if (typeof supabaseClient === 'undefined') return null;
-    const { data } = await supabaseClient.auth.getSession();
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
     return data?.session?.user || null;
   }
 
   function accountGate() {
     const card = document.getElementById('clientCard');
     if (!card) return;
-    const connected = Boolean(window.state?.user?.id);
+    const user = appUser();
+    const connected = Boolean(user?.id);
     card.classList.toggle('hidden', connected);
 
     let gate = document.getElementById('edmConnectedAccountGate');
@@ -31,12 +46,15 @@
       gate.className = 'card hidden';
       gate.innerHTML = '<div class="section-title"><div><h3>1. Compte client</h3><p id="edmConnectedAccountText">Compte connecté.</p></div><button class="btn btn-secondary" type="button" data-edm-open-account>Modifier mes informations</button></div>';
       card.insertAdjacentElement('afterend', gate);
-      gate.querySelector('[data-edm-open-account]')?.addEventListener('click', () => window.showPage?.('account'));
+      gate.querySelector('[data-edm-open-account]')?.addEventListener('click', () => {
+        if (typeof window.showPage === 'function') window.showPage('account');
+        else if (typeof showPage === 'function') showPage('account');
+        setTimeout(() => void renderAccountEditor(true).catch(showAccountError), 40);
+      });
     }
     gate.classList.toggle('hidden', !connected);
     const text = document.getElementById('edmConnectedAccountText');
     if (text && connected) {
-      const user = window.state?.user || {};
       const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Compte connecté';
       text.textContent = name + (user.email ? ` · ${user.email}` : '');
     }
@@ -59,8 +77,9 @@
     if (!force && accountRenderedFor === user.id && document.getElementById('accountSaveProfile')) return;
 
     const profileResult = await supabaseClient.from('profiles').select('first_name,last_name,phone,email').eq('id', user.id).maybeSingle();
+    if (profileResult.error) throw profileResult.error;
     const profile = profileResult.data || {};
-    const current = window.state?.user || {};
+    const current = appUser() || {};
     const billing = readBilling();
     accountRenderedFor = user.id;
 
@@ -80,7 +99,7 @@
         </div>
         <div class="card">
           <h3>Coordonnées pour les débours</h3>
-          <p>Ces coordonnées servent lorsque EDM28 achète une pièce en votre nom et pour votre compte.</p>
+          <p>Ces coordonnées servent lorsque EDM28 achète une pièce en votre nom et pour votre compte. Elles sont conservées pour vos prochaines demandes.</p>
           ${billingFieldsMarkup(billing)}
           <button class="btn btn-primary" id="accountSaveBilling" type="button" style="margin-top:14px">Enregistrer mes coordonnées de débours</button>
           <div id="accountBillingStatus" style="margin-top:10px"></div>
@@ -96,8 +115,12 @@
 
     document.getElementById('accountSaveProfile')?.addEventListener('click', () => void saveProfile().catch(showAccountError));
     document.getElementById('accountSaveBilling')?.addEventListener('click', () => void saveAccountBilling().catch(showBillingError));
-    document.getElementById('accountSignOutBtn')?.addEventListener('click', () => window.signOutFromSupabase?.());
-    document.getElementById('accountDeleteBtn')?.addEventListener('click', () => window.deleteCurrentAccount?.());
+    document.getElementById('accountSignOutBtn')?.addEventListener('click', () => {
+      if (typeof signOutFromSupabase === 'function') void signOutFromSupabase();
+    });
+    document.getElementById('accountDeleteBtn')?.addEventListener('click', () => {
+      if (typeof deleteCurrentAccount === 'function') void deleteCurrentAccount();
+    });
   }
 
   function showAccountError(error) {
@@ -127,10 +150,8 @@
       if (changed.error) throw changed.error;
       emailMessage = ' Un email de confirmation peut être nécessaire pour valider la nouvelle adresse.';
     }
-    if (window.state) {
-      window.state.user = { ...(window.state.user || {}), id:user.id, firstName, lastName, phone, email };
-      window.saveState?.();
-    }
+
+    updateAppUser({ id:user.id, firstName, lastName, phone, email });
     for (const [id, value] of [['firstName',firstName],['lastName',lastName],['phone',phone],['email',email]]) {
       const input = document.getElementById(id);
       if (input) input.value = value;
@@ -181,7 +202,8 @@
       box.innerHTML = '<div class="section-title"><div><h2>Continuer ma demande</h2><p>Enregistrez vos coordonnées de débours, puis revenez à votre demande pour choisir vos prestations et l’envoyer à EDM28.</p></div><button class="btn btn-primary" type="button" data-edm-continue-request>Continuer ma demande</button></div>';
       billingPanel?.insertAdjacentElement('afterend', box);
       box.querySelector('[data-edm-continue-request]')?.addEventListener('click', () => {
-        window.showPage?.('appointment');
+        if (typeof window.showPage === 'function') window.showPage('appointment');
+        else if (typeof showPage === 'function') showPage('appointment');
         setTimeout(() => document.getElementById('servicesArea')?.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
       });
     }
@@ -230,10 +252,25 @@
 
   function install() {
     refresh();
+
+    if (typeof window.hydrateUserFromSupabase === 'function' && !window.hydrateUserFromSupabase.__edmAccountFlowWrapped) {
+      const originalHydrate = window.hydrateUserFromSupabase;
+      const wrappedHydrate = async (...args) => {
+        const result = await originalHydrate(...args);
+        accountRenderedFor = '';
+        refresh();
+        return result;
+      };
+      wrappedHydrate.__edmAccountFlowWrapped = true;
+      window.hydrateUserFromSupabase = wrappedHydrate;
+    }
+
     if (typeof supabaseClient !== 'undefined') supabaseClient.auth.onAuthStateChange(() => {
       accountRenderedFor = '';
       setTimeout(refresh, 0);
+      setTimeout(refresh, 250);
     });
+
     const observer = new MutationObserver(() => setTimeout(refresh, 0));
     observer.observe(document.body, { childList:true, subtree:true });
   }
