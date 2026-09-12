@@ -87,6 +87,20 @@
     return data;
   }
 
+  async function sendPreviewEmailFallback(requestId) {
+    try {
+      const { data, error } = await supabaseClient.rpc('preview_send_request_notification', { p_request_id: requestId });
+      if (error) {
+        console.warn('EDM Preview email fallback unavailable', error);
+        return false;
+      }
+      return data?.success === true;
+    } catch (error) {
+      console.warn('EDM Preview email fallback failed', error);
+      return false;
+    }
+  }
+
   async function submitRequest() {
     const totals = calculateTotals(true);
     if (!totals) return;
@@ -127,6 +141,12 @@
         error.saved = result.saved === true;
         throw error;
       }
+
+      if (result.emailSent === false) {
+        const fallbackSent = await sendPreviewEmailFallback(result.requestId || request.id);
+        if (fallbackSent) result.emailSent = true;
+      }
+
       writePending(null);
       updateStepper(4);
       if (result.emailSent === false) {
