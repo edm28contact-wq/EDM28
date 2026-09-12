@@ -16,6 +16,7 @@
     { src: '/client-password-flow.js?v=2', attr: 'data-edm-password' },
     { src: '/client-vehicle-required-fields.js?v=1', attr: 'data-edm-vehicle-required-fields' },
     { src: '/client-step3-fixes.js?v=2', attr: 'data-edm-step3' },
+    { src: '/client-service-conflicts.js?v=1', attr: 'data-edm-service-conflicts' },
     { src: '/request-submit-safe.js?v=5', attr: 'data-edm-submit' },
     { src: '/client-quotes.js?v=1', attr: 'data-edm-quotes' },
     { src: '/client-disbursements.js?v=2', attr: 'data-edm-disbursements' },
