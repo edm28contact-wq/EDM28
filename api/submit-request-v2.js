@@ -1,4 +1,5 @@
 import { resolveSupabasePublicConfig } from './supabase-config.js';
+import { sendPreviewRequestEmailFallback } from '../lib/preview-request-email.js';
 
 const supabase = resolveSupabasePublicConfig();
 const SUPABASE_URL = supabase.url;
@@ -153,6 +154,16 @@ async function sendWithResend(config, requestId, payload) {
   return { ok: false, failure: lastFailure };
 }
 
+async function tryPreviewFallback(authorization, requestId) {
+  if (SUPABASE_ENVIRONMENT === 'production') return null;
+  return sendPreviewRequestEmailFallback({
+    supabaseUrl: SUPABASE_URL,
+    anonKey: SUPABASE_ANON_KEY,
+    authorization,
+    requestId
+  }).catch((error) => ({ ok: false, error: error?.message || 'Fallback Preview indisponible.' }));
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { success: false, error: 'Méthode non autorisée.' });
 
@@ -166,7 +177,14 @@ export default async function handler(req, res) {
 
     const { request, profile, vehicle } = canonical;
     if (request.status === 'submitted') {
-      return sendJson(res, 200, { success: true, requestId: request.id, alreadySubmitted: true });
+      const fallback = await tryPreviewFallback(authorization, request.id);
+      return sendJson(res, 200, {
+        success: true,
+        requestId: request.id,
+        alreadySubmitted: true,
+        emailSent: fallback?.ok === true,
+        emailId: fallback?.id || null
+      });
     }
     if (request.status !== 'draft') {
       return sendJson(res, 409, { success: false, saved: true, error: 'Cette demande ne peut plus être transmise.' });
@@ -182,12 +200,25 @@ export default async function handler(req, res) {
     const email = resolveEmailConfig();
     const emailUnavailable = !email.apiKeys.length || !email.from || !email.to;
     if (emailUnavailable) {
+      const fallback = await tryPreviewFallback(authorization, request.id);
+      if (fallback?.ok) {
+        return sendJson(res, 200, {
+          success: true,
+          saved: true,
+          emailSent: true,
+          requestId: request.id,
+          emailId: fallback.id || null,
+          emailChannel: 'staging_fallback'
+        });
+      }
+
       console.error('request email unavailable', {
         environment: SUPABASE_ENVIRONMENT,
         requestId: request.id,
         hasApiKey: email.apiKeys.length > 0,
         hasFrom: Boolean(email.from),
-        hasTo: Boolean(email.to)
+        hasTo: Boolean(email.to),
+        fallbackError: fallback?.error || null
       });
       return sendJson(res, 200, {
         success: true,
@@ -264,12 +295,25 @@ export default async function handler(req, res) {
     });
 
     if (!emailAttempt.ok) {
+      const fallback = await tryPreviewFallback(authorization, request.id);
+      if (fallback?.ok) {
+        return sendJson(res, 200, {
+          success: true,
+          saved: true,
+          emailSent: true,
+          requestId: request.id,
+          emailId: fallback.id || null,
+          emailChannel: 'staging_fallback'
+        });
+      }
+
       console.error('request email failed', {
         environment: SUPABASE_ENVIRONMENT,
         requestId: request.id,
         providerStatus: emailAttempt.failure?.status || null,
         providerName: emailAttempt.failure?.name || null,
-        providerMessage: emailAttempt.failure?.message || null
+        providerMessage: emailAttempt.failure?.message || null,
+        fallbackError: fallback?.error || null
       });
       return sendJson(res, 200, {
         success: true,

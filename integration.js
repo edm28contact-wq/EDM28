@@ -168,6 +168,13 @@
   }
 
   async function renderHistoryRemote() {
+    if (typeof window.renderRequestHistory === 'function') {
+      await window.renderRequestHistory();
+      if (typeof window.renderVehicleHistory === 'function') await window.renderVehicleHistory();
+      if (typeof window.renderCompletedInterventionHistory === 'function') await window.renderCompletedInterventionHistory();
+      return;
+    }
+
     const host = document.getElementById('historyList');
     if (!state.user?.id) {
       host.innerHTML = '<div class="empty">Connectez-vous pour consulter votre historique.</div>';
