@@ -100,11 +100,18 @@ test('combo discount is suspended pending rate review', async () => {
 });
 
 test('safe submit authenticates and API is idempotent', async () => {
-  const [client, api] = await Promise.all([read('request-submit-safe.js'), read('api/submit-request-v2.js')]);
+  const [client, api, fallback] = await Promise.all([
+    read('request-submit-safe.js'),
+    read('api/submit-request-v2.js'),
+    read('lib/preview-request-email.js')
+  ]);
   assert.match(client, /getSession\s*\(/);
   assert.match(client, /Authorization:/);
   assert.match(api, /alreadySubmitted:\s*true/);
   assert.match(api, /Idempotency-Key/);
+  assert.match(api, /tryPreviewFallback/);
+  assert.match(api, /staging_fallback/);
+  assert.match(fallback, /preview_send_request_notification/);
 });
 
 test('Preview and production Supabase credentials are isolated', async () => {
@@ -147,7 +154,7 @@ test('submitted requests are loaded and refreshed in client history', async () =
   assert.match(router, /window\.renderRequestHistory/);
   assert.match(app, /request-history\.js\?v=2/);
   assert.match(app, /client-simple-flow\.js\?v=9/);
-  assert.match(loader, /request-submit-safe\.js\?v=5/);
+  assert.match(loader, /request-submit-safe\.js\?v=6/);
   assert.match(loader, /client-workflow-adjustments\.js\?v=1/);
 });
 
