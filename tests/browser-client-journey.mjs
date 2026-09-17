@@ -147,8 +147,12 @@ try {
   await page.click('#btnPasswordVerify');
   await page.waitForFunction(() => state?.user?.id === 'u1');
 
-  await page.click('#btnSignOut');
+  await page.evaluate(() => window.__edmNavigate('account'));
+  await page.waitForSelector('#accountSignOutBtn', { state:'visible', timeout:15000 });
+  await page.click('#accountSignOutBtn');
   await page.waitForFunction(() => !state?.user?.id);
+  await page.evaluate(() => window.__edmNavigate('appointment'));
+  await page.waitForSelector('#appointment.active #btnSignIn', { state:'visible', timeout:15000 });
   await page.fill('#email','client@example.test');
   await page.fill('#password','MotDePasse-test-2026');
   await page.click('#btnSignIn');
