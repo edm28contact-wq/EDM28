@@ -14,7 +14,7 @@ appHandler({ method: 'GET' }, {
 });
 if (!html.includes('client-account-safe.js?v=13')) throw new Error('Preview account asset mismatch');
 if (!html.includes('request-history.js?v=2')) throw new Error('Preview history asset mismatch');
-if (!html.includes('client-simple-flow.js?v=8')) throw new Error('Preview password flow asset mismatch');
+if (!html.includes('client-simple-flow.js?v=9')) throw new Error('Preview password flow asset mismatch');
 
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
@@ -95,6 +95,7 @@ const stub = `
   window.supabase={createClient(){return{
     auth:{
       async getSession(){return {data:{session},error:null}},
+      async getUser(){return {data:{user:session?.user || null},error:null}},
       async signUp({email,password,options}){
         if(email!==user.email)return {data:{user:null,session:null},error:new Error('unexpected email')};
         accountPassword=password;
@@ -146,8 +147,12 @@ try {
   await page.click('#btnPasswordVerify');
   await page.waitForFunction(() => state?.user?.id === 'u1');
 
-  await page.click('#btnSignOut');
+  await page.evaluate(() => window.__edmNavigate('account'));
+  await page.waitForSelector('#accountSignOutBtn', { state:'visible', timeout:15000 });
+  await page.click('#accountSignOutBtn');
   await page.waitForFunction(() => !state?.user?.id);
+  await page.evaluate(() => window.__edmNavigate('appointment'));
+  await page.waitForSelector('#appointment.active #btnSignIn', { state:'visible', timeout:15000 });
   await page.fill('#email','client@example.test');
   await page.fill('#password','MotDePasse-test-2026');
   await page.click('#btnSignIn');
@@ -177,6 +182,8 @@ try {
 
   await page.click('[data-select-pack="freinage"]');
   for (const basket of ['eco','standard','premium']) await page.click(`[data-basket="${basket}"]`);
+  await page.waitForSelector('#edmPartsPurchaseChoice input[value="client_direct"]', { state:'attached' });
+  await page.check('#edmPartsPurchaseChoice input[value="client_direct"]');
   await page.click('#j7Accepted');
   await page.click('#refuseControl');
   await page.fill('#clientNotes','Bruit au freinage');
@@ -188,7 +195,30 @@ try {
     await page.waitForFunction((pageId) => document.getElementById(pageId)?.classList.contains('active'), id);
   }
 
-  await page.waitForSelector('#historyList [data-service-request-id="request-e2e-1"]', { timeout:5000 });
+  try {
+    await page.waitForSelector('#historyList [data-service-request-id="request-e2e-1"]', { timeout:5000 });
+  } catch (error) {
+    const diagnostic = await page.evaluate(async () => {
+      const sessionResult = await supabaseClient.auth.getSession();
+      const before = document.getElementById('historyList')?.innerHTML || '';
+      let directError = '';
+      try { await window.renderRequestHistory(); } catch (renderError) { directError = renderError?.message || String(renderError); }
+      return {
+        historyActive: document.getElementById('history')?.classList.contains('active'),
+        historyBeforeDirectRender: before,
+        historyAfterDirectRender: document.getElementById('historyList')?.innerHTML || '',
+        stateUserId: state?.user?.id || null,
+        sessionUserId: sessionResult.data?.session?.user?.id || null,
+        directError,
+        hasRequestRenderer: typeof window.renderRequestHistory === 'function',
+        hasVehicleRenderer: typeof window.renderVehicleHistory === 'function',
+        requestSectionPresent: Boolean(document.querySelector('#historyList [data-request-history]')),
+        vehicleSectionPresent: Boolean(document.querySelector('#historyList [data-vehicle-history]'))
+      };
+    });
+    console.error(`HISTORY_DEBUG ${JSON.stringify(diagnostic)}`);
+    throw error;
+  }
   const historyText = await page.locator('#historyList [data-service-request-id="request-e2e-1"]').textContent();
   if (!historyText?.includes('AA-123-BC') || (!historyText.includes('Transmise') && !historyText.includes('Enregistrée'))) throw new Error(`Submitted request is missing from history: ${historyText}`);
 
@@ -197,7 +227,7 @@ try {
   await page.waitForFunction(() => !state?.user?.id);
 
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('password signup, one-time verification, password login, buttons and history ok');
+  console.log('password signup, one-time verification, password login, parts choice, buttons and history ok');
 } finally {
   await context.close();
   await browser.close();

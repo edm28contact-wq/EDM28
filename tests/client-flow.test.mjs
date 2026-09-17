@@ -41,6 +41,36 @@ test('account hydration preserves non-empty fields', async () => {
   assert.match(source, /first\(user\.email, field\('email'\), current\.email/);
 });
 
+test('connected account hides login card and centralizes editable client data', async () => {
+  const [loader, flow] = await Promise.all([
+    read('client-simple-flow.js'),
+    read('client-account-disbursement-flow.js')
+  ]);
+  assert.match(loader, /client-account-disbursement-flow\.js\?v=1/);
+  assert.match(flow, /card\.classList\.toggle\('hidden', connected\)/);
+  assert.match(flow, /Informations du compte/);
+  assert.match(flow, /accountSaveProfile/);
+  assert.match(flow, /Coordonnées pour les débours/);
+  assert.match(flow, /accountSaveBilling/);
+  assert.match(flow, /client_save_disbursement_billing/);
+  assert.match(flow, /Continuer ma demande/);
+  assert.doesNotMatch(flow, /window\.state\?\.user/);
+});
+
+test('overlapping brake services cannot remain selected together', async () => {
+  const [loader, conflicts] = await Promise.all([
+    read('client-simple-flow.js'),
+    read('client-service-conflicts.js')
+  ]);
+  assert.match(loader, /client-service-conflicts\.js\?v=1/);
+  assert.match(conflicts, /FR_PLAQ_AV:\s*\['plaquettes_av'\]/);
+  assert.match(conflicts, /FR_DISC_PLAQ_AV:\s*\['disques_av', 'plaquettes_av'\]/);
+  assert.match(conflicts, /FR_DISC_PLAQ_AV_AR/);
+  assert.match(conflicts, /a\.some\(\(component\) => b\.includes\(component\)\)/);
+  assert.match(conflicts, /input\.checked = false/);
+  assert.match(conflicts, /la nouvelle prestation couvre déjà la même opération/);
+});
+
 test('Preview loads protected routes and refreshed password client flow', async () => {
   const source = await read('api/app.js');
   assert.match(source, /client-account-safe\.js\?v=13/);
@@ -70,11 +100,18 @@ test('combo discount is suspended pending rate review', async () => {
 });
 
 test('safe submit authenticates and API is idempotent', async () => {
-  const [client, api] = await Promise.all([read('request-submit-safe.js'), read('api/submit-request-v2.js')]);
+  const [client, api, fallback] = await Promise.all([
+    read('request-submit-safe.js'),
+    read('api/submit-request-v2.js'),
+    read('lib/preview-request-email.js')
+  ]);
   assert.match(client, /getSession\s*\(/);
   assert.match(client, /Authorization:/);
   assert.match(api, /alreadySubmitted:\s*true/);
   assert.match(api, /Idempotency-Key/);
+  assert.match(api, /tryPreviewFallback/);
+  assert.match(api, /staging_fallback/);
+  assert.match(fallback, /preview_send_request_notification/);
 });
 
 test('Preview and production Supabase credentials are isolated', async () => {
@@ -117,7 +154,8 @@ test('submitted requests are loaded and refreshed in client history', async () =
   assert.match(router, /window\.renderRequestHistory/);
   assert.match(app, /request-history\.js\?v=2/);
   assert.match(app, /client-simple-flow\.js\?v=9/);
-  assert.match(loader, /request-submit-safe\.js\?v=4/);
+  assert.match(loader, /request-submit-safe\.js\?v=6/);
+  assert.match(loader, /client-workflow-adjustments\.js\?v=1/);
 });
 
 test('messaging loop uses guarded RPCs and explicit human approval', async () => {

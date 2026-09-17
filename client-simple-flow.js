@@ -7,6 +7,7 @@
     window.__edmLegacyHistoryGuard = true;
     window.renderHistory = function guardedRenderHistory(...args) {
       if (!document.getElementById('historyList')) return;
+      if (typeof window.renderRequestHistory === 'function') return;
       return legacyRenderHistory.apply(this, args);
     };
   }
@@ -15,9 +16,10 @@
     { src: '/client-password-flow.js?v=2', attr: 'data-edm-password' },
     { src: '/client-vehicle-required-fields.js?v=1', attr: 'data-edm-vehicle-required-fields' },
     { src: '/client-step3-fixes.js?v=2', attr: 'data-edm-step3' },
-    { src: '/request-submit-safe.js?v=4', attr: 'data-edm-submit' },
+    { src: '/client-service-conflicts.js?v=1', attr: 'data-edm-service-conflicts' },
+    { src: '/request-submit-safe.js?v=6', attr: 'data-edm-submit' },
     { src: '/client-quotes.js?v=1', attr: 'data-edm-quotes' },
-    { src: '/client-disbursements.js?v=1', attr: 'data-edm-disbursements' },
+    { src: '/client-disbursements.js?v=2', attr: 'data-edm-disbursements' },
     { src: '/client-operations.js?v=1', attr: 'data-edm-operations' },
     { src: '/client-inspections.js?v=1', attr: 'data-edm-inspections' },
     { src: '/client-invoices.js?v=1', attr: 'data-edm-invoices' },
@@ -26,7 +28,10 @@
     { src: '/combo-suspended.js?v=1', attr: 'data-edm-combo-policy' },
     { src: '/client-basket-pricing.js?v=1', attr: 'data-edm-basket-pricing' },
     { src: '/client-note-guidance.js?v=1', attr: 'data-edm-note-guidance' },
-    { src: '/client-labor-pricing.js?v=2', attr: 'data-edm-labor-pricing' }
+    { src: '/client-labor-pricing.js?v=2', attr: 'data-edm-labor-pricing' },
+    { src: '/client-workflow-adjustments.js?v=1', attr: 'data-edm-workflow-adjustments' },
+    { src: '/client-disbursement-entry.js?v=1', attr: 'data-edm-disbursement-entry' },
+    { src: '/client-account-disbursement-flow.js?v=1', attr: 'data-edm-account-disbursement-flow' }
   ];
 
   const loadScript = ({ src, attr }) => new Promise((resolve, reject) => {
