@@ -1338,15 +1338,9 @@
     }
 
     function validateBeforeServices() {
-      if (!state.user?.id) {
-        setAuthStatus("Créez un compte ou connectez-vous avant de pouvoir continuer.", true);
-        toast("Connexion obligatoire avant de prendre RDV.");
-        return false;
-      }
-
       const vehicle = getVehicle();
       if (!vehicle.plateNormalized) {
-        toast("Entre une plaque véhicule.");
+        toast("Entrez une plaque véhicule.");
         return false;
       }
 
