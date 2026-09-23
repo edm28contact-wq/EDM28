@@ -59,7 +59,7 @@ const stub = `
     auth:{
       async getSession(){return {data:{session},error:null}},
       async setSession(){return {data:{session},error:null}},
-      async signInWithPassword({email,password}){if(!email||!password)return {data:{user:null,session:null},error:{message:'Invalid login credentials'}};session={access_token:'admin-token',refresh_token:'admin-refresh',user};return {data:{user,session},error:null}},
+      async signInWithPassword({email,password}){if(email!=='admin@edm28.fr'||!password)return {data:{user:null,session:null},error:{message:'Invalid login credentials'}};session={access_token:'admin-token',refresh_token:'admin-refresh',user};return {data:{user,session},error:null}},
       async signOut(){session=null;return {error:null}}
     },
     from:builder,
@@ -86,7 +86,7 @@ try {
     if (await page.evaluate(() => localStorage.getItem('edm_admin_remember')) !== '1') throw new Error('Admin remember-on preference was not saved.');
   } else throw new Error('Admin remember-me control is missing.');
 
-  await page.fill('#adminEmail','admin@example.test');
+  if (await page.locator('#adminEmail').count()) throw new Error('Admin email field must not be visible.');
   await page.fill('#adminPassword','admin-password');
   await page.click('#loginBtn');
   await page.waitForSelector('#dashboard:not(.hidden)', {timeout:15000});

@@ -92,9 +92,12 @@ test('admin reset is red, requires an exact phrase and preserves administrators 
 });
 
 
-test('admin authentication uses password and no email OTP', async () => {
-  const source = await read('admin-core.js');
+test('admin authentication uses password only and no email OTP', async () => {
+  const [source, html] = await Promise.all([read('admin-core.js'), read('admin.html')]);
+  assert.match(source, /ADMIN_EMAIL = 'admin@edm28\.fr'/);
   assert.match(source, /auth\.signInWithPassword\s*\(/);
   assert.doesNotMatch(source, /auth\.signInWithOtp\s*\(/);
   assert.doesNotMatch(source, /auth\.verifyOtp\s*\(/);
+  assert.doesNotMatch(html, /id="adminEmail"/);
+  assert.match(html, /id="adminPassword"/);
 });

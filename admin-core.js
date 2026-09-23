@@ -219,13 +219,14 @@
     }
   };
 
+  const ADMIN_EMAIL = 'admin@edm28.fr';
+
   async function login() {
-    const email = app.$('adminEmail').value.trim().toLowerCase();
     const password = app.$('adminPassword').value;
-    if (!email || !password) return app.status('loginStatus', 'Email et mot de passe obligatoires.', true);
+    if (!password) return app.status('loginStatus', 'Mot de passe obligatoire.', true);
     app.status('loginStatus', 'Connexion…');
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
-    if (error) return app.status('loginStatus', 'Email ou mot de passe incorrect.', true);
+    const { data, error } = await client.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
+    if (error) return app.status('loginStatus', 'Mot de passe incorrect.', true);
     try {
       await app.requireAdmin(data?.user);
       await app.open();
