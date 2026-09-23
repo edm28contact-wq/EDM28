@@ -33,19 +33,7 @@
     if (typeof saveState === 'function') saveState();
   };
 
-  const protectedPages = new Set(['account', 'garage', 'history', 'messages']);
-  protectedPages.add('disbursements');
-  const baseShowPage = window.showPage;
-  if (typeof baseShowPage === 'function') {
-    window.showPage = function (pageId) {
-      if (protectedPages.has(pageId) && !state?.user?.id) {
-        baseShowPage('appointment');
-        document.getElementById('email')?.focus();
-        return;
-      }
-      baseShowPage(pageId);
-    };
-  }
-
+  // Navigation publique : aucune page n'est bloquée par la connexion.
+  // Les données privées restent protégées par les loaders authentifiés et les règles RLS.
   window.renderSafeAccount = () => window.showPage?.('account');
 })();
