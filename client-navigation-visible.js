@@ -3,8 +3,8 @@
   window.__edmMenuRouterV7 = true;
   window.__edmConnectedRouter = true;
 
-  const allPages = new Set(['home', 'appointment', 'account', 'garage', 'request-status', 'history', 'messages', 'about']);
-  const privatePages = new Set(['account', 'garage', 'request-status', 'history', 'messages']);
+  const allPages = new Set(['home', 'appointment', 'account', 'garage', 'request-status', 'history', 'messages', 'disbursements', 'about']);
+  const privatePages = new Set(['garage', 'request-status', 'history', 'messages', 'disbursements']);
 
   let sessionUser = null;
   let sessionKnown = false;
@@ -56,7 +56,37 @@
     }
   }
 
+  function renderGuestPage(id) {
+    const page = document.getElementById(id);
+    if (!page) return;
+    let guest = page.querySelector('[data-guest-page]');
+    if (!guest) {
+      guest = document.createElement('div');
+      guest.dataset.guestPage = 'true';
+      guest.className = 'panel';
+      page.prepend(guest);
+    }
+    const labels = {
+      garage: ['Mes véhicules', 'Connectez-vous pour retrouver vos véhicules enregistrés. Vous pouvez continuer à consulter le reste du site sans compte.'],
+      'request-status': ['Suivi de mes demandes', 'Connectez-vous pour afficher l’avancement de vos dossiers.'],
+      history: ['Historique', 'Connectez-vous pour consulter vos interventions et vos documents personnels.'],
+      messages: ['Messages', 'Connectez-vous pour consulter et envoyer les messages liés à vos dossiers.'],
+      disbursements: ['Pièces et débours', 'Connectez-vous pour consulter les pièces préparées pour vos dossiers et les actions de paiement.']
+    };
+    const details = labels[id] || ['Espace personnel', 'Connectez-vous pour afficher vos informations personnelles.'];
+    guest.innerHTML = '<div class="section-title"><div><h2>' + details[0] + '</h2><p class="lead">' + details[1] + '</p></div></div><div class="btn-row"><button class="btn btn-primary" type="button" data-page="account">Se connecter / créer un compte</button><button class="btn btn-secondary" type="button" data-page="home">Continuer à visiter le site</button></div>';
+  }
+
+  function clearGuestPage(id) {
+    document.getElementById(id)?.querySelector('[data-guest-page]')?.remove();
+  }
+
   function renderPage(id) {
+    if (privatePages.has(id) && !hasKnownUser()) {
+      renderGuestPage(id);
+      return;
+    }
+    clearGuestPage(id);
     try {
       if (id === 'account' && typeof renderAccountPage === 'function') renderAccountPage();
       if (id === 'garage' && typeof renderGarage === 'function') renderGarage();
@@ -167,29 +197,19 @@
   }
 
   async function navigate(id) {
-    if (!privatePages.has(id)) {
-      activate(id);
-      return;
-    }
+    activate(id);
+    if (!privatePages.has(id)) return;
 
     if (hasKnownUser()) {
-      activate(id);
       const authenticated = await resolveSession();
-      if (!authenticated && document.getElementById(id)?.classList.contains('active')) {
-        activate('appointment');
-        document.getElementById('email')?.focus();
-      } else if (authenticated && document.getElementById(id)?.classList.contains('active')) {
-        renderPage(id);
-      }
+      if (authenticated && document.getElementById(id)?.classList.contains('active')) renderPage(id);
+      if (!authenticated && document.getElementById(id)?.classList.contains('active')) renderGuestPage(id);
       return;
     }
 
-    closeMenu();
-    activate('appointment');
-    document.getElementById('email')?.focus();
-
     const authenticated = await resolveSession();
-    if (authenticated) activate(id);
+    if (authenticated && document.getElementById(id)?.classList.contains('active')) renderPage(id);
+    else if (document.getElementById(id)?.classList.contains('active')) renderGuestPage(id);
   }
 
   function installAuthListener() {
@@ -208,7 +228,7 @@
         } else {
           clearStaleLocalUser();
           const activePrivate = [...privatePages].find((id) => document.getElementById(id)?.classList.contains('active'));
-          if (activePrivate) activate('appointment');
+          if (activePrivate) renderGuestPage(activePrivate);
         }
 
         revealNavigation();
