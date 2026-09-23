@@ -173,3 +173,17 @@ test('Preview exposes all client journey boundaries', async () => {
     assert.match(html, new RegExp(`id=["']${id}["']`));
   }
 });
+
+
+test('guests can browse services before authentication', async () => {
+  const [html, integration] = await Promise.all([
+    read('index.html'),
+    read('integration.js')
+  ]);
+  const validate = html.match(/function validateBeforeServices\(\) \{([\s\S]*?)\n    \}/)?.[1] || '';
+  assert.doesNotMatch(validate, /state\.user/);
+  assert.match(validate, /plateNormalized/);
+  const remote = integration.match(/async function accessServicesRemote\(\) \{([\s\S]*?)\n  \}/)?.[1] || '';
+  assert.doesNotMatch(remote, /saveVehicleToSupabase/);
+  assert.match(remote, /servicesArea/);
+});
