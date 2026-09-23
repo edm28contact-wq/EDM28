@@ -82,7 +82,9 @@
 
   async function accessServicesRemote() {
     try {
-      await saveVehicleToSupabase(false);
+      const vehicle = getVehicle();
+      if (!vehicle.plateNormalized) throw new Error('Plaque obligatoire.');
+      if (typeof saveVehicle === 'function') saveVehicle(false);
       document.getElementById('servicesArea').classList.remove('hidden');
       renderServices();
       renderBaskets();
@@ -90,7 +92,7 @@
       updateStepper(3);
       document.getElementById('servicesArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
-      toast(error.message || 'Impossible d’enregistrer le véhicule.');
+      toast(error.message || 'Impossible d’ouvrir les prestations.');
     }
   }
 
