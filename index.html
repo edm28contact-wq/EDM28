@@ -85,7 +85,7 @@
     .brand-sub { color: #cbd5e1; font-size: .95rem; line-height: 1.45; }
 
     .nav { display: grid; gap: 8px; }
-    .nav button {
+    .nav button, .nav a {
       width: 100%;
       display: flex;
       align-items: center;
@@ -98,7 +98,7 @@
       border: 1px solid transparent;
       font-weight: 800;
     }
-    .nav button:hover, .nav button.active {
+    .nav button:hover, .nav button.active, .nav a:hover, .nav a.active {
       background: rgba(255,255,255,.09);
       border-color: rgba(255,255,255,.14);
       color: white;
@@ -618,12 +618,16 @@
       </div>
 
       <nav class="nav" aria-label="Navigation principale">
-        <button class="active" data-page="home">🏁 Accueil</button>
-        <button data-page="appointment">🗓️ Prendre RDV</button>
-        <button data-page="account">👤 Mon compte</button>
-        <button data-page="garage">🚗 Mon garage</button>
-        <button data-page="history">🧾 Historique</button>
-        <button data-page="about">ℹ️ Qui sommes-nous</button>
+        <button class="active" data-page="home">Accueil</button>
+        <a href="/prestations">Prestations</a>
+        <a href="/tarifs">Tarifs</a>
+        <a href="/fonctionnement">Comment ça marche</a>
+        <a href="/contact">Contact</a>
+        <button data-page="appointment">Faire une demande</button>
+        <button data-page="account">Mon compte</button>
+        <button data-page="garage">Mes véhicules</button>
+        <button data-page="history">Historique</button>
+        <button data-page="about">À propos</button>
       </nav>
 
       <div class="sidebar-card" id="accountChip"><b>Non connecté</b><br>Connectez-vous pour retrouver votre garage et vos demandes.</div>
@@ -643,7 +647,7 @@
             <div>
               <div class="eyebrow">Demande simple · estimation claire · reprise manuelle</div>
               <h1>Préparez votre demande mécanique en quelques minutes.</h1>
-              <p class="lead">Créez votre compte, renseignez votre véhicule, sélectionnez les prestations souhaitées, consultez une estimation, puis transmettez votre demande à EDM AUTO pour reprise manuelle.</p>
+              <p class="lead">Consultez librement les prestations, renseignez votre véhicule et préparez votre demande. La connexion n’est demandée que lorsqu’elle est nécessaire pour enregistrer et suivre votre dossier.</p>
               <div class="btn-row">
                 <button class="btn btn-secondary" data-jump="appointment" type="button">Commencer ma demande</button>
                 <button class="btn btn-ghost" data-jump="about" type="button" style="color:white;border-color:rgba(255,255,255,.25)">Voir le principe</button>
@@ -662,8 +666,8 @@
         <div class="panel">
           <div class="section-title">
             <div>
-              <h2>Prendre RDV</h2>
-              <p>Un parcours simple : compte, véhicule, prestations, estimation, puis transmission de votre demande.</p>
+              <h2>Faire une demande</h2>
+              <p>Un parcours simple : véhicule, besoin, prestations et vérification. Le rendez-vous vient ensuite, quand le dossier est prêt.</p>
             </div>
             <span class="pill blue">Version actuelle</span>
           </div>
