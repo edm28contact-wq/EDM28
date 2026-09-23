@@ -23,14 +23,15 @@ test('client authentication uses password after one-time email verification', as
   assert.match(auth, /Les connexions suivantes utilisent l’email et le mot de passe/);
 });
 
-test('private client routes are guarded without duplicate click handlers', async () => {
-  const source = await read('client-account-safe.js');
-  assert.match(source, /new Set\(\['account', 'garage', 'history', 'messages'\]\)/);
-  assert.match(source, /protectedPages\.has\(pageId\)/);
-  assert.match(source, /baseShowPage\('appointment'\)/);
-  assert.match(source, /baseShowPage\(pageId\)/);
-  assert.doesNotMatch(source, /addEventListener\(['"]click/);
-  assert.doesNotMatch(source, /stopImmediatePropagation/);
+test('client pages remain navigable without forcing authentication', async () => {
+  const [compatibility, router] = await Promise.all([
+    read('client-account-safe.js'),
+    read('client-navigation-visible.js')
+  ]);
+  assert.doesNotMatch(compatibility, /protectedPages/);
+  assert.match(router, /function renderGuestPage/);
+  assert.match(router, /activate\(id\)/);
+  assert.doesNotMatch(router, /baseShowPage\('appointment'\)/);
 });
 
 test('account hydration preserves non-empty fields', async () => {
