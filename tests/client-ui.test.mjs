@@ -96,3 +96,19 @@ test('client page exposes every journey boundary', async () => {
   }
   assert.ok(app.indexOf('integration.js') < app.indexOf('client-simple-flow.js'));
 });
+
+
+test('public navigation remains available without an account', async () => {
+  const [html, router, compatibility] = await Promise.all([
+    read('index.html'),
+    read('client-navigation-visible.js'),
+    read('client-account-safe.js')
+  ]);
+  for (const href of ['/prestations', '/tarifs', '/fonctionnement', '/contact']) {
+    assert.match(html, new RegExp(`href=["']${href}["']`));
+  }
+  assert.match(html, /data-page="appointment">Faire une demande/);
+  assert.match(router, /function renderGuestPage/);
+  assert.match(router, /activate\(id\);/);
+  assert.doesNotMatch(compatibility, /protectedPages/);
+});
