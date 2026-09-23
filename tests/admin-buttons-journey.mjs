@@ -59,8 +59,7 @@ const stub = `
     auth:{
       async getSession(){return {data:{session},error:null}},
       async setSession(){return {data:{session},error:null}},
-      async signInWithOtp(){return {data:{},error:null}},
-      async verifyOtp(){session={access_token:'admin-token',refresh_token:'admin-refresh',user};return {data:{user,session},error:null}},
+      async signInWithPassword({email,password}){if(!email||!password)return {data:{user:null,session:null},error:{message:'Invalid login credentials'}};session={access_token:'admin-token',refresh_token:'admin-refresh',user};return {data:{user,session},error:null}},
       async signOut(){session=null;return {error:null}}
     },
     from:builder,
@@ -77,7 +76,7 @@ await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route)
 
 try {
   await page.goto(`http://127.0.0.1:${port}/`, {waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForSelector('#adminOtpSend', {timeout:15000});
+  await page.waitForSelector('#loginBtn', {timeout:15000});
 
   const remember = page.locator('#rememberAdmin');
   if (await remember.count()) {
@@ -88,10 +87,8 @@ try {
   } else throw new Error('Admin remember-me control is missing.');
 
   await page.fill('#adminEmail','admin@example.test');
-  await page.click('#adminOtpSend');
-  await page.waitForSelector('#adminOtpPanel:not(.hidden)');
-  await page.fill('#adminOtpCode','12345678');
-  await page.click('#adminOtpVerify');
+  await page.fill('#adminPassword','admin-password');
+  await page.click('#loginBtn');
   await page.waitForSelector('#dashboard:not(.hidden)', {timeout:15000});
   await page.waitForSelector('[data-page="planning"]', {timeout:5000});
   await page.waitForSelector('[data-page="messages"]', {timeout:5000});

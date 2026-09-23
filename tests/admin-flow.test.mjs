@@ -90,3 +90,11 @@ test('admin reset is red, requires an exact phrase and preserves administrators 
   assert.doesNotMatch(migration, /delete from public\.site_services/);
   assert.doesNotMatch(migration, /delete from public\.automation_settings/);
 });
+
+
+test('admin authentication uses password and no email OTP', async () => {
+  const source = await read('admin-core.js');
+  assert.match(source, /auth\.signInWithPassword\s*\(/);
+  assert.doesNotMatch(source, /auth\.signInWithOtp\s*\(/);
+  assert.doesNotMatch(source, /auth\.verifyOtp\s*\(/);
+});
