@@ -12,7 +12,7 @@ test('client disbursement flow explains choices and requires an explicit mandate
     read('client-disbursements.js')
   ]);
   assert.match(loader, /client-disbursements\.js\?v=1/);
-  assert.match(account, /protectedPages\.add\('disbursements'\)/);
+  assert.doesNotMatch(account, /protectedPages/);
   assert.match(client, /Achat direct client/);
   assert.match(client, /Débours EDM/);
   assert.match(client, /Vente de pièce par EDM/);
