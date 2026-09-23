@@ -87,8 +87,8 @@
     page.innerHTML = `<div class="panel">
       <div class="section-title"><div><h2>Comment fonctionne EDM28</h2><p class="lead">Du premier besoin jusqu’aux documents de fin d’intervention, votre dossier reste accessible depuis votre espace client.</p></div></div>
       <div class="edm-flow-grid">
-        <article class="edm-flow-card"><span class="pill blue">1</span><h3 style="margin-top:10px">Compte et véhicule</h3><p>Vous créez votre compte, ajoutez votre véhicule et renseignez les informations nécessaires.</p></article>
-        <article class="edm-flow-card"><span class="pill blue">2</span><h3 style="margin-top:10px">Demande et estimation</h3><p>Vous choisissez les prestations disponibles, le niveau de pièces et transmettez votre demande à EDM28.</p></article>
+        <article class="edm-flow-card"><span class="pill blue">1</span><h3 style="margin-top:10px">Véhicule et besoin</h3><p>Vous consultez librement le site, renseignez votre véhicule et préparez les prestations qui correspondent à votre besoin.</p></article>
+        <article class="edm-flow-card"><span class="pill blue">2</span><h3 style="margin-top:10px">Demande et compte</h3><p>Quand vous souhaitez enregistrer et transmettre votre demande, vous vous connectez ou créez votre compte pour assurer le suivi du dossier.</p></article>
         <article class="edm-flow-card"><span class="pill blue">3</span><h3 style="margin-top:10px">Devis</h3><p>EDM28 contrôle votre demande, prépare le devis puis le publie dans votre espace. Vous pouvez le consulter avant acceptation.</p></article>
         <article class="edm-flow-card"><span class="pill blue">4</span><h3 style="margin-top:10px">Rendez-vous et OR</h3><p>Après acceptation, le rendez-vous est confirmé et l’ordre de réparation reprend les travaux autorisés.</p></article>
         <article class="edm-flow-card"><span class="pill blue">5</span><h3 style="margin-top:10px">Intervention transparente</h3><p>Les contrôles, mesures, observations et photos sont enregistrés pendant l’intervention.</p></article>
