@@ -5,12 +5,9 @@ const PUBLIC_EMAIL = 'contact@edm28.fr';
 const NAV_ITEMS = [
   ['/', 'Accueil'],
   ['/?page=history', 'Mes interventions'],
-  ['/freinage', 'Freinage'],
-  ['/liaison-au-sol', 'Liaison au sol'],
   ['/prestations', 'Prestations'],
-  ['/tarifs', 'Tarifs'],
   ['/fonctionnement', 'Fonctionnement'],
-  ['/transparence', 'Transparence'],
+  ['/transparence', 'Conseils & FAQ'],
   ['/a-propos', 'À propos'],
   ['/contact', 'Contact']
 ];
@@ -158,7 +155,7 @@ const PAGES = {
       ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des prestations publiées.'],
       ['Un périmètre clair', 'Chaque demande est rapprochée d’une prestation réelle. Si le véhicule nécessite autre chose, la proposition doit être révisée avant travaux.']
     ],
-    links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs'], ['/fonctionnement', 'Fonctionnement']],
+    links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs et catalogue'], ['/transparence', 'Conseils & FAQ']],
     faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 se positionne principalement sur le freinage et des prestations ciblées de liaison au sol. La demande doit rester compatible avec le périmètre réel du garage.']]
   },
   tarifs: {
@@ -190,24 +187,38 @@ const PAGES = {
       ['3. Intervention → clôture → facture', 'L’intervention est réalisée dans le périmètre validé. Le dossier est ensuite clôturé et la facture correspondante est produite.'],
       ['4. Encaissement → historique client', 'L’encaissement est enregistré puis les éléments du dossier et les documents utiles restent accessibles dans l’historique client selon le fonctionnement de l’application.']
     ],
-    links: [['/transparence', 'Transparence EDM28'], ['/prestations', 'Prestations'], ['/tarifs', 'Tarifs'], ['/', 'Faire une demande']],
+    links: [['/transparence', 'Conseils & FAQ'], ['/prestations', 'Prestations et tarifs'], ['/?page=history', 'Mes interventions'], ['/', 'Faire une demande']],
     faq: [['Comment fonctionne une intervention chez EDM28 ?', 'Demande, devis, acceptation, débours si nécessaire, préparation atelier, intervention, clôture, facture, encaissement puis historique client.']]
   },
   transparence: {
     path: '/transparence',
-    title: 'Garage transparent : devis et suivi client | EDM28',
-    description: 'EDM28 met en avant un parcours transparent : devis avant travaux, validation client, suivi de l’intervention et conservation des documents utiles.',
-    h1: 'La transparence au centre du parcours EDM28',
-    lede: 'La transparence signifie que le client connaît le périmètre prévu avant les travaux et que les changements nécessaires sont expliqués avant d’être exécutés.',
-    serviceType: 'Suivi transparent des interventions automobiles EDM28',
-    breadcrumbs: [['/', 'Accueil'], ['/transparence', 'Transparence']],
+    title: 'Conseils auto et questions fréquentes | EDM28',
+    description: 'Comprendre ses freins, le train roulant et le fonctionnement transparent d’EDM28 : conseils pratiques, réponses courtes et futurs shorts vidéo explicatifs.',
+    h1: 'Conseils & FAQ EDM28',
+    lede: 'Un espace simple pour comprendre pourquoi une intervention peut être nécessaire, quand faire contrôler le véhicule et comment EDM28 informe ses clients avant, pendant et après les travaux.',
+    serviceType: 'Conseils pédagogiques et information client EDM28',
+    breadcrumbs: [['/', 'Accueil'], ['/transparence', 'Conseils & FAQ']],
     sections: [
-      ['Devis avant travaux', 'La prestation prévue est formalisée avant intervention. Le devis sert de référence au périmètre accepté par le client.'],
-      ['Pas de travaux supplémentaires sans validation', 'Si un besoin nouveau apparaît, EDM28 doit le présenter au client avant de modifier le périmètre des travaux.'],
-      ['Suivi et documents', 'Le parcours applicatif conserve les étapes utiles du dossier et les documents associés afin que le client puisse retrouver l’historique de ses interventions.']
+      ['Pourquoi faire contrôler ses freins ?', 'Les freins s’usent progressivement et certains signes — bruit, vibration, voyant, sensation différente à la pédale ou remarque au contrôle technique — doivent conduire à un contrôle. Le but n’est pas de remplacer des pièces automatiquement, mais de vérifier l’état réel du véhicule.'],
+      ['Quand intervenir sur le freinage ?', 'Il n’existe pas un kilométrage unique valable pour tous les véhicules. L’usage, le type de trajet, l’état des disques et plaquettes, l’historique d’entretien et les préconisations du véhicule comptent. EDM28 contrôle avant de proposer une intervention.'],
+      ['Pourquoi surveiller la liaison au sol ?', 'Triangles, rotules, biellettes et autres articulations guident et maintiennent le train roulant. Jeu, claquement, comportement imprécis ou usure anormale justifient un contrôle pour localiser la cause avant remplacement.'],
+      ['La transparence EDM28 envers ses clients', 'Le client connaît le périmètre prévu avant travaux. Le devis sert de référence. Un besoin supplémentaire doit être expliqué et validé avant d’être ajouté. Les étapes, documents et factures restent rattachés au dossier de l’intervention.']
     ],
-    links: [['/fonctionnement', 'Voir le fonctionnement'], ['/tarifs', 'Tarifs'], ['/prestations', 'Prestations'], ['/', 'Faire une demande']],
-    faq: [['Comment EDM28 évite-t-il les travaux non prévus ?', 'Le périmètre est défini dans le devis. Un besoin complémentaire doit être présenté et validé avant d’être ajouté à l’intervention.']]
+    shorts: [
+      ['Pourquoi les plaquettes de frein s’usent ?', '30 à 60 secondes pour comprendre le rôle des plaquettes et les principaux signes à surveiller.'],
+      ['Quand faut-il contrôler ses disques ?', 'Un format court sur les symptômes possibles et pourquoi un contrôle reste nécessaire avant remplacement.'],
+      ['Pourquoi un train avant peut claquer ?', 'Une explication simple des triangles, rotules et biellettes sans transformer un symptôme en diagnostic automatique.'],
+      ['Comment EDM28 valide des travaux supplémentaires ?', 'Le principe de transparence : contrôle, explication, validation client puis seulement intervention.']
+    ],
+    links: [['/freinage', 'Tout sur le freinage'], ['/liaison-au-sol', 'Comprendre la liaison au sol'], ['/prestations', 'Voir les prestations'], ['/fonctionnement', 'Parcours EDM28']],
+    faq: [
+      ['Comment savoir si mes plaquettes sont usées ?', 'Un bruit, un voyant ou une évolution du freinage peuvent alerter, mais le contrôle du véhicule confirme l’usure réelle.'],
+      ['Faut-il changer disques et plaquettes ensemble ?', 'Pas systématiquement. Leur état doit être vérifié ensemble avant de décider du remplacement.'],
+      ['Quand remplacer le liquide de frein ?', 'Il faut tenir compte des préconisations du véhicule, de l’historique d’entretien et du contrôle réalisé.'],
+      ['Un claquement du train avant indique-t-il forcément un triangle ?', 'Non. Plusieurs articulations peuvent produire des bruits proches ; le jeu doit être localisé avant de remplacer une pièce.'],
+      ['Comment EDM28 évite-t-il les travaux non prévus ?', 'Le devis fixe le périmètre accepté. Toute nécessité complémentaire doit être expliquée et validée avant intervention.'],
+      ['Où retrouver les documents de mon intervention ?', 'Dans Mes interventions, avec le véhicule concerné, le suivi du dossier et les documents disponibles.']
+    ]
   },
   'a-propos': {
     path: '/a-propos',
@@ -222,7 +233,7 @@ const PAGES = {
       ['Une relation client documentée', 'Le parcours associe demande, devis, validation, intervention, facture et historique afin de réduire les zones floues entre ce qui est demandé, accepté et réalisé.'],
       ['Pas de localisation inventée', 'Les informations locales ne sont publiées que lorsqu’elles sont réellement renseignées dans la configuration EDM28.']
     ],
-    links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/transparence', 'Transparence'], ['/contact', 'Contact']],
+    links: [['/prestations', 'Prestations'], ['/transparence', 'Conseils & FAQ'], ['/fonctionnement', 'Fonctionnement'], ['/contact', 'Contact']],
     faq: [['Quelle est la spécialité principale d’EDM28 ?', 'Le freinage. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant.']]
   },
   contact: {
@@ -236,7 +247,7 @@ const PAGES = {
       ['Demande de rendez-vous', 'Le parcours en ligne permet de préparer la demande et de la relier aux prestations disponibles avant l’étude du dossier.'],
       ['Email public', 'Vous pouvez écrire à contact@edm28.fr. Aucune adresse postale ni aucun numéro de téléphone n’est publié ici tant que ces informations ne sont pas renseignées dans la configuration publique.']
     ],
-    links: [['/', 'Faire une demande'], ['/prestations', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Transparence']],
+    links: [['/', 'Faire une demande'], ['/prestations', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Conseils & FAQ']],
     faq: [['Comment contacter EDM28 ?', 'L’email public est contact@edm28.fr. Le site permet également de préparer une demande de rendez-vous.']]
   }
 };
@@ -410,11 +421,27 @@ function renderPage(page, origin, services = []) {
             <p>Triangles, rotules, biellettes et éléments ciblés du train roulant après contrôle du véhicule.</p>
           </div>
         </a>
+        <a class="service-card" href="/tarifs">
+          <div class="service-visual service-visual-price" aria-hidden="true">
+            <svg viewBox="0 0 640 320" role="img">
+              <rect width="640" height="320" fill="#0a1019"/>
+              <rect x="160" y="58" width="320" height="204" rx="26" fill="#172235" stroke="#596678" stroke-width="4"/>
+              <path d="M216 110h208M216 154h148M216 198h184" stroke="#aab5c4" stroke-width="12" stroke-linecap="round"/>
+              <circle cx="430" cy="196" r="52" fill="#d9864b" opacity=".9"/>
+              <path d="M446 176c-10-9-34-8-34 7 0 23 45 8 45 31 0 17-27 19-42 8M435 162v74" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="service-body">
+            <div class="service-top"><h2>Tarifs</h2><span class="service-arrow" aria-hidden="true">›</span></div>
+            <p>Consultez le catalogue public EDM28. Le devis confirme ensuite le périmètre exact avant intervention.</p>
+          </div>
+        </a>
       </div>
       <section class="scope-card"><h2>${esc(page.sections[2][0])}</h2><p>${esc(page.sections[2][1])}</p></section>`
     : page.sections.map(([title, text]) => `<section><h2>${esc(title)}</h2><p>${esc(text)}</p></section>`).join('');
   const links = page.links.map(([path, label]) => `<a class="link-card" href="${esc(path)}">${esc(label)}<span aria-hidden="true">→</span></a>`).join('');
   const faq = page.faq?.length ? `<section aria-labelledby="faq-title"><h2 id="faq-title">Questions fréquentes</h2><div class="faq">${page.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p><strong>Réponse courte :</strong> ${esc(a)}</p></details>`).join('')}</div></section>` : '';
+  const shorts = page.shorts?.length ? `<section class="shorts-section" aria-labelledby="shorts-title"><div class="section-kicker">Bientôt en vidéo</div><h2 id="shorts-title">Les shorts EDM28</h2><p class="shorts-intro">De courtes vidéos TikTok viendront compléter ces réponses. Aucun lien officiel EDM28 n’est encore configuré, donc aucun faux lien n’est affiché.</p><div class="shorts-grid">${page.shorts.map(([title, description]) => `<article class="short-card"><div class="short-badge" aria-hidden="true">▶</div><div><h3>${esc(title)}</h3><p>${esc(description)}</p><span class="short-coming">Lien TikTok à ajouter</span></div></article>`).join('')}</div></section>` : '';
   const tariffs = page.path === '/tarifs' ? renderTariffs(services) : '';
   const jsonLd = structuredData(page, origin);
 
@@ -467,7 +494,7 @@ function renderPage(page, origin, services = []) {
 </aside>
 <main>
 <div class="hero"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1><p class="lead">${esc(page.lede)}</p><a class="cta" href="/">Faire une demande</a></div></div>
-<div class="wrap content">${sections}${tariffs}<div class="links" aria-label="Pages liées">${links}</div>${faq}</div>
+<div class="wrap content">${sections}${tariffs}${shorts}<div class="links" aria-label="Pages liées">${links}</div>${faq}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
 <script src="/public-site.js?v=1" defer></script></body>
