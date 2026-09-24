@@ -3,8 +3,8 @@
   window.__edmMenuRouterV7 = true;
   window.__edmConnectedRouter = true;
 
-  const allPages = new Set(['home', 'appointment', 'account', 'garage', 'request-status', 'history', 'messages', 'disbursements', 'about']);
-  const privatePages = new Set(['garage', 'request-status', 'history', 'messages', 'disbursements']);
+  const allPages = new Set(['home', 'appointment', 'account', 'request-status', 'history', 'disbursements', 'about']);
+  const privatePages = new Set(['request-status', 'history', 'disbursements']);
 
   let sessionUser = null;
   let sessionKnown = false;
@@ -43,13 +43,9 @@
     console.warn(`EDM ${id} render unavailable`, error);
     const hostId = id === 'account'
       ? 'accountPageContent'
-      : id === 'garage'
-        ? 'garageList'
-        : id === 'messages'
-          ? 'clientMessageThread'
-          : id === 'request-status'
-            ? 'requestStatusList'
-            : 'historyList';
+      : id === 'request-status'
+        ? 'requestStatusList'
+        : 'historyList';
     const host = document.getElementById(hostId);
     if (host && !host.textContent.trim()) {
       host.innerHTML = '<div class="notice">La page est ouverte. Les informations du compte sont en cours de chargement.</div>';
@@ -67,10 +63,8 @@
       page.prepend(guest);
     }
     const labels = {
-      garage: ['Mes véhicules', 'Connectez-vous pour retrouver vos véhicules enregistrés. Vous pouvez continuer à consulter le reste du site sans compte.'],
       'request-status': ['Suivi de mes demandes', 'Connectez-vous pour afficher l’avancement de vos dossiers.'],
-      history: ['Historique', 'Connectez-vous pour consulter vos interventions et vos documents personnels.'],
-      messages: ['Messages', 'Connectez-vous pour consulter et envoyer les messages liés à vos dossiers.'],
+      history: ['Mes interventions', 'Connectez-vous pour retrouver vos véhicules, interventions et documents personnels.'],
       disbursements: ['Pièces et débours', 'Connectez-vous pour consulter les pièces préparées pour vos dossiers et les actions de paiement.']
     };
     const details = labels[id] || ['Espace personnel', 'Connectez-vous pour afficher vos informations personnelles.'];
@@ -89,7 +83,7 @@
     clearGuestPage(id);
     try {
       if (id === 'account' && typeof renderAccountPage === 'function') renderAccountPage();
-      if (id === 'garage' && typeof renderGarage === 'function') renderGarage();
+      if (id === 'history' && typeof renderGarage === 'function') renderGarage();
       if (id === 'history' && typeof renderHistory === 'function') renderHistory();
     } catch (error) {
       showFallback(id, error);
@@ -103,9 +97,6 @@
     }
     if (id === 'history' && typeof window.renderCompletedInterventionHistory === 'function') {
       void window.renderCompletedInterventionHistory().catch((error) => console.warn('EDM intervention archive unavailable', error));
-    }
-    if (id === 'messages' && typeof window.renderClientMessages === 'function') {
-      void window.renderClientMessages().catch((error) => console.warn('EDM client messaging unavailable', error));
     }
   }
 
