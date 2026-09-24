@@ -225,10 +225,6 @@
       "dest": "/api/app?seo=page&slug=mes-interventions"
     },
     {
-      "src": "/or-vierge.pdf",
-      "dest": "/api/app?seo=blank-order"
-    },
-    {
       "handle": "filesystem"
     }
   ]
