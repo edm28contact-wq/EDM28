@@ -60,6 +60,28 @@ test('l’ancien portail client n’est plus servi par les routes publiques', as
   assert.match(client, /edmRequestApp/);
 });
 
+test('la demande valide les plaques françaises et bloque les prestations qui se recouvrent', async () => {
+  const [client, api] = await Promise.all([
+    read('public-client.js'),
+    read('api/submit-request-v2.js')
+  ]);
+
+  assert.match(client, /SIV_RE/);
+  assert.match(client, /FNI_RE/);
+  assert.match(client, /AA-123-AA ou 1234 AB 28/);
+  assert.match(client, /SERVICE_COVERAGE/);
+  assert.match(client, /'plaquettes-frein-avant': \['front_pads'\]/);
+  assert.match(client, /'disques-plaquettes-avant': \['front_discs','front_pads'\]/);
+  assert.match(client, /servicesOverlap/);
+  assert.match(client, /Déjà couvert par/);
+  assert.match(client, /Gardez uniquement la prestation la plus complète/);
+
+  assert.match(api, /validFrenchPlate/);
+  assert.match(api, /hasOverlappingServices/);
+  assert.match(api, /Immatriculation française invalide/);
+  assert.match(api, /prestations de freinage qui se recouvrent/);
+});
+
 test('Prestations est fusionnée dans l’accueil', async () => {
   const [source, configText] = await Promise.all([read('public-seo.js'), read('vercel.json')]);
   const config = JSON.parse(configText);
