@@ -100,11 +100,11 @@
     const faqs = [
       ['L’estimation affichée sur le site est-elle le prix définitif ?', 'Non. L’estimation sert à préparer votre demande. Le montant définitif est celui du devis publié par EDM28 après vérification.'],
       ['Quand puis-je choisir mon rendez-vous ?', 'Le rendez-vous se prépare après validation du devis afin que la durée et les travaux prévus soient cohérents.'],
-      ['Où retrouver mes documents ?', 'Dans Historique : choisissez votre véhicule, puis l’intervention. Vous pourrez ouvrir ou télécharger les documents disponibles et les photos du contrôle.'],
+      ['Où retrouver mes documents ?', 'Dans Mes interventions : choisissez votre véhicule, puis l’intervention. Vous pourrez ouvrir ou télécharger les documents disponibles et les photos du contrôle.'],
       ['Puis-je apporter mes propres pièces ?', 'Le traitement dépend de la prestation et des conditions indiquées lors de la demande. Les pièces doivent être compatibles avec le véhicule et les travaux prévus.'],
       ['Comment savoir ce qui a été contrôlé ?', 'La fiche de contrôle reprend les points vérifiés, les mesures, les statuts, les observations et, lorsqu’elles ont été ajoutées, les photos de l’intervention.'],
-      ['Comment contacter EDM28 ?', 'Utilisez la Messagerie de votre espace client. Vous pouvez écrire un nouveau message et consulter les réponses liées à votre dossier.'],
-      ['Puis-je télécharger mes documents ?', 'Oui. Dans l’historique d’une intervention, chaque document peut être ouvert ou téléchargé, et un bouton permet de télécharger tous les fichiers disponibles.']
+      ['Comment contacter EDM28 ?', 'Utilisez la page Contact du site ou écrivez à contact@edm28.fr.'],
+      ['Puis-je télécharger mes documents ?', 'Oui. Dans Mes interventions, chaque document disponible peut être ouvert ou téléchargé depuis le dossier du véhicule.']
     ];
     const faqHost = $('#edmFaq');
     if (faqHost) {
@@ -368,27 +368,14 @@
 
   function installNavigationHooks() {
     document.addEventListener('click', (event) => {
-      if (event.target.closest('[data-page="history"]')) window.setTimeout(() => void renderHistory(true), 20);
-      if (event.target.closest('[data-page="messages"]')) window.setTimeout(() => void loadMailbox(true), 20);
       if (event.target.closest('[data-page="about"],[data-jump="about"]')) window.setTimeout(patchHomeAndHelp, 20);
     });
-    if (typeof supabaseClient !== 'undefined') {
-      supabaseClient.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) {
-          window.setTimeout(() => { void renderHistory(true); void loadMailbox(true); }, 30);
-        }
-      });
-    }
   }
 
   function install() {
     installStyles();
     patchHomeAndHelp();
-    historyShell();
-    messagesShell();
     installNavigationHooks();
-    void renderHistory(true);
-    void loadMailbox(true);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
