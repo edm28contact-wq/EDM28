@@ -3,6 +3,8 @@ import { resolveSupabasePublicConfig } from './supabase-config.js';
 const PUBLIC_EMAIL = 'contact@edm28.fr';
 
 const NAV_ITEMS = [
+  ['/', 'Accueil'],
+  ['/?page=history', 'Mes interventions'],
   ['/freinage', 'Freinage'],
   ['/liaison-au-sol', 'Liaison au sol'],
   ['/prestations', 'Prestations'],
@@ -444,6 +446,8 @@ function renderPage(page, origin, services = []) {
   <nav class="drawer-nav" aria-label="Navigation mobile">
     ${NAV_ITEMS.map(([path, label]) => {
       const icons = {
+        '/':'<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>',
+        '/?page=history':'<svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M7 3h10v3H7zM8 10h8M8 14h8"/></svg>',
         '/freinage':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
         '/liaison-au-sol':'<svg viewBox="0 0 24 24"><path d="M9 3v5l-3 3v5l3 3v2M15 3v5l3 3v5l-3 3v2M9 12h6"/></svg>',
         '/prestations':'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
