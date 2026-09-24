@@ -193,7 +193,7 @@
         const events = timeline(data);
         const totalBilled = data.invoices.reduce((sum, i) => sum + Number(i.total || 0), 0);
         const totalPaid = data.invoices.reduce((sum, i) => sum + Number(i.amount_paid || 0), 0);
-        box.innerHTML = `<div class="top"><div><h2>Dossier client</h2><p class="muted">${esc(client.external_client_id || client.id)}</p></div></div>`
+        box.innerHTML = `<div class="top"><div><h2>Dossier client</h2><p class="muted">${esc(client.external_client_id || client.id)}</p></div></div>
           <div class="card"><h3>Coordonnées</h3><div class="grid2">
             <label>Prénom<input data-client-field="first_name" value="${esc(client.first_name)}"></label>
             <label>Nom<input data-client-field="last_name" value="${esc(client.last_name)}"></label>
