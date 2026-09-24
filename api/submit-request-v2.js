@@ -32,6 +32,42 @@ function firstNonEmpty(...values) {
 function uniqueNonEmpty(...values) {
   return [...new Set(values.filter((value) => typeof value === 'string' && value.trim()).map((value) => value.trim()))];
 }
+function normalizePlate(value) {
+  return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+}
+
+function validFrenchPlate(value) {
+  const compact = normalizePlate(value);
+  const siv = compact.match(/^([A-HJ-NP-TV-Z]{2})(\d{3})([A-HJ-NP-TV-Z]{2})$/);
+  if (siv && siv[1] !== 'SS' && siv[3] !== 'SS') return true;
+  return /^(\d{1,4})([A-Z]{1,3})([A-Z0-9]{2,3})$/.test(compact);
+}
+
+const SERVICE_COVERAGE = {
+  'plaquettes-frein-avant': ['front_pads'],
+  'plaquettes-frein-arriere': ['rear_pads'],
+  'plaquettes-avant-arriere': ['front_pads', 'rear_pads'],
+  'disques-plaquettes-avant': ['front_discs', 'front_pads'],
+  'disques-plaquettes-arriere': ['rear_discs', 'rear_pads'],
+  'freinage-complet': ['front_discs', 'front_pads', 'rear_discs', 'rear_pads']
+};
+
+function serviceCoverage(service) {
+  const slug = clean(service?.slug, 120).toLowerCase();
+  return SERVICE_COVERAGE[slug] || [];
+}
+
+function hasOverlappingServices(services) {
+  const covered = new Set();
+  for (const service of services) {
+    for (const token of serviceCoverage(service)) {
+      if (covered.has(token)) return true;
+      covered.add(token);
+    }
+  }
+  return false;
+}
+
 
 function resolveProductionSender(value) {
   const sender = clean(value, 254);
@@ -94,7 +130,7 @@ async function loadCanonicalRequest(requestId, user, authorization) {
     request.vehicle_id ? fetchSingle('vehicles', {
       id: `eq.${request.vehicle_id}`,
       user_id: `eq.${user.id}`,
-      select: 'id,plate,brand,model,year,energy,mileage'
+      select: 'id,plate,plate_normalized,brand,model,year,energy,mileage'
     }, authorization) : Promise.resolve(null)
   ]);
 
@@ -175,6 +211,12 @@ export default async function handler(req, res) {
     const services = Array.isArray(request.services) ? request.services : [];
     if (!vehicle?.plate || services.length === 0) {
       return sendJson(res, 400, { success: false, saved: true, error: 'Demande enregistrée mais incomplète.' });
+    }
+    if (!validFrenchPlate(vehicle.plate_normalized || vehicle.plate)) {
+      return sendJson(res, 400, { success: false, saved: true, error: 'Immatriculation française invalide.' });
+    }
+    if (hasOverlappingServices(services)) {
+      return sendJson(res, 400, { success: false, saved: true, error: 'La demande contient des prestations de freinage qui se recouvrent.' });
     }
 
     await markSubmitted(request.id, user.id, authorization);
