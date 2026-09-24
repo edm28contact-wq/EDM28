@@ -14,19 +14,19 @@ const NAV_ITEMS = [
 const PAGES = {
   accueil: {
     path: '/',
-    title: 'Prestations freinage et liaison au sol | EDM28',
-    description: 'Découvrez les prestations EDM28 en freinage et liaison au sol, avec demande d’intervention, devis avant travaux, suivi client et tarifs publics.',
-    h1: 'Prestations EDM28',
-    lede: 'Le catalogue EDM28 se concentre sur le freinage et des interventions ciblées de liaison au sol. Retrouvez ici les prestations, les tarifs et l’accès direct à votre demande d’intervention.',
-    serviceType: 'Prestations automobiles EDM28',
+    title: 'Freinage et liaison au sol | EDM28',
+    description: 'Découvrez EDM28 en freinage et liaison au sol, avec demande d’intervention, devis avant travaux, suivi client et tarifs publics.',
+    h1: 'EDM28',
+    lede: 'Freinage et interventions ciblées de liaison au sol. Retrouvez ici les travaux proposés, les tarifs et l’accès direct à votre demande d’intervention.',
+    serviceType: 'Interventions automobiles EDM28',
     breadcrumbs: [['/', 'Accueil']],
     sections: [
-      ['Freinage', 'Plaquettes avant ou arrière, plaquettes avant et arrière, disques et plaquettes, freinage complet et purge du liquide de frein font partie des prestations publiques actuellement configurées.'],
-      ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des prestations publiées.'],
-      ['Un périmètre clair', 'Chaque demande est rapprochée d’une prestation réelle. Si le véhicule nécessite autre chose, la proposition doit être révisée avant travaux.']
+      ['Freinage', 'Plaquettes avant ou arrière, plaquettes avant et arrière, disques et plaquettes, freinage complet et purge du liquide de frein font partie des interventions actuellement proposées.'],
+      ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des interventions publiées.'],
+      ['Un périmètre clair', 'Chaque demande est rapprochée d’un besoin réel. Si le véhicule nécessite autre chose, la proposition doit être révisée avant travaux.']
     ],
     links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs et catalogue'], ['/transparence', 'Conseils & FAQ'], ['/demande', 'Faire une demande']],
-    faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 se positionne principalement sur le freinage et des prestations ciblées de liaison au sol. La demande doit rester compatible avec le périmètre réel du garage.']]
+    faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 se positionne principalement sur le freinage et des interventions ciblées de liaison au sol. La demande doit rester compatible avec le périmètre réel du garage.']]
   },
   demande: {
     path: '/demande',
