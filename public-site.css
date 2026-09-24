@@ -442,6 +442,21 @@ h3{margin:0}
 .event-details span{display:block;color:#727b88;font-size:.75rem}
 .event-details strong{display:block;margin-top:3px;font-size:.92rem}
 
+
+.benefit-card{
+  margin-top:18px;
+  padding:18px;
+  border-radius:18px;
+  border:1px solid #d9d2ca;
+  background:linear-gradient(135deg,#faf7f2,#f2ece5);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px
+}
+.benefit-card strong{display:block;font-size:1rem;color:#182235}
+.benefit-card p{margin:6px 0 0;font-size:.92rem;line-height:1.55}
+
 .site-footer{
   border-top:1px solid #d8d2ca;
   padding:30px 0 44px;
@@ -478,6 +493,8 @@ h3{margin:0}
   .service-choice{grid-template-columns:auto 1fr}
   .service-choice>b{grid-column:2}
   .signed-box{align-items:flex-start;flex-direction:column}
+  .benefit-card{align-items:flex-start;flex-direction:column;padding:16px}
+  .benefit-card .secondary-action{width:100%;justify-content:center}
   .client-panel,.home-client-card,.next-appointment,.vehicle-history-card{border-radius:18px;padding:18px}
 }
 @media(min-width:821px){
