@@ -81,6 +81,23 @@ test('combo discount is suspended pending rate review', async () => {
   assert.match(policy, /Remise combo suspendue/);
 });
 
+test('guest request is preserved until authentication succeeds', async () => {
+  const source = await read('request-submit-safe.js');
+  assert.match(source, /edm28_guest_request_v1/);
+  assert.match(source, /captureGuestPreparation\(totals\)/);
+  assert.match(source, /restoreGuestPreparation\(\)/);
+  assert.match(source, /Votre demande est prête et conservée/);
+  assert.match(source, /session\?\.user && readGuest\(\)/);
+  assert.match(source, /writeGuest\(null\)/);
+});
+
+test('submission reliability does not keep a stale timed lock', async () => {
+  const source = await read('reliability.js');
+  assert.doesNotMatch(source, /setTimeout\(\(\) => \{ submitting = false; \}, 12000\)/);
+  assert.doesNotMatch(source, /if \(submitting\)/);
+  assert.match(source, /if \(!navigator\.onLine\)/);
+});
+
 test('safe submit authenticates and API is idempotent', async () => {
   const [client, api] = await Promise.all([read('request-submit-safe.js'), read('api/submit-request-v2.js')]);
   assert.match(client, /getSession\s*\(/);
