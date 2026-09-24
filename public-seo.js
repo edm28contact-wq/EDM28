@@ -407,7 +407,7 @@ function structuredData(page, origin) {
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replaceAll('<', '\\u003c');
 }
 
-function renderPage(page, origin, services = []) {
+function renderPage(page, origin, services = [], clientConfig = null) {
   const canonical = `${origin}${page.path}`;
   const breadcrumbs = page.breadcrumbs.map(([path, name], index) => {
     const current = index === page.breadcrumbs.length - 1;
@@ -482,6 +482,16 @@ function renderPage(page, origin, services = []) {
   const faq = page.faq?.length ? `<section aria-labelledby="faq-title"><h2 id="faq-title">Questions fréquentes</h2><div class="faq">${page.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p><strong>Réponse courte :</strong> ${esc(a)}</p></details>`).join('')}</div></section>` : '';
   const shorts = page.shorts?.length ? `<section class="shorts-section" aria-labelledby="shorts-title"><div class="section-kicker">Bientôt en vidéo</div><h2 id="shorts-title">Les shorts EDM28</h2><p class="shorts-intro">De courtes vidéos TikTok viendront compléter ces réponses. Aucun lien officiel EDM28 n’est encore configuré, donc aucun faux lien n’est affiché.</p><div class="shorts-grid">${page.shorts.map(([title, description]) => `<article class="short-card"><div class="short-badge" aria-hidden="true">▶</div><div><h3>${esc(title)}</h3><p>${esc(description)}</p><span class="short-coming">Lien TikTok à ajouter</span></div></article>`).join('')}</div></section>` : '';
   const tariffs = page.path === '/tarifs' ? renderTariffs(services) : '';
+  const clientSurface = page.path === '/'
+    ? '<div id="edmHomeClientApp"></div>'
+    : page.path === '/demande'
+      ? '<div id="edmRequestApp"></div>'
+      : page.path === '/mes-interventions'
+        ? '<div id="edmInterventionsApp"></div>'
+        : '';
+  const bodyContent = (page.path === '/demande' || page.path === '/mes-interventions')
+    ? `${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>`
+    : `${sections}${tariffs}${shorts}${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
   const jsonLd = structuredData(page, origin);
 
   return `<!doctype html>
@@ -502,7 +512,8 @@ function renderPage(page, origin, services = []) {
 <meta property="og:image" content="${esc(origin)}/logo-edm.svg">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<link rel="stylesheet" href="/public-site.css?v=1">
+<link rel="stylesheet" href="/public-site.css?v=2">
+${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>' : ''}
 </head>
 <body>
 <header class="site-header"><div class="wrap header-row"><a class="brand" href="/">EDM28</a><nav class="desktop-nav" aria-label="Navigation principale">${NAV_ITEMS.map(([path, label]) => `<a href="${path}"${page.path === path ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav><button class="menu-toggle" type="button" data-menu-toggle aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div></header>
@@ -513,7 +524,7 @@ function renderPage(page, origin, services = []) {
     ${NAV_ITEMS.map(([path, label]) => {
       const icons = {
         '/':'<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>',
-        '/?page=history':'<svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M7 3h10v3H7zM8 10h8M8 14h8"/></svg>',
+        '/mes-interventions':'<svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M7 3h10v3H7zM8 10h8M8 14h8"/></svg>',
         '/freinage':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
         '/liaison-au-sol':'<svg viewBox="0 0 24 24"><path d="M9 3v5l-3 3v5l3 3v2M15 3v5l3 3v5l-3 3v2M9 12h6"/></svg>',
         '/prestations':'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -527,15 +538,16 @@ function renderPage(page, origin, services = []) {
     }).join('')}
   </nav>
   <div class="drawer-bottom">
-    <a class="drawer-cta" href="/"><span>Faire une demande</span><span aria-hidden="true">→</span></a>
+    <a class="drawer-cta" href="/demande"><span>Faire une demande</span><span aria-hidden="true">→</span></a>
     <div class="drawer-contact">Une question ?<a href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></div>
   </div>
 </aside>
 <main>
-<div class="hero"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1><p class="lead">${esc(page.lede)}</p><a class="cta" href="/">Faire une demande</a></div></div>
-<div class="wrap content">${sections}${tariffs}${shorts}<div class="links" aria-label="Pages liées">${links}</div>${faq}</div>
+<div class="hero"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1><p class="lead">${esc(page.lede)}</p><a class="cta" href="/demande">Faire une demande</a></div></div>
+<div class="wrap content">${bodyContent}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
+${['/','/demande','/mes-interventions'].includes(page.path) ? `<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script><script src="/public-client.js?v=1" defer><\/script>` : ''}
 <script src="/public-site.js?v=1" defer></script></body>
 </html>`;
 }
@@ -551,7 +563,8 @@ export default async function handler(req, res) {
     return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1><p><a href="/">Retour à l’accueil</a></p></main></body></html>');
   }
   const services = page.path === '/tarifs' ? await loadPublishedServices() : [];
-  const html = renderPage(page, getOrigin(req), services);
+  const clientConfig = ['/','/demande','/mes-interventions'].includes(page.path) ? resolveSupabasePublicConfig() : null;
+  const html = renderPage(page, getOrigin(req), services, clientConfig);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', page.path === '/tarifs' ? 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' : 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
   if (req.method === 'HEAD') return res.status(200).end();
