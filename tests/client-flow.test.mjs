@@ -18,7 +18,9 @@ test('client authentication uses password after one-time email verification', as
   assert.match(auth, /auth\.verifyOtp\s*\(/);
   assert.match(auth, /auth\.resend\s*\(/);
   assert.match(auth, /auth\.updateUser\(\{ password \}\)/);
-  assert.match(auth, /shouldCreateUser:\s*false/);
+  assert.match(auth, /auth\.resetPasswordForEmail\s*\(/);
+  assert.match(auth, /PASSWORD_RECOVERY/);
+  assert.doesNotMatch(auth, /auth\.signInWithOtp\s*\(/);
   assert.match(auth, /MIN_PASSWORD_LENGTH\s*=\s*8/);
   assert.match(auth, /Les connexions suivantes utilisent l’email et le mot de passe/);
 });
