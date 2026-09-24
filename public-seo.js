@@ -4,7 +4,7 @@ const PUBLIC_EMAIL = 'contact@edm28.fr';
 
 const NAV_ITEMS = [
   ['/', 'Accueil'],
-  ['/?page=history', 'Mes interventions'],
+  ['/mes-interventions', 'Mes interventions'],
   ['/prestations', 'Prestations'],
   ['/fonctionnement', 'Fonctionnement'],
   ['/transparence', 'Conseils & FAQ'],
@@ -13,6 +13,45 @@ const NAV_ITEMS = [
 ];
 
 const PAGES = {
+  accueil: {
+    path: '/',
+    title: 'EDM28 | Garage freinage et liaison au sol',
+    description: 'EDM28 : prestations de freinage et liaison au sol, demande d’intervention en ligne, suivi client et conseils mécaniques clairs.',
+    h1: 'EDM28 — mécanique claire, spécialisée et suivie',
+    lede: 'Freinage, liaison au sol et suivi client dans une seule interface. Préparez votre demande, suivez vos interventions et retrouvez vos documents sans changer de site.',
+    serviceType: 'Garage automobile spécialisé freinage et liaison au sol',
+    breadcrumbs: [['/', 'Accueil']],
+    sections: [
+      ['Un seul parcours', 'Le même site sert à comprendre les prestations, préparer une demande et suivre ensuite le dossier du véhicule.'],
+      ['Spécialisation claire', 'EDM28 concentre son activité sur le freinage et des interventions ciblées de liaison au sol afin de garder un périmètre technique lisible.'],
+      ['Suivi client', 'Rendez-vous, devis, pièces, ordre de réparation, contrôle et facture restent rattachés au dossier dans Mes interventions.']
+    ],
+    links: [['/prestations', 'Voir les prestations'], ['/demande', 'Faire une demande'], ['/mes-interventions', 'Mes interventions'], ['/transparence', 'Conseils & FAQ']],
+    faq: []
+  },
+  demande: {
+    path: '/demande',
+    title: 'Faire une demande d’intervention | EDM28',
+    description: 'Préparez votre demande d’intervention EDM28 : véhicule, prestation, symptômes et coordonnées, puis transmettez le dossier après connexion.',
+    h1: 'Faire une demande d’intervention',
+    lede: 'Commencez par votre véhicule et votre besoin. Le compte n’est demandé qu’au moment de transmettre la demande et de suivre le dossier.',
+    serviceType: 'Demande d’intervention automobile EDM28',
+    breadcrumbs: [['/', 'Accueil'], ['/demande', 'Faire une demande']],
+    sections: [],
+    links: [['/prestations', 'Voir les prestations'], ['/transparence', 'Conseils & FAQ'], ['/mes-interventions', 'Mes interventions']],
+    faq: []
+  },
+  'mes-interventions': {
+    path: '/mes-interventions',
+    title: 'Mes interventions | EDM28',
+    description: 'Espace client EDM28 : véhicules, demandes, devis, pièces, rendez-vous, ordres de réparation, contrôles, factures et documents.',
+    h1: 'Mes interventions',
+    lede: 'Tous vos véhicules et tous leurs dossiers au même endroit, dans la même interface EDM28.',
+    breadcrumbs: [['/', 'Accueil'], ['/mes-interventions', 'Mes interventions']],
+    sections: [],
+    links: [['/demande', 'Faire une nouvelle demande'], ['/prestations', 'Prestations'], ['/transparence', 'Conseils & FAQ']],
+    faq: []
+  },
   freinage: {
     path: '/freinage',
     title: 'Freinage automobile | EDM28',
@@ -47,7 +86,7 @@ const PAGES = {
       ['Quand faire contrôler les plaquettes ?', 'Un bruit, un voyant, une remarque au contrôle technique ou une évolution du comportement au freinage sont des motifs de contrôle. L’intervention n’est pas décidée sur le seul kilométrage.'],
       ['Ce qui est inclus ou non', 'Le devis précise la prestation retenue. Les pièces, opérations complémentaires ou débours qui ne font pas partie de la prestation initiale doivent être identifiés avant d’être ajoutés.']
     ],
-    links: [['/freinage/disques-de-frein', 'Voir les disques de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/', 'Faire une demande']],
+    links: [['/freinage/disques-de-frein', 'Voir les disques de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/demande', 'Faire une demande']],
     faq: [
       ['Comment savoir si mes plaquettes de frein sont usées ?', 'Les symptômes peuvent alerter, mais seul le contrôle du véhicule permet de confirmer l’usure et le train concerné.'],
       ['Faut-il changer disques et plaquettes ensemble ?', 'La décision dépend de l’état des deux éléments. EDM28 vérifie la situation et indique dans le devis la combinaison retenue avant intervention.']
@@ -66,7 +105,7 @@ const PAGES = {
       ['Quand intervenir ?', 'Vibrations au freinage, bruit, corrosion visible ou usure constatée peuvent conduire à un contrôle. La cause doit être vérifiée avant de commander ou remplacer des éléments.'],
       ['Devis avant travaux', 'La prestation prévue est formalisée avant intervention. Si le contrôle révèle un besoin différent ou complémentaire, le client doit en être informé avant toute extension des travaux.']
     ],
-    links: [['/freinage/plaquettes-de-frein', 'Voir les plaquettes de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/', 'Faire une demande']],
+    links: [['/freinage/plaquettes-de-frein', 'Voir les plaquettes de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/demande', 'Faire une demande']],
     faq: [
       ['Quand changer ses disques de frein ?', 'Lorsqu’un contrôle montre que leur état nécessite un remplacement. EDM28 ne fixe pas un seuil universel indépendant du véhicule et de la pièce.'],
       ['Pourquoi une voiture vibre au freinage ?', 'Le freinage peut être en cause, mais d’autres éléments du train roulant peuvent aussi intervenir. Un contrôle est nécessaire pour trancher.']
@@ -85,7 +124,7 @@ const PAGES = {
       ['Comment se déroule la prestation ?', 'La prestation publiée par EDM28 prévoit le remplacement du liquide avec purge à la machine. Le devis confirme ce qui est prévu pour le véhicule avant l’intervention.'],
       ['Ce que la purge ne remplace pas', 'Une purge ne remplace pas le diagnostic d’un défaut mécanique ou hydraulique. Si un autre problème est constaté, il doit être expliqué séparément au client.']
     ],
-    links: [['/freinage/plaquettes-de-frein', 'Plaquettes de frein'], ['/freinage/disques-de-frein', 'Disques de frein'], ['/tarifs', 'Voir les tarifs'], ['/', 'Faire une demande']],
+    links: [['/freinage/plaquettes-de-frein', 'Plaquettes de frein'], ['/freinage/disques-de-frein', 'Disques de frein'], ['/tarifs', 'Voir les tarifs'], ['/demande', 'Faire une demande']],
     faq: [
       ['Quand remplacer le liquide de frein ?', 'Il faut se référer aux préconisations du véhicule, à l’historique et au contrôle réalisé. EDM28 évite d’appliquer un intervalle unique à tous les véhicules.'],
       ['Une purge corrige-t-elle tous les problèmes de pédale ?', 'Non. Une sensation anormale peut avoir plusieurs causes ; la purge n’est pertinente que si elle répond au besoin identifié.']
@@ -123,7 +162,7 @@ const PAGES = {
       ['Ce qui est proposé', 'La prestation publiée EDM28 vise la paire de triangles de suspension. Le devis détaille la prestation applicable au véhicule avant toute intervention.'],
       ['Après le contrôle', 'Si le défaut constaté concerne un autre élément du train roulant, EDM28 doit adapter la proposition au diagnostic plutôt que remplacer une pièce par défaut.']
     ],
-    links: [['/liaison-au-sol/direction', 'Direction et biellettes'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/prestations', 'Prestations'], ['/', 'Faire une demande']],
+    links: [['/liaison-au-sol/direction', 'Direction et biellettes'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/prestations', 'Prestations'], ['/demande', 'Faire une demande']],
     faq: [['Pourquoi un train avant peut-il claquer ?', 'Plusieurs articulations et liaisons peuvent être concernées. Le bruit doit être localisé avant de définir la réparation.']]
   },
   'liaison-au-sol/direction': {
@@ -139,7 +178,7 @@ const PAGES = {
       ['Prestations publiées', 'Le catalogue EDM28 inclut le remplacement de la paire de biellettes ou rotules de direction ainsi que la paire de biellettes de barre stabilisatrice.'],
       ['Devis et périmètre', 'Le devis distingue la prestation prévue des éventuels travaux additionnels. Une extension de l’intervention doit être validée avant exécution.']
     ],
-    links: [['/liaison-au-sol/triangles', 'Triangles de suspension'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/tarifs', 'Voir les tarifs'], ['/', 'Faire une demande']],
+    links: [['/liaison-au-sol/triangles', 'Triangles de suspension'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/tarifs', 'Voir les tarifs'], ['/demande', 'Faire une demande']],
     faq: [['Une voiture qui tire d’un côté vient-elle forcément de la direction ?', 'Non. Le freinage, les pneumatiques, la géométrie ou d’autres éléments peuvent intervenir. Le contrôle doit identifier la cause réelle.']]
   },
   prestations: {
@@ -170,7 +209,7 @@ const PAGES = {
       ['Comment lire les tarifs ?', 'Le prix affiché correspond à la valeur publique configurée pour la prestation. Les pièces, débours ou éléments complémentaires sont précisés au devis lorsqu’ils sont nécessaires.'],
       ['Le devis reste la référence', 'Le véhicule et la demande réelle déterminent le périmètre final. EDM28 fait valider le devis avant intervention et n’ajoute pas de travaux supplémentaires sans validation.']
     ],
-    links: [['/prestations', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/', 'Faire une demande']],
+    links: [['/prestations', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/demande', 'Faire une demande']],
     faq: [['Les prix de cette page sont-ils saisis manuellement ?', 'Non. La page charge les prestations publiées depuis la table publique site_services afin d’éviter une copie divergente des tarifs.']]
   },
   fonctionnement: {
@@ -187,7 +226,7 @@ const PAGES = {
       ['3. Intervention → clôture → facture', 'L’intervention est réalisée dans le périmètre validé. Le dossier est ensuite clôturé et la facture correspondante est produite.'],
       ['4. Encaissement → historique client', 'L’encaissement est enregistré puis les éléments du dossier et les documents utiles restent accessibles dans l’historique client selon le fonctionnement de l’application.']
     ],
-    links: [['/transparence', 'Conseils & FAQ'], ['/prestations', 'Prestations et tarifs'], ['/?page=history', 'Mes interventions'], ['/', 'Faire une demande']],
+    links: [['/transparence', 'Conseils & FAQ'], ['/prestations', 'Prestations et tarifs'], ['/?page=history', 'Mes interventions'], ['/demande', 'Faire une demande']],
     faq: [['Comment fonctionne une intervention chez EDM28 ?', 'Demande, devis, acceptation, débours si nécessaire, préparation atelier, intervention, clôture, facture, encaissement puis historique client.']]
   },
   transparence: {
@@ -247,7 +286,7 @@ const PAGES = {
       ['Demande de rendez-vous', 'Le parcours en ligne permet de préparer la demande et de la relier aux prestations disponibles avant l’étude du dossier.'],
       ['Email public', 'Vous pouvez écrire à contact@edm28.fr. Aucune adresse postale ni aucun numéro de téléphone n’est publié ici tant que ces informations ne sont pas renseignées dans la configuration publique.']
     ],
-    links: [['/', 'Faire une demande'], ['/prestations', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Conseils & FAQ']],
+    links: [['/demande', 'Faire une demande'], ['/prestations', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Conseils & FAQ']],
     faq: [['Comment contacter EDM28 ?', 'L’email public est contact@edm28.fr. Le site permet également de préparer une demande de rendez-vous.']]
   }
 };
