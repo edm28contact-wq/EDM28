@@ -35,7 +35,6 @@
         finalization: () => window.EDMAdminFinalization?.load(),
         'invoice-actions': () => window.EDMAdminInvoiceActions?.load(),
         clients: () => window.EDMAdminClients?.load(),
-        messages: () => window.EDMAdminMessages?.load(),
         services: () => window.EDMAdminServices?.load(),
         documents: () => window.EDMAdminDocs?.load(),
         accounting: () => window.EDMAdminAccounting?.load(),
@@ -47,7 +46,7 @@
       const errorTargets = {
         overview: 'anomalies', requests: 'requestStatus', quotes: 'quoteStatus', notifications: 'notificationStatus',
         operations: 'operationStatus', interventions: 'interventionStatus', finalization: 'finalizationStatus',
-        'invoice-actions': 'invoiceActionStatus', clients: 'clientDetail', messages: 'messageStatus',
+        'invoice-actions': 'invoiceActionStatus', clients: 'clientDetail', services: 'serviceStatus',
         accounting: 'accountingStatus', business: 'businessStatus', settings: 'automationStatus',
         'document-pdf': 'documentPdfStatus', 'audit-log': 'auditLogStatus'
       };
@@ -121,13 +120,12 @@
         client.from('repair_orders').select('id,status,order_number,quote_id,appointment_id,pdf_path,created_at,updated_at'),
         client.from('inspection_reports').select('id,repair_order_id,status,pdf_path,visible_to_client,created_at,updated_at'),
         client.from('invoices').select('id,status,invoice_number,total,amount_paid,due_at,pdf_path,visible_to_client,repair_order_id,created_at,updated_at'),
-        client.from('client_messages').select('id,user_id').eq('direction', 'inbound').eq('read_by_admin', false),
         client.from('business_configuration').select('*').eq('id', true).single()
       ]);
-      const queryNames = ['Clients','Véhicules','Demandes','Devis','Rendez-vous','Ordres','Contrôles','Factures','Messages','Entreprise'];
+      const queryNames = ['Clients','Véhicules','Demandes','Devis','Rendez-vous','Ordres','Contrôles','Factures','Entreprise'];
       const queryErrors = results.flatMap((result, index) => result.error ? [`${queryNames[index]} : ${result.error.message}`] : []);
-      const [profiles, vehicles, requests, quotes, appointments, orders, inspections, invoices, unreadMessages] = results.slice(0, 9).map((result) => this.listData(result));
-      const business = this.objectData(results[9]);
+      const [profiles, vehicles, requests, quotes, appointments, orders, inspections, invoices] = results.slice(0, 8).map((result) => this.listData(result));
+      const business = this.objectData(results[8]);
       const alerts = extraChecks.map((detail) => ({ severity: 'error', title: 'Module indisponible', detail, page: 'overview' }));
       queryErrors.forEach((detail) => alerts.push({ severity: 'error', title: 'Contrôle incomplet', detail, page: 'overview' }));
       const push = (condition, severity, title, detail, page) => { if (condition) alerts.push({ severity, title, detail, page }); };
@@ -177,7 +175,6 @@
       push(draftInvoices.length, 'info', 'Factures brouillons', `${draftInvoices.length} facture(s) attendent validation et PDF.`, 'invoice-actions');
       push(invoicesWithoutPdf.length, 'error', 'Factures émises sans PDF', `${invoicesWithoutPdf.length} facture(s) visible(s) par les clients n’ont pas de PDF.`, 'document-pdf');
       push(overdueInvoices.length, 'error', 'Factures échues', `${overdueInvoices.length} facture(s) sont échues pour ${this.money(overdueInvoices.reduce((sum, i) => sum + Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0)), 0))}.`, 'accounting');
-      push(unreadMessages.length, 'warning', 'Messages non lus', `${unreadMessages.length} message(s) client attendent une réponse.`, 'messages');
 
       const requiredBusiness = ['business_name','legal_name','siret','siren','vat_status','address_line1','postal_code','city','country','phone','email','payment_terms','late_penalty_text','recovery_fee_text','logo_url','calendar_id','timezone'];
       const missingBusiness = requiredBusiness.filter((key) => !String(business?.[key] || '').trim());
@@ -189,8 +186,7 @@
         ['Atelier actif', activeOrders.length],
         ['À facturer', completedOrders.length],
         ['À encaisser', this.money(outstanding)],
-        ['Échues', overdueInvoices.length],
-        ['Messages non lus', unreadMessages.length]
+        ['Échues', overdueInvoices.length]
       ].map(([label, value]) => `<article class="card kpi"><span>${this.esc(label)}</span><strong>${this.esc(value)}</strong></article>`).join('');
 
       const weight = { error: 0, warning: 1, info: 2 };
@@ -205,7 +201,6 @@
       const modules = [
         ['Demandes', () => window.EDMAdminRequests?.load()],
         ['Clients', () => window.EDMAdminClients?.load()],
-        ['Messagerie', () => window.EDMAdminMessages?.load()],
         ['Services', () => window.EDMAdminServices?.load()],
         ['Documents', () => window.EDMAdminDocs?.load()],
         ['Comptabilité', () => window.EDMAdminAccounting?.load()],
