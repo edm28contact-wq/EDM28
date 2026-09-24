@@ -169,7 +169,7 @@
           <h3>Photos avant / après</h3><label>Ajouter des photos<input data-photo-input type="file" accept="image/*" capture="environment" multiple></label><div data-photo-list class="grid2"></div>
           <h3>Signature</h3><canvas data-signature width="700" height="220" style="width:100%;height:180px;border:1px solid #d0d5dd;border-radius:12px;background:white;touch-action:none"></canvas><button type="button" class="btn ghost" data-clear-signature>Effacer la signature</button>
           <label>Observations générales<textarea data-observations rows="5">${esc(report.observations)}</textarea></label>
-          <div class="toolbar"><button class="btn ghost" data-booking>Ouvrir Google Agenda</button><button class="btn primary" data-save-report>Enregistrer</button><button class="btn primary" data-complete-report>Terminer et publier</button></div>`;
+          <div class="toolbar"><button class="btn ghost" data-booking>Ouvrir le planning EDM28</button><button class="btn primary" data-save-report>Enregistrer</button><button class="btn primary" data-complete-report>Terminer et publier</button></div>`;
         let photoPaths = Array.isArray(report.photo_paths) ? [...report.photo_paths] : [];
         const photoHost = detail.querySelector('[data-photo-list]');
         await previewPaths(photoPaths, photoHost);
@@ -189,10 +189,10 @@
           row.querySelectorAll('[data-control-status]').forEach((button) => button.className = `btn ${button === choice ? 'primary' : 'ghost'}`);
         });
         const signature = installSignature(detail.querySelector('[data-signature]'), detail.querySelector('[data-clear-signature]'));
-        detail.querySelector('[data-booking]').onclick = async () => {
-          const cfg = await A().db.from('business_configuration').select('booking_url').eq('id', true).single();
-          if (cfg.data?.booking_url) window.open(cfg.data.booking_url, '_blank', 'noopener');
-          else A().status('interventionStatus', 'Lien Google Agenda non configuré.', true);
+        detail.querySelector('[data-booking]').onclick = () => {
+          const planningButton = document.querySelector('[data-page="planning"]');
+          if (planningButton) planningButton.click();
+          else A().status('interventionStatus', 'Planning interne indisponible.', true);
         };
         const save = async (complete) => {
           const uploadInput = detail.querySelector('[data-photo-input]');
