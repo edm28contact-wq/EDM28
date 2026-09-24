@@ -32,7 +32,6 @@ test('Vercel expose les routes SEO publiques, sitemap et robots', async () => {
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
   assert.equal(routes.get('/sitemap.xml'), '/api/app?seo=sitemap');
   assert.equal(routes.get('/robots.txt'), '/api/app?seo=robots');
-  assert.equal(routes.get('/or-vierge.pdf'), '/api/app?seo=blank-order');
   for (const path of PUBLIC_PATHS) assert.match(routes.get(path) || '', /^\/api\/app\?seo=page&slug=/, path);
   assert.equal(routes.get('/prestations'), '/');
   assert.equal(routes.get('/'), '/api/app?seo=page&slug=accueil');
@@ -65,7 +64,7 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   const [seo, client, blankOrder] = await Promise.all([
     read('public-seo.js'),
     read('public-client.js'),
-    read('api/app.js')
+    read('pdf-lite.js')
   ]);
 
   assert.match(seo, /nettoie les points de corrosion accessibles/);
@@ -73,10 +72,12 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(seo, /jamais sur les surfaces de friction/);
   assert.match(client, /Que faut-il faire \?/);
   assert.match(client, /Contrôle complet dès 100 € TTC facturés chez EDM28/);
-  assert.match(client, /href="\/or-vierge\.pdf"/);
-  assert.match(blankOrder, /ORDRE DE REPARATION - MODELE VIERGE/);
-  assert.match(blankOrder, /A partir de 100 EUR TTC factures chez EDM28/);
-  assert.match(blankOrder, /Content-Disposition/);
+  assert.match(client, /downloadBlankOrder/);
+  assert.match(client, /EDMPdfLite\.build/);
+  assert.match(client, /ordre-reparation-vierge-edm28\.pdf/);
+  assert.match(client, /ORDRE DE RÉPARATION - MODÈLE VIERGE/);
+  assert.match(client, /À partir de 100 € TTC facturés chez EDM28/);
+  assert.match(blankOrder, /window\.EDMPdfLite = \{ build, buildDocument \}/);
 });
 
 test('la demande valide les plaques françaises et bloque les prestations qui se recouvrent', async () => {
