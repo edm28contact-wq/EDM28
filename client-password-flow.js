@@ -187,8 +187,8 @@
     await hydrateUserFromSupabase(user);
     setConnectedUi(true);
     setMessage(message);
-    if (typeof updateStepper === 'function') updateStepper(2);
-    $('vehicleCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (typeof updateStepper === 'function') updateStepper(3);
+    $('servicesArea')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   async function createAccount() {
