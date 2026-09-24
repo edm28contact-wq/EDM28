@@ -62,18 +62,19 @@ test('completed history is grouped by vehicle then intervention and shows three 
   assert.match(status, /createSignedUrl\(path, 120\)/);
 });
 
-test('invoice-backed archive keeps completed interventions visible even when an older OR was not published', async () => {
-  const [archive, app] = await Promise.all([
-    read('client-history-invoice-archive.js'),
+test('legacy invoice archive is no longer loaded because My interventions owns the complete history', async () => {
+  const [history, app] = await Promise.all([
+    read('client-booking-vehicle-history.js'),
     read('api/app.js')
   ]);
-  assert.match(app, /client-history-invoice-archive\.js\?v=1/);
-  assert.match(archive, /PUBLISHED = new Set\(\['issued', 'partially_paid', 'paid', 'overdue'\]\)/);
-  assert.match(archive, /invoice\.visible_to_client && invoice\.pdf_path && PUBLISHED\.has\(invoice\.status\)/);
-  assert.match(archive, /invoice\.repair_order_id \? orderById\.get\(invoice\.repair_order_id\)/);
-  assert.match(archive, /const vehicleId = invoice\.vehicle_id \|\| order\?\.vehicle_id \|\| quote\?\.vehicle_id \|\| ''/);
-  assert.match(archive, /Ordre de réparation/);
-  assert.match(archive, /Facture/);
+  assert.doesNotMatch(app, /client-history-invoice-archive\.js/);
+  for (const table of ['vehicles', 'service_requests', 'quotes', 'repair_orders', 'appointments', 'invoices', 'inspection_reports']) {
+    assert.match(history, new RegExp(`from\\('${table}'\\)`));
+  }
+  assert.match(history, /Ouvrir le devis PDF/);
+  assert.match(history, /Ouvrir l’ordre de réparation/);
+  assert.match(history, /Ouvrir la facture PDF/);
+  assert.match(history, /Ouvrir la fiche de contrôle/);
 });
 
 test('workshop preparation publishes the repair order PDF before intervention completion', async () => {
