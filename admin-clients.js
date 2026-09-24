@@ -56,7 +56,6 @@
     (data.inspections || []).forEach((r) => events.push({ at: r.completed_at || r.created_at, type: 'Contrôle', title: `${r.report_number || 'Fiche de contrôle'} · ${statusLabel(r.status)}`, detail: r.observations || '', filePath: r.pdf_path, fileLabel: 'Ouvrir le PDF' }));
     (data.invoices || []).forEach((i) => events.push({ at: i.issued_at || i.created_at, type: 'Facture', title: `${i.invoice_number || 'Facture'} · ${statusLabel(i.status)}`, detail: `${A().money(i.total)} · payé ${A().money(i.amount_paid)} · reste ${A().money(Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0)))}`, filePath: i.pdf_path, fileLabel: 'Ouvrir le PDF' }));
     (data.payments || []).forEach((p) => events.push({ at: p.paid_at || p.created_at, type: 'Paiement', title: `${A().money(p.amount)} · ${p.payment_method || 'Mode non renseigné'}`, detail: p.reference || '' }));
-    (data.messages || []).forEach((m) => events.push({ at: m.created_at, type: 'Message', title: m.direction === 'inbound' ? 'Message client' : 'Message EDM28', detail: m.subject || m.body?.slice(0, 140) || '' }));
     (data.historyFiles || []).forEach((file) => events.push({
       at: file.created_at,
       type: file.kind === 'photo' ? 'Photo' : 'PDF ajouté',
@@ -142,15 +141,14 @@
         A().db.from('repair_orders').select('id,order_number,status,mileage_in,visible_condition,customer_items,pdf_path,created_at,updated_at').eq('user_id', id).order('created_at', { ascending: false }),
         A().db.from('inspection_reports').select('id,report_number,status,mileage,technician_name,observations,photo_paths,signature_path,pdf_path,completed_at,created_at').eq('user_id', id).order('created_at', { ascending: false }),
         A().db.from('invoices').select('id,invoice_number,status,title,total,amount_paid,payment_method,issued_at,due_at,paid_at,pdf_path,created_at').eq('user_id', id).order('created_at', { ascending: false }),
-        A().db.from('payments').select('id,invoice_id,amount,payment_method,reference,paid_at,created_at').eq('user_id', id).order('paid_at', { ascending: false }),
-        A().db.from('client_messages').select('id,direction,subject,body,created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(100)
+        A().db.from('payments').select('id,invoice_id,amount,payment_method,reference,paid_at,created_at').eq('user_id', id).order('paid_at', { ascending: false })
       ]);
       const failure = queries.find((result) => result.error)?.error;
       if (failure) throw failure;
-      const [vehicles, requests, quotes, appointments, orders, inspections, invoices, payments, messages] = queries.map((r) => r.data || []);
+      const [vehicles, requests, quotes, appointments, orders, inspections, invoices, payments] = queries.map((r) => r.data || []);
       const fileResult = await A().db.storage.from('repair-documents').list(`${id}/${HISTORY_FOLDER}`, { limit: 100, offset: 0 });
       return {
-        vehicles, requests, quotes, appointments, orders, inspections, invoices, payments, messages,
+        vehicles, requests, quotes, appointments, orders, inspections, invoices, payments,
         historyFiles: fileResult.error ? [] : historyFiles(id, fileResult.data),
         historyFilesError: fileResult.error?.message || null
       };
@@ -195,7 +193,7 @@
         const events = timeline(data);
         const totalBilled = data.invoices.reduce((sum, i) => sum + Number(i.total || 0), 0);
         const totalPaid = data.invoices.reduce((sum, i) => sum + Number(i.amount_paid || 0), 0);
-        box.innerHTML = `<div class="top"><div><h2>Dossier client</h2><p class="muted">${esc(client.external_client_id || client.id)}</p></div><button class="btn ghost" data-message-client-open>Ouvrir la messagerie</button></div>
+        box.innerHTML = `<div class="top"><div><h2>Dossier client</h2><p class="muted">${esc(client.external_client_id || client.id)}</p></div></div>`
           <div class="card"><h3>Coordonnées</h3><div class="grid2">
             <label>Prénom<input data-client-field="first_name" value="${esc(client.first_name)}"></label>
             <label>Nom<input data-client-field="last_name" value="${esc(client.last_name)}"></label>
@@ -222,10 +220,6 @@
           finally { button.disabled = false; }
         });
         box.querySelectorAll('[data-delete-history-file]').forEach((button) => button.onclick = () => this.deleteHistoryFile(button.dataset.deleteHistoryFile, button));
-        box.querySelector('[data-message-client-open]').onclick = () => {
-          A().page('messages');
-          setTimeout(() => window.EDMAdminMessages?.open(id, true, false).catch(() => {}), 200);
-        };
       } catch (error) {
         box.innerHTML = `<div class="status error">${esc(error.message || 'Dossier client indisponible.')}</div>`;
       }
