@@ -102,7 +102,7 @@
     row.insertAdjacentHTML('beforeend', `
       <button class="btn btn-primary" id="btnSignUp" type="button">Créer mon compte</button>
       <button class="btn btn-secondary" id="btnSignIn" type="button">Se connecter</button>
-      <button class="btn btn-ghost" id="btnPasswordReset" type="button">Mot de passe oublié / à définir</button>
+      <button class="btn btn-ghost" id="btnPasswordReset" type="button">Mot de passe oublié</button>
       <button class="btn btn-ghost hidden" id="btnSignOut" type="button">Se déconnecter</button>`);
 
     row.insertAdjacentHTML('afterend', `
@@ -263,17 +263,12 @@
     setButtonBusy(button, true, 'Envoi...');
     try {
       localStorage.setItem(RECOVERY_STORAGE_KEY, email);
-      const { error } = await supabaseClient.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: false }
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/`
       });
       if (error) throw error;
-      showVerificationPanel(
-        email,
-        'recovery',
-        `Un email de sécurité a été envoyé à ${email}. Cliquez sur le lien reçu ou saisissez le code pour définir un nouveau mot de passe.`
-      );
-      setMessage('Email de récupération envoyé.');
+      $('passwordVerificationPanel')?.classList.add('hidden');
+      setMessage(`Email de réinitialisation envoyé à ${email}. Ouvrez le lien reçu pour définir un nouveau mot de passe.`);
     } catch (error) {
       localStorage.removeItem(RECOVERY_STORAGE_KEY);
       setMessage(friendly(error), true);
@@ -295,9 +290,8 @@
         });
         if (error) throw error;
       } else {
-        const { error } = await supabaseClient.auth.signInWithOtp({
-          email: verificationEmail,
-          options: { shouldCreateUser: false }
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(verificationEmail, {
+          redirectTo: `${window.location.origin}/`
         });
         if (error) throw error;
       }
