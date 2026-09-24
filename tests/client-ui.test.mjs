@@ -23,10 +23,11 @@ test('client signup verifies email once and subsequent logins use a password', a
   assert.match(source, /auth\.verifyOtp\s*\(/);
   assert.match(source, /auth\.resend\s*\(/);
   assert.match(source, /auth\.updateUser\(\{ password \}\)/);
-  assert.match(source, /shouldCreateUser:\s*false/);
+  assert.match(source, /auth\.resetPasswordForEmail\s*\(/);
+  assert.match(source, /PASSWORD_RECOVERY/);
   assert.match(source, /MIN_PASSWORD_LENGTH\s*=\s*8/);
   assert.match(source, /passwordConfirm/);
-  assert.match(source, /Mot de passe oublié \/ à définir/);
+  assert.match(source, /Mot de passe oublié/);
 });
 
 test('legacy recurring OTP flow is not loaded', async () => {
@@ -94,6 +95,12 @@ test('client page exposes every journey boundary', async () => {
   for (const id of ['clientCard','vehicleCard','servicesArea','serviceList','basketList','btnSubmit','historyList']) {
     assert.match(html, new RegExp(`id=["']${id}["']`));
   }
+  assert.ok(html.indexOf('id="vehicleCard"') < html.indexOf('id="servicesArea"'));
+  assert.ok(html.indexOf('id="servicesArea"') < html.indexOf('id="clientCard"'));
+  assert.match(html, /1 · Véhicule/);
+  assert.match(html, /2 · Intervention/);
+  assert.match(html, /3 · Coordonnées/);
+  assert.match(html, /4 · Vérification/);
   assert.ok(app.indexOf('integration.js') < app.indexOf('client-simple-flow.js'));
 });
 
