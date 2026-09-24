@@ -69,29 +69,19 @@
 
   function installUi() {
     installStyle();
-    const nav = document.querySelector('.nav');
-    if (nav && !nav.querySelector('[data-page="request-status"]')) {
-      const button = document.createElement('button');
-      button.dataset.page = 'request-status';
-      button.textContent = '📍 Statut de ma demande';
-      const history = nav.querySelector('[data-page="history"]');
-      nav.insertBefore(button, history || null);
-    }
-
-    const main = document.querySelector('main.main');
-    if (main && !document.getElementById('request-status')) {
-      const section = document.createElement('section');
-      section.id = 'request-status';
-      section.className = 'page';
-      section.innerHTML = `<div class="panel">
-        <div class="section-title">
-          <div><h2>Statut de ma demande</h2><p>Suivez chaque dossier depuis son envoi jusqu’à la publication de la facture.</p></div>
-          <button class="btn btn-ghost" id="requestStatusRefresh" type="button">Actualiser</button>
-        </div>
-        <div id="requestStatusList"></div>
-      </div>`;
-      const history = document.getElementById('history');
-      main.insertBefore(section, history || null);
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+    let section = historyList.querySelector('[data-request-status-summary]');
+    if (!section) {
+      section = document.createElement('section');
+      section.className = 'panel';
+      section.dataset.requestStatusSummary = 'true';
+      section.innerHTML = `<div class="section-title">
+        <div><h2>Avancement de mes dossiers</h2><p>Suivez chaque demande depuis son envoi jusqu’à la facture, directement dans Mes interventions.</p></div>
+        <button class="btn btn-ghost" id="requestStatusRefresh" type="button">Actualiser</button>
+      </div>
+      <div id="requestStatusList"></div>`;
+      historyList.prepend(section);
       section.querySelector('#requestStatusRefresh')?.addEventListener('click', () => renderRequestStatus().catch(showStatusError));
     }
   }
@@ -305,10 +295,13 @@
     }));
 
     host.querySelectorAll('[data-open-archive]').forEach((button) => button.addEventListener('click', async () => {
-      window.__edmHistoryFocus = { vehicleId: button.dataset.vehicleId || '', orderId: button.dataset.orderId || '' };
       if (typeof window.__edmNavigate === 'function') await window.__edmNavigate('history');
       else document.querySelector('[data-page="history"]')?.click();
-      window.setTimeout(() => renderCompletedInterventionHistory().catch((error) => console.warn('EDM intervention archive unavailable', error)), 50);
+      window.setTimeout(() => {
+        if (typeof window.renderVehicleHistory === 'function') {
+          window.renderVehicleHistory().catch((error) => console.warn('EDM intervention history unavailable', error));
+        }
+      }, 50);
     }));
   }
 
@@ -440,23 +433,27 @@
 
   function install() {
     installUi();
-    installHistoryObserver();
-    if (document.getElementById('request-status')?.classList.contains('active')) renderRequestStatus().catch(showStatusError);
-    if (document.getElementById('history')?.classList.contains('active')) renderCompletedInterventionHistory().catch((error) => console.warn('EDM intervention archive unavailable', error));
+    if (document.getElementById('history')?.classList.contains('active')) {
+      renderRequestStatus().catch(showStatusError);
+    }
+    document.addEventListener('click', (event) => {
+      if (event.target.closest?.('[data-page="history"]')) {
+        window.setTimeout(() => renderRequestStatus().catch(showStatusError), 80);
+      }
+    });
   }
 
   window.renderRequestStatus = renderRequestStatus;
-  window.renderCompletedInterventionHistory = renderCompletedInterventionHistory;
-
   window.addEventListener('edm:request-submitted', () => {
-    if (document.getElementById('request-status')?.classList.contains('active')) renderRequestStatus().catch(showStatusError);
+    if (document.getElementById('history')?.classList.contains('active')) renderRequestStatus().catch(showStatusError);
   });
 
   if (typeof supabaseClient !== 'undefined') {
     supabaseClient.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) return;
-      if (document.getElementById('request-status')?.classList.contains('active')) window.setTimeout(() => renderRequestStatus().catch(showStatusError), 100);
-      if (document.getElementById('history')?.classList.contains('active')) window.setTimeout(() => renderCompletedInterventionHistory().catch((error) => console.warn('EDM intervention archive unavailable', error)), 100);
+      if (document.getElementById('history')?.classList.contains('active')) {
+        window.setTimeout(() => renderRequestStatus().catch(showStatusError), 100);
+      }
     });
   }
 
