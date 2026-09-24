@@ -217,6 +217,13 @@
         <h2>Que faut-il regarder ?</h2>
         <p>Sélectionnez une ou plusieurs prestations. EDM28 confirmera ensuite le périmètre réel avant travaux.</p>
         <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
+        <div class="benefit-card">
+          <div>
+            <strong>Contrôle complet dès 100 € TTC facturés chez EDM28</strong>
+            <p>À partir de 100 € dépensés chez EDM28, la liste complète des points de contrôle EDM28 est vérifiée et rattachée au dossier de l’intervention.</p>
+          </div>
+          <a class="secondary-action as-link" href="/api/or-vierge" download="ordre-reparation-vierge-edm28.pdf">Télécharger l’OR vierge</a>
+        </div>
         <label style="display:block;margin-top:18px">Symptômes ou précisions
           <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
         </label>
