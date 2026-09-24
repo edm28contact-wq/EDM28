@@ -14,6 +14,8 @@ const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225
 
 const PUBLIC_PATHS = [
   '/',
+  '/demande',
+  '/mes-interventions',
   '/garage-freinage-saint-lubin-de-la-haye',
   '/freinage',
   '/freinage/plaquettes-de-frein',
