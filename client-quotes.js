@@ -3,9 +3,11 @@
 
   async function respond(id, status) {
     if (!['accepted', 'refused'].includes(status)) return;
-    const { data, error } = await supabaseClient.from('quotes').update({ status }).eq('id', id).eq('status', 'sent').select('id');
+    const { error } = await supabaseClient.rpc('client_respond_quote', {
+      p_quote_id: id,
+      p_response: status
+    });
     if (error) throw error;
-    if (!data?.length) throw new Error('Ce devis a déjà été traité ou a expiré.');
   }
 
   function card(q) {
