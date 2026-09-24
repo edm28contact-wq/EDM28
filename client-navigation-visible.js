@@ -245,6 +245,13 @@
     }, true);
 
     installAuthListener();
+
+    try {
+      const requestedPage = new URLSearchParams(window.location.search).get('page');
+      if (requestedPage && allPages.has(requestedPage)) {
+        window.setTimeout(() => void navigate(requestedPage), 0);
+      }
+    } catch (_) {}
   }
 
   window.__edmNavigate = navigate;
