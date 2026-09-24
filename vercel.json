@@ -174,7 +174,7 @@
     },
     {
       "src": "/prestations",
-      "dest": "/api/app?seo=page&slug=prestations"
+      "dest": "/"
     },
     {
       "src": "/tarifs",
