@@ -8,6 +8,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path) => readFile(join(root, path), 'utf8');
 
 const PUBLIC_PATHS = [
+  '/',
+  '/demande',
+  '/mes-interventions',
   '/freinage',
   '/freinage/plaquettes-de-frein',
   '/freinage/disques-de-frein',
@@ -31,7 +34,29 @@ test('Vercel expose les routes SEO publiques, sitemap et robots', async () => {
   assert.equal(routes.get('/sitemap.xml'), '/api/app?seo=sitemap');
   assert.equal(routes.get('/robots.txt'), '/api/app?seo=robots');
   for (const path of PUBLIC_PATHS) assert.match(routes.get(path) || '', /^\/api\/app\?seo=page&slug=/, path);
-  assert.equal(routes.get('/'), '/api/app');
+  assert.equal(routes.get('/'), '/api/app?seo=page&slug=accueil');
+  assert.equal(routes.get('/index.html'), '/api/app?seo=page&slug=accueil');
+  assert.equal(routes.get('/demande'), '/api/app?seo=page&slug=demande');
+  assert.equal(routes.get('/mes-interventions'), '/api/app?seo=page&slug=mes-interventions');
+});
+
+test('l’ancien portail client n’est plus servi par les routes publiques', async () => {
+  const [app, config, publicSeo, client] = await Promise.all([
+    read('api/app.js'),
+    read('vercel.json'),
+    read('public-seo.js'),
+    read('public-client.js')
+  ]);
+  const vercel = JSON.parse(config);
+  const routes = new Map(vercel.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
+  assert.equal(routes.get('/'), '/api/app?seo=page&slug=accueil');
+  assert.equal(routes.get('/index.html'), '/api/app?seo=page&slug=accueil');
+  assert.match(app, /legacy client application is intentionally no longer served/i);
+  assert.match(app, /res\.setHeader\('Location', '\/'\)/);
+  assert.match(publicSeo, /path: '\/mes-interventions'/);
+  assert.match(publicSeo, /path: '\/demande'/);
+  assert.match(client, /edmInterventionsApp/);
+  assert.match(client, /edmRequestApp/);
 });
 
 test('chaque page SEO possède une URL, un title et une description uniques', async () => {
