@@ -3,13 +3,17 @@
   window.__edmClientRequestStatusHistoryInstalled = true;
 
   const STEPS = [
-    'Envoyé',
-    'Étudié',
-    'Devis envoyé',
-    'Intervention en préparation',
-    'OR envoyé',
-    'Intervention finie',
-    'Facture envoyée'
+    'Demande reçue',
+    'Étude en cours',
+    'Devis disponible',
+    'Devis accepté',
+    'Pièces à régler',
+    'Pièces commandées',
+    'Pièces reçues',
+    'Rendez-vous confirmé',
+    'Intervention en cours',
+    'Facture disponible',
+    'Terminé'
   ];
   const PUBLISHED_INVOICE_STATUSES = new Set(['issued', 'partially_paid', 'paid', 'overdue']);
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -44,7 +48,7 @@
     style.id = 'edm-request-status-style';
     style.textContent = `
       .edm-status-card{margin:14px 0}
-      .edm-status-track{display:grid;grid-template-columns:repeat(7,minmax(112px,1fr));overflow-x:auto;padding:14px 0 6px;scrollbar-width:thin}
+      .edm-status-track{display:grid;grid-template-columns:repeat(11,minmax(112px,1fr));overflow-x:auto;padding:14px 0 6px;scrollbar-width:thin}
       .edm-status-step{position:relative;text-align:center;min-width:112px;padding:0 8px;color:var(--muted)}
       .edm-status-step:not(:last-child)::after{content:"";position:absolute;left:calc(50% + 18px);right:calc(-50% + 18px);top:16px;height:3px;background:var(--border);z-index:0}
       .edm-status-step.done:not(:last-child)::after{background:var(--green)}
@@ -58,7 +62,7 @@
       .edm-archive-toggle{width:100%;background:transparent;color:inherit;text-align:left;padding:0;border:0}
       .edm-doc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
       .edm-doc{border:1px solid var(--border);border-radius:16px;padding:12px;background:white}
-      @media(max-width:700px){.edm-doc-grid{grid-template-columns:1fr}.edm-status-track{grid-template-columns:repeat(7,124px)}}
+      @media(max-width:700px){.edm-doc-grid{grid-template-columns:1fr}.edm-status-track{grid-template-columns:repeat(11,124px)}}
     `;
     document.head.appendChild(style);
   }
@@ -102,6 +106,9 @@
       supabaseClient.from('quotes')
         .select('id,vehicle_id,service_request_id,quote_number,status,visible_to_client,pdf_path,valid_until,created_at,updated_at')
         .eq('user_id', userId).order('created_at', { ascending: false }),
+      supabaseClient.from('disbursements')
+        .select('id,service_request_id,quote_id,status,client_choice,mandate_signed,authorized_limit,provision_required,provision_received,parts_status,amount,refunded_amount,created_at')
+        .eq('user_id', userId).order('created_at', { ascending: false }),
       supabaseClient.from('appointments')
         .select('id,vehicle_id,service_request_id,status,visible_to_client,starts_at,created_at')
         .eq('user_id', userId).order('created_at', { ascending: false }),
@@ -118,20 +125,22 @@
       requests: results[0].data || [],
       vehicles: results[1].data || [],
       quotes: results[2].data || [],
-      appointments: results[3].data || [],
-      orders: results[4].data || [],
-      invoices: results[5].data || []
+      disbursements: results[3].data || [],
+      appointments: results[4].data || [],
+      orders: results[5].data || [],
+      invoices: results[6].data || []
     };
   }
 
   function requestRelations(request, data) {
     const quotes = data.quotes.filter((quote) => quote.service_request_id === request.id).sort(byDateDesc);
     const quoteIds = new Set(quotes.map((quote) => quote.id));
+    const disbursements = data.disbursements.filter((row) => row.service_request_id === request.id || quoteIds.has(row.quote_id)).sort(byDateDesc);
     const appointments = data.appointments.filter((appointment) => appointment.service_request_id === request.id).sort(byDateDesc);
     const orders = data.orders.filter((order) => order.service_request_id === request.id || quoteIds.has(order.quote_id)).sort(byDateDesc);
     const orderIds = new Set(orders.map((order) => order.id));
     const invoices = data.invoices.filter((invoice) => orderIds.has(invoice.repair_order_id) || quoteIds.has(invoice.quote_id)).sort(byDateDesc);
-    return { quotes, appointments, orders, invoices };
+    return { quotes, disbursements, appointments, orders, invoices };
   }
 
   function publishedQuote(rows) {
@@ -147,17 +156,51 @@
     const quote = publishedQuote(relations.quotes);
     const accepted = relations.quotes.some((row) => row.status === 'accepted');
     const order = relations.orders[0] || null;
-    const publishedOrder = relations.orders.find((row) => row.visible_to_client && row.pdf_path) || null;
     const invoice = publishedInvoice(relations.invoices);
+    const activeParts = relations.disbursements.filter((row) => !['cancelled', 'rejected'].includes(row.status) && row.client_choice !== 'client_direct');
 
     if (['reviewed', 'quoted', 'confirmed', 'completed', 'closed'].includes(request.status) || relations.quotes.length) stage = 2;
     if (quote) stage = 3;
-    if (accepted || relations.appointments.length || relations.orders.length) stage = Math.max(stage, 4);
-    if (publishedOrder) stage = Math.max(stage, 5);
-    if (relations.orders.some((row) => ['completed', 'invoiced'].includes(row.status))) stage = Math.max(stage, 6);
-    if (invoice) stage = 7;
+    if (accepted) stage = 4;
 
-    return { stage, quote, order, invoice, refused: quote?.status === 'refused' };
+    if (accepted && activeParts.length) {
+      stage = Math.max(stage, 5);
+      const allOrdered = activeParts.every((row) => ['ordered', 'shipped', 'received'].includes(row.parts_status));
+      const allReceived = activeParts.every((row) => row.parts_status === 'received');
+      if (allOrdered) stage = Math.max(stage, 6);
+      if (allReceived) stage = Math.max(stage, 7);
+    } else if (accepted) {
+      stage = Math.max(stage, 7);
+    }
+
+    if (relations.appointments.some((row) => row.status !== 'cancelled')) stage = Math.max(stage, 8);
+    if (relations.orders.some((row) => ['in_progress', 'completed', 'invoiced'].includes(row.status))) stage = Math.max(stage, 9);
+    if (invoice) stage = Math.max(stage, 10);
+    if (invoice?.status === 'paid' || request.status === 'closed') stage = 11;
+
+    return { stage, quote, order, invoice, activeParts, refused: quote?.status === 'refused' };
+  }
+
+  function nextActionHtml(progress) {
+    if (progress.refused) return '<div class="notice"><strong>Action actuelle :</strong> attendre une nouvelle proposition EDM28 ou contacter le garage si nécessaire.</div>';
+    if (progress.quote?.status === 'sent') return '<div class="notice"><strong>Action actuelle :</strong> consulter et répondre au devis.</div>';
+
+    if (progress.stage === 5) {
+      const pendingClientAction = progress.activeParts.some((row) => {
+        if (row.client_choice !== 'edm_disbursement' || !row.mandate_signed) return true;
+        const required = Number(row.provision_required || row.authorized_limit || 0);
+        return required > Number(row.provision_received || 0) + 0.009;
+      });
+      return pendingClientAction
+        ? '<div class="notice"><strong>Action actuelle :</strong> valider le mandat et/ou la provision des pièces.</div><div class="btn-row"><button class="btn btn-primary" type="button" data-next-page="disbursements">Gérer mes pièces</button></div>'
+        : '<div class="notice"><strong>Action actuelle :</strong> aucune. La provision est reçue ; EDM28 doit maintenant commander les pièces.</div>';
+    }
+    if (progress.stage === 6) return '<div class="notice"><strong>Action actuelle :</strong> aucune. Les pièces sont commandées ou en transit.</div>';
+    if (progress.stage === 7) return '<div class="notice"><strong>Action actuelle :</strong> choisir votre rendez-vous.</div><div class="btn-row"><button class="btn btn-primary" type="button" data-next-page="booking">Choisir mon rendez-vous</button></div>';
+    if (progress.stage === 8 || progress.stage === 9) return '<div class="notice"><strong>Action actuelle :</strong> aucune. Suivez simplement l’avancement de votre intervention.</div>';
+    if (progress.stage === 10 && progress.invoice?.pdf_path) return `<div class="notice"><strong>Action actuelle :</strong> consulter votre facture.</div><div class="btn-row"><button class="btn btn-primary" type="button" data-status-doc="${esc(progress.invoice.pdf_path)}">Voir ma facture</button></div>`;
+    if (progress.stage === 11) return '<div class="notice"><strong>Dossier terminé.</strong> Tous les documents restent accessibles dans votre historique.</div>';
+    return '<div class="notice"><strong>Action actuelle :</strong> aucune. EDM28 étudie votre demande.</div>';
   }
 
   function timelineHtml(stage) {
@@ -191,9 +234,8 @@
 
   async function respondToQuote(id, status) {
     if (!['accepted', 'refused'].includes(status)) return;
-    const result = await supabaseClient.from('quotes').update({ status }).eq('id', id).eq('status', 'sent').select('id');
+    const result = await supabaseClient.rpc('client_respond_quote', { p_quote_id: id, p_response: status });
     if (result.error) throw result.error;
-    if (!result.data?.length) throw new Error('Ce devis a déjà été traité ou a expiré.');
   }
 
   function showStatusError(error) {
@@ -221,20 +263,27 @@
       const currentLabel = progress.refused ? 'Devis refusé' : STEPS[progress.stage - 1];
       const title = `${vehicle.brand || ''} ${vehicle.model || ''}`.trim() || 'Véhicule';
       const services = serviceNames(request) || 'Prestations à confirmer';
-      const archiveButton = progress.stage === 7
+      const archiveButton = progress.stage === 11
         ? `<button class="btn btn-primary" type="button" data-open-archive data-vehicle-id="${esc(request.vehicle_id || '')}" data-order-id="${esc(progress.order?.id || '')}">Voir l’intervention dans l’historique</button>`
         : '';
       return `<article class="card edm-status-card" data-status-request="${esc(request.id)}">
         <div class="section-title">
-          <div><span class="pill ${progress.stage === 7 ? 'green' : progress.refused ? 'red' : 'orange'}">${esc(currentLabel)}</span><h3 style="margin-top:10px">${esc(vehicle.plate || 'Véhicule')}</h3><p>${esc(title)} · ${esc(services)}</p></div>
+          <div><span class="pill ${progress.stage === 11 ? 'green' : progress.refused ? 'red' : 'orange'}">${esc(currentLabel)}</span><h3 style="margin-top:10px">${esc(vehicle.plate || 'Véhicule')}</h3><p>${esc(title)} · ${esc(services)}</p></div>
           <strong>${esc(formatDate(request.submitted_at || request.created_at))}</strong>
         </div>
         ${timelineHtml(progress.stage)}
         ${progress.refused ? '<div class="notice">Le devis a été refusé. Cette demande ne passera pas en préparation atelier sans nouveau devis accepté.</div>' : ''}
+        ${nextActionHtml(progress)}
         <div class="btn-row">${quoteActions(progress.quote)}${archiveButton}</div>
       </article>`;
     }).join('');
     host.innerHTML = cards || '<div class="empty">Aucune demande envoyée.</div>';
+
+    host.querySelectorAll('[data-next-page]').forEach((button) => button.addEventListener('click', async () => {
+      const page = button.dataset.nextPage;
+      if (typeof window.__edmNavigate === 'function') await window.__edmNavigate(page);
+      else document.querySelector(`[data-page="${page}"]`)?.click();
+    }));
 
     host.querySelectorAll('[data-status-doc]').forEach((button) => button.addEventListener('click', async () => {
       button.disabled = true;
