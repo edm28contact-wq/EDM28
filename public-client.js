@@ -17,7 +17,41 @@
     const d = new Date(value || 0);
     return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});
   };
-  const normalizePlate = (value) => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+  const SIV_RE = /^([A-HJ-NP-TV-Z]{2})(\d{3})([A-HJ-NP-TV-Z]{2})$/;
+  const FNI_RE = /^(\d{1,4})([A-Z]{1,3})([A-Z0-9]{2,3})$/;
+  const SERVICE_COVERAGE = {
+    'plaquettes-frein-avant': ['front_pads'],
+    'plaquettes-frein-arriere': ['rear_pads'],
+    'plaquettes-avant-arriere': ['front_pads','rear_pads'],
+    'disques-plaquettes-avant': ['front_discs','front_pads'],
+    'disques-plaquettes-arriere': ['rear_discs','rear_pads'],
+    'freinage-complet': ['front_discs','front_pads','rear_discs','rear_pads']
+  };
+
+  function parseFrenchPlate(value) {
+    const compact = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+    let match = compact.match(SIV_RE);
+    if (match && match[1] !== 'SS' && match[3] !== 'SS') {
+      return { valid:true, format:'SIV', normalized:compact, display:`${match[1]}-${match[2]}-${match[3]}` };
+    }
+    match = compact.match(FNI_RE);
+    if (match) {
+      return { valid:true, format:'FNI', normalized:compact, display:`${match[1]} ${match[2]} ${match[3]}` };
+    }
+    return { valid:false, format:null, normalized:compact, display:String(value || '').trim().toUpperCase() };
+  }
+
+  function serviceCoverage(service) {
+    const slug = String(service?.slug || '').trim().toLowerCase();
+    return SERVICE_COVERAGE[slug] || [];
+  }
+
+  function servicesOverlap(a,b) {
+    const coverageA = serviceCoverage(a);
+    const coverageB = new Set(serviceCoverage(b));
+    return coverageA.some((token) => coverageB.has(token));
+  }
+
   const intOrNull = (value) => {
     const n = Number.parseInt(String(value || '').replace(/\D/g,''),10);
     return Number.isFinite(n) ? n : null;
@@ -165,7 +199,11 @@
         <div class="section-kicker">1 · Véhicule</div>
         <h2>Votre véhicule</h2>
         <div class="form-grid three">
-          <label>Immatriculation<input id="requestPlate" autocomplete="off" placeholder="AB-123-CD"></label>
+          <label>Immatriculation
+            <input id="requestPlate" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AA-123-AA ou 1234 AB 28" aria-describedby="requestPlateHelp requestPlateStatus">
+            <small id="requestPlateHelp" class="field-help">Formats acceptés : nouveau SIV AA-123-AA ou ancien FNI 1234 AB 28.</small>
+            <small id="requestPlateStatus" class="plate-status"></small>
+          </label>
           <label>Marque<input id="requestBrand" placeholder="Renault"></label>
           <label>Modèle<input id="requestModel" placeholder="Clio"></label>
           <label>Année<input id="requestYear" inputmode="numeric" placeholder="2018"></label>
@@ -208,7 +246,7 @@
     const servicesHost = byId('requestServices');
     const { data: services, error } = await client
       .from('site_services')
-      .select('id,name,category,client_description,pricing_type,displayed_price,labor_price,duration_minutes')
+      .select('id,name,slug,category,client_description,pricing_type,displayed_price,labor_price,duration_minutes')
       .eq('active',true)
       .not('published_at','is',null)
       .order('display_order',{ascending:true});
@@ -218,10 +256,74 @@
       servicesHost.innerHTML = (services || []).map((service) => `
         <label class="service-choice">
           <input type="checkbox" value="${esc(service.id)}" data-service-json="${esc(encodeURIComponent(JSON.stringify(service)))}">
-          <span><strong>${esc(service.name)}</strong><small>${esc(service.client_description || service.category || '')}</small></span>
+          <span><strong>${esc(service.name)}</strong><small>${esc(service.client_description || service.category || '')}</small><small class="service-conflict-note"></small></span>
           <b>${service.pricing_type === 'quote' ? 'Sur devis' : money(service.displayed_price)}</b>
         </label>`).join('') || '<div class="notice">Aucune prestation disponible actuellement.</div>';
     }
+
+    const plateInput = byId('requestPlate');
+    const plateStatus = byId('requestPlateStatus');
+
+    function refreshPlateStatus(formatValue = false) {
+      const parsed = parseFrenchPlate(plateInput?.value);
+      if (!plateInput?.value.trim()) {
+        plateInput?.removeAttribute('aria-invalid');
+        if (plateStatus) {
+          plateStatus.textContent = '';
+          plateStatus.className = 'plate-status';
+        }
+        return parsed;
+      }
+      plateInput.setAttribute('aria-invalid', String(!parsed.valid));
+      if (parsed.valid) {
+        if (formatValue) plateInput.value = parsed.display;
+        if (plateStatus) {
+          plateStatus.textContent = `Format ${parsed.format} valide.`;
+          plateStatus.className = 'plate-status valid';
+        }
+      } else if (plateStatus) {
+        plateStatus.textContent = 'Plaque invalide. Utilisez AA-123-AA ou un ancien format comme 1234 AB 28.';
+        plateStatus.className = 'plate-status invalid';
+      }
+      return parsed;
+    }
+
+    plateInput?.addEventListener('input', () => {
+      plateInput.value = plateInput.value.toUpperCase().replace(/[^A-Z0-9 -]/g,'').slice(0,14);
+      refreshPlateStatus(false);
+    });
+    plateInput?.addEventListener('blur', () => refreshPlateStatus(true));
+
+    function decodeServiceInput(input) {
+      try { return JSON.parse(decodeURIComponent(input.dataset.serviceJson || '')); }
+      catch (_) { return null; }
+    }
+
+    function refreshServiceConflicts() {
+      const inputs = [...servicesHost.querySelectorAll('input[type="checkbox"]')];
+      const selected = inputs.filter((input) => input.checked).map((input) => ({ input, service:decodeServiceInput(input) })).filter((row) => row.service);
+
+      inputs.forEach((input) => {
+        const label = input.closest('.service-choice');
+        const note = label?.querySelector('.service-conflict-note');
+        if (input.checked) {
+          input.disabled = false;
+          label?.classList.remove('is-conflict-disabled');
+          if (note) note.textContent = '';
+          return;
+        }
+        const service = decodeServiceInput(input);
+        const conflict = service ? selected.find((row) => servicesOverlap(service,row.service)) : null;
+        input.disabled = Boolean(conflict);
+        label?.classList.toggle('is-conflict-disabled',Boolean(conflict));
+        if (note) note.textContent = conflict ? `Déjà couvert par « ${conflict.service.name} ».` : '';
+      });
+    }
+
+    servicesHost.addEventListener('change',(event)=>{
+      if (event.target.matches('input[type="checkbox"]')) refreshServiceConflicts();
+    });
+    refreshServiceConflicts();
 
     async function renderAccount() {
       const area = byId('requestAccountArea');
@@ -247,15 +349,20 @@
         const session = await getSession();
         if (!session?.user) throw new Error('Connectez-vous ou créez votre compte avant de transmettre la demande.');
 
-        const plate = byId('requestPlate').value.trim().toUpperCase();
-        const plateNormalized = normalizePlate(plate);
-        if (!plateNormalized) throw new Error('Immatriculation obligatoire.');
+        const parsedPlate = refreshPlateStatus(true);
+        if (!parsedPlate.valid) throw new Error('Immatriculation obligatoire au format AA-123-AA ou ancien format FNI, par exemple 1234 AB 28.');
+        const plate = parsedPlate.display;
+        const plateNormalized = parsedPlate.normalized;
 
-        const selected = [...document.querySelectorAll('#requestServices input[type="checkbox"]:checked')].map((input) => {
-          try { return JSON.parse(decodeURIComponent(input.dataset.serviceJson || '')); }
-          catch (_) { return null; }
-        }).filter(Boolean);
+        const selected = [...document.querySelectorAll('#requestServices input[type="checkbox"]:checked')].map(decodeServiceInput).filter(Boolean);
         if (!selected.length) throw new Error('Choisissez au moins une prestation.');
+        for (let i = 0; i < selected.length; i += 1) {
+          for (let j = i + 1; j < selected.length; j += 1) {
+            if (servicesOverlap(selected[i],selected[j])) {
+              throw new Error(`Les prestations « ${selected[i].name} » et « ${selected[j].name} » se recouvrent. Gardez uniquement la prestation la plus complète.`);
+            }
+          }
+        }
 
         const firstName = byId('requestFirstName').value.trim();
         const lastName = byId('requestLastName').value.trim();
@@ -281,6 +388,7 @@
 
         const serviceRows = selected.map((service) => ({
           id:service.id,
+          slug:service.slug,
           name:service.name,
           category:service.category,
           labor:Number(service.labor_price || service.displayed_price || 0),
