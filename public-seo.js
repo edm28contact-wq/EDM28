@@ -21,7 +21,7 @@ const PAGES = {
     serviceType: 'Interventions automobiles EDM28',
     breadcrumbs: [['/', 'Accueil']],
     sections: [
-      ['Freinage', 'Plaquettes avant ou arrière, plaquettes avant et arrière, disques et plaquettes, freinage complet et purge du liquide de frein font partie des interventions actuellement proposées.'],
+      ['Freinage', 'Plaquettes, disques et purge du liquide de frein font partie des interventions proposées. Lors des démontages concernés, EDM28 nettoie les points de corrosion accessibles et remonte avec une graisse adaptée sur les portées prévues, jamais sur les surfaces de friction, afin de limiter le retour de corrosion.'],
       ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des interventions publiées.'],
       ['Un périmètre clair', 'Chaque demande est rapprochée d’un besoin réel. Si le véhicule nécessite autre chose, la proposition doit être révisée avant travaux.']
     ],
@@ -189,7 +189,7 @@ const PAGES = {
     serviceType: 'Catalogue tarifaire des prestations automobiles EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/tarifs', 'Tarifs']],
     sections: [
-      ['Comment lire les tarifs ?', 'Le prix affiché correspond à la valeur publique configurée pour la prestation. Les pièces, débours ou éléments complémentaires sont précisés au devis lorsqu’ils sont nécessaires.'],
+      ['Ce qui est compris dans le travail', 'Le prix affiché correspond à la prestation publique configurée. Pour les démontages de freinage concernés, la préparation comprend le nettoyage des points de corrosion accessibles et un remontage avec graisse adaptée uniquement sur les portées prévues, jamais sur les surfaces de friction, afin de limiter la corrosion future. Les pièces, débours ou éléments complémentaires restent précisés au devis.'],
       ['Le devis reste la référence', 'Le véhicule et la demande réelle déterminent le périmètre final. EDM28 fait valider le devis avant intervention et n’ajoute pas de travaux supplémentaires sans validation.']
     ],
     links: [['/', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/demande', 'Faire une demande']],
@@ -418,7 +418,7 @@ function renderPage(page, origin, services = [], clientConfig = null) {
           </div>
           <div class="service-body">
             <div class="service-top"><h2>Freinage</h2><span class="service-arrow" aria-hidden="true">›</span></div>
-            <p>Plaquettes, disques, freinage complet et liquide de frein, avec contrôle et devis avant intervention.</p>
+            <p>Plaquettes, disques et liquide de frein, avec nettoyage des points de corrosion accessibles et remontage protégé sur les portées prévues, hors surfaces de friction.</p>
           </div>
         </a>
         <a class="service-card" href="/liaison-au-sol">
