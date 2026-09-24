@@ -624,9 +624,8 @@
         <a href="/fonctionnement">Comment ça marche</a>
         <a href="/contact">Contact</a>
         <button data-page="appointment">Faire une demande</button>
+        <button data-page="history">Mes interventions</button>
         <button data-page="account">Mon compte</button>
-        <button data-page="garage">Mes véhicules</button>
-        <button data-page="history">Historique</button>
         <button data-page="about">À propos</button>
       </nav>
 
@@ -660,6 +659,7 @@
             </div>
           </div>
         </div>
+        <div id="homeNextAppointment"></div>
       </section>
 
       <section id="appointment" class="page">
@@ -807,6 +807,17 @@
               </div>
             </div>
           </div>
+
+          <div id="requestBookingPanel" style="margin-top:18px">
+            <div class="panel">
+              <div class="section-title">
+                <div>
+                  <h2>Rendez-vous de cette intervention</h2>
+                  <p>Après l’envoi de la demande, ce bloc suivra le devis, les pièces puis proposera le créneau lorsque le dossier sera prêt.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -822,21 +833,23 @@
         </div>
       </section>
 
-      <section id="garage" class="page">
-        <div class="panel">
-          <div class="section-title">
-            <div><h2>Mon garage</h2><p>Retrouvez ici les véhicules enregistrés sur votre compte.</p></div>
-            <button class="btn btn-primary" data-jump="appointment" type="button">Ajouter un véhicule</button>
-          </div>
-          <div id="garageList"></div>
-        </div>
-      </section>
-
       <section id="history" class="page">
         <div class="panel">
-          <h2>Historique</h2>
-          <p>Retrouvez ici l’historique de vos demandes.</p>
-          <div id="historyList"></div>
+          <div class="section-title">
+            <div>
+              <h2>Mes interventions</h2>
+              <p>Retrouvez vos véhicules et tout l’historique associé : demandes, devis, rendez-vous, ordres de réparation, contrôles, documents et factures.</p>
+            </div>
+            <button class="btn btn-primary" data-jump="appointment" type="button">Faire une nouvelle demande</button>
+          </div>
+          <div class="card" style="margin-top:18px">
+            <div class="section-title">
+              <div><h3>Mes véhicules</h3><p>Les véhicules enregistrés sur votre compte sont regroupés ici avec leurs dossiers.</p></div>
+              <button class="btn btn-secondary" data-jump="appointment" type="button">Ajouter un véhicule</button>
+            </div>
+            <div id="garageList"></div>
+          </div>
+          <div id="historyList" style="margin-top:18px"></div>
         </div>
       </section>
 
