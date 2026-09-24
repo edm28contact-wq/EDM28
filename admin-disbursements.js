@@ -42,7 +42,7 @@
       section.id = 'disbursements';
       section.className = 'page';
       section.innerHTML = `<div class="card">
-        <div class="top"><div><h2>Débours client</h2><p class="muted">Mandat préalable, provision reçue avant commande, achat au nom et pour le compte du client, justificatif et régularisation exacte sans marge.</p></div><button id="disbursementRefresh" class="btn ghost" type="button">Actualiser</button></div>
+        <div class="top"><div><h2>Débours client</h2><p class="muted">Mandat préalable, provision reçue avant commande, achat au nom et pour le compte du client et régularisation exacte. Aucune marge n’est appliquée sur les débours.</p></div><button id="disbursementRefresh" class="btn ghost" type="button">Actualiser</button></div>
         <div class="status" style="margin-top:12px"><strong>Fonctionnement :</strong> 1) préparer les pièces ; 2) le client accepte le mandat ; 3) enregistrer la provision reçue ; 4) seulement ensuite commander ; 5) suivre expédition et réception ; 6) enregistrer le justificatif réel puis rembourser l’écart éventuel. Les débours restent séparés du chiffre d’affaires EDM28.</div>
         <div id="disbursementKpis" class="grid" style="margin-top:14px"></div>
         <div id="disbursementStatus" class="status hidden"></div>
