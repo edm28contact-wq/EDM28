@@ -23,6 +23,17 @@ test('client authentication uses password after one-time email verification', as
   assert.match(auth, /Les connexions suivantes utilisent l’email et le mot de passe/);
 });
 
+test('legacy inline auth stays disabled when password flow owns the controls', async () => {
+  const [html, app] = await Promise.all([
+    read('index.html'),
+    read('api/app.js')
+  ]);
+
+  assert.match(app, /client-account-safe\.js\?v=13.*client-password-flow\.js\?v=2/);
+  assert.match(html, /if \(!window\.__edmPasswordFlow\) \{/);
+  assert.match(html, /if \(!window\.__edmPasswordFlow\) bootstrapSupabaseAuth\(\)/);
+});
+
 test('client pages remain navigable without forcing authentication', async () => {
   const [compatibility, router] = await Promise.all([
     read('client-account-safe.js'),
