@@ -124,6 +124,38 @@
     });
   }
 
+  async function installHomePage() {
+    const host = byId('edmHomeClientApp');
+    if (!host) return;
+
+    async function render() {
+      const session = await getSession();
+      if (!session?.user) {
+        host.innerHTML = `<section class="home-client-card"><div><div class="section-kicker">Espace client</div><h2>Suivez vos interventions</h2><p>Connectez-vous depuis Mes interventions pour retrouver vos véhicules, documents et rendez-vous.</p></div><a class="primary-action as-link" href="/mes-interventions">Mes interventions</a></section>`;
+        return;
+      }
+      const { data, error } = await client.from('appointments')
+        .select('id,starts_at,status,vehicle_id,vehicles(plate,brand,model)')
+        .eq('user_id',session.user.id)
+        .eq('visible_to_client',true)
+        .neq('status','cancelled')
+        .gte('starts_at',new Date().toISOString())
+        .order('starts_at',{ascending:true})
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.starts_at) {
+        host.innerHTML = `<section class="home-client-card"><div><div class="section-kicker">Espace client</div><h2>Aucun rendez-vous à venir</h2><p>Vos dossiers restent disponibles dans Mes interventions.</p></div><a class="primary-action as-link" href="/mes-interventions">Mes interventions</a></section>`;
+        return;
+      }
+      const vehicle = data.vehicles ? [data.vehicles.plate,data.vehicles.brand,data.vehicles.model].filter(Boolean).join(' · ') : '';
+      host.innerHTML = `<section class="next-appointment"><div class="section-kicker">Prochain rendez-vous</div><h2>${esc(dateTime(data.starts_at))}</h2><p>${esc(vehicle || 'Intervention EDM28')}</p><a class="primary-action as-link" href="/mes-interventions">Voir mes interventions</a></section>`;
+    }
+
+    try { await render(); } catch (_) { host.innerHTML = ''; }
+    client.auth.onAuthStateChange(()=>window.setTimeout(()=>render().catch(()=>{}),0));
+  }
+
   async function installRequestPage() {
     const host = byId('edmRequestApp');
     if (!host) return;
@@ -422,8 +454,9 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded',()=>{ void installRequestPage(); void installInterventionsPage(); },{once:true});
+    document.addEventListener('DOMContentLoaded',()=>{ void installHomePage(); void installRequestPage(); void installInterventionsPage(); },{once:true});
   } else {
+    void installHomePage();
     void installRequestPage();
     void installInterventionsPage();
   }
