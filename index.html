@@ -1478,9 +1478,11 @@
       document.querySelectorAll("[data-jump]").forEach((btn) => btn.addEventListener("click", () => showPage(btn.dataset.jump)));
       $("openMenu").addEventListener("click", () => $("sidebar").classList.add("open"));
 
-      $("btnSignUp").addEventListener("click", signUpWithSupabase);
-      $("btnSignIn").addEventListener("click", signInWithSupabase);
-      $("btnSignOut").addEventListener("click", signOutFromSupabase);
+      if (!window.__edmPasswordFlow) {
+        $("btnSignUp")?.addEventListener("click", signUpWithSupabase);
+        $("btnSignIn")?.addEventListener("click", signInWithSupabase);
+        $("btnSignOut")?.addEventListener("click", signOutFromSupabase);
+      }
 
       $("btnSaveVehicle").addEventListener("click", () => saveVehicle(true));
       $("btnAccessServices").addEventListener("click", accessServices);
@@ -1509,7 +1511,7 @@
 
       document.querySelector("[data-select-pack='freinage']").addEventListener("click", selectFreinagePack);
 
-      bootstrapSupabaseAuth();
+      if (!window.__edmPasswordFlow) bootstrapSupabaseAuth();
       updateAccountUi();
       renderGarage();
       renderHistory();
