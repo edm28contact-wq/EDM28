@@ -27,7 +27,7 @@
     const host = section();
     if (!host) return;
     host.dataset.internalBooking = 'true';
-    host.innerHTML = `<div class="panel"><div class="section-title"><div><h2>Préparer mon RDV</h2><p>Votre devis, votre décision puis votre rendez-vous au même endroit.</p></div><span class="pill blue">Parcours client</span></div><div id="prepareRdvStatus"></div><div id="prepareRdvContent"><div class="notice">Chargement de votre dossier…</div></div></div>`;
+    host.innerHTML = `<div class="panel"><div class="section-title"><div><h2>Préparer mon RDV</h2><p>Le rendez-vous devient disponible après validation du devis et réception des pièces nécessaires.</p></div><span class="pill blue">Parcours client</span></div><div id="prepareRdvStatus"></div><div id="prepareRdvContent"><div class="notice">Chargement de votre dossier…</div></div></div>`;
   }
 
   async function openPdf(path) {
@@ -63,7 +63,15 @@
 
     let appointment = null;
     let order = null;
+    let disbursements = [];
     if (quote?.id) {
+      const disbursementResult = await supabaseClient.from('disbursements')
+        .select('id,status,client_choice,mandate_signed,authorized_limit,provision_required,provision_received,parts_status')
+        .eq('user_id', currentUser.id)
+        .eq('quote_id', quote.id)
+        .not('status', 'in', '("cancelled","rejected")');
+      if (disbursementResult.error) throw disbursementResult.error;
+      disbursements = disbursementResult.data || [];
       const orderResult = await supabaseClient.from('repair_orders')
         .select('id,order_number,status,appointment_id,created_at')
         .eq('user_id', currentUser.id)
@@ -84,7 +92,7 @@
         appointment = appointmentResult.data;
       }
     }
-    return { user:currentUser, request, quote, order, appointment };
+    return { user:currentUser, request, quote, order, appointment, disbursements };
   }
 
   function waitingView(state) {
@@ -101,6 +109,39 @@
     const q = state.quote;
     const expired = q.valid_until && q.valid_until < new Date().toISOString().slice(0,10);
     return `<div class="card"><div class="section-title"><div><span class="pill orange">Devis à valider</span><h3 style="margin-top:10px">${esc(q.quote_number || q.title || 'Devis EDM28')}</h3></div><strong>${money(q.total)}</strong></div><p>${esc(q.description || 'Votre devis est disponible.')}</p><p class="small">${q.valid_until ? `Valable jusqu’au ${new Date(q.valid_until + 'T00:00:00').toLocaleDateString('fr-FR')}` : ''}${expired ? ' · Expiré' : ''}</p><div class="btn-row">${q.pdf_path ? '<button id="prepareOpenQuote" class="btn btn-ghost" type="button">Ouvrir le devis</button>' : ''}<button id="prepareAcceptQuote" class="btn btn-success" type="button" ${expired ? 'disabled' : ''}>Accepter le devis</button><button id="prepareRefuseQuote" class="btn btn-danger" type="button">Refuser le devis</button></div></div>`;
+  }
+
+  function partsReadiness(state) {
+    const rows = Array.isArray(state.disbursements) ? state.disbursements : [];
+    const edmRows = rows.filter((row) => row.client_choice !== 'client_direct');
+    if (!edmRows.length) return { ready:true, reason:'no_parts' };
+
+    const mandatePending = edmRows.some((row) => row.client_choice !== 'edm_disbursement' || !row.mandate_signed);
+    if (mandatePending) return { ready:false, reason:'mandate' };
+
+    const provisionPending = edmRows.some((row) => {
+      const required = Number(row.provision_required || row.authorized_limit || 0);
+      return required > 0 && Number(row.provision_received || 0) + 0.009 < required;
+    });
+    if (provisionPending) return { ready:false, reason:'provision' };
+
+    const partsPending = edmRows.some((row) => row.parts_status !== 'received');
+    if (partsPending) return { ready:false, reason:'parts' };
+
+    return { ready:true, reason:'received' };
+  }
+
+  function partsWaitingView(state, readiness) {
+    const messages = {
+      mandate: ['Pièces à valider', 'Validez le mandat de débours dans « Débours & pièces » avant toute commande.'],
+      provision: ['Provision à régler', 'La provision doit être enregistrée avant qu’EDM28 puisse commander les pièces.'],
+      parts: ['Pièces en préparation', 'EDM28 s’occupe de la commande. Le rendez-vous sera disponible dès que toutes les pièces seront reçues.']
+    };
+    const [title, body] = messages[readiness.reason] || ['Dossier en préparation', 'Le rendez-vous sera disponible lorsque le dossier sera prêt.'];
+    const button = readiness.reason === 'mandate' || readiness.reason === 'provision'
+      ? '<button id="prepareOpenParts" class="btn btn-primary" type="button">Ouvrir Débours & pièces</button>'
+      : '';
+    return `<div class="card"><span class="pill orange">Devis accepté</span><h3 style="margin-top:12px">${esc(title)}</h3><p>${esc(body)}</p><div class="btn-row">${button}</div></div>`;
   }
 
   async function slotsView(state) {
@@ -195,7 +236,19 @@
       document.getElementById('prepareRefuseQuote')?.addEventListener('click', () => respondQuote('refused').catch((error) => status(error.message || 'Réponse impossible.', true)));
       return;
     }
-    if (currentState.quote.status === 'accepted') { await slotsView(currentState); return; }
+    if (currentState.quote.status === 'accepted') {
+      const readiness = partsReadiness(currentState);
+      if (!readiness.ready) {
+        host.innerHTML = partsWaitingView(currentState, readiness);
+        document.getElementById('prepareOpenParts')?.addEventListener('click', async () => {
+          if (typeof window.__edmNavigate === 'function') await window.__edmNavigate('disbursements');
+          else document.querySelector('[data-page="disbursements"]')?.click();
+        });
+        return;
+      }
+      await slotsView(currentState);
+      return;
+    }
     host.innerHTML = waitingView(currentState);
   }
 
