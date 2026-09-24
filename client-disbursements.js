@@ -55,7 +55,7 @@
             <article class="card"><h3>2 · Débours EDM</h3><p>Vous mandatez EDM avant l’achat puis versez la provision affichée. EDM ne peut commander qu’après réception de cette provision. Le montant est ensuite régularisé sur le justificatif réel, sans marge.</p></article>
             <article class="card"><h3>3 · Vente de pièce par EDM</h3><p>Si une pièce est vendue par EDM comme une vente classique, elle reste une ligne commerciale normale. Elle n’est pas traitée comme un débours.</p></article>
           </div>
-          <div class="notice" style="margin-top:16px"><strong>Règle de transparence :</strong> une proposition de débours affiche le montant à provisionner avant achat. EDM ne commande pas avant réception de la provision. Après achat, le montant réel du justificatif est comparé à la provision et l’écart est remboursé ou complété sans marge.</div>
+          <div class="notice" style="margin-top:16px"><strong>Règle de transparence :</strong> une proposition de débours affiche le montant à provisionner avant achat. EDM ne commande pas avant réception de la provision. Après achat, le montant exact du justificatif fournisseur est comparé à la provision et l’écart est remboursé ou complété sans marge.</div>
         </div>
         <div class="panel">
           <div class="section-title"><div><h2>Mes pièces et débours</h2><p>Mandats, achats, justificatifs et remboursements associés à vos devis.</p></div><button id="clientDisbursementRefresh" class="btn btn-ghost" type="button">Actualiser</button></div>
