@@ -196,7 +196,7 @@
         : '<div class="notice"><strong>Action actuelle :</strong> aucune. La provision est reçue ; EDM28 doit maintenant commander les pièces.</div>';
     }
     if (progress.stage === 6) return '<div class="notice"><strong>Action actuelle :</strong> aucune. Les pièces sont commandées ou en transit.</div>';
-    if (progress.stage === 7) return '<div class="notice"><strong>Action actuelle :</strong> choisir votre rendez-vous.</div><div class="btn-row"><button class="btn btn-primary" type="button" data-next-page="booking">Choisir mon rendez-vous</button></div>';
+    if (progress.stage === 7) return '<div class="notice"><strong>Action actuelle :</strong> choisir votre rendez-vous.</div><div class="btn-row"><button class="btn btn-primary" type="button" data-next-page="appointment">Choisir mon rendez-vous</button></div>';
     if (progress.stage === 8 || progress.stage === 9) return '<div class="notice"><strong>Action actuelle :</strong> aucune. Suivez simplement l’avancement de votre intervention.</div>';
     if (progress.stage === 10 && progress.invoice?.pdf_path) return `<div class="notice"><strong>Action actuelle :</strong> consulter votre facture.</div><div class="btn-row"><button class="btn btn-primary" type="button" data-status-doc="${esc(progress.invoice.pdf_path)}">Voir ma facture</button></div>`;
     if (progress.stage === 11) return '<div class="notice"><strong>Dossier terminé.</strong> Tous les documents restent accessibles dans votre historique.</div>';
