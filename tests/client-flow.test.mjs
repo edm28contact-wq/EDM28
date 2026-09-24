@@ -173,6 +173,37 @@ test('client messaging is removed from the portal while guarded backend function
   assert.match(hardening, /v_recent_count\s*>=\s*12/);
 });
 
+test('client portal uses one interventions area and embeds appointment handling in the request', async () => {
+  const [html, router, booking, history, loader, home] = await Promise.all([
+    read('index.html'),
+    read('client-navigation-visible.js'),
+    read('client-internal-booking.js'),
+    read('client-booking-vehicle-history.js'),
+    read('client-simple-flow.js'),
+    read('client-home-appointment.js')
+  ]);
+
+  assert.match(html, /data-page="home">Accueil/);
+  assert.match(html, /data-page="history">Mes interventions/);
+  assert.match(html, /id="garageList"/);
+  assert.match(html, /id="historyList"/);
+  assert.match(html, /id="requestBookingPanel"/);
+  assert.match(html, /id="homeNextAppointment"/);
+  assert.doesNotMatch(html, /data-page="garage"/);
+  assert.doesNotMatch(html, /data-page="booking"/);
+  assert.doesNotMatch(html, /data-page="messages"/);
+
+  assert.doesNotMatch(router, /'garage'/);
+  assert.doesNotMatch(router, /'messages'/);
+  assert.doesNotMatch(router, /'request-status'/);
+  assert.match(booking, /requestBookingPanel/);
+  assert.doesNotMatch(booking, /data-page="booking"/);
+  assert.doesNotMatch(history, /data-page="booking"/);
+  assert.match(loader, /client-home-appointment\.js\?v=1/);
+  assert.match(home, /Prochain rendez-vous/);
+  assert.match(home, /from\('appointments'\)/);
+});
+
 test('Preview exposes all client journey boundaries', async () => {
   const html = await read('index.html');
   for (const id of ['clientCard','vehicleCard','servicesArea','serviceList','basketList','btnSubmit','historyList','accountPageContent']) {
