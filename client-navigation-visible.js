@@ -80,6 +80,8 @@
       if (id === 'account' && typeof renderAccountPage === 'function') renderAccountPage();
       if (id === 'history' && typeof renderGarage === 'function') renderGarage();
       if (id === 'history' && typeof renderHistory === 'function') renderHistory();
+      if (id === 'appointment' && window.EDMInternalBooking?.load) void window.EDMInternalBooking.load();
+      if (id === 'home' && window.EDMHomeAppointment?.render) void window.EDMHomeAppointment.render();
     } catch (error) {
       showFallback(id, error);
     }
