@@ -45,7 +45,7 @@ test('request status exposes one next action and uses the secure quote response 
   const status = await read('client-request-status-history.js');
   assert.match(status, /Action actuelle/);
   assert.match(status, /data-next-page="disbursements"/);
-  assert.match(status, /data-next-page="booking"/);
+  assert.match(status, /data-next-page="appointment"/);
   assert.match(status, /client_respond_quote/);
   assert.doesNotMatch(status, /from\('quotes'\)\.update\(\{ status \}\)/);
 });
