@@ -48,7 +48,7 @@ const PAGES = {
       ['Quand faire contrôler les plaquettes ?', 'Un bruit, un voyant, une remarque au contrôle technique ou une évolution du comportement au freinage sont des motifs de contrôle. L’intervention n’est pas décidée sur le seul kilométrage.'],
       ['Ce qui est inclus ou non', 'Le devis précise la prestation retenue. Les pièces, opérations complémentaires ou débours qui ne font pas partie de la prestation initiale doivent être identifiés avant d’être ajoutés.']
     ],
-    links: [['/freinage/disques-de-frein', 'Voir les disques de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/', 'Prendre rendez-vous']],
+    links: [['/freinage/disques-de-frein', 'Voir les disques de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/', 'Faire une demande']],
     faq: [
       ['Comment savoir si mes plaquettes de frein sont usées ?', 'Les symptômes peuvent alerter, mais seul le contrôle du véhicule permet de confirmer l’usure et le train concerné.'],
       ['Faut-il changer disques et plaquettes ensemble ?', 'La décision dépend de l’état des deux éléments. EDM28 vérifie la situation et indique dans le devis la combinaison retenue avant intervention.']
@@ -67,7 +67,7 @@ const PAGES = {
       ['Quand intervenir ?', 'Vibrations au freinage, bruit, corrosion visible ou usure constatée peuvent conduire à un contrôle. La cause doit être vérifiée avant de commander ou remplacer des éléments.'],
       ['Devis avant travaux', 'La prestation prévue est formalisée avant intervention. Si le contrôle révèle un besoin différent ou complémentaire, le client doit en être informé avant toute extension des travaux.']
     ],
-    links: [['/freinage/plaquettes-de-frein', 'Voir les plaquettes de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/', 'Prendre rendez-vous']],
+    links: [['/freinage/plaquettes-de-frein', 'Voir les plaquettes de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/', 'Faire une demande']],
     faq: [
       ['Quand changer ses disques de frein ?', 'Lorsqu’un contrôle montre que leur état nécessite un remplacement. EDM28 ne fixe pas un seuil universel indépendant du véhicule et de la pièce.'],
       ['Pourquoi une voiture vibre au freinage ?', 'Le freinage peut être en cause, mais d’autres éléments du train roulant peuvent aussi intervenir. Un contrôle est nécessaire pour trancher.']
@@ -86,7 +86,7 @@ const PAGES = {
       ['Comment se déroule la prestation ?', 'La prestation publiée par EDM28 prévoit le remplacement du liquide avec purge à la machine. Le devis confirme ce qui est prévu pour le véhicule avant l’intervention.'],
       ['Ce que la purge ne remplace pas', 'Une purge ne remplace pas le diagnostic d’un défaut mécanique ou hydraulique. Si un autre problème est constaté, il doit être expliqué séparément au client.']
     ],
-    links: [['/freinage/plaquettes-de-frein', 'Plaquettes de frein'], ['/freinage/disques-de-frein', 'Disques de frein'], ['/tarifs', 'Voir les tarifs'], ['/', 'Prendre rendez-vous']],
+    links: [['/freinage/plaquettes-de-frein', 'Plaquettes de frein'], ['/freinage/disques-de-frein', 'Disques de frein'], ['/tarifs', 'Voir les tarifs'], ['/', 'Faire une demande']],
     faq: [
       ['Quand remplacer le liquide de frein ?', 'Il faut se référer aux préconisations du véhicule, à l’historique et au contrôle réalisé. EDM28 évite d’appliquer un intervalle unique à tous les véhicules.'],
       ['Une purge corrige-t-elle tous les problèmes de pédale ?', 'Non. Une sensation anormale peut avoir plusieurs causes ; la purge n’est pertinente que si elle répond au besoin identifié.']
@@ -124,7 +124,7 @@ const PAGES = {
       ['Ce qui est proposé', 'La prestation publiée EDM28 vise la paire de triangles de suspension. Le devis détaille la prestation applicable au véhicule avant toute intervention.'],
       ['Après le contrôle', 'Si le défaut constaté concerne un autre élément du train roulant, EDM28 doit adapter la proposition au diagnostic plutôt que remplacer une pièce par défaut.']
     ],
-    links: [['/liaison-au-sol/direction', 'Direction et biellettes'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/prestations', 'Prestations'], ['/', 'Prendre rendez-vous']],
+    links: [['/liaison-au-sol/direction', 'Direction et biellettes'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/prestations', 'Prestations'], ['/', 'Faire une demande']],
     faq: [['Pourquoi un train avant peut-il claquer ?', 'Plusieurs articulations et liaisons peuvent être concernées. Le bruit doit être localisé avant de définir la réparation.']]
   },
   'liaison-au-sol/direction': {
@@ -140,7 +140,7 @@ const PAGES = {
       ['Prestations publiées', 'Le catalogue EDM28 inclut le remplacement de la paire de biellettes ou rotules de direction ainsi que la paire de biellettes de barre stabilisatrice.'],
       ['Devis et périmètre', 'Le devis distingue la prestation prévue des éventuels travaux additionnels. Une extension de l’intervention doit être validée avant exécution.']
     ],
-    links: [['/liaison-au-sol/triangles', 'Triangles de suspension'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/tarifs', 'Voir les tarifs'], ['/', 'Prendre rendez-vous']],
+    links: [['/liaison-au-sol/triangles', 'Triangles de suspension'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/tarifs', 'Voir les tarifs'], ['/', 'Faire une demande']],
     faq: [['Une voiture qui tire d’un côté vient-elle forcément de la direction ?', 'Non. Le freinage, les pneumatiques, la géométrie ou d’autres éléments peuvent intervenir. Le contrôle doit identifier la cause réelle.']]
   },
   prestations: {
@@ -171,7 +171,7 @@ const PAGES = {
       ['Comment lire les tarifs ?', 'Le prix affiché correspond à la valeur publique configurée pour la prestation. Les pièces, débours ou éléments complémentaires sont précisés au devis lorsqu’ils sont nécessaires.'],
       ['Le devis reste la référence', 'Le véhicule et la demande réelle déterminent le périmètre final. EDM28 fait valider le devis avant intervention et n’ajoute pas de travaux supplémentaires sans validation.']
     ],
-    links: [['/prestations', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/', 'Prendre rendez-vous']],
+    links: [['/prestations', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/', 'Faire une demande']],
     faq: [['Les prix de cette page sont-ils saisis manuellement ?', 'Non. La page charge les prestations publiées depuis la table publique site_services afin d’éviter une copie divergente des tarifs.']]
   },
   fonctionnement: {
@@ -188,7 +188,7 @@ const PAGES = {
       ['3. Intervention → clôture → facture', 'L’intervention est réalisée dans le périmètre validé. Le dossier est ensuite clôturé et la facture correspondante est produite.'],
       ['4. Encaissement → historique client', 'L’encaissement est enregistré puis les éléments du dossier et les documents utiles restent accessibles dans l’historique client selon le fonctionnement de l’application.']
     ],
-    links: [['/transparence', 'Transparence EDM28'], ['/prestations', 'Prestations'], ['/tarifs', 'Tarifs'], ['/', 'Prendre rendez-vous']],
+    links: [['/transparence', 'Transparence EDM28'], ['/prestations', 'Prestations'], ['/tarifs', 'Tarifs'], ['/', 'Faire une demande']],
     faq: [['Comment fonctionne une intervention chez EDM28 ?', 'Demande, devis, acceptation, débours si nécessaire, préparation atelier, intervention, clôture, facture, encaissement puis historique client.']]
   },
   transparence: {
@@ -204,7 +204,7 @@ const PAGES = {
       ['Pas de travaux supplémentaires sans validation', 'Si un besoin nouveau apparaît, EDM28 doit le présenter au client avant de modifier le périmètre des travaux.'],
       ['Suivi et documents', 'Le parcours applicatif conserve les étapes utiles du dossier et les documents associés afin que le client puisse retrouver l’historique de ses interventions.']
     ],
-    links: [['/fonctionnement', 'Voir le fonctionnement'], ['/tarifs', 'Tarifs'], ['/prestations', 'Prestations'], ['/', 'Prendre rendez-vous']],
+    links: [['/fonctionnement', 'Voir le fonctionnement'], ['/tarifs', 'Tarifs'], ['/prestations', 'Prestations'], ['/', 'Faire une demande']],
     faq: [['Comment EDM28 évite-t-il les travaux non prévus ?', 'Le périmètre est défini dans le devis. Un besoin complémentaire doit être présenté et validé avant d’être ajouté à l’intervention.']]
   },
   'a-propos': {
@@ -234,7 +234,7 @@ const PAGES = {
       ['Demande de rendez-vous', 'Le parcours en ligne permet de préparer la demande et de la relier aux prestations disponibles avant l’étude du dossier.'],
       ['Email public', 'Vous pouvez écrire à contact@edm28.fr. Aucune adresse postale ni aucun numéro de téléphone n’est publié ici tant que ces informations ne sont pas renseignées dans la configuration publique.']
     ],
-    links: [['/', 'Prendre rendez-vous'], ['/prestations', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Transparence']],
+    links: [['/', 'Faire une demande'], ['/prestations', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Transparence']],
     faq: [['Comment contacter EDM28 ?', 'L’email public est contact@edm28.fr. Le site permet également de préparer une demande de rendez-vous.']]
   }
 };
@@ -392,7 +392,7 @@ function renderPage(page, origin, services = []) {
 <body>
 <header class="site-header"><div class="wrap header-row"><a class="brand" href="/">EDM28</a><nav class="nav" aria-label="Navigation principale">${NAV_ITEMS.map(([path, label]) => `<a href="${path}">${label}</a>`).join('')}</nav></div></header>
 <main>
-<div class="hero"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1><p class="lead">${esc(page.lede)}</p><a class="cta" href="/">Prendre rendez-vous</a></div></div>
+<div class="hero"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1><p class="lead">${esc(page.lede)}</p><a class="cta" href="/">Faire une demande</a></div></div>
 <div class="wrap content">${sections}${tariffs}<div class="links" aria-label="Pages liées">${links}</div>${faq}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
