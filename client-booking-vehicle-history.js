@@ -2,7 +2,6 @@
   if (window.__edmBookingVehicleHistoryInstalled) return;
   window.__edmBookingVehicleHistoryInstalled = true;
 
-  const BOOKING_URL = 'https://calendar.app.google/CfmuTgoQ84bBMvnr8';
   const money = (value) => Number(value || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
   const dateTime = (value) => {
     const date = new Date(value || Date.now());
@@ -22,7 +21,7 @@
     if (nav && !nav.querySelector('[data-page="booking"]')) {
       const button = document.createElement('button');
       button.dataset.page = 'booking';
-      button.innerHTML = '📅 Choisir mon RDV';
+      button.innerHTML = '📅 Préparer mon RDV';
       const historyButton = nav.querySelector('[data-page="history"]');
       nav.insertBefore(button, historyButton || nav.lastElementChild);
     }
@@ -36,16 +35,11 @@
         <div class="panel">
           <div class="section-title">
             <div>
-              <h2>Choisir mon rendez-vous</h2>
-              <p>Consultez les créneaux disponibles dans le planning Google EDM28, puis sélectionnez celui qui vous convient.</p>
+              <h2>Préparer mon rendez-vous</h2>
+              <p>Le rendez-vous devient disponible dans EDM28 lorsque le dossier est prêt et les pièces nécessaires reçues.</p>
             </div>
-            <a class="btn btn-primary" href="${BOOKING_URL}" target="_blank" rel="noopener noreferrer">Ouvrir le planning</a>
           </div>
-          <div class="notice">Réservez de préférence après acceptation de votre devis afin que la durée de l’intervention soit correctement prévue.</div>
-          <div style="margin-top:18px;border:1px solid var(--border);border-radius:22px;overflow:hidden;background:white;min-height:680px">
-            <iframe title="Planning Google EDM28" src="${BOOKING_URL}" style="width:100%;height:680px;border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-          </div>
-          <p class="small" style="margin-top:12px">Si Google refuse l’affichage intégré sur votre appareil, utilisez le bouton « Ouvrir le planning ».</p>
+          <div class="notice">Chargement de votre dossier…</div>
         </div>`;
       const history = document.getElementById('history');
       main.insertBefore(section, history || null);
