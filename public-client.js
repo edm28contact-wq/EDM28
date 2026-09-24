@@ -222,7 +222,7 @@
             <strong>Contrôle complet dès 100 € TTC facturés chez EDM28</strong>
             <p>À partir de 100 € dépensés chez EDM28, la liste complète des points de contrôle EDM28 est vérifiée et rattachée au dossier de l’intervention.</p>
           </div>
-          <a class="secondary-action as-link" href="/or-vierge.pdf" download="ordre-reparation-vierge-edm28.pdf">Télécharger l’OR vierge</a>
+          <button class="secondary-action" type="button" id="downloadBlankOrder">Télécharger l’OR vierge</button>
         </div>
         <label style="display:block;margin-top:18px">Symptômes ou précisions
           <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
@@ -433,6 +433,58 @@
         message('requestSubmitStatus',error.message || 'Envoi impossible.','errorbox');
       }
     }
+
+    byId('downloadBlankOrder')?.addEventListener('click', () => {
+      try {
+        if (!window.EDMPdfLite?.build) throw new Error('Générateur PDF indisponible.');
+        const checks = [
+          'Plaquettes avant gauche','Plaquettes avant droite','Plaquettes arrière gauche','Plaquettes arrière droite',
+          'Disque avant gauche','Disque avant droit','Disque arrière gauche','Disque arrière droit',
+          'Liquide de frein','Flexibles de frein','Pneu avant gauche','Pneu avant droit','Pneu arrière gauche','Pneu arrière droit',
+          'Pressions pneumatiques','Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets',
+          'Géométrie / comportement','État visible du véhicule','Photos avant / après','Observations générales'
+        ];
+        const lines = [
+          { text:'EDM28', bold:true, size:22 },
+          { text:'ORDRE DE RÉPARATION - MODÈLE VIERGE', bold:true, size:16, gap:6 },
+          { text:'Document de préparation à compléter avant intervention.', size:9, gap:4 },
+          { text:'CLIENT', bold:true, size:11, gap:14 },
+          'Nom / Prénom : ____________________________________________',
+          'Téléphone : ______________________________________________',
+          'Email : ___________________________________________________',
+          { text:'VÉHICULE', bold:true, size:11, gap:12 },
+          'Immatriculation : __________________________________________',
+          'Marque / Modèle : __________________________________________',
+          'Kilométrage : ______________________________________________',
+          { text:'TRAVAUX AUTORISÉS / DEMANDE CLIENT', bold:true, size:11, gap:12 },
+          '____________________________________________________________',
+          '____________________________________________________________',
+          '____________________________________________________________',
+          { text:'POINTS DE CONTRÔLE EDM28', bold:true, size:11, gap:14 },
+          { text:'À partir de 100 € TTC facturés chez EDM28 : contrôle complet de cette liste.', bold:true, size:9, gap:4 },
+          ...checks.map((label) => '[ ] ' + label),
+          { text:'OBSERVATIONS / MESURES', bold:true, size:11, gap:14 },
+          '____________________________________________________________',
+          '____________________________________________________________',
+          '____________________________________________________________',
+          { text:'VALIDATION', bold:true, size:11, gap:14 },
+          'Date : _______________________   Technicien : _______________________',
+          'Nom client : _____________________________________________________',
+          'Signature client : __________________   Visa technicien : _____________'
+        ];
+        const blob = window.EDMPdfLite.build(lines);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'ordre-reparation-vierge-edm28.pdf';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) {
+        message('requestSubmitStatus', error.message || 'Téléchargement impossible.', 'errorbox');
+      }
+    });
 
     byId('requestSubmit')?.addEventListener('click',submit);
     await renderAccount();
