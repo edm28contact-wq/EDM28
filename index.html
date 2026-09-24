@@ -673,38 +673,16 @@
           </div>
 
           <div class="stepper" id="stepper">
-            <div class="step current" data-step="1">1 · Compte</div>
-            <div class="step" data-step="2">2 · Véhicule</div>
-            <div class="step" data-step="3">3 · Services</div>
-            <div class="step" data-step="4">4 · Envoi</div>
-          </div>
-
-          <div class="card" id="clientCard">
-            <div class="section-title">
-              <div>
-                <h3>1. Compte client</h3>
-                <p>Créez votre compte ou connectez-vous avant de pouvoir transmettre une demande.</p>
-              </div>
-            </div>
-            <div class="grid">
-              <label>Nom <input id="lastName" autocomplete="family-name" placeholder="Dupont"></label>
-              <label>Prénom <input id="firstName" autocomplete="given-name" placeholder="Jean"></label>
-              <label>Téléphone <input id="phone" autocomplete="tel" placeholder="06..."></label>
-              <label>Email <input id="email" type="email" autocomplete="email" placeholder="client@email.fr"></label>
-              <label>Mot de passe <input id="password" type="password" placeholder="Minimum 6 caractères"></label>
-            </div>
-            <div class="btn-row">
-              <button class="btn btn-primary" id="btnSignUp" type="button">Créer mon compte</button>
-              <button class="btn btn-secondary" id="btnSignIn" type="button">Se connecter</button>
-              <button class="btn btn-ghost" id="btnSignOut" type="button">Se déconnecter</button>
-            </div>
-            <div id="authStatus" class="small" style="margin-top:10px"></div>
+            <div class="step current" data-step="1">1 · Véhicule</div>
+            <div class="step" data-step="2">2 · Intervention</div>
+            <div class="step" data-step="3">3 · Coordonnées</div>
+            <div class="step" data-step="4">4 · Vérification</div>
           </div>
 
           <div class="card" id="vehicleCard">
             <div class="section-title">
               <div>
-                <h3>2. Véhicule</h3>
+                <h3>1. Véhicule</h3>
                 <p>Renseignez manuellement les informations utiles de votre véhicule pour préparer votre demande.</p>
               </div>
               <span class="pill blue">Saisie manuelle</span>
@@ -735,7 +713,7 @@
             <div class="card">
               <div class="section-title">
                 <div>
-                  <h3>3. Services</h3>
+                  <h3>2. Intervention</h3>
                   <p>Choisissez les prestations souhaitées pour obtenir une estimation plus claire de votre demande.</p>
                 </div>
               </div>
@@ -756,12 +734,34 @@
             <div class="card">
               <div class="section-title">
                 <div>
-                  <h3>4. Paniers de pièces</h3>
+                  <h3>Pièces estimées</h3>
                   <p>Choisissez le niveau de panier qui correspond le mieux à votre budget et à la qualité de pièces souhaitée.</p>
                 </div>
               </div>
               <div class="basket-row" id="basketList"></div>
             </div>
+
+          <div class="card" id="clientCard">
+            <div class="section-title">
+              <div>
+                <h3>3. Coordonnées et compte</h3>
+                <p>Renseignez vos coordonnées puis créez votre compte ou connectez-vous uniquement pour transmettre et suivre la demande.</p>
+              </div>
+            </div>
+            <div class="grid">
+              <label>Nom <input id="lastName" autocomplete="family-name" placeholder="Dupont"></label>
+              <label>Prénom <input id="firstName" autocomplete="given-name" placeholder="Jean"></label>
+              <label>Téléphone <input id="phone" autocomplete="tel" placeholder="06..."></label>
+              <label>Email <input id="email" type="email" autocomplete="email" placeholder="client@email.fr"></label>
+              <label>Mot de passe <input id="password" type="password" placeholder="Minimum 6 caractères"></label>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btnSignUp" type="button">Créer mon compte</button>
+              <button class="btn btn-secondary" id="btnSignIn" type="button">Se connecter</button>
+              <button class="btn btn-ghost" id="btnSignOut" type="button">Se déconnecter</button>
+            </div>
+            <div id="authStatus" class="small" style="margin-top:10px"></div>
+          </div>
 
             <div class="summary-grid">
               <div class="card">
@@ -790,7 +790,7 @@
               </div>
 
               <div class="card">
-                <h3>Estimation</h3>
+                <h3>4. Vérification avant envoi</h3>
                 <div class="summary" id="summaryBox">
                   <div class="summary-line"><span>Main-d’œuvre estimée</span><strong id="laborBefore">0 €</strong></div>
                   <div class="summary-line"><span>Remise combo</span><strong id="comboSaving">0 €</strong></div>
