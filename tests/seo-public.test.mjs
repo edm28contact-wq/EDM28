@@ -60,6 +60,24 @@ test('l’ancien portail client n’est plus servi par les routes publiques', as
   assert.match(client, /edmRequestApp/);
 });
 
+test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et fournit un OR vierge', async () => {
+  const [seo, client, blankOrder] = await Promise.all([
+    read('public-seo.js'),
+    read('public-client.js'),
+    read('api/or-vierge.js')
+  ]);
+
+  assert.match(seo, /nettoie les points de corrosion accessibles/);
+  assert.match(seo, /graisse adaptée/);
+  assert.match(seo, /jamais sur les surfaces de friction/);
+  assert.match(client, /Que faut-il faire \?/);
+  assert.match(client, /Contrôle complet dès 100 € TTC facturés chez EDM28/);
+  assert.match(client, /href="\/api\/or-vierge"/);
+  assert.match(blankOrder, /ORDRE DE REPARATION - MODELE VIERGE/);
+  assert.match(blankOrder, /A partir de 100 EUR TTC factures chez EDM28/);
+  assert.match(blankOrder, /Content-Disposition/);
+});
+
 test('la demande valide les plaques françaises et bloque les prestations qui se recouvrent', async () => {
   const [client, api] = await Promise.all([
     read('public-client.js'),
