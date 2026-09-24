@@ -31,7 +31,7 @@
         if (existing.data?.length) return;
 
         const total = Number(quote.total || 0).toLocaleString('fr-FR', { style:'currency', currency:'EUR' });
-        const body = `Votre devis ${quote.quote_number || 'EDM28'} d’un montant de ${total} est disponible. Ouvrez « Préparer mon RDV » pour consulter le devis, l’accepter ou le refuser. Après acceptation, vous pourrez choisir directement votre créneau de rendez-vous.`;
+        const body = `Votre devis ${quote.quote_number || 'EDM28'} d’un montant de ${total} est disponible. Ouvrez « Préparer mon RDV » pour consulter le devis, l’accepter ou le refuser. Après acceptation, EDM28 prépare les pièces nécessaires. Si un débours est proposé, validez le mandat et la provision. Le rendez-vous devient disponible lorsque le dossier est prêt et les pièces requises reçues.`;
         const sent = await admin.db.rpc('admin_send_message', {
           p_user_id: quote.user_id,
           p_body: body,
