@@ -32,6 +32,7 @@ test('Vercel expose les routes SEO publiques, sitemap et robots', async () => {
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
   assert.equal(routes.get('/sitemap.xml'), '/api/app?seo=sitemap');
   assert.equal(routes.get('/robots.txt'), '/api/app?seo=robots');
+  assert.equal(routes.get('/or-vierge.pdf'), '/api/app?seo=blank-order');
   for (const path of PUBLIC_PATHS) assert.match(routes.get(path) || '', /^\/api\/app\?seo=page&slug=/, path);
   assert.equal(routes.get('/prestations'), '/');
   assert.equal(routes.get('/'), '/api/app?seo=page&slug=accueil');
@@ -64,7 +65,7 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   const [seo, client, blankOrder] = await Promise.all([
     read('public-seo.js'),
     read('public-client.js'),
-    read('api/or-vierge.js')
+    read('api/app.js')
   ]);
 
   assert.match(seo, /nettoie les points de corrosion accessibles/);
