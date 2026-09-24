@@ -180,6 +180,7 @@
         const { error: bookingError } = await supabaseClient.rpc('book_quote_appointment', { p_quote_id:q.id, p_starts_at:selectedSlot });
         if (bookingError) throw bookingError;
         selectedSlot = '';
+        window.dispatchEvent(new CustomEvent('edm:appointment-updated'));
         await load();
       } catch (error) { status(error.message || 'Réservation impossible.', true); }
     };
