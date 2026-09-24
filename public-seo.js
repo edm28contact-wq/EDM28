@@ -5,7 +5,6 @@ const PUBLIC_EMAIL = 'contact@edm28.fr';
 const NAV_ITEMS = [
   ['/', 'Accueil'],
   ['/mes-interventions', 'Mes interventions'],
-  ['/prestations', 'Prestations'],
   ['/fonctionnement', 'Fonctionnement'],
   ['/transparence', 'Conseils & FAQ'],
   ['/a-propos', 'À propos'],
@@ -15,19 +14,19 @@ const NAV_ITEMS = [
 const PAGES = {
   accueil: {
     path: '/',
-    title: 'EDM28 | Garage freinage et liaison au sol',
-    description: 'EDM28 : prestations de freinage et liaison au sol, demande d’intervention en ligne, suivi client et conseils mécaniques clairs.',
-    h1: 'EDM28 — mécanique claire, spécialisée et suivie',
-    lede: 'Freinage, liaison au sol et suivi client dans une seule interface. Préparez votre demande, suivez vos interventions et retrouvez vos documents sans changer de site.',
-    serviceType: 'Garage automobile spécialisé freinage et liaison au sol',
+    title: 'Prestations freinage et liaison au sol | EDM28',
+    description: 'Découvrez les prestations EDM28 en freinage et liaison au sol, avec demande d’intervention, devis avant travaux, suivi client et tarifs publics.',
+    h1: 'Prestations EDM28',
+    lede: 'Le catalogue EDM28 se concentre sur le freinage et des interventions ciblées de liaison au sol. Retrouvez ici les prestations, les tarifs et l’accès direct à votre demande d’intervention.',
+    serviceType: 'Prestations automobiles EDM28',
     breadcrumbs: [['/', 'Accueil']],
     sections: [
-      ['Un seul parcours', 'Le même site sert à comprendre les prestations, préparer une demande et suivre ensuite le dossier du véhicule.'],
-      ['Spécialisation claire', 'EDM28 concentre son activité sur le freinage et des interventions ciblées de liaison au sol afin de garder un périmètre technique lisible.'],
-      ['Suivi client', 'Rendez-vous, devis, pièces, ordre de réparation, contrôle et facture restent rattachés au dossier dans Mes interventions.']
+      ['Freinage', 'Plaquettes avant ou arrière, plaquettes avant et arrière, disques et plaquettes, freinage complet et purge du liquide de frein font partie des prestations publiques actuellement configurées.'],
+      ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des prestations publiées.'],
+      ['Un périmètre clair', 'Chaque demande est rapprochée d’une prestation réelle. Si le véhicule nécessite autre chose, la proposition doit être révisée avant travaux.']
     ],
-    links: [['/prestations', 'Voir les prestations'], ['/demande', 'Faire une demande'], ['/mes-interventions', 'Mes interventions'], ['/transparence', 'Conseils & FAQ']],
-    faq: []
+    links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs et catalogue'], ['/transparence', 'Conseils & FAQ'], ['/demande', 'Faire une demande']],
+    faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 se positionne principalement sur le freinage et des prestations ciblées de liaison au sol. La demande doit rester compatible avec le périmètre réel du garage.']]
   },
   demande: {
     path: '/demande',
@@ -38,7 +37,7 @@ const PAGES = {
     serviceType: 'Demande d’intervention automobile EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/demande', 'Faire une demande']],
     sections: [],
-    links: [['/prestations', 'Voir les prestations'], ['/transparence', 'Conseils & FAQ'], ['/mes-interventions', 'Mes interventions']],
+    links: [['/', 'Voir les prestations'], ['/transparence', 'Conseils & FAQ'], ['/mes-interventions', 'Mes interventions']],
     faq: []
   },
   'mes-interventions': {
@@ -49,7 +48,7 @@ const PAGES = {
     lede: 'Tous vos véhicules et tous leurs dossiers au même endroit, dans la même interface EDM28.',
     breadcrumbs: [['/', 'Accueil'], ['/mes-interventions', 'Mes interventions']],
     sections: [],
-    links: [['/demande', 'Faire une nouvelle demande'], ['/prestations', 'Prestations'], ['/transparence', 'Conseils & FAQ']],
+    links: [['/demande', 'Faire une nouvelle demande'], ['/', 'Prestations'], ['/transparence', 'Conseils & FAQ']],
     faq: []
   },
   freinage: {
@@ -143,7 +142,7 @@ const PAGES = {
       ['Interventions ciblées', 'Le catalogue public EDM28 comprend notamment les triangles de suspension, les biellettes ou rotules de direction et les biellettes de barre stabilisatrice.'],
       ['Validation avant travaux', 'Le besoin constaté est traduit en prestation et en devis. Les travaux supplémentaires ne sont pas ajoutés sans validation du client.']
     ],
-    links: [['/liaison-au-sol/triangles', 'Triangles de suspension'], ['/liaison-au-sol/direction', 'Direction et biellettes'], ['/prestations', 'Toutes les prestations'], ['/fonctionnement', 'Fonctionnement EDM28']],
+    links: [['/liaison-au-sol/triangles', 'Triangles de suspension'], ['/liaison-au-sol/direction', 'Direction et biellettes'], ['/', 'Toutes les prestations'], ['/fonctionnement', 'Fonctionnement EDM28']],
     faq: [
       ['Un claquement indique-t-il forcément un triangle usé ?', 'Non. Plusieurs éléments du train roulant peuvent produire un bruit. Il faut contrôler le véhicule pour identifier la cause.'],
       ['Une imprécision de direction suffit-elle à remplacer une rotule ?', 'Non. Le symptôme motive un contrôle ; le remplacement dépend du jeu ou du défaut effectivement constaté.']
@@ -162,7 +161,7 @@ const PAGES = {
       ['Ce qui est proposé', 'La prestation publiée EDM28 vise la paire de triangles de suspension. Le devis détaille la prestation applicable au véhicule avant toute intervention.'],
       ['Après le contrôle', 'Si le défaut constaté concerne un autre élément du train roulant, EDM28 doit adapter la proposition au diagnostic plutôt que remplacer une pièce par défaut.']
     ],
-    links: [['/liaison-au-sol/direction', 'Direction et biellettes'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/prestations', 'Prestations'], ['/demande', 'Faire une demande']],
+    links: [['/liaison-au-sol/direction', 'Direction et biellettes'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/', 'Prestations'], ['/demande', 'Faire une demande']],
     faq: [['Pourquoi un train avant peut-il claquer ?', 'Plusieurs articulations et liaisons peuvent être concernées. Le bruit doit être localisé avant de définir la réparation.']]
   },
   'liaison-au-sol/direction': {
@@ -181,22 +180,6 @@ const PAGES = {
     links: [['/liaison-au-sol/triangles', 'Triangles de suspension'], ['/liaison-au-sol', 'Retour liaison au sol'], ['/tarifs', 'Voir les tarifs'], ['/demande', 'Faire une demande']],
     faq: [['Une voiture qui tire d’un côté vient-elle forcément de la direction ?', 'Non. Le freinage, les pneumatiques, la géométrie ou d’autres éléments peuvent intervenir. Le contrôle doit identifier la cause réelle.']]
   },
-  prestations: {
-    path: '/prestations',
-    title: 'Prestations freinage et liaison au sol | EDM28',
-    description: 'Découvrez les prestations EDM28 en freinage et liaison au sol, avec devis avant intervention, validation client et historique des documents.',
-    h1: 'Prestations EDM28',
-    lede: 'Le catalogue EDM28 se concentre sur le freinage et des interventions ciblées de liaison au sol. Les prestations réservables et leurs tarifs sont pilotés par le catalogue public du garage.',
-    serviceType: 'Prestations automobiles EDM28',
-    breadcrumbs: [['/', 'Accueil'], ['/prestations', 'Prestations']],
-    sections: [
-      ['Freinage', 'Plaquettes avant ou arrière, plaquettes avant et arrière, disques et plaquettes, freinage complet et purge du liquide de frein font partie des prestations publiques actuellement configurées.'],
-      ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des prestations publiées.'],
-      ['Un périmètre clair', 'Chaque demande est rapprochée d’une prestation réelle. Si le véhicule nécessite autre chose, la proposition doit être révisée avant travaux.']
-    ],
-    links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs et catalogue'], ['/transparence', 'Conseils & FAQ']],
-    faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 se positionne principalement sur le freinage et des prestations ciblées de liaison au sol. La demande doit rester compatible avec le périmètre réel du garage.']]
-  },
   tarifs: {
     path: '/tarifs',
     title: 'Tarifs des prestations | EDM28',
@@ -209,7 +192,7 @@ const PAGES = {
       ['Comment lire les tarifs ?', 'Le prix affiché correspond à la valeur publique configurée pour la prestation. Les pièces, débours ou éléments complémentaires sont précisés au devis lorsqu’ils sont nécessaires.'],
       ['Le devis reste la référence', 'Le véhicule et la demande réelle déterminent le périmètre final. EDM28 fait valider le devis avant intervention et n’ajoute pas de travaux supplémentaires sans validation.']
     ],
-    links: [['/prestations', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/demande', 'Faire une demande']],
+    links: [['/', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/demande', 'Faire une demande']],
     faq: [['Les prix de cette page sont-ils saisis manuellement ?', 'Non. La page charge les prestations publiées depuis la table publique site_services afin d’éviter une copie divergente des tarifs.']]
   },
   fonctionnement: {
@@ -226,7 +209,7 @@ const PAGES = {
       ['3. Intervention → clôture → facture', 'L’intervention est réalisée dans le périmètre validé. Le dossier est ensuite clôturé et la facture correspondante est produite.'],
       ['4. Encaissement → historique client', 'L’encaissement est enregistré puis les éléments du dossier et les documents utiles restent accessibles dans l’historique client selon le fonctionnement de l’application.']
     ],
-    links: [['/transparence', 'Conseils & FAQ'], ['/prestations', 'Prestations et tarifs'], ['/?page=history', 'Mes interventions'], ['/demande', 'Faire une demande']],
+    links: [['/transparence', 'Conseils & FAQ'], ['/', 'Prestations et tarifs'], ['/?page=history', 'Mes interventions'], ['/demande', 'Faire une demande']],
     faq: [['Comment fonctionne une intervention chez EDM28 ?', 'Demande, devis, acceptation, débours si nécessaire, préparation atelier, intervention, clôture, facture, encaissement puis historique client.']]
   },
   transparence: {
@@ -249,7 +232,7 @@ const PAGES = {
       ['Pourquoi un train avant peut claquer ?', 'Une explication simple des triangles, rotules et biellettes sans transformer un symptôme en diagnostic automatique.'],
       ['Comment EDM28 valide des travaux supplémentaires ?', 'Le principe de transparence : contrôle, explication, validation client puis seulement intervention.']
     ],
-    links: [['/freinage', 'Tout sur le freinage'], ['/liaison-au-sol', 'Comprendre la liaison au sol'], ['/prestations', 'Voir les prestations'], ['/fonctionnement', 'Parcours EDM28']],
+    links: [['/freinage', 'Tout sur le freinage'], ['/liaison-au-sol', 'Comprendre la liaison au sol'], ['/', 'Voir les prestations'], ['/fonctionnement', 'Parcours EDM28']],
     faq: [
       ['Comment savoir si mes plaquettes sont usées ?', 'Un bruit, un voyant ou une évolution du freinage peuvent alerter, mais le contrôle du véhicule confirme l’usure réelle.'],
       ['Faut-il changer disques et plaquettes ensemble ?', 'Pas systématiquement. Leur état doit être vérifié ensemble avant de décider du remplacement.'],
@@ -272,7 +255,7 @@ const PAGES = {
       ['Une relation client documentée', 'Le parcours associe demande, devis, validation, intervention, facture et historique afin de réduire les zones floues entre ce qui est demandé, accepté et réalisé.'],
       ['Pas de localisation inventée', 'Les informations locales ne sont publiées que lorsqu’elles sont réellement renseignées dans la configuration EDM28.']
     ],
-    links: [['/prestations', 'Prestations'], ['/transparence', 'Conseils & FAQ'], ['/fonctionnement', 'Fonctionnement'], ['/contact', 'Contact']],
+    links: [['/', 'Prestations'], ['/transparence', 'Conseils & FAQ'], ['/fonctionnement', 'Fonctionnement'], ['/contact', 'Contact']],
     faq: [['Quelle est la spécialité principale d’EDM28 ?', 'Le freinage. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant.']]
   },
   contact: {
@@ -286,7 +269,7 @@ const PAGES = {
       ['Demande de rendez-vous', 'Le parcours en ligne permet de préparer la demande et de la relier aux prestations disponibles avant l’étude du dossier.'],
       ['Email public', 'Vous pouvez écrire à contact@edm28.fr. Aucune adresse postale ni aucun numéro de téléphone n’est publié ici tant que ces informations ne sont pas renseignées dans la configuration publique.']
     ],
-    links: [['/demande', 'Faire une demande'], ['/prestations', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Conseils & FAQ']],
+    links: [['/demande', 'Faire une demande'], ['/', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Conseils & FAQ']],
     faq: [['Comment contacter EDM28 ?', 'L’email public est contact@edm28.fr. Le site permet également de préparer une demande de rendez-vous.']]
   }
 };
@@ -413,7 +396,7 @@ function renderPage(page, origin, services = [], clientConfig = null) {
     const current = index === page.breadcrumbs.length - 1;
     return current ? `<span aria-current="page">${esc(name)}</span>` : `<a href="${esc(path)}">${esc(name)}</a>`;
   }).join('<span aria-hidden="true">›</span>');
-  const sections = page.path === '/prestations'
+  const sections = page.path === '/'
     ? `<div class="service-grid" aria-label="Prestations principales">
         <a class="service-card" href="/freinage">
           <div class="service-visual" aria-hidden="true">
