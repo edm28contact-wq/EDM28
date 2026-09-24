@@ -344,6 +344,104 @@ h3{margin:0}
   font-weight:800
 }
 
+
+.client-panel,.home-client-card,.next-appointment,.vehicle-history-card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:26px;
+  margin-bottom:20px
+}
+.home-client-card,.next-appointment,.account-strip,.vehicle-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px
+}
+.next-appointment{
+  background:linear-gradient(135deg,#101a2b,#18253a);
+  color:#fff;
+  border-color:#18253a
+}
+.next-appointment p{color:#dbe2ec}
+.form-grid{display:grid;gap:14px;margin-top:18px}
+.form-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.form-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.form-grid label,.client-panel>label,.account-box label{
+  display:grid;
+  gap:7px;
+  font-weight:800;
+  font-size:.9rem
+}
+.form-grid input,.client-panel input,.client-panel textarea,.account-box input{
+  width:100%;
+  border:1px solid #d8d2ca;
+  border-radius:14px;
+  padding:12px 13px;
+  background:#fff;
+  color:var(--ink)
+}
+.form-grid input:focus,.client-panel input:focus,.client-panel textarea:focus,.account-box input:focus{
+  outline:2px solid rgba(13,23,40,.12);
+  border-color:#8b96a5
+}
+.action-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+.primary-action,.secondary-action,.text-action{
+  border:0;
+  cursor:pointer;
+  border-radius:999px;
+  min-height:44px;
+  padding:0 17px;
+  font-weight:850
+}
+.primary-action{background:var(--navy);color:#fff}
+.secondary-action{background:#eee9e3;color:#172033}
+.text-action{background:transparent;color:#172033;text-decoration:underline}
+.as-link{display:inline-flex;align-items:center;text-decoration:none}
+.inline-status{margin-top:14px}
+.okbox,.errorbox,.notice{
+  padding:15px 17px;
+  border-radius:14px;
+  line-height:1.5
+}
+.okbox{background:#edf8f2;color:#175c3a}
+.errorbox{background:#fff0ef;color:#9f2f2a}
+.account-box{padding:18px;border:1px solid #e1dbd4;border-radius:18px;background:#faf8f5}
+.signed-box{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;border:1px solid #e1dbd4;border-radius:16px}
+.signed-box p{margin:2px 0 0}
+.service-choice-grid{display:grid;gap:10px;margin-top:18px}
+.service-choice{
+  display:grid!important;
+  grid-template-columns:auto 1fr auto;
+  gap:14px!important;
+  align-items:center;
+  padding:14px 16px;
+  border:1px solid #e1dbd4;
+  border-radius:16px;
+  background:#fff;
+  cursor:pointer
+}
+.service-choice input{width:20px;height:20px}
+.service-choice span{display:grid;gap:3px}
+.service-choice small{color:#667085;font-weight:500}
+.vehicle-history-card{padding:0;overflow:hidden}
+.vehicle-head{padding:22px 24px;background:#faf8f5;border-bottom:1px solid #e3ddd5}
+.vehicle-head h2{margin:10px 0 4px}
+.vehicle-plate{display:inline-flex;padding:5px 9px;border-radius:999px;background:#19263b;color:#fff;font-size:.78rem;font-weight:900}
+.event-count{font-size:.85rem;color:#667085;font-weight:800}
+.timeline-list{display:grid;gap:0}
+.intervention-event{padding:20px 24px;border-bottom:1px solid #ece7e1}
+.intervention-event:last-child{border-bottom:0}
+.event-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.event-type,.event-status{font-size:.76rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+.event-type{color:#8a5a35}
+.event-status{color:#5c6674}
+.event-date{font-size:.9rem;margin:4px 0 10px!important}
+.event-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:12px 0}
+.event-details>div{padding:10px 12px;border-radius:12px;background:#f7f4f0}
+.event-details span{display:block;color:#727b88;font-size:.75rem}
+.event-details strong{display:block;margin-top:3px;font-size:.92rem}
+
 .site-footer{
   border-top:1px solid #d8d2ca;
   padding:30px 0 44px;
@@ -372,6 +470,11 @@ h3{margin:0}
   .service-body{padding:19px}
   .service-top h2{font-size:1.45rem}
   .links{grid-template-columns:1fr;margin:22px 0}
+  .form-grid.two,.form-grid.three{grid-template-columns:1fr}
+  .home-client-card,.next-appointment,.account-strip,.vehicle-head{align-items:flex-start;flex-direction:column}
+  .service-choice{grid-template-columns:auto 1fr}
+  .service-choice>b{grid-column:2}
+  .signed-box{align-items:flex-start;flex-direction:column}
 }
 @media(min-width:821px){
   .mobile-drawer,.menu-backdrop{display:none!important}
