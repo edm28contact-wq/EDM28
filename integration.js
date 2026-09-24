@@ -89,7 +89,7 @@
       renderServices();
       renderBaskets();
       updateSummary();
-      updateStepper(3);
+      updateStepper(2);
       document.getElementById('servicesArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
       toast(error.message || 'Impossible d’ouvrir les prestations.');
