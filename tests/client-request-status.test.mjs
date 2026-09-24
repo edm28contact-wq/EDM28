@@ -26,8 +26,9 @@ test('client request status exposes the complete EDM28 business journey', async 
     'Terminé'
   ]) assert.ok(status.includes(label), `étape absente : ${label}`);
 
-  assert.match(router, /'request-status'/);
-  assert.match(router, /renderRequestStatus/);
+  assert.doesNotMatch(router, /'request-status'/);
+  assert.match(status, /data-request-status-summary/);
+  assert.match(status, /document\.getElementById\('historyList'\)/);
   assert.match(app, /client-request-status-history\.js\?v=1/);
 });
 
