@@ -452,29 +452,33 @@ h3{margin:0}
 .email{font-weight:800}
 
 @media(max-width:820px){
-  .wrap{width:min(100% - 28px,720px)}
-  .header-row{min-height:70px}
+  .wrap{width:min(100% - 20px,720px)}
+  .header-row{min-height:64px}
+  .brand{font-size:.94rem}
   .desktop-nav{display:none}
-  .menu-toggle{display:flex}
-  .hero{padding:44px 0 40px}
-  .crumbs{margin-bottom:18px}
-  h1{font-size:clamp(2.45rem,11vw,3.5rem);max-width:100%}
-  .lead{font-size:1rem;line-height:1.7;margin-top:18px}
-  .cta{margin-top:20px}
-  .content{padding:28px 0 58px}
-  .content section{padding:22px;border-radius:20px}
-  .service-grid{grid-template-columns:1fr;gap:14px}
+  .menu-toggle{display:flex;width:42px;height:42px;border-radius:12px}
+  .hero{padding:28px 0 26px}
+  .crumbs{margin-bottom:12px;font-size:.82rem}
+  h1{font-size:clamp(2rem,10vw,2.75rem);line-height:1;max-width:100%}
+  .lead{font-size:.96rem;line-height:1.55;margin-top:14px}
+  .cta{display:flex;width:100%;justify-content:center;margin-top:16px;padding:13px 18px}
+  .content{padding:18px 0 42px}
+  .content section{padding:18px;border-radius:18px;margin-bottom:14px}
+  .service-grid{grid-template-columns:1fr;gap:12px;margin-bottom:14px}
   .shorts-grid{grid-template-columns:1fr}
-  .service-card{border-radius:22px}
-  .service-visual{height:190px}
-  .service-body{padding:19px}
-  .service-top h2{font-size:1.45rem}
-  .links{grid-template-columns:1fr;margin:22px 0}
+  .service-card{border-radius:18px}
+  .service-visual{height:150px}
+  .service-body{padding:16px}
+  .service-top h2{font-size:1.3rem}
+  .service-body p{font-size:.92rem;line-height:1.5}
+  .links{grid-template-columns:1fr;margin:16px 0;gap:10px}
+  .link-card{padding:15px 16px;border-radius:16px}
   .form-grid.two,.form-grid.three{grid-template-columns:1fr}
   .home-client-card,.next-appointment,.account-strip,.vehicle-head{align-items:flex-start;flex-direction:column}
   .service-choice{grid-template-columns:auto 1fr}
   .service-choice>b{grid-column:2}
   .signed-box{align-items:flex-start;flex-direction:column}
+  .client-panel,.home-client-card,.next-appointment,.vehicle-history-card{border-radius:18px;padding:18px}
 }
 @media(min-width:821px){
   .mobile-drawer,.menu-backdrop{display:none!important}
