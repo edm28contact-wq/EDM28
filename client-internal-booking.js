@@ -14,7 +14,7 @@
     return data?.session?.user || null;
   }
 
-  function section() { return document.getElementById('booking'); }
+  function section() { return document.getElementById('requestBookingPanel'); }
   function content() { return document.getElementById('prepareRdvContent'); }
   function status(message, error = false) {
     const host = document.getElementById('prepareRdvStatus');
@@ -23,11 +23,10 @@
   }
 
   function installShell() {
-    document.querySelectorAll('[data-page="booking"]').forEach((button) => { button.innerHTML = '📅 Préparer mon RDV'; });
     const host = section();
     if (!host) return;
     host.dataset.internalBooking = 'true';
-    host.innerHTML = `<div class="panel"><div class="section-title"><div><h2>Préparer mon RDV</h2><p>Le rendez-vous devient disponible après validation du devis et réception des pièces nécessaires.</p></div><span class="pill blue">Parcours client</span></div><div id="prepareRdvStatus"></div><div id="prepareRdvContent"><div class="notice">Chargement de votre dossier…</div></div></div>`;
+    host.innerHTML = `<div class="panel"><div class="section-title"><div><h2>Rendez-vous de cette intervention</h2><p>Après l’envoi de la demande, ce bloc suit le devis et les pièces. Le choix du créneau s’active automatiquement quand le dossier est prêt.</p></div><span class="pill blue">Même dossier</span></div><div id="prepareRdvStatus"></div><div id="prepareRdvContent"><div class="notice">Envoyez votre demande pour démarrer le suivi de cette intervention.</div></div></div>`;
   }
 
   async function openPdf(path) {
@@ -98,7 +97,7 @@
   function waitingView(state) {
     const vehicle = state.request?.vehicles;
     const vehicleText = vehicle ? [vehicle.plate, vehicle.brand, vehicle.model].filter(Boolean).join(' · ') : '';
-    return `<div class="card"><span class="pill orange">En attente du devis</span><h3 style="margin-top:12px">Votre demande est bien enregistrée</h3><p>EDM28 étudie votre demande. Dès que le devis est publié, il apparaîtra ici et dans votre messagerie.</p>${vehicleText ? `<p class="small">${esc(vehicleText)}</p>` : ''}</div>`;
+    return `<div class="card"><span class="pill orange">En attente du devis</span><h3 style="margin-top:12px">Votre demande est bien enregistrée</h3><p>EDM28 étudie votre demande. Dès que le devis est publié, il apparaîtra ici dans le même dossier.</p>${vehicleText ? `<p class="small">${esc(vehicleText)}</p>` : ''}</div>`;
   }
 
   function refusedView() {
@@ -261,10 +260,17 @@
   function install() {
     installShell();
     document.addEventListener('click', (event) => {
-      if (event.target.closest?.('[data-page="booking"]')) setTimeout(() => load().catch((error) => status(error.message || 'Dossier indisponible.', true)), 60);
+      if (event.target.closest?.('[data-page="appointment"],[data-jump="appointment"]')) {
+        setTimeout(() => load().catch((error) => status(error.message || 'Dossier indisponible.', true)), 80);
+      }
+    });
+    window.addEventListener('edm:request-submitted', () => {
+      setTimeout(() => load().catch((error) => status(error.message || 'Dossier indisponible.', true)), 120);
     });
     supabaseClient?.auth?.onAuthStateChange?.(() => {
-      if (section()?.classList.contains('active')) setTimeout(() => load().catch(() => {}), 80);
+      if (document.getElementById('appointment')?.classList.contains('active')) {
+        setTimeout(() => load().catch(() => {}), 100);
+      }
     });
   }
 
