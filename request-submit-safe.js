@@ -1,5 +1,7 @@
 (() => {
   const STORAGE_KEY = 'edm28_pending_request_v2';
+  const GUEST_STORAGE_KEY = 'edm28_guest_request_v1';
+  let guestRestored = false;
   const waitForApp = async () => {
     for (let i = 0; i < 120; i += 1) {
       if (typeof supabaseClient !== 'undefined' && typeof calculateTotals === 'function' && typeof getVehicle === 'function' && document.getElementById('btnSubmit')) return true;
@@ -9,8 +11,60 @@
   };
   const readPending = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (_) { return null; } };
   const writePending = (value) => value ? localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) : localStorage.removeItem(STORAGE_KEY);
+  const readGuest = () => { try { return JSON.parse(localStorage.getItem(GUEST_STORAGE_KEY) || 'null'); } catch (_) { return null; } };
+  const writeGuest = (value) => value ? localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(value)) : localStorage.removeItem(GUEST_STORAGE_KEY);
   const intOrNull = (value) => { const number = Number.parseInt(String(value || '').replace(/\D/g, ''), 10); return Number.isFinite(number) ? number : null; };
   const field = (id) => document.getElementById(id)?.value?.trim() || '';
+
+  function captureGuestPreparation(totals) {
+    writeGuest({
+      vehicle: getVehicle(),
+      serviceIds: (totals?.selected || []).map((service) => service.id).filter(Boolean),
+      selectedBasket: typeof selectedBasket === 'string' ? selectedBasket : null,
+      j7Accepted: Boolean(document.getElementById('j7Accepted')?.checked),
+      refuseControl: Boolean(document.getElementById('refuseControl')?.checked),
+      notes: field('clientNotes'),
+      savedAt: Date.now()
+    });
+  }
+
+  function restoreGuestPreparation() {
+    const draft = readGuest();
+    if (!draft || guestRestored) return false;
+    guestRestored = true;
+
+    const vehicle = draft.vehicle || {};
+    const values = {
+      plate: vehicle.plate || '',
+      mileage: vehicle.mileage || '',
+      brand: vehicle.brand || '',
+      model: vehicle.model || '',
+      year: vehicle.year || '',
+      energy: vehicle.energy || '',
+      clientNotes: draft.notes || ''
+    };
+    Object.entries(values).forEach(([id, value]) => {
+      const input = document.getElementById(id);
+      if (input && value !== '') input.value = value;
+    });
+
+    if (draft.selectedBasket && typeof selectedBasket !== 'undefined') selectedBasket = draft.selectedBasket;
+    if (document.getElementById('j7Accepted')) document.getElementById('j7Accepted').checked = Boolean(draft.j7Accepted);
+    if (document.getElementById('refuseControl')) document.getElementById('refuseControl').checked = Boolean(draft.refuseControl);
+
+    if (typeof accessServices === 'function') accessServices();
+    const selected = new Set(Array.isArray(draft.serviceIds) ? draft.serviceIds : []);
+    document.querySelectorAll('.service-check').forEach((input) => { input.checked = selected.has(input.value); });
+    if (typeof getSelectedServiceIds === 'function') getSelectedServiceIds();
+    if (typeof renderServices === 'function') renderServices();
+    if (typeof renderBaskets === 'function') renderBaskets();
+    if (typeof updateSummary === 'function') updateSummary();
+
+    document.getElementById('submitStatus').innerHTML =
+      '<div class="notice"><strong>Votre demande a été conservée.</strong><br>Vérifiez le résumé puis cliquez sur « Envoyer ma demande pour étude ».</div>';
+    document.getElementById('servicesArea')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
 
   async function currentSession() {
     const { data, error } = await supabaseClient.auth.getSession();
@@ -119,6 +173,7 @@
         throw error;
       }
       writePending(null);
+      writeGuest(null);
       updateStepper(4);
       if (result.emailSent === false) {
         const warning = result.warning || 'Votre demande est enregistrée dans le back-office. La notification email est momentanément indisponible.';
@@ -135,6 +190,12 @@
         void window.renderRequestHistory().catch((error) => console.warn('EDM request history refresh unavailable', error));
       }
     } catch (error) {
+      if (String(error?.message || '') === 'Connexion requise.') {
+        captureGuestPreparation(totals);
+        status.innerHTML = '<div class="notice"><strong>Votre demande est prête et conservée.</strong><br>Créez votre compte ou connectez-vous pour pouvoir la transmettre à EDM28. Vous ne perdrez pas votre véhicule ni vos prestations.</div>';
+        document.getElementById('clientCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
       const prefix = error.saved ? 'Votre demande est enregistrée. ' : '';
       status.innerHTML = `<div class="errorbox"><strong>Envoi non terminé.</strong><br>${escapeHtml(prefix + (error.message || 'Réessayez plus tard.'))}</div>`;
     } finally {
@@ -149,7 +210,12 @@
     const button = oldButton.cloneNode(true);
     oldButton.replaceWith(button);
     button.addEventListener('click', submitRequest);
-    supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') writePending(null); });
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') writePending(null);
+      if (session?.user && readGuest()) window.setTimeout(() => restoreGuestPreparation(), 0);
+    });
+    const { data } = await supabaseClient.auth.getSession();
+    if (data?.session?.user && readGuest()) restoreGuestPreparation();
   }
 
   install().catch((error) => console.error('EDM safe submit:', error));
