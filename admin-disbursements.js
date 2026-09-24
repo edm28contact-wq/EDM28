@@ -7,10 +7,10 @@
   const date = (value) => value ? new Date(value).toLocaleDateString('fr-FR') : '—';
   const statusLabels = {
     awaiting_mandate: 'Mandat client à valider',
-    authorized: 'Autorisé · achat possible',
+    authorized: 'Mandat accepté · provision',
     awaiting_reapproval: 'Nouveau plafond à valider',
     client_direct: 'Achat direct client',
-    eligible: 'Justifié · à rembourser',
+    eligible: 'Achat justifié · régularisation',
     reimbursed: 'Remboursé',
     cancelled: 'Annulé',
     rejected: 'Refusé',
@@ -42,8 +42,8 @@
       section.id = 'disbursements';
       section.className = 'page';
       section.innerHTML = `<div class="card">
-        <div class="top"><div><h2>Débours client</h2><p class="muted">Mandat préalable, achat au nom et pour le compte du client, justificatif et remboursement exact sans marge.</p></div><button id="disbursementRefresh" class="btn ghost" type="button">Actualiser</button></div>
-        <div class="status" style="margin-top:12px"><strong>Fonctionnement :</strong> 1) proposer un plafond sur une ligne de pièce d’un devis publié ; 2) le client accepte le devis puis choisit achat direct ou mandat EDM ; 3) si EDM est mandaté, ne pas acheter au-delà du plafond ; 4) enregistrer le montant réel et le justificatif au nom du client ; 5) le remboursement exact est séparé des prestations EDM.</div>
+        <div class="top"><div><h2>Débours client</h2><p class="muted">Mandat préalable, provision reçue avant commande, achat au nom et pour le compte du client, justificatif et régularisation exacte sans marge.</p></div><button id="disbursementRefresh" class="btn ghost" type="button">Actualiser</button></div>
+        <div class="status" style="margin-top:12px"><strong>Fonctionnement :</strong> 1) préparer les pièces ; 2) le client accepte le mandat ; 3) enregistrer la provision reçue ; 4) seulement ensuite commander ; 5) suivre expédition et réception ; 6) enregistrer le justificatif réel puis rembourser l’écart éventuel. Les débours restent séparés du chiffre d’affaires EDM28.</div>
         <div id="disbursementKpis" class="grid" style="margin-top:14px"></div>
         <div id="disbursementStatus" class="status hidden"></div>
       </div>
@@ -59,7 +59,7 @@
   function mandateText({ quote, item, limit, vehicle }) {
     const part = item.designation || item.description || 'pièce automobile';
     const plate = vehicle?.plate ? ` pour le véhicule ${vehicle.plate}` : '';
-    return `Je mandate EDM pour acheter ${part}${plate}, en mon nom et pour mon compte, dans la limite de ${A().money(limit)}. Je rembourserai uniquement le montant réellement avancé figurant sur le justificatif fournisseur établi à mon nom. Aucune marge ne sera appliquée sur ce débours. Devis ${quote.quote_number || quote.id}.`;
+    return `Je mandate EDM pour acheter ${part}${plate}, en mon nom et pour mon compte, dans la limite de ${A().money(limit)}. Je verserai la provision demandée avant toute commande. Le montant sera ensuite régularisé sur le justificatif fournisseur établi à mon nom, sans marge. Devis ${quote.quote_number || quote.id}.`;
   }
 
   async function createProposal(quote, item, root) {
@@ -86,7 +86,7 @@
       status: 'awaiting_mandate'
     }).select('id').single();
     if (inserted.error) throw inserted.error;
-    const note = `Proposition de débours : plafond ${A().money(limit)}, remboursement du montant réel sur justificatif, sans marge.`;
+    const note = `Proposition de débours : provision maximale ${A().money(limit)} avant commande, régularisation du montant réel sur justificatif, sans marge.`;
     const currentDescription = String(item.description || '').trim();
     const patch = {
       purchase_mode: 'disbursement',
@@ -107,6 +107,49 @@
     if (updated.error || !updated.data?.length) throw updated.error || new Error('Le débours a changé de statut.');
   }
 
+  async function recordProvision(row, root) {
+    const required = n(row.provision_required || row.authorized_limit);
+    const received = n(row.provision_received);
+    const missing = Math.max(0, required - received);
+    const amount = n(root.querySelector('[data-provision-amount]')?.value);
+    const paymentMethod = root.querySelector('[data-provision-method]')?.value || 'transfer';
+    const reference = root.querySelector('[data-provision-reference]')?.value.trim() || null;
+    if (!(amount > 0)) throw new Error('Montant de provision positif obligatoire.');
+    if (missing > 0 && amount > missing + 0.009) throw new Error('Le montant saisi dépasse la provision restant à recevoir.');
+    const type = received > 0 ? 'complement' : 'provision';
+    const result = await A().db.rpc('admin_record_disbursement_transaction', {
+      p_disbursement_id: row.id,
+      p_transaction_type: type,
+      p_amount: amount,
+      p_payment_method: paymentMethod,
+      p_reference: reference
+    });
+    if (result.error) throw result.error;
+  }
+
+  async function recordRefund(row, root) {
+    const amount = n(root.querySelector('[data-refund-amount]')?.value);
+    const paymentMethod = root.querySelector('[data-refund-method]')?.value || 'transfer';
+    const reference = root.querySelector('[data-refund-reference]')?.value.trim() || null;
+    if (!(amount > 0)) throw new Error('Montant de remboursement positif obligatoire.');
+    const result = await A().db.rpc('admin_record_disbursement_transaction', {
+      p_disbursement_id: row.id,
+      p_transaction_type: 'refund',
+      p_amount: amount,
+      p_payment_method: paymentMethod,
+      p_reference: reference
+    });
+    if (result.error) throw result.error;
+  }
+
+  async function setPartsStatus(row, partsStatus) {
+    const result = await A().db.rpc('admin_set_disbursement_parts_status', {
+      p_disbursement_id: row.id,
+      p_parts_status: partsStatus
+    });
+    if (result.error) throw result.error;
+  }
+
   async function recordPurchase(row, root) {
     const supplier = root.querySelector('[data-purchase-supplier]').value.trim();
     const invoiceNumber = root.querySelector('[data-purchase-invoice]').value.trim() || null;
@@ -115,6 +158,9 @@
     const paymentMethod = root.querySelector('[data-purchase-method]').value;
     const customerNameConfirmed = root.querySelector('[data-customer-name]').checked;
     const file = root.querySelector('[data-purchase-proof]').files?.[0];
+    const requiredProvision = n(row.provision_required || row.authorized_limit);
+    if (n(row.provision_received) + 0.009 < requiredProvision) throw new Error('Provision client insuffisante : achat interdit.');
+    if (!['ordered', 'shipped', 'received'].includes(row.parts_status)) throw new Error('Marquez d’abord les pièces comme commandées.');
     if (!supplier) throw new Error('Fournisseur obligatoire.');
     if (!(amount > 0)) throw new Error('Montant réel positif obligatoire.');
     if (amount > n(row.authorized_limit)) throw new Error('Montant supérieur au plafond : demandez une nouvelle autorisation avant tout achat.');
@@ -173,22 +219,43 @@
     const vehicle = row.vehicles || {};
     const label = item.designation || item.description || row.description || 'Pièce';
     const proof = row.proof_path ? `<button class="btn ghost" type="button" data-open-proof="${A().esc(row.proof_path)}">Justificatif</button>` : '';
+    const provisionRequired = n(row.provision_required || row.authorized_limit);
+    const provisionReceived = n(row.provision_received);
+    const provisionMissing = Math.max(0, provisionRequired - provisionReceived);
+    const refundDue = row.amount == null ? 0 : Math.max(0, provisionReceived - n(row.amount) - n(row.refunded_amount));
+    const partsLabels = { not_ordered:'Non commandé', ready_to_order:'Provision reçue · à commander', ordered:'Commandé', shipped:'Expédié', received:'Reçu', cancelled:'Annulé' };
     let action = '';
     if (row.status === 'authorized') {
-      action = `<div class="card" style="margin-top:12px;background:#f8fafc"><h4>Enregistrer l’achat</h4><p class="muted">Ne pas acheter au-delà de ${A().money(row.authorized_limit)}. Si le fournisseur annonce un prix supérieur, demandez d’abord un nouveau plafond.</p><div class="grid2"><label>Fournisseur<input data-purchase-supplier value="${A().esc(row.supplier || '')}"></label><label>N° facture / ticket<input data-purchase-invoice></label><label>Date du justificatif<input data-purchase-date type="date"></label><label>Montant réellement payé<input data-purchase-amount type="number" min="0.01" max="${n(row.authorized_limit)}" step="0.01"></label><label>Mode de paiement<select data-purchase-method><option value="card">Carte</option><option value="transfer">Virement</option><option value="cash">Espèces</option><option value="check">Chèque</option></select></label><label>Justificatif<input data-purchase-proof type="file" accept="application/pdf,image/*"></label></div><label style="display:flex;grid-template-columns:auto 1fr;gap:10px;align-items:start"><input data-customer-name type="checkbox" style="width:20px;min-height:20px"><span>Je confirme que le justificatif fournisseur est établi au nom du client.</span></label><div class="toolbar"><button class="btn primary" type="button" data-record-purchase="${row.id}">Enregistrer l’achat exact</button></div><hr><div class="grid2"><label>Nouveau plafond avant achat<input data-new-limit type="number" min="${n(row.authorized_limit) + 0.01}" step="0.01"></label><div style="align-self:end"><button class="btn ghost" type="button" data-request-limit="${row.id}">Demander une nouvelle autorisation</button></div></div></div>`;
+      if (provisionMissing > 0) {
+        action = `<div class="card" style="margin-top:12px;background:#f8fafc"><h4>Provision client</h4><p class="muted">À recevoir avant toute commande : <strong>${A().money(provisionMissing)}</strong>.</p><div class="grid2"><label>Montant reçu<input data-provision-amount type="number" min="0.01" max="${provisionMissing}" step="0.01" value="${provisionMissing}"></label><label>Mode<select data-provision-method><option value="transfer">Virement</option><option value="card">Carte</option><option value="cash">Espèces</option><option value="check">Chèque</option></select></label><label>Référence<input data-provision-reference placeholder="Virement, reçu, référence..."></label></div><button class="btn primary" type="button" data-record-provision="${row.id}">Enregistrer la provision</button></div>`;
+      } else {
+        const partsAction = row.parts_status === 'ready_to_order'
+          ? `<button class="btn primary" type="button" data-parts-status="ordered" data-disbursement="${row.id}">Marquer commandé</button>`
+          : row.parts_status === 'ordered'
+            ? `<button class="btn ghost" type="button" data-parts-status="shipped" data-disbursement="${row.id}">Marquer expédié</button><button class="btn primary" type="button" data-parts-status="received" data-disbursement="${row.id}">Marquer reçu</button>`
+            : row.parts_status === 'shipped'
+              ? `<button class="btn primary" type="button" data-parts-status="received" data-disbursement="${row.id}">Marquer reçu</button>`
+              : '';
+        const purchaseForm = ['ordered','shipped','received'].includes(row.parts_status)
+          ? `<div class="card" style="margin-top:12px;background:#f8fafc"><h4>Justificatif fournisseur</h4><p class="muted">Montant maximum autorisé : ${A().money(row.authorized_limit)}.</p><div class="grid2"><label>Fournisseur<input data-purchase-supplier value="${A().esc(row.supplier || '')}"></label><label>N° facture / ticket<input data-purchase-invoice></label><label>Date du justificatif<input data-purchase-date type="date"></label><label>Montant réellement payé<input data-purchase-amount type="number" min="0.01" max="${n(row.authorized_limit)}" step="0.01"></label><label>Mode de paiement<select data-purchase-method><option value="card">Carte</option><option value="transfer">Virement</option><option value="cash">Espèces</option><option value="check">Chèque</option></select></label><label>Justificatif<input data-purchase-proof type="file" accept="application/pdf,image/*"></label></div><label style="display:flex;grid-template-columns:auto 1fr;gap:10px;align-items:start"><input data-customer-name type="checkbox" style="width:20px;min-height:20px"><span>Je confirme que le justificatif fournisseur est établi au nom du client.</span></label><div class="toolbar"><button class="btn primary" type="button" data-record-purchase="${row.id}">Enregistrer le montant réel</button></div></div>`
+          : '';
+        action = `<div class="status ok"><strong>Provision complète.</strong> État pièces : ${A().esc(partsLabels[row.parts_status] || row.parts_status)}.</div><div class="toolbar">${partsAction}</div>${purchaseForm}<div class="grid2" style="margin-top:12px"><label>Nouveau plafond avant achat<input data-new-limit type="number" min="${n(row.authorized_limit) + 0.01}" step="0.01"></label><div style="align-self:end"><button class="btn ghost" type="button" data-request-limit="${row.id}">Demander une nouvelle autorisation</button></div></div>`;
+      }
     } else if (row.status === 'awaiting_mandate') {
       action = '<div class="status">Le client doit d’abord accepter le devis puis choisir achat direct ou mandat EDM dans son espace.</div>';
     } else if (row.status === 'awaiting_reapproval') {
       action = `<div class="status">Nouvelle autorisation client en attente : ${A().money(row.requested_limit)}. Aucun achat au-dessus de l’ancien plafond avant validation.</div>`;
     } else if (row.status === 'eligible') {
-      action = `<div class="status ok">Débours conforme : ${A().money(row.amount)} à rembourser exactement. Il sera rattaché à la facture lors de la clôture.</div>`;
+      action = refundDue > 0.009
+        ? `<div class="status"><strong>Remboursement client nécessaire : ${A().money(refundDue)}</strong></div><div class="grid2"><label>Montant remboursé<input data-refund-amount type="number" min="0.01" max="${refundDue}" step="0.01" value="${refundDue}"></label><label>Mode<select data-refund-method><option value="transfer">Virement</option><option value="card">Carte</option><option value="cash">Espèces</option><option value="check">Chèque</option></select></label><label>Référence<input data-refund-reference></label></div><button class="btn primary" type="button" data-record-refund="${row.id}">Enregistrer le remboursement</button>`
+        : `<div class="status ok">Achat régularisé : ${A().money(row.amount)}. Aucun écart financier restant.</div>`;
     } else if (row.status === 'client_direct') {
       action = '<div class="status ok">Le client commande et paie lui-même. Aucun flux financier de pièce ne doit passer par EDM.</div>';
     } else if (row.status === 'reimbursed') {
       action = `<div class="status ok">Remboursement exact enregistré le ${A().esc(date(row.reimbursed_at))}.</div>`;
     }
     const cancelButton = ['awaiting_mandate','authorized','awaiting_reapproval'].includes(row.status) ? `<button class="btn ghost" type="button" data-cancel-disbursement="${row.id}">Annuler la proposition</button>` : '';
-    return `<article class="card" data-disbursement-id="${row.id}" style="margin:12px 0"><div class="top"><div><span class="pill">${A().esc(statusLabels[row.status] || row.status)}</span><h3>${A().esc(label)}</h3><p class="muted">${A().esc(quote.quote_number || 'Devis')} · ${A().esc(row.profiles?.email || 'Client')} · ${A().esc(vehicle.plate || 'Véhicule')}</p></div><strong>${row.amount != null ? A().money(row.amount) : A().money(row.requested_limit || row.authorized_limit || 0)}</strong></div><div class="grid2"><p><strong>Plafond accepté :</strong><br>${row.authorized_limit ? A().money(row.authorized_limit) : '—'}</p><p><strong>Montant réel :</strong><br>${row.amount != null ? A().money(row.amount) : '—'}</p><p><strong>Mandat :</strong><br>${row.mandate_signed ? `Accepté le ${A().esc(date(row.mandate_accepted_at))}` : 'En attente'}</p><p><strong>Marge sur débours :</strong><br>${row.no_margin ? '0 €' : 'NON CONFORME'}</p></div>${action}<div class="toolbar">${proof}${cancelButton}</div></article>`;
+    return `<article class="card" data-disbursement-id="${row.id}" style="margin:12px 0"><div class="top"><div><span class="pill">${A().esc(statusLabels[row.status] || row.status)}</span><h3>${A().esc(label)}</h3><p class="muted">${A().esc(quote.quote_number || 'Devis')} · ${A().esc(row.profiles?.email || 'Client')} · ${A().esc(vehicle.plate || 'Véhicule')}</p></div><strong>${row.amount != null ? A().money(row.amount) : A().money(row.requested_limit || row.authorized_limit || 0)}</strong></div><div class="grid2"><p><strong>Plafond accepté :</strong><br>${row.authorized_limit ? A().money(row.authorized_limit) : '—'}</p><p><strong>Provision reçue :</strong><br>${A().money(provisionReceived)} / ${A().money(provisionRequired)}</p><p><strong>Pièces :</strong><br>${A().esc(partsLabels[row.parts_status] || row.parts_status || '—')}</p><p><strong>Montant réel :</strong><br>${row.amount != null ? A().money(row.amount) : '—'}</p><p><strong>Mandat :</strong><br>${row.mandate_signed ? `Accepté le ${A().esc(date(row.mandate_accepted_at))}` : 'En attente'}</p><p><strong>Marge sur débours :</strong><br>${row.no_margin ? '0 €' : 'NON CONFORME'}</p></div>${action}<div class="toolbar">${proof}${cancelButton}</div></article>`;
   }
 
   function renderKpis(rows) {
@@ -202,6 +269,24 @@
 
   function bindWorkflow(rows) {
     const host = document.getElementById('disbursementList');
+    host?.querySelectorAll('[data-record-provision]').forEach((button) => button.onclick = async () => {
+      button.disabled = true;
+      try { const row = rows.find((item) => item.id === button.dataset.recordProvision); await recordProvision(row, button.closest('[data-disbursement-id]')); A().status('disbursementStatus', 'Provision enregistrée.'); await load(); }
+      catch (error) { A().status('disbursementStatus', error.message || 'Provision impossible.', true); }
+      finally { button.disabled = false; }
+    });
+    host?.querySelectorAll('[data-record-refund]').forEach((button) => button.onclick = async () => {
+      button.disabled = true;
+      try { const row = rows.find((item) => item.id === button.dataset.recordRefund); await recordRefund(row, button.closest('[data-disbursement-id]')); A().status('disbursementStatus', 'Remboursement enregistré.'); await load(); }
+      catch (error) { A().status('disbursementStatus', error.message || 'Remboursement impossible.', true); }
+      finally { button.disabled = false; }
+    });
+    host?.querySelectorAll('[data-parts-status]').forEach((button) => button.onclick = async () => {
+      button.disabled = true;
+      try { const row = rows.find((item) => item.id === button.dataset.disbursement); await setPartsStatus(row, button.dataset.partsStatus); await load(); }
+      catch (error) { A().status('disbursementStatus', error.message || 'Changement de statut impossible.', true); }
+      finally { button.disabled = false; }
+    });
     host?.querySelectorAll('[data-record-purchase]').forEach((button) => button.onclick = async () => {
       button.disabled = true;
       try { const row = rows.find((item) => item.id === button.dataset.recordPurchase); await recordPurchase(row, button.closest('[data-disbursement-id]')); A().status('disbursementStatus', 'Achat enregistré. Débours éligible au remboursement exact.'); await load(); }
@@ -229,7 +314,7 @@
     ensureUi();
     if (!A()?.db) return;
     const [disbursementsResult, quotesResult] = await Promise.all([
-      A().db.from('disbursements').select('id,user_id,vehicle_id,service_request_id,quote_id,invoice_id,quote_item_id,supplier,supplier_invoice_number,supplier_invoice_date,description,amount,mandate_signed,supplier_invoice_in_customer_name,exact_reimbursement,no_margin,proof_path,status,reimbursed_at,authorized_limit,requested_limit,client_choice,mandate_text,mandate_version,mandate_accepted_at,purchase_recorded_at,payment_method,created_at,profiles(email),quotes(quote_number,status),quote_items(designation,description,purchase_mode),vehicles(plate)').order('created_at', { ascending: false }),
+      A().db.from('disbursements').select('id,user_id,vehicle_id,service_request_id,quote_id,invoice_id,quote_item_id,supplier,supplier_invoice_number,supplier_invoice_date,description,amount,mandate_signed,supplier_invoice_in_customer_name,exact_reimbursement,no_margin,proof_path,status,reimbursed_at,authorized_limit,requested_limit,client_choice,mandate_text,mandate_version,mandate_accepted_at,purchase_recorded_at,payment_method,provision_required,provision_received,provision_received_at,refunded_amount,parts_status,ordered_at,shipped_at,received_at,created_at,profiles(email),quotes(quote_number,status),quote_items(designation,description,purchase_mode),vehicles(plate)').order('created_at', { ascending: false }),
       A().db.from('quotes').select('id,user_id,vehicle_id,service_request_id,quote_number,status,profiles(email),vehicles(plate),quote_items(id,item_type,designation,description,quantity,unit_price,total,supplier,purchase_mode)').in('status', ['sent','accepted']).order('created_at', { ascending: false })
     ]);
     if (disbursementsResult.error) throw disbursementsResult.error;
