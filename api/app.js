@@ -258,6 +258,12 @@ export default function handler(req, res) {
     return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1></main></body></html>');
   }
 
+  // The legacy client application is intentionally no longer served.
+  // All public/client navigation now uses the unified public interface.
+  res.setHeader('Location', '/');
+  res.setHeader('Cache-Control', 'no-store');
+  return res.status(302).end();
+
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).end();
