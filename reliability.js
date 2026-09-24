@@ -1,5 +1,4 @@
 (() => {
-  let submitting = false;
   let serviceWorkerWatching = false;
 
   function ensureNetworkBanner() {
@@ -15,7 +14,7 @@
     const refresh = () => {
       banner.style.display = navigator.onLine ? 'none' : 'block';
       const submit = document.getElementById('btnSubmit');
-      if (submit && !submitting) submit.disabled = !navigator.onLine;
+      if (submit) submit.disabled = !navigator.onLine;
     };
 
     window.addEventListener('online', refresh);
@@ -36,13 +35,6 @@
         if (host) host.innerHTML = '<div class="errorbox"><strong>Connexion indisponible.</strong><br>Reconnectez-vous avant d’envoyer la demande.</div>';
         return;
       }
-      if (submitting) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        return;
-      }
-      submitting = true;
-      setTimeout(() => { submitting = false; }, 12000);
     }, true);
   }
 
