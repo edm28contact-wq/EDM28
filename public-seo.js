@@ -361,7 +361,56 @@ function renderPage(page, origin, services = []) {
     const current = index === page.breadcrumbs.length - 1;
     return current ? `<span aria-current="page">${esc(name)}</span>` : `<a href="${esc(path)}">${esc(name)}</a>`;
   }).join('<span aria-hidden="true">›</span>');
-  const sections = page.sections.map(([title, text]) => `<section><h2>${esc(title)}</h2><p>${esc(text)}</p></section>`).join('');
+  const sections = page.path === '/prestations'
+    ? `<div class="service-grid" aria-label="Prestations principales">
+        <a class="service-card" href="/freinage">
+          <div class="service-visual" aria-hidden="true">
+            <svg viewBox="0 0 640 320" role="img">
+              <defs>
+                <radialGradient id="disc" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#637083"/><stop offset=".55" stop-color="#313b49"/><stop offset="1" stop-color="#151c27"/></radialGradient>
+                <linearGradient id="metal" x1="0" x2="1"><stop offset="0" stop-color="#aeb8c5"/><stop offset="1" stop-color="#465261"/></linearGradient>
+              </defs>
+              <rect width="640" height="320" fill="#0a1019"/>
+              <circle cx="410" cy="162" r="112" fill="url(#disc)" stroke="#667385" stroke-width="5"/>
+              <circle cx="410" cy="162" r="66" fill="#111925" stroke="#778496" stroke-width="4"/>
+              <circle cx="410" cy="162" r="20" fill="#9ba6b4"/>
+              <g fill="#111925">
+                <circle cx="410" cy="80" r="7"/><circle cx="486" cy="112" r="7"/><circle cx="492" cy="199" r="7"/><circle cx="410" cy="244" r="7"/><circle cx="330" cy="199" r="7"/><circle cx="332" cy="112" r="7"/>
+              </g>
+              <path d="M262 85c38 7 75 27 98 57-18 24-22 60-10 89-31 30-73 47-119 42l-42-48 12-103z" fill="url(#metal)" opacity=".9"/>
+              <rect x="0" y="252" width="640" height="68" fill="rgba(0,0,0,.24)"/>
+            </svg>
+          </div>
+          <div class="service-body">
+            <div class="service-top"><h2>Freinage</h2><span class="service-arrow" aria-hidden="true">›</span></div>
+            <p>Plaquettes, disques, freinage complet et liquide de frein, avec contrôle et devis avant intervention.</p>
+          </div>
+        </a>
+        <a class="service-card" href="/liaison-au-sol">
+          <div class="service-visual" aria-hidden="true">
+            <svg viewBox="0 0 640 320" role="img">
+              <defs>
+                <linearGradient id="arm" x1="0" x2="1"><stop offset="0" stop-color="#536070"/><stop offset=".5" stop-color="#b2bac4"/><stop offset="1" stop-color="#343f4c"/></linearGradient>
+              </defs>
+              <rect width="640" height="320" fill="#091019"/>
+              <g stroke="#8c98a8" stroke-width="14" fill="none">
+                <path d="M410 25c-50 28-44 65 0 89s45 61 0 87-43 61 6 92"/>
+                <path d="M452 25c-50 28-44 65 0 89s45 61 0 87-43 61 6 92" opacity=".7"/>
+              </g>
+              <path d="M95 236l215-118 75 48-192 122z" fill="url(#arm)"/>
+              <circle cx="303" cy="128" r="31" fill="#222b37" stroke="#9ca6b2" stroke-width="10"/>
+              <circle cx="188" cy="244" r="27" fill="#222b37" stroke="#8f9aa8" stroke-width="9"/>
+              <path d="M396 57l66 181" stroke="#d9864b" stroke-width="10" opacity=".55"/>
+            </svg>
+          </div>
+          <div class="service-body">
+            <div class="service-top"><h2>Liaison au sol</h2><span class="service-arrow" aria-hidden="true">›</span></div>
+            <p>Triangles, rotules, biellettes et éléments ciblés du train roulant après contrôle du véhicule.</p>
+          </div>
+        </a>
+      </div>
+      <section class="scope-card"><h2>${esc(page.sections[2][0])}</h2><p>${esc(page.sections[2][1])}</p></section>`
+    : page.sections.map(([title, text]) => `<section><h2>${esc(title)}</h2><p>${esc(text)}</p></section>`).join('');
   const links = page.links.map(([path, label]) => `<a class="link-card" href="${esc(path)}">${esc(label)}<span aria-hidden="true">→</span></a>`).join('');
   const faq = page.faq?.length ? `<section aria-labelledby="faq-title"><h2 id="faq-title">Questions fréquentes</h2><div class="faq">${page.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p><strong>Réponse courte :</strong> ${esc(a)}</p></details>`).join('')}</div></section>` : '';
   const tariffs = page.path === '/tarifs' ? renderTariffs(services) : '';
@@ -385,18 +434,39 @@ function renderPage(page, origin, services = []) {
 <meta property="og:image" content="${esc(origin)}/logo-edm.svg">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<style>
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171717;background:#f5f2ee;line-height:1.6}*{box-sizing:border-box}body{margin:0}a{color:inherit}.wrap{width:min(1120px,calc(100% - 32px));margin:auto}.site-header{background:#111827;color:#fff}.header-row{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{font-weight:900;letter-spacing:.08em;text-decoration:none}.nav{display:flex;flex-wrap:wrap;gap:16px;font-size:.92rem}.nav a{text-decoration:none;color:#e5e7eb}.hero{padding:72px 0 54px;background:linear-gradient(135deg,#fff,#ede7e0)}.crumbs{display:flex;gap:8px;flex-wrap:wrap;font-size:.9rem;color:#5d6470;margin-bottom:22px}.crumbs a{color:#374151}h1{font-size:clamp(2.2rem,6vw,4.6rem);line-height:1.02;letter-spacing:-.05em;max-width:900px;margin:0}.lead{max-width:760px;font-size:1.15rem;color:#4b5563;margin:22px 0}.cta{display:inline-flex;background:#111827;color:#fff;text-decoration:none;padding:13px 18px;border-radius:999px;font-weight:800}.content{padding:54px 0 80px}.content section{background:#fff;border:1px solid #ded8d1;border-radius:24px;padding:28px;margin:0 0 20px}h2{font-size:1.65rem;letter-spacing:-.03em;margin:0 0 10px}h3{margin:0}.content p{margin:0;color:#535b66}.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:30px 0}.link-card{display:flex;justify-content:space-between;gap:12px;background:#111827;color:#fff;text-decoration:none;border-radius:18px;padding:18px;font-weight:800}.faq{display:grid;gap:10px}.faq details{border-top:1px solid #e5e7eb;padding:14px 0}.faq summary{font-weight:800;cursor:pointer}.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}.price-card{border:1px solid #e5e7eb;border-radius:18px;padding:18px}.price-card span{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:#6b7280}.price-card strong{display:block;font-size:1.35rem;margin:10px 0}.price-card p{font-size:.93rem}.notice{padding:18px;border-radius:16px;background:#f3f4f6}.small{font-size:.9rem;color:#6b7280;margin-top:16px}.site-footer{border-top:1px solid #d8d2ca;padding:28px 0 42px;color:#5d6470}.site-footer p{margin:0}.email{font-weight:800}@media(max-width:760px){.header-row{align-items:flex-start;flex-direction:column;padding:18px 0}.nav{gap:10px}.hero{padding-top:46px}.content section{padding:22px}}
-</style>
+<link rel="stylesheet" href="/public-site.css?v=1">
 </head>
 <body>
-<header class="site-header"><div class="wrap header-row"><a class="brand" href="/">EDM28</a><nav class="nav" aria-label="Navigation principale">${NAV_ITEMS.map(([path, label]) => `<a href="${path}">${label}</a>`).join('')}</nav></div></header>
+<header class="site-header"><div class="wrap header-row"><a class="brand" href="/">EDM28</a><nav class="desktop-nav" aria-label="Navigation principale">${NAV_ITEMS.map(([path, label]) => `<a href="${path}"${page.path === path ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav><button class="menu-toggle" type="button" data-menu-toggle aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div></header>
+<div class="menu-backdrop" data-menu-backdrop></div>
+<aside class="mobile-drawer" id="mobile-menu" data-mobile-drawer aria-hidden="true">
+  <div class="drawer-head"><span class="drawer-brand">EDM28</span><button class="drawer-close" type="button" data-menu-close aria-label="Fermer le menu"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <nav class="drawer-nav" aria-label="Navigation mobile">
+    ${NAV_ITEMS.map(([path, label]) => {
+      const icons = {
+        '/freinage':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+        '/liaison-au-sol':'<svg viewBox="0 0 24 24"><path d="M9 3v5l-3 3v5l3 3v2M15 3v5l3 3v5l-3 3v2M9 12h6"/></svg>',
+        '/prestations':'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+        '/tarifs':'<svg viewBox="0 0 24 24"><path d="M3 12l9-9h7l2 2v7l-9 9z"/><circle cx="17" cy="7" r="1"/></svg>',
+        '/fonctionnement':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>',
+        '/transparence':'<svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.1-7 10-4-1.9-7-5.5-7-10V6z"/><path d="M12 7v10"/></svg>',
+        '/a-propos':'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-4 2-6 6-6s6 2 6 6M14 15c3.5 0 6 1.6 7 5"/></svg>',
+        '/contact':'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 7l8 6 8-6"/></svg>'
+      };
+      return `<a href="${path}"${page.path === path ? ' aria-current="page"' : ''}><span class="nav-icon">${icons[path] || ''}</span><span class="nav-label">${label}</span><span class="nav-arrow" aria-hidden="true">›</span></a>`;
+    }).join('')}
+  </nav>
+  <div class="drawer-bottom">
+    <a class="drawer-cta" href="/"><span>Faire une demande</span><span aria-hidden="true">→</span></a>
+    <div class="drawer-contact">Une question ?<a href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></div>
+  </div>
+</aside>
 <main>
 <div class="hero"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1><p class="lead">${esc(page.lede)}</p><a class="cta" href="/">Faire une demande</a></div></div>
 <div class="wrap content">${sections}${tariffs}<div class="links" aria-label="Pages liées">${links}</div>${faq}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
-</body>
+<script src="/public-site.js?v=1" defer></script></body>
 </html>`;
 }
 
