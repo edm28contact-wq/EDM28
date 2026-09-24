@@ -4,7 +4,7 @@
   window.__edmConnectedRouter = true;
 
   const allPages = new Set(['home', 'appointment', 'account', 'request-status', 'history', 'disbursements', 'about']);
-  const privatePages = new Set(['request-status', 'history', 'disbursements']);
+  const privatePages = new Set(['history', 'disbursements']);
 
   let sessionUser = null;
   let sessionKnown = false;
@@ -41,11 +41,7 @@
 
   function showFallback(id, error) {
     console.warn(`EDM ${id} render unavailable`, error);
-    const hostId = id === 'account'
-      ? 'accountPageContent'
-      : id === 'request-status'
-        ? 'requestStatusList'
-        : 'historyList';
+    const hostId = id === 'account' ? 'accountPageContent' : 'historyList';
     const host = document.getElementById(hostId);
     if (host && !host.textContent.trim()) {
       host.innerHTML = '<div class="notice">La page est ouverte. Les informations du compte sont en cours de chargement.</div>';
@@ -63,7 +59,6 @@
       page.prepend(guest);
     }
     const labels = {
-      'request-status': ['Suivi de mes demandes', 'Connectez-vous pour afficher l’avancement de vos dossiers.'],
       history: ['Mes interventions', 'Connectez-vous pour retrouver vos véhicules, interventions et documents personnels.'],
       disbursements: ['Pièces et débours', 'Connectez-vous pour consulter les pièces préparées pour vos dossiers et les actions de paiement.']
     };
@@ -89,9 +84,6 @@
       showFallback(id, error);
     }
 
-    if (id === 'request-status' && typeof window.renderRequestStatus === 'function') {
-      void window.renderRequestStatus().catch((error) => showFallback(id, error));
-    }
     if (id === 'history' && typeof window.renderRequestHistory === 'function') {
       void window.renderRequestHistory().catch((error) => console.warn('EDM request history unavailable', error));
     }
