@@ -13,12 +13,12 @@
   const statusLabels = {
     draft: 'Brouillon',
     awaiting_mandate: 'Choix client requis',
-    authorized: 'Mandat accepté · achat à effectuer',
+    authorized: 'Mandat accepté · provision à régler',
     awaiting_reapproval: 'Nouvelle autorisation requise',
     client_direct: 'Achat direct par le client',
     purchased: 'Achat à contrôler',
-    eligible: 'Débours justifié · remboursement à venir',
-    reimbursed: 'Remboursé et archivé',
+    eligible: 'Achat justifié · régularisation',
+    reimbursed: 'Régularisé et archivé',
     rejected: 'Refusé',
     cancelled: 'Annulé'
   };
@@ -52,10 +52,10 @@
           <div class="section-title"><div><span class="pill orange">Pièces & débours</span><h2 style="margin-top:12px">Comment ça fonctionne ?</h2><p>EDM distingue toujours le prix de sa prestation du financement des pièces. Un débours n’est jamais une revente de pièce déguisée.</p></div></div>
           <div class="grid-3" style="margin-top:16px">
             <article class="card"><h3>1 · Achat direct client</h3><p>Vous achetez et payez vous-même la pièce. EDM peut fournir la référence utile. Aucun remboursement de pièce ne transite par EDM.</p></article>
-            <article class="card"><h3>2 · Débours EDM</h3><p>Vous mandatez EDM avant l’achat. L’achat est fait en votre nom et pour votre compte, dans la limite autorisée. Vous remboursez uniquement le montant réel du justificatif, sans marge.</p></article>
+            <article class="card"><h3>2 · Débours EDM</h3><p>Vous mandatez EDM avant l’achat puis versez la provision affichée. EDM ne peut commander qu’après réception de cette provision. Le montant est ensuite régularisé sur le justificatif réel, sans marge.</p></article>
             <article class="card"><h3>3 · Vente de pièce par EDM</h3><p>Si une pièce est vendue par EDM comme une vente classique, elle reste une ligne commerciale normale. Elle n’est pas traitée comme un débours.</p></article>
           </div>
-          <div class="notice" style="margin-top:16px"><strong>Règle de transparence :</strong> une proposition de débours affiche un plafond avant achat. Le montant remboursable devient ensuite le montant exact du justificatif fournisseur. Si le prix dépasse le plafond accepté, EDM doit demander une nouvelle autorisation avant l’achat.</div>
+          <div class="notice" style="margin-top:16px"><strong>Règle de transparence :</strong> une proposition de débours affiche le montant à provisionner avant achat. EDM ne commande pas avant réception de la provision. Après achat, le montant réel du justificatif est comparé à la provision et l’écart est remboursé ou complété sans marge.</div>
         </div>
         <div class="panel">
           <div class="section-title"><div><h2>Mes pièces et débours</h2><p>Mandats, achats, justificatifs et remboursements associés à vos devis.</p></div><button id="clientDisbursementRefresh" class="btn btn-ghost" type="button">Actualiser</button></div>
@@ -115,7 +115,7 @@
       <strong>${reapproval ? 'Nouvelle autorisation demandée' : 'Deux choix possibles avant achat'}</strong>
       <p style="margin:8px 0">${esc(row.mandate_text || 'Mandat de débours EDM28.')}</p>
       <p><strong>Plafond à autoriser : ${money(currentLimit)}</strong></p>
-      <label style="display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px;font-weight:700"><input id="${checkId}" data-mandate-check="${row.id}" type="checkbox" style="width:20px;min-height:20px;margin-top:3px"><span>J’ai lu le mandat. Je comprends qu’EDM agit pour cet achat en mon nom et pour mon compte, sans marge, et que je rembourserai le montant exact du justificatif dans la limite autorisée.</span></label>
+      <label style="display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px;font-weight:700"><input id="${checkId}" data-mandate-check="${row.id}" type="checkbox" style="width:20px;min-height:20px;margin-top:3px"><span>J’ai lu le mandat. Je comprends qu’EDM agit pour cet achat en mon nom et pour mon compte, sans marge, et qu’une provision est requise avant toute commande.</span></label>
       <div class="btn-row">
         <button class="btn btn-primary" type="button" data-accept-mandate="${row.id}" disabled>${reapproval ? 'Autoriser le nouveau plafond' : 'Je mandate EDM pour l’achat'}</button>
         ${reapproval ? '' : `<button class="btn btn-secondary" type="button" data-client-direct="${row.id}">Je commande et paie moi-même</button>`}
@@ -129,14 +129,42 @@
     const proof = row.proof_path ? `<button class="btn btn-ghost" type="button" data-proof="${esc(row.proof_path)}">Voir le justificatif fournisseur</button>` : '';
     const mandate = ['awaiting_mandate', 'awaiting_reapproval'].includes(row.status) ? mandateActions(row) : '';
     const direct = row.status === 'client_direct' ? '<div class="okbox"><strong>Achat direct choisi.</strong><br>Vous achetez et payez la pièce directement. Cette pièce ne sera pas remboursée à EDM comme débours.</div>' : '';
-    const authorized = row.status === 'authorized' ? `<div class="infobox"><strong>Mandat accepté.</strong><br>EDM peut acheter la pièce dans la limite de ${money(row.authorized_limit)}. Le montant final sera celui du justificatif réel.</div>` : '';
-    const eligible = row.status === 'eligible' ? `<div class="okbox"><strong>Débours justifié.</strong><br>Montant exact à rembourser : ${money(row.amount)}. Aucune marge n’est appliquée.</div>` : '';
-    const reimbursed = row.status === 'reimbursed' ? `<div class="okbox"><strong>Débours remboursé.</strong><br>Le remboursement exact de ${money(row.amount)} a été enregistré le ${esc(dateTime(row.reimbursed_at))}.</div>` : '';
+    const provisionRequired = Number(row.provision_required || row.authorized_limit || 0);
+    const provisionReceived = Number(row.provision_received || 0);
+    const refundedAmount = Number(row.refunded_amount || 0);
+    const provisionMissing = Math.max(0, provisionRequired - provisionReceived);
+    const balanceAfterPurchase = row.amount == null ? null : provisionReceived - Number(row.amount || 0) - refundedAmount;
+    const partsLabels = {
+      not_ordered: 'En attente de provision',
+      ready_to_order: 'Provision reçue · commande à passer',
+      ordered: 'Commandé',
+      shipped: 'Expédié',
+      received: 'Reçu chez EDM28',
+      cancelled: 'Annulé'
+    };
+    const authorized = row.status === 'authorized'
+      ? (provisionMissing > 0
+        ? `<div class="notice"><strong>Provision à régler : ${money(provisionMissing)}</strong><br>Aucune commande n’est engagée avant réception complète de la provision.</div>`
+        : `<div class="okbox"><strong>Provision reçue.</strong><br>EDM peut maintenant commander les pièces dans la limite autorisée.</div>`)
+      : '';
+    const eligible = row.status === 'eligible'
+      ? (balanceAfterPurchase > 0.009
+        ? `<div class="notice"><strong>Remboursement client nécessaire : ${money(balanceAfterPurchase)}</strong><br>Le prix réel est inférieur à la provision reçue.</div>`
+        : balanceAfterPurchase < -0.009
+          ? `<div class="notice"><strong>Complément nécessaire : ${money(Math.abs(balanceAfterPurchase))}</strong><br>Le montant réel dépasse la provision enregistrée.</div>`
+          : `<div class="okbox"><strong>Achat régularisé.</strong><br>Le montant réel correspond à la provision nette enregistrée. Aucune marge n’est appliquée.</div>`)
+      : '';
+    const reimbursed = row.status === 'reimbursed'
+      ? `<div class="okbox"><strong>Débours régularisé.</strong><br>Le dossier financier de cette pièce est archivé.</div>`
+      : '';
 
     return `<article class="card" data-client-disbursement="${row.id}" style="margin:12px 0">
       <div class="section-title"><div><span class="pill orange">${esc(statusLabels[row.status] || row.status)}</span><h3 style="margin-top:10px">${esc(label)}</h3><p>${esc(quote.quote_number || 'Devis')} · ${esc(vehicleLabel)}</p></div><strong>${currentLimit ? `Plafond ${money(currentLimit)}` : actual}</strong></div>
       <div class="summary">
-        <div class="summary-line"><span>Montant réellement avancé</span><strong>${actual}</strong></div>
+        <div class="summary-line"><span>Provision demandée</span><strong>${provisionRequired ? money(provisionRequired) : 'En attente'}</strong></div>
+        <div class="summary-line"><span>Provision reçue</span><strong>${money(provisionReceived)}</strong></div>
+        <div class="summary-line"><span>État des pièces</span><strong>${esc(partsLabels[row.parts_status] || row.parts_status || 'En attente')}</strong></div>
+        <div class="summary-line"><span>Montant réel fournisseur</span><strong>${actual}</strong></div>
         <div class="summary-line"><span>Fournisseur</span><strong>${esc(row.supplier || 'À renseigner après achat')}</strong></div>
         <div class="summary-line"><span>Facture au nom du client</span><strong>${row.supplier_invoice_in_customer_name ? 'Oui' : 'En attente'}</strong></div>
         <div class="summary-line"><span>Marge EDM sur le débours</span><strong>${row.no_margin ? '0 €' : 'Non conforme'}</strong></div>
@@ -184,7 +212,7 @@
     if (status) status.innerHTML = '';
     host.innerHTML = '<div class="notice">Chargement…</div>';
     const { data, error } = await supabaseClient.from('disbursements')
-      .select('id,user_id,vehicle_id,service_request_id,quote_id,invoice_id,quote_item_id,supplier,supplier_invoice_number,supplier_invoice_date,description,amount,mandate_signed,supplier_invoice_in_customer_name,exact_reimbursement,no_margin,proof_path,status,reimbursed_at,authorized_limit,requested_limit,client_choice,mandate_text,mandate_version,mandate_accepted_at,purchase_recorded_at,payment_method,created_at,quotes(quote_number,status),quote_items(designation,description,supplier_reference,purchase_mode),vehicles(plate,brand,model)')
+      .select('id,user_id,vehicle_id,service_request_id,quote_id,invoice_id,quote_item_id,supplier,supplier_invoice_number,supplier_invoice_date,description,amount,mandate_signed,supplier_invoice_in_customer_name,exact_reimbursement,no_margin,proof_path,status,reimbursed_at,authorized_limit,requested_limit,client_choice,mandate_text,mandate_version,mandate_accepted_at,purchase_recorded_at,payment_method,provision_required,provision_received,provision_received_at,refunded_amount,parts_status,ordered_at,shipped_at,received_at,created_at,quotes(quote_number,status),quote_items(designation,description,supplier_reference,purchase_mode),vehicles(plate,brand,model)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     if (error) throw error;
