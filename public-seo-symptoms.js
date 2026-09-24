@@ -241,15 +241,28 @@ function renderPage(page, origin) {
 <meta property="og:image" content="${esc(origin)}/logo-edm.svg">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<style>
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171717;background:#f5f2ee;line-height:1.65}*{box-sizing:border-box}body{margin:0}a{color:inherit}.wrap{width:min(1080px,calc(100% - 32px));margin:auto}.site-header{background:#111827;color:#fff}.header-row{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{font-weight:900;letter-spacing:.08em;text-decoration:none}.nav{display:flex;flex-wrap:wrap;gap:16px;font-size:.92rem}.nav a{text-decoration:none;color:#e5e7eb}.hero{padding:68px 0 50px;background:linear-gradient(135deg,#fff,#ede7e0)}.crumbs{display:flex;gap:8px;flex-wrap:wrap;font-size:.9rem;color:#5d6470;margin-bottom:22px}.crumbs a{color:#374151}h1{font-size:clamp(2.2rem,6vw,4.4rem);line-height:1.03;letter-spacing:-.05em;max-width:920px;margin:0}.lead{max-width:780px;font-size:1.15rem;color:#4b5563;margin:22px 0}.cta{display:inline-flex;background:#111827;color:#fff;text-decoration:none;padding:13px 18px;border-radius:999px;font-weight:800}.content{padding:52px 0 80px}.content section{background:#fff;border:1px solid #ded8d1;border-radius:24px;padding:28px;margin:0 0 18px}h2{font-size:1.6rem;letter-spacing:-.03em;margin:0 0 10px}.content p{margin:0;color:#535b66}.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:30px 0}.link-card{display:flex;justify-content:space-between;gap:12px;background:#111827;color:#fff;text-decoration:none;border-radius:18px;padding:18px;font-weight:800}.faq{display:grid;gap:10px}.faq details{border-top:1px solid #e5e7eb;padding:14px 0}.faq summary{font-weight:800;cursor:pointer}.site-footer{border-top:1px solid #d8d2ca;padding:28px 0 42px;color:#5d6470}@media(max-width:760px){.header-row{align-items:flex-start;flex-direction:column;padding:18px 0}.nav{gap:10px}.hero{padding-top:44px}.content section{padding:22px}}
-</style>
+<link rel="stylesheet" href="/public-site.css?v=1">
 </head>
 <body>
-<header class="site-header"><div class="wrap header-row"><a class="brand" href="/">EDM28</a><nav class="nav" aria-label="Navigation principale"><a href="/freinage">Freinage</a><a href="/liaison-au-sol">Liaison au sol</a><a href="/symptomes">Symptômes</a><a href="/prestations">Prestations</a><a href="/tarifs">Tarifs</a><a href="/contact">Contact</a></nav></div></header>
+<header class="site-header"><div class="wrap header-row"><a class="brand" href="/">EDM28</a><nav class="desktop-nav" aria-label="Navigation principale"><a href="/freinage">Freinage</a><a href="/liaison-au-sol">Liaison au sol</a><a href="/prestations">Prestations</a><a href="/tarifs">Tarifs</a><a href="/fonctionnement">Fonctionnement</a><a href="/transparence">Transparence</a><a href="/a-propos">À propos</a><a href="/contact">Contact</a></nav><button class="menu-toggle" type="button" data-menu-toggle aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div></header>
+<div class="menu-backdrop" data-menu-backdrop></div>
+<aside class="mobile-drawer" id="mobile-menu" data-mobile-drawer aria-hidden="true">
+  <div class="drawer-head"><span class="drawer-brand">EDM28</span><button class="drawer-close" type="button" data-menu-close aria-label="Fermer le menu"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <nav class="drawer-nav" aria-label="Navigation mobile">
+    <a href="/freinage"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></span><span class="nav-label">Freinage</span><span class="nav-arrow">›</span></a>
+    <a href="/liaison-au-sol"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 3v5l-3 3v5l3 3v2M15 3v5l3 3v5l-3 3v2M9 12h6"/></svg></span><span class="nav-label">Liaison au sol</span><span class="nav-arrow">›</span></a>
+    <a href="/prestations"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="nav-label">Prestations</span><span class="nav-arrow">›</span></a>
+    <a href="/tarifs"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 12l9-9h7l2 2v7l-9 9z"/><circle cx="17" cy="7" r="1"/></svg></span><span class="nav-label">Tarifs</span><span class="nav-arrow">›</span></a>
+    <a href="/fonctionnement"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span><span class="nav-label">Fonctionnement</span><span class="nav-arrow">›</span></a>
+    <a href="/transparence"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.1-7 10-4-1.9-7-5.5-7-10V6z"/><path d="M12 7v10"/></svg></span><span class="nav-label">Transparence</span><span class="nav-arrow">›</span></a>
+    <a href="/a-propos"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-4 2-6 6-6s6 2 6 6M14 15c3.5 0 6 1.6 7 5"/></svg></span><span class="nav-label">À propos</span><span class="nav-arrow">›</span></a>
+    <a href="/contact"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 7l8 6 8-6"/></svg></span><span class="nav-label">Contact</span><span class="nav-arrow">›</span></a>
+  </nav>
+  <div class="drawer-bottom"><a class="drawer-cta" href="/"><span>Faire une demande</span><span>→</span></a><div class="drawer-contact">Une question ?<a href="mailto:contact@edm28.fr">contact@edm28.fr</a></div></div>
+</aside>
 <main><div class="hero"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1><p class="lead">${esc(page.lede)}</p><a class="cta" href="/">Préparer une demande</a></div></div><div class="wrap content">${sections}<div class="links" aria-label="Pages liées">${links}</div>${faq}</div></main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Freinage et liaison au sol. Un symptôme oriente le contrôle, il ne remplace pas le diagnostic du véhicule.</p><p>Contact public : <a href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
-</body>
+<script src="/public-site.js?v=1" defer></script></body>
 </html>`;
 }
 
