@@ -18,7 +18,6 @@ const PUBLIC_PATHS = [
   '/liaison-au-sol',
   '/liaison-au-sol/triangles',
   '/liaison-au-sol/direction',
-  '/prestations',
   '/tarifs',
   '/fonctionnement',
   '/transparence',
@@ -34,6 +33,7 @@ test('Vercel expose les routes SEO publiques, sitemap et robots', async () => {
   assert.equal(routes.get('/sitemap.xml'), '/api/app?seo=sitemap');
   assert.equal(routes.get('/robots.txt'), '/api/app?seo=robots');
   for (const path of PUBLIC_PATHS) assert.match(routes.get(path) || '', /^\/api\/app\?seo=page&slug=/, path);
+  assert.equal(routes.get('/prestations'), '/');
   assert.equal(routes.get('/'), '/api/app?seo=page&slug=accueil');
   assert.equal(routes.get('/index.html'), '/api/app?seo=page&slug=accueil');
   assert.equal(routes.get('/demande'), '/api/app?seo=page&slug=demande');
@@ -54,9 +54,21 @@ test('l’ancien portail client n’est plus servi par les routes publiques', as
   assert.match(app, /legacy client application is intentionally no longer served/i);
   assert.match(app, /res\.setHeader\('Location', '\/'\)/);
   assert.match(publicSeo, /path: '\/mes-interventions'/);
+  assert.doesNotMatch(publicSeo, /path: '\/prestations'/);
   assert.match(publicSeo, /path: '\/demande'/);
   assert.match(client, /edmInterventionsApp/);
   assert.match(client, /edmRequestApp/);
+});
+
+test('Prestations est fusionnée dans l’accueil', async () => {
+  const [source, configText] = await Promise.all([read('public-seo.js'), read('vercel.json')]);
+  const config = JSON.parse(configText);
+  const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
+  assert.equal(routes.get('/prestations'), '/');
+  assert.match(source, /h1: 'Prestations EDM28'/);
+  assert.match(source, /const sections = page\.path === '\/'/);
+  assert.doesNotMatch(source, /prestations:\s*\{/);
+  assert.doesNotMatch(source.split('const NAV_ITEMS = [')[1].split('];')[0], /Prestations/);
 });
 
 test('chaque page SEO possède une URL, un title et une description uniques', async () => {
