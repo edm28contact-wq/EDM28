@@ -1,0 +1,430 @@
+(() => {
+  if (window.__edmPublicClientInstalled) return;
+  window.__edmPublicClientInstalled = true;
+
+  const config = window.EDM_PUBLIC_SUPABASE || {};
+  if (!window.supabase?.createClient || !config.url || !config.key) return;
+  const client = window.supabase.createClient(config.url, config.key);
+
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[char]));
+  const money = (value) => {
+    const n = Number(value || 0);
+    return Number.isFinite(n) ? n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}) : '—';
+  };
+  const dateTime = (value) => {
+    const d = new Date(value || 0);
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});
+  };
+  const normalizePlate = (value) => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+  const intOrNull = (value) => {
+    const n = Number.parseInt(String(value || '').replace(/\D/g,''),10);
+    return Number.isFinite(n) ? n : null;
+  };
+  const byId = (id) => document.getElementById(id);
+
+  function message(hostId, text, type='notice') {
+    const host = byId(hostId);
+    if (host) host.innerHTML = text ? `<div class="${type}">${esc(text)}</div>` : '';
+  }
+
+  async function getSession() {
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    return data?.session || null;
+  }
+
+  async function signIn(email, password) {
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data?.session || null;
+  }
+
+  async function signUp(email, password) {
+    const { data, error } = await client.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.href.split('#')[0] }
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function signOut() {
+    const { error } = await client.auth.signOut();
+    if (error) throw error;
+  }
+
+  function authBlock(context) {
+    return `
+      <div class="account-box" data-auth-box="${context}">
+        <div class="section-kicker">Compte client</div>
+        <h2>Connexion EDM28</h2>
+        <p>Votre compte sert uniquement à transmettre et suivre vos dossiers.</p>
+        <div class="form-grid two">
+          <label>Email<input id="${context}AuthEmail" type="email" autocomplete="email" placeholder="vous@exemple.fr"></label>
+          <label>Mot de passe<input id="${context}AuthPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 caractères minimum"></label>
+        </div>
+        <div class="action-row">
+          <button class="primary-action" type="button" data-auth-signin="${context}">Se connecter</button>
+          <button class="secondary-action" type="button" data-auth-signup="${context}">Créer mon compte</button>
+          <button class="text-action" type="button" data-auth-reset="${context}">Mot de passe oublié</button>
+        </div>
+        <div id="${context}AuthStatus" class="inline-status"></div>
+      </div>`;
+  }
+
+  async function sendReset(context) {
+    const email = byId(`${context}AuthEmail`)?.value.trim().toLowerCase();
+    if (!email) throw new Error('Renseignez votre adresse email.');
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}${window.location.pathname}`
+    });
+    if (error) throw error;
+    message(`${context}AuthStatus`, 'Email de réinitialisation envoyé.', 'okbox');
+  }
+
+  function bindAuth(context, onReady) {
+    document.querySelector(`[data-auth-signin="${context}"]`)?.addEventListener('click', async () => {
+      try {
+        message(`${context}AuthStatus`, 'Connexion…');
+        const email = byId(`${context}AuthEmail`)?.value.trim().toLowerCase();
+        const password = byId(`${context}AuthPassword`)?.value || '';
+        if (!email || !password) throw new Error('Email et mot de passe obligatoires.');
+        await signIn(email,password);
+        message(`${context}AuthStatus`, 'Connecté.', 'okbox');
+        await onReady();
+      } catch (error) {
+        message(`${context}AuthStatus`, error.message || 'Connexion impossible.', 'errorbox');
+      }
+    });
+
+    document.querySelector(`[data-auth-signup="${context}"]`)?.addEventListener('click', async () => {
+      try {
+        message(`${context}AuthStatus`, 'Création du compte…');
+        const email = byId(`${context}AuthEmail`)?.value.trim().toLowerCase();
+        const password = byId(`${context}AuthPassword`)?.value || '';
+        if (!email || password.length < 8) throw new Error('Email valide et mot de passe de 8 caractères minimum obligatoires.');
+        const data = await signUp(email,password);
+        if (data?.session) {
+          message(`${context}AuthStatus`, 'Compte créé et connecté.', 'okbox');
+          await onReady();
+        } else {
+          message(`${context}AuthStatus`, 'Compte créé. Ouvrez l’email reçu et cliquez sur le lien de confirmation.', 'okbox');
+        }
+      } catch (error) {
+        message(`${context}AuthStatus`, error.message || 'Création du compte impossible.', 'errorbox');
+      }
+    });
+
+    document.querySelector(`[data-auth-reset="${context}"]`)?.addEventListener('click', async () => {
+      try { await sendReset(context); }
+      catch (error) { message(`${context}AuthStatus`, error.message || 'Réinitialisation impossible.', 'errorbox'); }
+    });
+  }
+
+  async function installRequestPage() {
+    const host = byId('edmRequestApp');
+    if (!host) return;
+
+    host.innerHTML = `
+      <section class="client-panel">
+        <div class="section-kicker">1 · Véhicule</div>
+        <h2>Votre véhicule</h2>
+        <div class="form-grid three">
+          <label>Immatriculation<input id="requestPlate" autocomplete="off" placeholder="AB-123-CD"></label>
+          <label>Marque<input id="requestBrand" placeholder="Renault"></label>
+          <label>Modèle<input id="requestModel" placeholder="Clio"></label>
+          <label>Année<input id="requestYear" inputmode="numeric" placeholder="2018"></label>
+          <label>Énergie<input id="requestEnergy" placeholder="Essence, Diesel…"></label>
+          <label>Kilométrage<input id="requestMileage" inputmode="numeric" placeholder="85000"></label>
+        </div>
+      </section>
+
+      <section class="client-panel">
+        <div class="section-kicker">2 · Intervention</div>
+        <h2>Que faut-il regarder ?</h2>
+        <p>Sélectionnez une ou plusieurs prestations. EDM28 confirmera ensuite le périmètre réel avant travaux.</p>
+        <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
+        <label style="display:block;margin-top:18px">Symptômes ou précisions
+          <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
+        </label>
+      </section>
+
+      <section class="client-panel">
+        <div class="section-kicker">3 · Coordonnées</div>
+        <h2>Vos coordonnées</h2>
+        <div class="form-grid three">
+          <label>Prénom<input id="requestFirstName" autocomplete="given-name"></label>
+          <label>Nom<input id="requestLastName" autocomplete="family-name"></label>
+          <label>Téléphone<input id="requestPhone" autocomplete="tel"></label>
+        </div>
+        <div id="requestAccountArea" style="margin-top:18px"></div>
+      </section>
+
+      <section class="client-panel">
+        <div class="section-kicker">4 · Vérification</div>
+        <h2>Transmettre la demande</h2>
+        <p>La demande est étudiée par EDM28 avant devis. Aucun travail supplémentaire n’est ajouté sans validation.</p>
+        <div class="action-row">
+          <button id="requestSubmit" class="primary-action" type="button">Envoyer ma demande pour étude</button>
+        </div>
+        <div id="requestSubmitStatus" class="inline-status"></div>
+      </section>`;
+
+    const servicesHost = byId('requestServices');
+    const { data: services, error } = await client
+      .from('site_services')
+      .select('id,name,category,client_description,pricing_type,displayed_price,labor_price,duration_minutes')
+      .eq('active',true)
+      .not('published_at','is',null)
+      .order('display_order',{ascending:true});
+    if (error) {
+      servicesHost.innerHTML = '<div class="errorbox">Catalogue momentanément indisponible.</div>';
+    } else {
+      servicesHost.innerHTML = (services || []).map((service) => `
+        <label class="service-choice">
+          <input type="checkbox" value="${esc(service.id)}" data-service-json="${esc(encodeURIComponent(JSON.stringify(service)))}">
+          <span><strong>${esc(service.name)}</strong><small>${esc(service.client_description || service.category || '')}</small></span>
+          <b>${service.pricing_type === 'quote' ? 'Sur devis' : money(service.displayed_price)}</b>
+        </label>`).join('') || '<div class="notice">Aucune prestation disponible actuellement.</div>';
+    }
+
+    async function renderAccount() {
+      const area = byId('requestAccountArea');
+      const session = await getSession();
+      if (!session?.user) {
+        area.innerHTML = authBlock('request');
+        bindAuth('request', renderAccount);
+        return;
+      }
+      const { data: profile } = await client.from('profiles').select('first_name,last_name,phone').eq('id',session.user.id).maybeSingle();
+      if (profile) {
+        byId('requestFirstName').value = profile.first_name || byId('requestFirstName').value;
+        byId('requestLastName').value = profile.last_name || byId('requestLastName').value;
+        byId('requestPhone').value = profile.phone || byId('requestPhone').value;
+      }
+      area.innerHTML = `<div class="signed-box"><div><strong>Connecté</strong><p>${esc(session.user.email || '')}</p></div><button class="secondary-action" type="button" id="requestSignOut">Se déconnecter</button></div>`;
+      byId('requestSignOut')?.addEventListener('click', async () => { await signOut(); await renderAccount(); });
+    }
+
+    async function submit() {
+      try {
+        message('requestSubmitStatus','Enregistrement de la demande…');
+        const session = await getSession();
+        if (!session?.user) throw new Error('Connectez-vous ou créez votre compte avant de transmettre la demande.');
+
+        const plate = byId('requestPlate').value.trim().toUpperCase();
+        const plateNormalized = normalizePlate(plate);
+        if (!plateNormalized) throw new Error('Immatriculation obligatoire.');
+
+        const selected = [...document.querySelectorAll('#requestServices input[type="checkbox"]:checked')].map((input) => {
+          try { return JSON.parse(decodeURIComponent(input.dataset.serviceJson || '')); }
+          catch (_) { return null; }
+        }).filter(Boolean);
+        if (!selected.length) throw new Error('Choisissez au moins une prestation.');
+
+        const firstName = byId('requestFirstName').value.trim();
+        const lastName = byId('requestLastName').value.trim();
+        const phone = byId('requestPhone').value.trim();
+        if (!firstName || !lastName || !phone) throw new Error('Prénom, nom et téléphone obligatoires.');
+
+        const { error: profileError } = await client.from('profiles').update({
+          first_name:firstName,last_name:lastName,phone
+        }).eq('id',session.user.id);
+        if (profileError) throw profileError;
+
+        const { data: vehicle, error: vehicleError } = await client.from('vehicles').upsert({
+          user_id:session.user.id,
+          plate,
+          plate_normalized:plateNormalized,
+          brand:byId('requestBrand').value.trim() || null,
+          model:byId('requestModel').value.trim() || null,
+          year:intOrNull(byId('requestYear').value),
+          energy:byId('requestEnergy').value.trim() || null,
+          mileage:intOrNull(byId('requestMileage').value)
+        },{onConflict:'user_id,plate_normalized'}).select('id').single();
+        if (vehicleError) throw vehicleError;
+
+        const serviceRows = selected.map((service) => ({
+          id:service.id,
+          name:service.name,
+          category:service.category,
+          labor:Number(service.labor_price || service.displayed_price || 0),
+          duration_minutes:Number(service.duration_minutes || 0)
+        }));
+        const laborTotal = serviceRows.reduce((sum,row)=>sum+Number(row.labor||0),0);
+        const totals = { laborBase:laborTotal,laborTotal,totalMin:laborTotal,totalMax:laborTotal,totalAllMin:laborTotal,totalAllMax:laborTotal };
+
+        const { data: request, error: requestError } = await client.from('service_requests').insert({
+          user_id:session.user.id,
+          vehicle_id:vehicle.id,
+          status:'draft',
+          selected_basket:'standard',
+          services:serviceRows,
+          notes:byId('requestNotes').value.trim() || null,
+          totals,
+          j7_accepted:false,
+          refuse_control:false,
+          submitted_at:null
+        }).select('id').single();
+        if (requestError) throw requestError;
+
+        const response = await fetch('/api/submit-request-v2',{
+          method:'POST',
+          headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},
+          body:JSON.stringify({requestId:request.id})
+        });
+        const result = await response.json().catch(()=>({}));
+        if (!response.ok || result.success !== true) throw new Error(result.error || 'Transmission impossible.');
+
+        message('requestSubmitStatus',result.emailSent === false
+          ? 'Demande enregistrée. La notification email est momentanément indisponible, mais le dossier est bien dans le back-office.'
+          : 'Demande transmise. EDM28 l’étudiera avant de vous proposer la suite.','okbox');
+      } catch (error) {
+        message('requestSubmitStatus',error.message || 'Envoi impossible.','errorbox');
+      }
+    }
+
+    byId('requestSubmit')?.addEventListener('click',submit);
+    await renderAccount();
+    client.auth.onAuthStateChange(()=>window.setTimeout(renderAccount,0));
+  }
+
+  function eventCard(type,title,date,status,details=[],documentPath='') {
+    const detailHtml = details.filter(Boolean).map(([label,value]) => value ? `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>` : '').join('');
+    return `<article class="intervention-event">
+      <div class="event-head"><span class="event-type">${esc(type)}</span><span class="event-status">${esc(status || '')}</span></div>
+      <h3>${esc(title)}</h3>
+      <p class="event-date">${esc(date)}</p>
+      ${detailHtml ? `<div class="event-details">${detailHtml}</div>` : ''}
+      ${documentPath ? `<button class="text-action" type="button" data-doc-path="${esc(documentPath)}">Ouvrir le document</button>` : ''}
+    </article>`;
+  }
+
+  async function openDocument(path) {
+    const { data, error } = await client.storage.from('repair-documents').createSignedUrl(path,120);
+    if (error || !data?.signedUrl) throw error || new Error('Document indisponible.');
+    window.open(data.signedUrl,'_blank','noopener,noreferrer');
+  }
+
+  async function installInterventionsPage() {
+    const host = byId('edmInterventionsApp');
+    if (!host) return;
+
+    async function render() {
+      const session = await getSession();
+      if (!session?.user) {
+        host.innerHTML = `<section class="client-panel">${authBlock('history')}</section>`;
+        bindAuth('history',render);
+        return;
+      }
+
+      host.innerHTML = '<section class="client-panel"><div class="notice">Chargement de vos interventions…</div></section>';
+
+      const uid = session.user.id;
+      const results = await Promise.all([
+        client.from('vehicles').select('id,plate,brand,model,year,energy,engine,mileage,created_at').eq('user_id',uid).order('created_at'),
+        client.from('service_requests').select('id,vehicle_id,status,services,notes,submitted_at,created_at').eq('user_id',uid).order('created_at',{ascending:false}),
+        client.from('quotes').select('id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,visible_to_client,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
+        client.from('disbursements').select('id,vehicle_id,service_request_id,quote_id,status,description,authorized_limit,provision_required,provision_received,parts_status,amount,refunded_amount,created_at').eq('user_id',uid).order('created_at',{ascending:false}),
+        client.from('appointments').select('id,vehicle_id,service_request_id,starts_at,ends_at,status,notes,visible_to_client,created_at').eq('user_id',uid).eq('visible_to_client',true).order('starts_at',{ascending:false}),
+        client.from('repair_orders').select('id,vehicle_id,service_request_id,order_number,status,pdf_path,visible_to_client,signed_at,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
+        client.from('inspection_reports').select('id,vehicle_id,report_number,status,observations,pdf_path,visible_to_client,completed_at,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
+        client.from('invoices').select('id,vehicle_id,invoice_number,status,total,amount_paid,pdf_path,visible_to_client,issued_at,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false})
+      ]);
+      const failed = results.find((result)=>result.error);
+      if (failed?.error) throw failed.error;
+      const [vehicles,requests,quotes,disbursements,appointments,orders,inspections,invoices] = results.map((result)=>result.data || []);
+
+      const byVehicle = new Map(vehicles.map((vehicle)=>[vehicle.id,{vehicle,events:[]}]));
+      const add = (vehicleId,html,stamp) => {
+        if (!vehicleId || !byVehicle.has(vehicleId)) return;
+        byVehicle.get(vehicleId).events.push({html,stamp:new Date(stamp || 0).getTime() || 0});
+      };
+
+      requests.forEach((row)=>add(row.vehicle_id,eventCard(
+        'Demande',
+        (row.services || []).map((s)=>s.name || s.label || s.id).filter(Boolean).join(' · ') || 'Demande d’intervention',
+        dateTime(row.submitted_at || row.created_at),
+        row.status,
+        [['Notes',row.notes || '']]
+      ),row.submitted_at || row.created_at));
+
+      quotes.forEach((row)=>add(row.vehicle_id,eventCard(
+        'Devis',row.quote_number || row.title || 'Devis',dateTime(row.created_at),row.status,
+        [['Total',money(row.total)]],row.pdf_path
+      ),row.created_at));
+
+      disbursements.forEach((row)=>add(row.vehicle_id,eventCard(
+        'Pièces',row.description || 'Pièces / débours',dateTime(row.created_at),row.parts_status || row.status,
+        [
+          ['Provision demandée',row.provision_required ? money(row.provision_required) : ''],
+          ['Provision reçue',row.provision_received ? money(row.provision_received) : ''],
+          ['Montant réel',row.amount ? money(row.amount) : '']
+        ]
+      ),row.created_at));
+
+      appointments.forEach((row)=>add(row.vehicle_id,eventCard(
+        'Rendez-vous',dateTime(row.starts_at),dateTime(row.created_at),row.status,
+        [['Fin',row.ends_at ? dateTime(row.ends_at) : ''],['Informations',row.notes || '']]
+      ),row.starts_at || row.created_at));
+
+      orders.forEach((row)=>add(row.vehicle_id,eventCard(
+        'Intervention',row.order_number || 'Ordre de réparation',dateTime(row.signed_at || row.created_at),row.status,[],row.pdf_path
+      ),row.signed_at || row.created_at));
+
+      inspections.forEach((row)=>add(row.vehicle_id,eventCard(
+        'Contrôle',row.report_number || 'Fiche de contrôle',dateTime(row.completed_at || row.created_at),row.status,
+        [['Observations',row.observations || '']],row.pdf_path
+      ),row.completed_at || row.created_at));
+
+      invoices.forEach((row)=>add(row.vehicle_id,eventCard(
+        'Facture',row.invoice_number || 'Facture',dateTime(row.issued_at || row.created_at),row.status,
+        [['Total',money(row.total)],['Payé',money(row.amount_paid)]],row.pdf_path
+      ),row.issued_at || row.created_at));
+
+      const nextAppointment = appointments
+        .filter((row)=>row.starts_at && new Date(row.starts_at) > new Date() && row.status !== 'cancelled')
+        .sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at))[0];
+
+      const cards = [...byVehicle.values()].map(({vehicle,events})=>{
+        events.sort((a,b)=>b.stamp-a.stamp);
+        const title = [vehicle.brand,vehicle.model].filter(Boolean).join(' ') || 'Véhicule';
+        return `<section class="vehicle-history-card">
+          <div class="vehicle-head">
+            <div><span class="vehicle-plate">${esc(vehicle.plate || 'Sans plaque')}</span><h2>${esc(title)}</h2><p>${esc([vehicle.year,vehicle.energy,vehicle.mileage ? vehicle.mileage+' km' : ''].filter(Boolean).join(' · '))}</p></div>
+            <span class="event-count">${events.length} élément${events.length>1?'s':''}</span>
+          </div>
+          <div class="timeline-list">${events.length ? events.map((event)=>event.html).join('') : '<div class="notice">Aucun dossier pour ce véhicule.</div>'}</div>
+        </section>`;
+      }).join('');
+
+      host.innerHTML = `
+        <section class="client-panel account-strip">
+          <div><strong>${esc(session.user.email || '')}</strong><p>Compte client EDM28</p></div>
+          <div class="action-row"><a class="primary-action as-link" href="/demande">Nouvelle demande</a><button class="secondary-action" id="historySignOut" type="button">Se déconnecter</button></div>
+        </section>
+        ${nextAppointment ? `<section class="next-appointment"><div class="section-kicker">Prochain rendez-vous</div><h2>${esc(dateTime(nextAppointment.starts_at))}</h2><p>Le rendez-vous est aussi conservé dans le dossier du véhicule concerné.</p></section>` : ''}
+        ${cards || '<section class="client-panel"><div class="notice">Aucun véhicule enregistré.</div></section>'}`;
+
+      byId('historySignOut')?.addEventListener('click',async()=>{await signOut();await render();});
+      host.querySelectorAll('[data-doc-path]').forEach((button)=>button.addEventListener('click',async()=>{
+        try { await openDocument(button.dataset.docPath); }
+        catch (error) { window.alert(error.message || 'Document indisponible.'); }
+      }));
+    }
+
+    try { await render(); }
+    catch (error) { host.innerHTML = `<section class="client-panel"><div class="errorbox">${esc(error.message || 'Chargement impossible.')}</div></section>`; }
+    client.auth.onAuthStateChange(()=>window.setTimeout(()=>render().catch(()=>{}),0));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded',()=>{ void installRequestPage(); void installInterventionsPage(); },{once:true});
+  } else {
+    void installRequestPage();
+    void installInterventionsPage();
+  }
+})();
