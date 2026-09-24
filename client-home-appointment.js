@@ -77,6 +77,8 @@
     supabaseClient.auth.onAuthStateChange(() => schedule());
   }
 
+  window.EDMHomeAppointment = { render, schedule };
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', schedule, { once:true });
   } else {
