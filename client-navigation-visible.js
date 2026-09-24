@@ -3,7 +3,7 @@
   window.__edmMenuRouterV7 = true;
   window.__edmConnectedRouter = true;
 
-  const allPages = new Set(['home', 'appointment', 'account', 'request-status', 'history', 'disbursements', 'about']);
+  const allPages = new Set(['home', 'appointment', 'account', 'history', 'disbursements', 'about']);
   const privatePages = new Set(['history', 'disbursements']);
 
   let sessionUser = null;
