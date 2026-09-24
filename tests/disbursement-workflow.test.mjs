@@ -64,6 +64,28 @@ test('database migration enforces exact no-margin disbursements end to end', asy
   }
 });
 
+test('provision-first workflow blocks ordering and booking until parts are ready', async () => {
+  const [migration, admin, client] = await Promise.all([
+    read('supabase/migrations/20260924083520_disbursement_provision_workflow.sql'),
+    read('admin-disbursements.js'),
+    read('client-disbursements.js')
+  ]);
+  assert.match(migration, /provision_required/);
+  assert.match(migration, /provision_received/);
+  assert.match(migration, /disbursement_transactions/);
+  assert.match(migration, /Provision client insuffisante/);
+  assert.match(migration, /guard_appointment_parts_ready/);
+  assert.match(migration, /parts_status <> 'received'/);
+  assert.match(migration, /security invoker/i);
+  assert.match(admin, /admin_record_disbursement_transaction/);
+  assert.match(admin, /admin_set_disbursement_parts_status/);
+  assert.match(admin, /data-record-provision/);
+  assert.match(admin, /data-parts-status/);
+  assert.match(client, /Provision à régler/);
+  assert.match(client, /Reçu chez EDM28/);
+  assert.match(client, /Remboursement client nécessaire/);
+});
+
 test('accounting keeps reimbursed disbursements separate from EDM service revenue', async () => {
   const accounting = await read('admin-accounting.js');
   assert.match(accounting, /disbursement_total/);
