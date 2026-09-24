@@ -214,7 +214,7 @@
 
       <section class="client-panel">
         <div class="section-kicker">2 · Intervention</div>
-        <h2>Que faut-il regarder ?</h2>
+        <h2>Que faut-il faire ?</h2>
         <p>Sélectionnez une ou plusieurs prestations. EDM28 confirmera ensuite le périmètre réel avant travaux.</p>
         <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
         <div class="benefit-card">
