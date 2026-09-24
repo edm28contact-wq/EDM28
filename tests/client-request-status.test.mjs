@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-test('client request status exposes the seven business stages', async () => {
+test('client request status exposes the complete EDM28 business journey', async () => {
   const [status, router, app] = await Promise.all([
     read('client-request-status-history.js'),
     read('client-navigation-visible.js'),
@@ -13,13 +13,17 @@ test('client request status exposes the seven business stages', async () => {
   ]);
 
   for (const label of [
-    'Envoyé',
-    'Étudié',
-    'Devis envoyé',
-    'Intervention en préparation',
-    'OR envoyé',
-    'Intervention finie',
-    'Facture envoyée'
+    'Demande reçue',
+    'Étude en cours',
+    'Devis disponible',
+    'Devis accepté',
+    'Pièces à régler',
+    'Pièces commandées',
+    'Pièces reçues',
+    'Rendez-vous confirmé',
+    'Intervention en cours',
+    'Facture disponible',
+    'Terminé'
   ]) assert.ok(status.includes(label), `étape absente : ${label}`);
 
   assert.match(router, /'request-status'/);
@@ -29,12 +33,21 @@ test('client request status exposes the seven business stages', async () => {
 
 test('request status derives progress from existing business records', async () => {
   const status = await read('client-request-status-history.js');
-  for (const table of ['service_requests', 'quotes', 'appointments', 'repair_orders', 'invoices']) {
+  for (const table of ['service_requests', 'quotes', 'disbursements', 'appointments', 'repair_orders', 'invoices']) {
     assert.match(status, new RegExp(`from\\('${table}'\\)`));
   }
   assert.match(status, /visible_to_client\s*&&\s*row\.pdf_path/);
   assert.match(status, /PUBLISHED_INVOICE_STATUSES/);
-  assert.match(status, /\['completed', 'invoiced'\]/);
+  assert.match(status, /\['in_progress', 'completed', 'invoiced'\]/);
+});
+
+test('request status exposes one next action and uses the secure quote response RPC', async () => {
+  const status = await read('client-request-status-history.js');
+  assert.match(status, /Action actuelle/);
+  assert.match(status, /data-next-page="disbursements"/);
+  assert.match(status, /data-next-page="booking"/);
+  assert.match(status, /client_respond_quote/);
+  assert.doesNotMatch(status, /from\('quotes'\)\.update\(\{ status \}\)/);
 });
 
 test('completed history is grouped by vehicle then intervention and shows three PDFs', async () => {
@@ -48,7 +61,7 @@ test('completed history is grouped by vehicle then intervention and shows three 
   assert.match(status, /createSignedUrl\(path, 120\)/);
 });
 
-test('invoice-backed archive keeps stage seven interventions visible even when an older OR was not published', async () => {
+test('invoice-backed archive keeps completed interventions visible even when an older OR was not published', async () => {
   const [archive, app] = await Promise.all([
     read('client-history-invoice-archive.js'),
     read('api/app.js')
