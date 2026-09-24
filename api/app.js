@@ -54,6 +54,80 @@ function getSeoMode(req) {
 function xmlEscape(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 }
+function pdfEscape(value) {
+  return String(value ?? '').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+}
+
+function buildBlankOrderPdf() {
+  const text = (x, y, value, size = 10, bold = false) =>
+    `BT /${bold ? 'F2' : 'F1'} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${pdfEscape(value)}) Tj ET`;
+  const line = (x1, y1, x2, y2, width = 0.8) => `${width} w ${x1} ${y1} m ${x2} ${y2} l S`;
+  const rect = (x, y, w, h, width = 0.8) => `${width} w ${x} ${y} ${w} ${h} re S`;
+  const checkbox = (x, y, label) => [rect(x, y - 7, 8, 8, 0.6), text(x + 13, y - 5, label, 7.5)].join('\n');
+
+  const commands = [];
+  commands.push(text(42, 800, 'EDM28', 24, true));
+  commands.push(text(42, 780, 'ORDRE DE REPARATION - MODELE VIERGE', 16, true));
+  commands.push(text(42, 763, 'Document de preparation - a completer avant intervention', 8));
+  commands.push(line(42, 752, 553, 752, 1.2));
+  commands.push(text(42, 728, 'CLIENT', 10, true), rect(42, 656, 245, 60));
+  commands.push(text(50, 700, 'Nom / Prenom :', 8), text(50, 682, 'Telephone :', 8), text(50, 664, 'Email :', 8));
+  commands.push(text(310, 728, 'VEHICULE', 10, true), rect(310, 656, 243, 60));
+  commands.push(text(318, 700, 'Immatriculation :', 8), text(318, 682, 'Marque / Modele :', 8), text(318, 664, 'Kilometrage :', 8));
+  commands.push(text(42, 632, 'TRAVAUX AUTORISES / DEMANDE CLIENT', 10, true), rect(42, 548, 511, 72));
+  commands.push(line(50, 598, 545, 598), line(50, 578, 545, 578), line(50, 558, 545, 558));
+  commands.push(text(42, 522, 'POINTS DE CONTROLE EDM28', 10, true));
+  commands.push(text(42, 508, 'A partir de 100 EUR TTC factures chez EDM28 : controle complet de cette liste.', 7.5, true));
+
+  const left = ['Plaquettes avant gauche','Plaquettes avant droite','Plaquettes arriere gauche','Plaquettes arriere droite','Disque avant gauche','Disque avant droit','Disque arriere gauche','Disque arriere droit','Liquide de frein','Flexibles de frein','Pneu avant gauche','Pneu avant droit'];
+  const right = ['Pneu arriere gauche','Pneu arriere droit','Pressions pneumatiques','Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets','Geometrie / comportement','Etat visible du vehicule','Photos avant / apres','Observations generales'];
+  let y = 486;
+  left.forEach((label) => { commands.push(checkbox(46, y, label)); y -= 17; });
+  y = 486;
+  right.forEach((label) => { commands.push(checkbox(305, y, label)); y -= 17; });
+
+  commands.push(text(42, 272, 'OBSERVATIONS / MESURES', 10, true), rect(42, 190, 511, 68));
+  commands.push(line(50, 235, 545, 235), line(50, 213, 545, 213));
+  commands.push(text(42, 164, 'VALIDATION', 10, true), rect(42, 74, 245, 76), rect(310, 74, 243, 76));
+  commands.push(text(50, 134, 'Date :', 8), text(50, 116, 'Nom client :', 8), text(50, 94, 'Signature client :', 8));
+  commands.push(text(318, 134, 'Technicien :', 8), text(318, 116, 'Date / heure :', 8), text(318, 94, 'Signature / visa :', 8));
+  commands.push(text(42, 50, 'EDM28 - Modele vierge. Le document final est genere depuis le dossier client.', 7));
+
+  const stream = commands.join('\n');
+  const objects = [];
+  objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+  objects[2] = '<< /Type /Pages /Kids [3 0 R] /Count 1 >>';
+  objects[3] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>';
+  objects[4] = `<< /Length ${Buffer.byteLength(stream, 'binary')} >>\nstream\n${stream}\nendstream`;
+  objects[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+  objects[6] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
+
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  for (let i = 1; i < objects.length; i += 1) {
+    offsets[i] = Buffer.byteLength(pdf, 'binary');
+    pdf += `${i} 0 obj\n${objects[i]}\nendobj\n`;
+  }
+  const xref = Buffer.byteLength(pdf, 'binary');
+  pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+  for (let i = 1; i < objects.length; i += 1) pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return Buffer.from(pdf, 'binary');
+}
+
+function handleBlankOrder(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
+    return res.status(405).end();
+  }
+  const pdf = buildBlankOrderPdf();
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename="ordre-reparation-vierge-edm28.pdf"');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  if (req.method === 'HEAD') return res.status(200).end();
+  return res.status(200).send(pdf);
+}
+
 
 function normalizeConfiguredOrigin(value) {
   const raw = String(value || '').trim();
@@ -255,6 +329,7 @@ export default function handler(req, res) {
   }
   if (seoMode === 'robots') return handleRobots(req, res);
   if (seoMode === 'sitemap') return handleSitemap(req, res);
+  if (seoMode === 'blank-order') return handleBlankOrder(req, res);
   if (seoMode) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1></main></body></html>');
