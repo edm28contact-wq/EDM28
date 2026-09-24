@@ -65,7 +65,7 @@ test('Prestations est fusionnée dans l’accueil', async () => {
   const config = JSON.parse(configText);
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
   assert.equal(routes.get('/prestations'), '/');
-  assert.match(source, /h1: 'Prestations EDM28'/);
+  assert.match(source, /h1: 'EDM28'/);
   assert.match(source, /const sections = page\.path === '\/'/);
   assert.doesNotMatch(source, /prestations:\s*\{/);
   assert.doesNotMatch(source.split('const NAV_ITEMS = [')[1].split('];')[0], /Prestations/);
