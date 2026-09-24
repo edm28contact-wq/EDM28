@@ -16,36 +16,6 @@
     return data?.session?.user || null;
   }
 
-  function installBookingPage() {
-    const nav = document.querySelector('.nav');
-    if (nav && !nav.querySelector('[data-page="booking"]')) {
-      const button = document.createElement('button');
-      button.dataset.page = 'booking';
-      button.innerHTML = '📅 Préparer mon RDV';
-      const historyButton = nav.querySelector('[data-page="history"]');
-      nav.insertBefore(button, historyButton || nav.lastElementChild);
-    }
-
-    const main = document.querySelector('main.main');
-    if (main && !document.getElementById('booking')) {
-      const section = document.createElement('section');
-      section.id = 'booking';
-      section.className = 'page';
-      section.innerHTML = `
-        <div class="panel">
-          <div class="section-title">
-            <div>
-              <h2>Préparer mon rendez-vous</h2>
-              <p>Le rendez-vous devient disponible dans EDM28 lorsque le dossier est prêt et les pièces nécessaires reçues.</p>
-            </div>
-          </div>
-          <div class="notice">Chargement de votre dossier…</div>
-        </div>`;
-      const history = document.getElementById('history');
-      main.insertBefore(section, history || null);
-    }
-  }
-
   function serviceNames(request) {
     return (Array.isArray(request?.services) ? request.services : [])
       .map((service) => typeof service === 'string' ? service : service?.name || service?.label || service?.id)
@@ -249,13 +219,18 @@
   }
 
   function install() {
-    installBookingPage();
     document.addEventListener('click', (event) => {
-      if (event.target.closest?.('[data-page="history"]')) setTimeout(() => renderVehicleHistory().catch(console.warn), 100);
+      if (event.target.closest?.('[data-page="history"]')) setTimeout(() => {
+        try { if (typeof renderGarage === 'function') renderGarage(); } catch (error) { console.warn('EDM vehicles unavailable', error); }
+        renderVehicleHistory().catch(console.warn);
+      }, 100);
     });
     if (typeof supabaseClient !== 'undefined') {
       supabaseClient.auth.onAuthStateChange((_event, session) => {
-        if (session?.user && document.getElementById('history')?.classList.contains('active')) setTimeout(() => renderVehicleHistory().catch(console.warn), 150);
+        if (session?.user && document.getElementById('history')?.classList.contains('active')) setTimeout(() => {
+          try { if (typeof renderGarage === 'function') renderGarage(); } catch (error) { console.warn('EDM vehicles unavailable', error); }
+          renderVehicleHistory().catch(console.warn);
+        }, 150);
       });
     }
   }
