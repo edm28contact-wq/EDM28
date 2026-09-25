@@ -559,6 +559,217 @@
     return doc.build();
   }
 
+  const ADV_NAVY = [0.06, 0.09, 0.15];
+  const ADV_ORANGE = [0.79, 0.46, 0.24];
+  const ADV_GREEN = [0.08, 0.55, 0.28];
+  const ADV_GREEN_LIGHT = [0.91, 0.97, 0.93];
+  const ADV_RED = [0.78, 0.17, 0.17];
+  const ADV_RED_LIGHT = [0.99, 0.92, 0.92];
+  const ADV_WARM = [0.97, 0.96, 0.94];
+
+  function drawStatusMark(page, cx, cy, included) {
+    const color = included ? ADV_GREEN : ADV_RED;
+    const fill = included ? ADV_GREEN_LIGHT : ADV_RED_LIGHT;
+    page.circle(cx, cy, 13, { fill, stroke: color, width: 0.8 });
+    if (included) {
+      page.line(cx - 6, cy, cx - 1, cy - 5, { color, width: 2.2 });
+      page.line(cx - 1, cy - 5, cx + 7, cy + 6, { color, width: 2.2 });
+    } else {
+      page.line(cx - 5, cy - 5, cx + 5, cy + 5, { color, width: 2.2 });
+      page.line(cx - 5, cy + 5, cx + 5, cy - 5, { color, width: 2.2 });
+    }
+  }
+
+  function drawAdvantagePage(doc) {
+    const page = doc.addPage();
+    page.rect(0, 0, PAGE_W, PAGE_H, { fill: [0.985, 0.98, 0.97] });
+    page.rect(0, 742, PAGE_W, 100, { fill: ADV_NAVY });
+    page.text(40, 797, 'EDM28', { size: 25, bold: true, color: WHITE });
+    page.text(40, 775, 'MES AVANTAGES', { size: 16, bold: true, color: WHITE });
+    page.text(40, 724, 'Des contrôles simples et clairement définis selon le montant TTC facturé.', { size: 10, color: DARK });
+    page.text(40, 705, 'Le seuil de 100 € est calculé sur le total TTC facturé par EDM28 pour l’intervention.', { size: 8.5, color: GRAY });
+
+    const x = 40;
+    const top = 665;
+    const widths = [285, 115, 115];
+    const headerH = 42;
+    const rowH = 58;
+    const totalW = widths.reduce((sum, value) => sum + value, 0);
+
+    page.rect(x, top - headerH, totalW, headerH, { fill: ADV_NAVY, stroke: ADV_NAVY });
+    page.text(x + 12, top - 26, 'Contrôle', { size: 9, bold: true, color: WHITE });
+    page.text(x + widths[0], top - 26, 'Moins de 100 € TTC', { size: 8.2, bold: true, color: WHITE, width: widths[1], align: 'center' });
+    page.text(x + widths[0] + widths[1], top - 26, '100 € TTC et plus', { size: 8.2, bold: true, color: WHITE, width: widths[2], align: 'center' });
+
+    const rows = [
+      ['Pression des 4 pneus', true, true],
+      ['État du système de freinage', true, true],
+      ['État des 4 pneus', false, true],
+      ['Jeu dans les roues / liaison au sol', false, true],
+      ['Niveaux : frein, huile moteur, refroidissement, lave-glace', false, true],
+      ['Essuie-glaces, klaxon et éclairage complet', false, true],
+      ['Checklist complémentaire complète EDM28', false, true]
+    ];
+
+    let rowTop = top - headerH;
+    rows.forEach((row, index) => {
+      const bottom = rowTop - rowH;
+      page.rect(x, bottom, totalW, rowH, { fill: index % 2 ? WHITE : ADV_WARM, stroke: [0.86,0.84,0.81], width: 0.5 });
+      page.rect(x + widths[0] + widths[1], bottom, widths[2], rowH, { fill: ADV_GREEN_LIGHT });
+      const labelLines = wrapText(row[0], widths[0] - 24, 8.6, false, 3);
+      labelLines.forEach((line, lineIndex) => page.text(x + 12, bottom + 34 - lineIndex * 11, line, { size: 8.6, color: DARK }));
+      drawStatusMark(page, x + widths[0] + widths[1] / 2, bottom + rowH / 2 + 4, row[1]);
+      drawStatusMark(page, x + widths[0] + widths[1] + widths[2] / 2, bottom + rowH / 2 + 4, row[2]);
+      page.text(x + widths[0], bottom + 8, row[1] ? 'Inclus' : 'Non inclus', { size: 6.7, bold: true, color: row[1] ? ADV_GREEN : ADV_RED, width: widths[1], align: 'center' });
+      page.text(x + widths[0] + widths[1], bottom + 8, row[2] ? 'Inclus' : 'Non inclus', { size: 6.7, bold: true, color: row[2] ? ADV_GREEN : ADV_RED, width: widths[2], align: 'center' });
+      rowTop = bottom;
+    });
+
+    const noteY = 105;
+    page.rect(40, noteY, 515, 64, { fill: WHITE, stroke: [0.86,0.84,0.81], width: 0.7 });
+    page.text(54, noteY + 43, 'Moins de 100 € TTC', { size: 9, bold: true, color: ADV_NAVY });
+    page.text(170, noteY + 43, 'Pression des pneus + vérification de l’état du système de freinage.', { size: 8.2, color: DARK });
+    page.text(54, noteY + 20, 'À partir de 100 € TTC', { size: 9, bold: true, color: ADV_GREEN });
+    page.text(170, noteY + 20, 'Ces contrôles + checklist complète EDM28 rattachée au dossier.', { size: 8.2, color: DARK });
+    page.text(40, 72, 'Le détail de la checklist complète figure dans l’ordre de réparation vierge ci-après.', { size: 7.6, color: GRAY });
+  }
+
+  function drawBlankOrderMainPage(doc) {
+    const page = doc.addPage();
+    page.rect(0, 0, PAGE_W, PAGE_H, { fill: WHITE });
+    page.rect(0, 748, PAGE_W, 94, { fill: ADV_NAVY });
+    page.text(36, 800, 'EDM28', { size: 24, bold: true, color: WHITE });
+    page.text(36, 774, 'ORDRE DE RÉPARATION - MODÈLE VIERGE', { size: 15, bold: true, color: WHITE });
+    page.text(36, 754, 'Document de préparation - à compléter avant intervention', { size: 7.8, color: [0.86,0.89,0.94] });
+
+    page.text(36, 720, 'CLIENT', { size: 10, bold: true, color: ADV_ORANGE });
+    page.rect(36, 632, 250, 74, { fill: ADV_WARM, stroke: [0.80,0.79,0.77], width: 0.7 });
+    page.text(48, 686, 'Nom / Prénom : ____________________________________', { size: 8.2 });
+    page.text(48, 664, 'Téléphone : _______________________________________', { size: 8.2 });
+    page.text(48, 642, 'E-mail : __________________________________________', { size: 8.2 });
+
+    page.text(310, 720, 'VÉHICULE', { size: 10, bold: true, color: ADV_ORANGE });
+    page.rect(310, 632, 249, 74, { fill: ADV_WARM, stroke: [0.80,0.79,0.77], width: 0.7 });
+    page.text(322, 686, 'Immatriculation : _________________________________', { size: 8.2 });
+    page.text(322, 664, 'Marque / Modèle : _________________________________', { size: 8.2 });
+    page.text(322, 642, 'Kilométrage : _____________________________________', { size: 8.2 });
+
+    page.text(36, 600, 'TRAVAUX AUTORISÉS / DEMANDE CLIENT', { size: 10, bold: true, color: ADV_ORANGE });
+    page.rect(36, 480, 523, 104, { stroke: [0.80,0.79,0.77], width: 0.7 });
+    [560, 535, 510].forEach((y) => page.line(48, y, 547, y, { color: [0.86,0.84,0.81], width: 0.5 }));
+
+    page.text(36, 446, 'CONTRÔLES STANDARD EDM28', { size: 10, bold: true, color: ADV_ORANGE });
+    const standard = [
+      'Pression avant gauche',
+      'Pression avant droite',
+      'Pression arrière gauche',
+      'Pression arrière droite',
+      'État du système de freinage'
+    ];
+    let y = 418;
+    standard.forEach((label) => {
+      page.rect(42, y - 7, 10, 10, { stroke: ADV_NAVY, width: 0.8 });
+      page.text(62, y - 5, label, { size: 8.4, color: DARK });
+      y -= 28;
+    });
+
+    page.rect(36, 220, 523, 70, { fill: ADV_GREEN_LIGHT, stroke: [0.72,0.87,0.77], width: 0.7 });
+    page.text(50, 270, 'À PARTIR DE 100 € TTC FACTURÉS', { size: 10, bold: true, color: ADV_GREEN });
+    page.paragraph(50, 250, 'La checklist complète EDM28 des pages suivantes est ajoutée au contrôle et rattachée au dossier de l’intervention.', { size: 8.4, width: 490, maxLines: 3 });
+
+    page.text(36, 184, 'OBSERVATIONS', { size: 10, bold: true, color: ADV_ORANGE });
+    page.rect(36, 92, 523, 76, { stroke: [0.80,0.79,0.77], width: 0.7 });
+    page.text(36, 64, 'Date : ____________________     Signature client : ____________________     Technicien : ____________________', { size: 7.8, color: DARK });
+  }
+
+  function drawChecklistBox(page, x, y, label, width) {
+    page.rect(x, y - 7, 9, 9, { stroke: ADV_NAVY, width: 0.7 });
+    const lines = wrapText(label, width - 18, 7.7, false, 2);
+    lines.forEach((line, index) => page.text(x + 17, y - 5 - index * 10, line, { size: 7.7, color: DARK }));
+    return Math.max(17, lines.length * 10 + 5);
+  }
+
+  function drawChecklistGroup(page, x, y, width, title, items) {
+    page.rect(x, y - 20, width, 20, { fill: ADV_NAVY });
+    page.text(x + 8, y - 14, title, { size: 8.3, bold: true, color: WHITE });
+    let cursor = y - 32;
+    items.forEach((item) => { cursor -= drawChecklistBox(page, x + 8, cursor, item, width - 16); });
+    return cursor - 6;
+  }
+
+  function drawMechanicalChecklistPage(doc) {
+    const page = doc.addPage();
+    page.text(36, 802, 'OR VIERGE - CHECKLIST COMPLÈTE EDM28', { size: 15, bold: true, color: ADV_NAVY });
+    page.text(36, 782, 'Partie 1/2 - Freinage, pneumatiques, liaison au sol, pressions et niveaux', { size: 8, color: GRAY });
+    page.line(36, 770, 559, 770, { color: ADV_ORANGE, width: 1.4 });
+
+    const leftGroups = [
+      ['FREINAGE', ['Plaquettes avant gauche','Plaquettes avant droite','Plaquettes arrière gauche','Plaquettes arrière droite','Disque avant gauche','Disque avant droit','Disque arrière gauche','Disque arrière droit','Flexibles de frein']],
+      ['PNEUMATIQUES - ÉTAT', ['Pneu avant gauche','Pneu avant droit','Pneu arrière gauche','Pneu arrière droit']]
+    ];
+    const rightGroups = [
+      ['LIAISON AU SOL', ['Jeu dans les roues','Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets']],
+      ['PRESSION DES PNEUS', ['Pression avant gauche','Pression avant droite','Pression arrière gauche','Pression arrière droite']],
+      ['NIVEAUX', ['Niveau liquide de frein','Niveau huile moteur','Niveau liquide de refroidissement','Niveau lave-glace']]
+    ];
+
+    let yLeft = 746;
+    leftGroups.forEach(([title, items]) => { yLeft = drawChecklistGroup(page, 36, yLeft, 250, title, items); });
+    let yRight = 746;
+    rightGroups.forEach(([title, items]) => { yRight = drawChecklistGroup(page, 309, yRight, 250, title, items); });
+
+    page.text(36, 58, 'Chaque case est à renseigner pendant le contrôle. Les observations peuvent être précisées sur la page suivante.', { size: 7.2, color: GRAY });
+  }
+
+  function drawEquipmentChecklistPage(doc) {
+    const page = doc.addPage();
+    page.text(36, 802, 'OR VIERGE - CHECKLIST COMPLÈTE EDM28', { size: 15, bold: true, color: ADV_NAVY });
+    page.text(36, 782, 'Partie 2/2 - Équipements, éclairage, observations et validation', { size: 8, color: GRAY });
+    page.line(36, 770, 559, 770, { color: ADV_ORANGE, width: 1.4 });
+
+    const items = [
+      'Essuie-glaces avant','Essuie-glace arrière','Klaxon',
+      'Feu de position avant gauche','Feu de position avant droit','Feu de position arrière gauche','Feu de position arrière droit',
+      'Feu de croisement gauche','Feu de croisement droit','Feu de route gauche','Feu de route droit',
+      'Feu stop gauche','Feu stop droit','Troisième feu stop',
+      'Feu de recul gauche','Feu de recul droit',
+      'Antibrouillard avant gauche','Antibrouillard avant droit','Antibrouillard arrière',
+      'Éclairage de plaque gauche','Éclairage de plaque droit',
+      'Clignotant avant gauche','Clignotant avant droit','Clignotant arrière gauche','Clignotant arrière droit',
+      'Répétiteur latéral gauche','Répétiteur latéral droit','Feux de détresse'
+    ];
+
+    page.rect(36, 724, 523, 24, { fill: ADV_NAVY });
+    page.text(44, 732, 'ÉQUIPEMENTS ET ÉCLAIRAGE', { size: 8.5, bold: true, color: WHITE });
+    const left = items.slice(0, 14);
+    const right = items.slice(14);
+    let yLeft = 706;
+    left.forEach((item) => { yLeft -= drawChecklistBox(page, 44, yLeft, item, 240); });
+    let yRight = 706;
+    right.forEach((item) => { yRight -= drawChecklistBox(page, 309, yRight, item, 240); });
+
+    page.text(36, 330, 'OBSERVATIONS / MESURES', { size: 9.5, bold: true, color: ADV_ORANGE });
+    page.rect(36, 188, 523, 126, { stroke: [0.80,0.79,0.77], width: 0.7 });
+    [282, 250, 218].forEach((y) => page.line(48, y, 547, y, { color: [0.88,0.86,0.83], width: 0.5 }));
+
+    page.text(36, 156, 'VALIDATION', { size: 9.5, bold: true, color: ADV_ORANGE });
+    page.rect(36, 76, 250, 64, { fill: ADV_WARM, stroke: [0.80,0.79,0.77], width: 0.7 });
+    page.text(48, 120, 'Date : ______________________________', { size: 7.8 });
+    page.text(48, 98, 'Nom / signature client : __________________________', { size: 7.8 });
+    page.rect(309, 76, 250, 64, { fill: ADV_WARM, stroke: [0.80,0.79,0.77], width: 0.7 });
+    page.text(321, 120, 'Technicien : _________________________', { size: 7.8 });
+    page.text(321, 98, 'Visa : _______________________________', { size: 7.8 });
+  }
+
+  function buildAdvantagesOrder() {
+    const doc = new PdfDocument();
+    drawAdvantagePage(doc);
+    drawBlankOrderMainPage(doc);
+    drawMechanicalChecklistPage(doc);
+    drawEquipmentChecklistPage(doc);
+    return doc.build();
+  }
+
   function normalizeLine(line) {
     return typeof line === 'object' && line !== null ? { text: clean(line.text), bold: Boolean(line.bold), size: Number(line.size || 10), gap: Number(line.gap || 0), indent: Number(line.indent || 0) } : { text: clean(line), bold: false, size: 10, gap: 0, indent: 0 };
   }
@@ -588,5 +799,5 @@
     throw new Error('Type de document PDF non pris en charge.');
   }
 
-  window.EDMPdfLite = { build, buildDocument };
+  window.EDMPdfLite = { build, buildDocument, buildAdvantagesOrder };
 })();
