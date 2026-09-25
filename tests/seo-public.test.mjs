@@ -75,6 +75,10 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(client, /Moins de 100 € TTC/);
   assert.match(client, /100 € TTC et plus/);
   assert.match(client, /Checklist complémentaire complète EDM28/);
+  assert.match(client, /Pression des 4 pneus/);
+  assert.match(client, /Automatique/);
+  assert.match(client, /État des 4 pneus/);
+  assert.match(client, /Jeu dans les roues/);
   assert.match(client, /downloadBlankOrder/);
   assert.match(client, /EDMPdfLite\.build/);
   assert.match(client, /ordre-reparation-vierge-edm28\.pdf/);
