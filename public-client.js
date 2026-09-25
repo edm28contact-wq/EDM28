@@ -280,12 +280,14 @@
         <h2>Que faut-il faire ?</h2>
         <p>Sélectionnez une ou plusieurs prestations. EDM28 confirmera ensuite le périmètre réel avant travaux.</p>
         <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
-        <div class="benefit-card">
+        <div class="benefit-card advantage-card">
           <div>
+            <span class="advantage-badge">Dès 100 € TTC</span>
             <strong>Mes avantages à partir de 100 €</strong>
-            <p>Consultez le PDF avantages : comparatif des contrôles selon le montant, puis OR vierge et checklist complète EDM28.</p>
+            <p>Comparatif des contrôles, OR vierge et checklist complète EDM28.</p>
+            <small>Le PDF s’ouvre dans un nouvel onglet.</small>
           </div>
-          <button class="secondary-action" type="button" id="downloadBlankOrder">Mes avantages à partir de 100 €</button>
+          <button class="advantage-action" type="button" id="downloadBlankOrder">Mes avantages à partir de 100 € <span aria-hidden="true">→</span></button>
         </div>
         <label style="display:block;margin-top:18px">Symptômes ou précisions
           <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
@@ -502,15 +504,19 @@
         if (!window.EDMPdfLite?.buildAdvantagesOrder) throw new Error('Générateur PDF indisponible.');
         const blob = window.EDMPdfLite.buildAdvantagesOrder();
         const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'mes-avantages-et-or-vierge-edm28.pdf';
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        const opened = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!opened) {
+          const link = document.createElement('a');
+          link.href = url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        }
+        window.setTimeout(() => URL.revokeObjectURL(url), 60000);
       } catch (error) {
-        message('requestSubmitStatus', error.message || 'Téléchargement impossible.', 'errorbox');
+        message('requestSubmitStatus', error.message || 'Ouverture du PDF impossible.', 'errorbox');
       }
     });
 
