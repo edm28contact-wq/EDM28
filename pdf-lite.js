@@ -467,7 +467,7 @@
     disque_av_g: 'Disque avant gauche', disque_av_d: 'Disque avant droit', disque_ar_g: 'Disque arrière gauche', disque_ar_d: 'Disque arrière droit',
     pneu_av_g: 'Pneu avant gauche', pneu_av_d: 'Pneu avant droit', pneu_ar_g: 'Pneu arrière gauche', pneu_ar_d: 'Pneu arrière droit',
     pression_av_g: 'Pression avant gauche', pression_av_d: 'Pression avant droit', pression_ar_g: 'Pression arrière gauche', pression_ar_d: 'Pression arrière droite',
-    liquide_frein: 'Liquide de frein', flexibles: 'Flexibles de frein', amortisseurs: 'Amortisseurs', rotules: 'Rotules', silentblocs: 'Silentblocs', roulements: 'Roulements', soufflets: 'Soufflets', geometrie: 'Géométrie'
+    liquide_frein: 'Liquide de frein', flexibles: 'Flexibles de frein', amortisseurs: 'Amortisseurs', rotules: 'Rotules', silentblocs: 'Silentblocs', roulements: 'Roulements', soufflets: 'Soufflets'
   };
   const sectionForCheck = (key) => /plaquettes|disque|liquide_frein|flexibles/.test(key) ? 'FREINAGE' : /pneu|pression/.test(key) ? 'PNEUMATIQUES' : 'LIAISON AU SOL';
   const checkValue = (value) => typeof value === 'object' && value !== null ? value : { status: value };
