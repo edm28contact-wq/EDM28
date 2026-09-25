@@ -89,12 +89,8 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(blankOrder, /État du système de freinage/);
   assert.match(blankOrder, /État des 4 pneus/);
   assert.match(blankOrder, /Jeu dans les roues/);
-  assert.match(blankOrder, /ORDRE DE RÉPARATION - MODÈLE VIERGE/);
-  assert.match(blankOrder, /CHECKLIST COMPLÈTE EDM28/);
   assert.match(blankOrder, /drawAdvantagePage\(doc\)/);
-  assert.match(blankOrder, /drawBlankOrderMainPage\(doc\)/);
-  assert.match(blankOrder, /drawMechanicalChecklistPage\(doc\)/);
-  assert.match(blankOrder, /drawEquipmentChecklistPage\(doc\)/);
+  assert.doesNotMatch(blankOrder, /drawBlankOrderMainPage\(doc\);\s*drawMechanicalChecklistPage\(doc\)/);
   assert.match(blankOrder, /window\.EDMPdfLite = \{ build, buildDocument, buildAdvantagesOrder \}/);
 });
 
