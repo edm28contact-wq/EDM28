@@ -233,33 +233,38 @@
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Pression des 4 pneus</span>
-              <span role="cell" class="comparison-yes">Automatique</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Automatique</span>
+              <span role="cell" class="comparison-status yes" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
+              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">État du système de freinage</span>
-              <span role="cell" class="comparison-yes">Vérifié</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Vérifié</span>
+              <span role="cell" class="comparison-status yes" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
+              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">État des 4 pneus</span>
-              <span role="cell">Non inclus dans le contrôle standard</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Checklist complète</span>
+              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
+              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
             </div>
             <div class="comparison-row" role="row">
-              <span role="cell">Jeu dans les roues / liaison au sol : roulements, rotules, silentblocs, soufflets</span>
-              <span role="cell">Non inclus dans le contrôle standard</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Checklist complète</span>
+              <span role="cell">Jeu dans les roues / liaison au sol</span>
+              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
+              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Niveaux : frein, huile moteur, refroidissement, lave-glace</span>
-              <span role="cell">Non inclus dans le contrôle standard</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Checklist complète</span>
+              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
+              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Essuie-glaces, klaxon et éclairage complet</span>
-              <span role="cell">Non inclus dans le contrôle standard</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Checklist complète</span>
+              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
+              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">Checklist complémentaire complète EDM28</span>
+              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
+              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
             </div>
           </div>
           <p class="comparison-note"><strong>Moins de 100 € TTC :</strong> pression des pneus + vérification de l’état du système de freinage. <strong>À partir de 100 € TTC :</strong> ces deux vérifications restent faites et la checklist complète EDM28 est ajoutée au dossier.</p>
