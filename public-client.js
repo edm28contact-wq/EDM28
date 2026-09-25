@@ -232,47 +232,37 @@
               <strong role="columnheader" class="comparison-highlight">100 € TTC et plus</strong>
             </div>
             <div class="comparison-row" role="row">
-              <span role="cell">Points directement liés à l’intervention demandée</span>
-              <span role="cell">Contrôlés</span>
-              <span role="cell" class="comparison-highlight">Contrôlés</span>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">Contrôles nécessaires selon l’état constaté du véhicule</span>
-              <span role="cell">Selon besoin</span>
-              <span role="cell" class="comparison-highlight">Selon besoin</span>
-            </div>
-            <div class="comparison-row" role="row">
               <span role="cell">Pression des 4 pneus</span>
               <span role="cell" class="comparison-yes">Automatique</span>
               <span role="cell" class="comparison-highlight comparison-yes">Automatique</span>
             </div>
             <div class="comparison-row" role="row">
+              <span role="cell">État du système de freinage</span>
+              <span role="cell" class="comparison-yes">Vérifié</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Vérifié</span>
+            </div>
+            <div class="comparison-row" role="row">
               <span role="cell">État des 4 pneus</span>
-              <span role="cell">Selon besoin</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Contrôle complet</span>
+              <span role="cell">Non inclus dans le contrôle standard</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Checklist complète</span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Jeu dans les roues / liaison au sol : roulements, rotules, silentblocs, soufflets</span>
-              <span role="cell">Selon besoin</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Contrôle complet</span>
+              <span role="cell">Non inclus dans le contrôle standard</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Checklist complète</span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Niveaux : frein, huile moteur, refroidissement, lave-glace</span>
-              <span role="cell">Selon besoin</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Inclus</span>
+              <span role="cell">Non inclus dans le contrôle standard</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Checklist complète</span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Essuie-glaces, klaxon et éclairage complet</span>
-              <span role="cell">Selon besoin</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Inclus</span>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">Checklist complémentaire complète EDM28</span>
-              <span role="cell">Non automatique</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Incluse</span>
+              <span role="cell">Non inclus dans le contrôle standard</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Checklist complète</span>
             </div>
           </div>
-          <p class="comparison-note">La pression des pneus est vérifiée automatiquement. À partir de 100 € TTC facturés, EDM28 ajoute le contrôle complet de l’état des pneus, des jeux et éléments de liaison au sol, des niveaux, des équipements et de l’éclairage, puis rattache la checklist complète au dossier.</p>
+          <p class="comparison-note"><strong>Moins de 100 € TTC :</strong> pression des pneus + vérification de l’état du système de freinage. <strong>À partir de 100 € TTC :</strong> ces deux vérifications restent faites et la checklist complète EDM28 est ajoutée au dossier.</p>
         </div>
         <label style="display:block;margin-top:18px">Symptômes ou précisions
           <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
@@ -496,7 +486,7 @@
             'Pneu avant gauche','Pneu avant droit','Pneu arrière gauche','Pneu arrière droit'
           ]],
           ['LIAISON AU SOL', [
-            'Jeu dans les roues','Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets','Géométrie'
+            'Jeu dans les roues','Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets'
           ]],
           ['CONTRÔLES COMPLÉMENTAIRES - PRESSION DES PNEUS', [
             'Pression avant gauche','Pression avant droite','Pression arrière gauche','Pression arrière droite'
