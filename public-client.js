@@ -69,6 +69,34 @@
     return data?.session || null;
   }
 
+  const PENDING_CONFIRMATION_KEY = 'edm28_pending_email_confirmation_v1';
+
+  function confirmationRedirect() {
+    const local = /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
+    return local ? `${window.location.origin}/` : 'https://edm28.fr/';
+  }
+
+  function rememberPendingConfirmation(email) {
+    try {
+      localStorage.setItem(PENDING_CONFIRMATION_KEY, JSON.stringify({
+        email: String(email || '').trim().toLowerCase(),
+        sentAt: Date.now()
+      }));
+    } catch (_) {}
+  }
+
+  function pendingConfirmation() {
+    try {
+      return JSON.parse(localStorage.getItem(PENDING_CONFIRMATION_KEY) || 'null');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function clearPendingConfirmation() {
+    try { localStorage.removeItem(PENDING_CONFIRMATION_KEY); } catch (_) {}
+  }
+
   async function signIn(email, password) {
     const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw error;
@@ -79,7 +107,7 @@
     const { data, error } = await client.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.href.split('#')[0] }
+      options: { emailRedirectTo: confirmationRedirect() }
     });
     if (error) throw error;
     return data;
@@ -95,7 +123,7 @@
       <div class="account-box" data-auth-box="${context}">
         <div class="section-kicker">Compte client</div>
         <h2>Connexion EDM28</h2>
-        <p>Votre compte sert uniquement à transmettre et suivre vos dossiers.</p>
+        <p>Votre compte sert uniquement à transmettre et suivre vos dossiers. Après création, la confirmation de votre adresse email est obligatoire avant la première connexion.</p>
         <div class="form-grid two">
           <label>Email<input id="${context}AuthEmail" type="email" autocomplete="email" placeholder="vous@exemple.fr"></label>
           <label>Mot de passe<input id="${context}AuthPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 caractères minimum"></label>
@@ -104,9 +132,23 @@
           <button class="primary-action" type="button" data-auth-signin="${context}">Se connecter</button>
           <button class="secondary-action" type="button" data-auth-signup="${context}">Créer mon compte</button>
           <button class="text-action" type="button" data-auth-reset="${context}">Mot de passe oublié</button>
+          <button class="text-action" type="button" data-auth-resend="${context}" hidden>Renvoyer l’email de confirmation</button>
         </div>
         <div id="${context}AuthStatus" class="inline-status"></div>
       </div>`;
+  }
+
+  async function resendConfirmation(context) {
+    const email = byId(`${context}AuthEmail`)?.value.trim().toLowerCase();
+    if (!email) throw new Error('Renseignez votre adresse email.');
+    const { error } = await client.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: confirmationRedirect() }
+    });
+    if (error) throw error;
+    rememberPendingConfirmation(email);
+    message(`${context}AuthStatus`, 'Email de confirmation renvoyé. Vérifiez votre boîte de réception et vos courriers indésirables.', 'okbox');
   }
 
   async function sendReset(context) {
@@ -130,7 +172,13 @@
         message(`${context}AuthStatus`, 'Connecté.', 'okbox');
         await onReady();
       } catch (error) {
-        message(`${context}AuthStatus`, error.message || 'Connexion impossible.', 'errorbox');
+        const needsConfirmation = error?.code === 'email_not_confirmed' || /email not confirmed|email.*confirm/i.test(error?.message || '');
+        if (needsConfirmation) {
+          document.querySelector(`[data-auth-resend="${context}"]`)?.removeAttribute('hidden');
+          message(`${context}AuthStatus`, 'Adresse email non confirmée. Ouvrez l’email EDM28 et cliquez sur le lien de confirmation avant de vous connecter.', 'errorbox');
+        } else {
+          message(`${context}AuthStatus`, error.message || 'Connexion impossible.', 'errorbox');
+        }
       }
     });
 
@@ -142,14 +190,21 @@
         if (!email || password.length < 8) throw new Error('Email valide et mot de passe de 8 caractères minimum obligatoires.');
         const data = await signUp(email,password);
         if (data?.session) {
-          message(`${context}AuthStatus`, 'Compte créé et connecté.', 'okbox');
-          await onReady();
+          message(`${context}AuthStatus`, 'Compte créé. La confirmation de l’adresse email doit rester activée dans Supabase Auth avant utilisation du compte.', 'errorbox');
+          await signOut();
         } else {
-          message(`${context}AuthStatus`, 'Compte créé. Ouvrez l’email reçu et cliquez sur le lien de confirmation.', 'okbox');
+          rememberPendingConfirmation(email);
+          document.querySelector(`[data-auth-resend="${context}"]`)?.removeAttribute('hidden');
+          message(`${context}AuthStatus`, 'Compte créé. Un email de confirmation vient d’être envoyé. Cliquez sur le lien reçu pour valider votre adresse avant de vous connecter. Pensez à vérifier les courriers indésirables.', 'okbox');
         }
       } catch (error) {
         message(`${context}AuthStatus`, error.message || 'Création du compte impossible.', 'errorbox');
       }
+    });
+
+    document.querySelector(`[data-auth-resend="${context}"]`)?.addEventListener('click', async () => {
+      try { await resendConfirmation(context); }
+      catch (error) { message(`${context}AuthStatus`, error.message || 'Impossible de renvoyer l’email de confirmation.', 'errorbox'); }
     });
 
     document.querySelector(`[data-auth-reset="${context}"]`)?.addEventListener('click', async () => {
@@ -164,6 +219,14 @@
 
     async function render() {
       const session = await getSession();
+      const pending = pendingConfirmation();
+      const justConfirmed = Boolean(
+        session?.user?.email &&
+        session.user.email_confirmed_at &&
+        pending?.email &&
+        String(session.user.email).toLowerCase() === String(pending.email).toLowerCase()
+      );
+      if (justConfirmed) clearPendingConfirmation();
       if (!session?.user) {
         host.innerHTML = `<section class="home-client-card"><div><div class="section-kicker">Espace client</div><h2>Suivez vos interventions</h2><p>Connectez-vous depuis Mes interventions pour retrouver vos véhicules, documents et rendez-vous.</p></div><a class="primary-action as-link" href="/mes-interventions">Mes interventions</a></section>`;
         return;
@@ -179,11 +242,11 @@
         .maybeSingle();
       if (error) throw error;
       if (!data?.starts_at) {
-        host.innerHTML = `<section class="home-client-card"><div><div class="section-kicker">Espace client</div><h2>Aucun rendez-vous à venir</h2><p>Vos dossiers restent disponibles dans Mes interventions.</p></div><a class="primary-action as-link" href="/mes-interventions">Mes interventions</a></section>`;
+        host.innerHTML = `${justConfirmed ? '<section class="client-panel"><div class="okbox"><strong>Adresse email confirmée.</strong> Votre compte EDM28 est maintenant actif.</div></section>' : ''}<section class="home-client-card"><div><div class="section-kicker">Espace client</div><h2>Aucun rendez-vous à venir</h2><p>Vos dossiers restent disponibles dans Mes interventions.</p></div><a class="primary-action as-link" href="/mes-interventions">Mes interventions</a></section>`;
         return;
       }
       const vehicle = data.vehicles ? [data.vehicles.plate,data.vehicles.brand,data.vehicles.model].filter(Boolean).join(' · ') : '';
-      host.innerHTML = `<section class="next-appointment"><div class="section-kicker">Prochain rendez-vous</div><h2>${esc(dateTime(data.starts_at))}</h2><p>${esc(vehicle || 'Intervention EDM28')}</p><a class="primary-action as-link" href="/mes-interventions">Voir mes interventions</a></section>`;
+      host.innerHTML = `${justConfirmed ? '<section class="client-panel"><div class="okbox"><strong>Adresse email confirmée.</strong> Votre compte EDM28 est maintenant actif.</div></section>' : ''}<section class="next-appointment"><div class="section-kicker">Prochain rendez-vous</div><h2>${esc(dateTime(data.starts_at))}</h2><p>${esc(vehicle || 'Intervention EDM28')}</p><a class="primary-action as-link" href="/mes-interventions">Voir mes interventions</a></section>`;
     }
 
     try { await render(); } catch (_) { host.innerHTML = ''; }
