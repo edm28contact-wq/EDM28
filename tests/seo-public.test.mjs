@@ -83,6 +83,7 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
 
   assert.match(blankOrder, /function buildAdvantagesOrder/);
   assert.match(blankOrder, /MES AVANTAGES À PARTIR DE 100 €/);
+  assert.match(blankOrder, /fill: ADV_NAVY/);
   assert.match(blankOrder, /Moins de 100 € TTC/);
   assert.match(blankOrder, /100 € TTC et plus/);
   assert.match(blankOrder, /Pression des 4 pneus/);
