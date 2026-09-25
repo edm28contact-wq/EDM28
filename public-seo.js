@@ -495,7 +495,7 @@ function renderPage(page, origin, services = [], clientConfig = null) {
 <meta property="og:image" content="${esc(origin)}/logo-edm.svg">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<link rel="stylesheet" href="/public-site.css?v=2">
+<link rel="stylesheet" href="/public-site.css?v=3">
 ${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>' : ''}
 </head>
 <body>
@@ -530,8 +530,8 @@ ${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="http
 <div class="wrap content">${bodyContent}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
-${['/','/demande','/mes-interventions'].includes(page.path) ? `<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=1"><\\/script>' : ''}<script src="/public-client.js?v=1" defer><\/script>` : ''}
-<script src="/public-site.js?v=1" defer></script></body>
+${['/','/demande','/mes-interventions'].includes(page.path) ? `<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=2"><\/script>' : ''}<script src="/public-client.js?v=2" defer><\/script>` : ''}
+<script src="/public-site.js?v=2" defer></script></body>
 </html>`;
 }
 
@@ -549,7 +549,7 @@ export default async function handler(req, res) {
   const clientConfig = ['/','/demande','/mes-interventions'].includes(page.path) ? resolveSupabasePublicConfig() : null;
   const html = renderPage(page, getOrigin(req), services, clientConfig);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', page.path === '/tarifs' ? 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' : 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  res.setHeader('Cache-Control', page.path === '/tarifs' ? 'public, max-age=0, s-maxage=120, stale-while-revalidate=300' : 'public, max-age=0, s-maxage=120, stale-while-revalidate=300');
   if (req.method === 'HEAD') return res.status(200).end();
   return res.status(200).send(html);
 }
