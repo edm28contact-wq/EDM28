@@ -26,8 +26,7 @@
     { key:'rotules', label:'Rotules', unit:'' },
     { key:'silentblocs', label:'Silentblocs', unit:'' },
     { key:'roulements', label:'Roulements', unit:'' },
-    { key:'soufflets', label:'Soufflets', unit:'' },
-    { key:'geometrie', label:'Géométrie', unit:'' }
+    { key:'soufflets', label:'Soufflets', unit:'' }
   ];
 
   async function nextNumber() {
