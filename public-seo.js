@@ -526,7 +526,7 @@ ${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="http
   </div>
 </aside>
 <main>
-<div class="hero${page.path === '/' ? ' hero-home' : ''}"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav>${page.path === '/' ? '<div class="hero-kicker"><span></span>Freinage <b>•</b> Liaison au sol</div>' : ''}<h1>${esc(page.h1)}</h1><p class="lead">${esc(page.lede)}</p><a class="cta" href="/demande">Faire une demande</a>${page.path === '/' ? '<div class="hero-trust" aria-label="Engagements EDM28"><span>Devis avant travaux</span><span>Pas de marge sur les pièces</span><span>Suivi client transparent</span></div>' : ''}</div></div>
+<div class="hero${page.path === '/' ? ' hero-home' : ''}"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1>${page.path === '/' ? '<div class="hero-kicker"><span></span>Freinage <b>•</b> Liaison au sol</div><div class="hero-logo" aria-hidden="true"><img src="/logo-edm.svg" alt=""></div>' : ''}<p class="lead">${esc(page.lede)}</p><a class="cta" href="/demande">Faire une demande</a>${page.path === '/' ? '<div class="hero-trust" aria-label="Engagements EDM28"><span>Devis avant travaux</span><span>Pas de marge sur les pièces</span><span>Suivi client transparent</span></div>' : ''}</div></div>
 <div class="wrap content">${bodyContent}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
