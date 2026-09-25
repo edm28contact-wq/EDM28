@@ -582,33 +582,24 @@
 
   function drawAdvantagePage(doc) {
     const page = doc.addPage();
-    const PAPER = [0.965, 0.953, 0.937];
-    const CARD = [1, 1, 1];
-    const LINE = [0.88, 0.86, 0.83];
-    const MUTED = [0.40, 0.44, 0.50];
-    const ORANGE_LIGHT = [1.0, 0.973, 0.945];
-
-    page.rect(0, 0, PAGE_W, PAGE_H, { fill: PAPER });
-
-    page.text(40, 797, 'EDM28', { size: 20, bold: true, color: ADV_NAVY });
-    page.circle(111, 802, 3.2, { fill: ADV_ORANGE });
-    page.text(40, 764, 'MES AVANTAGES À PARTIR DE 100 €', { size: 19, bold: true, color: ADV_NAVY });
-    page.line(40, 748, 108, 748, { color: ADV_ORANGE, width: 2.2 });
-    page.text(40, 720, 'Des contrôles simples et clairement définis selon le montant TTC facturé.', { size: 9.5, color: DARK });
-    page.text(40, 702, 'Le seuil de 100 € est calculé sur le total TTC facturé par EDM28 pour l’intervention.', { size: 8, color: MUTED });
+    page.rect(0, 0, PAGE_W, PAGE_H, { fill: [0.985, 0.98, 0.97] });
+    page.rect(0, 742, PAGE_W, 100, { fill: ADV_NAVY });
+    page.text(40, 797, 'EDM28', { size: 25, bold: true, color: WHITE });
+    page.text(40, 775, 'MES AVANTAGES À PARTIR DE 100 €', { size: 16, bold: true, color: WHITE });
+    page.text(40, 724, 'Des contrôles simples et clairement définis selon le montant TTC facturé.', { size: 10, color: DARK });
+    page.text(40, 705, 'Le seuil de 100 € est calculé sur le total TTC facturé par EDM28 pour l’intervention.', { size: 8.5, color: GRAY });
 
     const x = 40;
-    const top = 660;
+    const top = 665;
     const widths = [285, 115, 115];
-    const headerH = 44;
+    const headerH = 42;
     const rowH = 58;
     const totalW = widths.reduce((sum, value) => sum + value, 0);
 
-    page.rect(x, top - headerH, totalW, headerH, { fill: CARD, stroke: LINE, width: 0.7 });
-    page.rect(x + widths[0] + widths[1], top - headerH, widths[2], headerH, { fill: ORANGE_LIGHT });
-    page.text(x + 12, top - 27, 'Contrôle', { size: 8.8, bold: true, color: ADV_NAVY });
-    page.text(x + widths[0], top - 27, 'Moins de 100 € TTC', { size: 8, bold: true, color: ADV_NAVY, width: widths[1], align: 'center' });
-    page.text(x + widths[0] + widths[1], top - 27, '100 € TTC et plus', { size: 8, bold: true, color: ADV_ORANGE, width: widths[2], align: 'center' });
+    page.rect(x, top - headerH, totalW, headerH, { fill: ADV_NAVY, stroke: ADV_NAVY });
+    page.text(x + 12, top - 26, 'Contrôle', { size: 9, bold: true, color: WHITE });
+    page.text(x + widths[0], top - 26, 'Moins de 100 € TTC', { size: 8.2, bold: true, color: WHITE, width: widths[1], align: 'center' });
+    page.text(x + widths[0] + widths[1], top - 26, '100 € TTC et plus', { size: 8.2, bold: true, color: WHITE, width: widths[2], align: 'center' });
 
     const rows = [
       ['Pression des 4 pneus', true, true],
@@ -623,26 +614,23 @@
     let rowTop = top - headerH;
     rows.forEach((row, index) => {
       const bottom = rowTop - rowH;
-      page.rect(x, bottom, totalW, rowH, { fill: index % 2 ? CARD : [0.985, 0.98, 0.973], stroke: LINE, width: 0.5 });
-      page.rect(x + widths[0] + widths[1], bottom, widths[2], rowH, { fill: ORANGE_LIGHT });
-      const labelLines = wrapText(row[0], widths[0] - 24, 8.4, false, 3);
-      labelLines.forEach((line, lineIndex) => page.text(x + 12, bottom + 34 - lineIndex * 11, line, { size: 8.4, color: DARK }));
+      page.rect(x, bottom, totalW, rowH, { fill: index % 2 ? WHITE : ADV_WARM, stroke: [0.86,0.84,0.81], width: 0.5 });
+      page.rect(x + widths[0] + widths[1], bottom, widths[2], rowH, { fill: ADV_GREEN_LIGHT });
+      const labelLines = wrapText(row[0], widths[0] - 24, 8.6, false, 3);
+      labelLines.forEach((line, lineIndex) => page.text(x + 12, bottom + 34 - lineIndex * 11, line, { size: 8.6, color: DARK }));
       drawStatusMark(page, x + widths[0] + widths[1] / 2, bottom + rowH / 2 + 4, row[1]);
       drawStatusMark(page, x + widths[0] + widths[1] + widths[2] / 2, bottom + rowH / 2 + 4, row[2]);
-      page.text(x + widths[0], bottom + 8, row[1] ? 'Inclus' : 'Non inclus', { size: 6.5, bold: true, color: row[1] ? ADV_GREEN : ADV_RED, width: widths[1], align: 'center' });
-      page.text(x + widths[0] + widths[1], bottom + 8, 'Inclus', { size: 6.5, bold: true, color: ADV_GREEN, width: widths[2], align: 'center' });
+      page.text(x + widths[0], bottom + 8, row[1] ? 'Inclus' : 'Non inclus', { size: 6.7, bold: true, color: row[1] ? ADV_GREEN : ADV_RED, width: widths[1], align: 'center' });
+      page.text(x + widths[0] + widths[1], bottom + 8, row[2] ? 'Inclus' : 'Non inclus', { size: 6.7, bold: true, color: row[2] ? ADV_GREEN : ADV_RED, width: widths[2], align: 'center' });
       rowTop = bottom;
     });
 
-    const noteY = 102;
-    page.rect(40, noteY, 515, 66, { fill: CARD, stroke: LINE, width: 0.7 });
-    page.rect(40, noteY, 4, 66, { fill: ADV_ORANGE });
-    page.text(56, noteY + 44, 'Moins de 100 € TTC', { size: 8.7, bold: true, color: ADV_NAVY });
-    page.text(172, noteY + 44, 'Pression des pneus + vérification de l’état du système de freinage.', { size: 7.8, color: DARK });
-    page.text(56, noteY + 20, 'À partir de 100 € TTC', { size: 8.7, bold: true, color: ADV_ORANGE });
-    page.text(172, noteY + 20, 'Ces contrôles + checklist complète EDM28.', { size: 7.8, color: DARK });
-
-    page.text(40, 70, 'EDM28 - simplicité, contrôle et transparence.', { size: 7.3, bold: true, color: MUTED });
+    const noteY = 105;
+    page.rect(40, noteY, 515, 64, { fill: WHITE, stroke: [0.86,0.84,0.81], width: 0.7 });
+    page.text(54, noteY + 43, 'Moins de 100 € TTC', { size: 9, bold: true, color: ADV_NAVY });
+    page.text(170, noteY + 43, 'Pression des pneus + vérification de l’état du système de freinage.', { size: 8.2, color: DARK });
+    page.text(54, noteY + 20, 'À partir de 100 € TTC', { size: 9, bold: true, color: ADV_GREEN });
+    page.text(170, noteY + 20, 'Ces contrôles + checklist complète EDM28 rattachée au dossier.', { size: 8.2, color: DARK });
   }
 
   function drawBlankOrderMainPage(doc) {
