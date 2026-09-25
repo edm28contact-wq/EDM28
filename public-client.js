@@ -496,7 +496,7 @@
             'Pneu avant gauche','Pneu avant droit','Pneu arrière gauche','Pneu arrière droit'
           ]],
           ['LIAISON AU SOL', [
-            'Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets','Géométrie'
+            'Jeu dans les roues','Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets','Géométrie'
           ]],
           ['CONTRÔLES COMPLÉMENTAIRES - PRESSION DES PNEUS', [
             'Pression avant gauche','Pression avant droite','Pression arrière gauche','Pression arrière droite'
