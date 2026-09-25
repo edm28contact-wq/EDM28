@@ -219,10 +219,10 @@
         <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
         <div class="benefit-card">
           <div>
-            <strong>Mes avantages EDM28</strong>
+            <strong>Mes avantages à partir de 100 €</strong>
             <p>Consultez le PDF avantages : comparatif des contrôles selon le montant, puis OR vierge et checklist complète EDM28.</p>
           </div>
-          <button class="secondary-action" type="button" id="downloadBlankOrder">Mes avantages</button>
+          <button class="secondary-action" type="button" id="downloadBlankOrder">Mes avantages à partir de 100 €</button>
         </div>
         <label style="display:block;margin-top:18px">Symptômes ou précisions
           <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
