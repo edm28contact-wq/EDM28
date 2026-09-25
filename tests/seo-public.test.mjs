@@ -71,7 +71,10 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(seo, /graisse adaptée/);
   assert.match(seo, /jamais sur les surfaces de friction/);
   assert.match(client, /Que faut-il faire \?/);
-  assert.match(client, /Contrôle complet dès 100 € TTC facturés chez EDM28/);
+  assert.match(client, /Contrôles EDM28 selon le montant facturé/);
+  assert.match(client, /Moins de 100 € TTC/);
+  assert.match(client, /100 € TTC et plus/);
+  assert.match(client, /Checklist complémentaire complète EDM28/);
   assert.match(client, /downloadBlankOrder/);
   assert.match(client, /EDMPdfLite\.build/);
   assert.match(client, /ordre-reparation-vierge-edm28\.pdf/);
