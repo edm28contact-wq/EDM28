@@ -34,7 +34,6 @@
     silentblocs: ['Liaison au sol', 'Silentblocs', ''],
     roulements: ['Liaison au sol', 'Roulements', ''],
     soufflets: ['Liaison au sol', 'Soufflets', ''],
-    geometrie: ['Liaison au sol', 'Géométrie', ''],
     niveau_huile_moteur: ['Contrôles complémentaires - niveaux', 'Niveau huile moteur', ''],
     niveau_liquide_refroidissement: ['Contrôles complémentaires - niveaux', 'Niveau liquide de refroidissement', ''],
     niveau_lave_glace: ['Contrôles complémentaires - niveaux', 'Niveau lave-glace', ''],
