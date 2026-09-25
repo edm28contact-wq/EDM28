@@ -217,57 +217,12 @@
         <h2>Que faut-il faire ?</h2>
         <p>Sélectionnez une ou plusieurs prestations. EDM28 confirmera ensuite le périmètre réel avant travaux.</p>
         <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
-        <div class="control-comparison">
-          <div class="control-comparison-head">
-            <div>
-              <strong>Contrôles EDM28 selon le montant facturé</strong>
-              <p>Le seuil est calculé sur le total TTC facturé par EDM28 pour l’intervention.</p>
-            </div>
-            <button class="secondary-action" type="button" id="downloadBlankOrder">Voir l’OR vierge</button>
+        <div class="benefit-card">
+          <div>
+            <strong>Mes avantages EDM28</strong>
+            <p>Consultez le PDF avantages : comparatif des contrôles selon le montant, puis OR vierge et checklist complète EDM28.</p>
           </div>
-          <div class="control-comparison-table" role="table" aria-label="Comparatif des contrôles EDM28">
-            <div class="comparison-row comparison-header" role="row">
-              <span role="columnheader">Contrôle</span>
-              <strong role="columnheader">Moins de 100 € TTC</strong>
-              <strong role="columnheader" class="comparison-highlight">100 € TTC et plus</strong>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">Pression des 4 pneus</span>
-              <span role="cell" class="comparison-status yes" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">État du système de freinage</span>
-              <span role="cell" class="comparison-status yes" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">État des 4 pneus</span>
-              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
-              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">Jeu dans les roues / liaison au sol</span>
-              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
-              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">Niveaux : frein, huile moteur, refroidissement, lave-glace</span>
-              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
-              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">Essuie-glaces, klaxon et éclairage complet</span>
-              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
-              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-            </div>
-            <div class="comparison-row" role="row">
-              <span role="cell">Checklist complémentaire complète EDM28</span>
-              <span role="cell" class="comparison-status no" aria-label="Non inclus"><span aria-hidden="true">×</span></span>
-              <span role="cell" class="comparison-status yes comparison-highlight" aria-label="Inclus"><span aria-hidden="true">✓</span></span>
-            </div>
-          </div>
-          <p class="comparison-note"><strong>Moins de 100 € TTC :</strong> pression des pneus + vérification de l’état du système de freinage. <strong>À partir de 100 € TTC :</strong> ces deux vérifications restent faites et la checklist complète EDM28 est ajoutée au dossier.</p>
+          <button class="secondary-action" type="button" id="downloadBlankOrder">Mes avantages</button>
         </div>
         <label style="display:block;margin-top:18px">Symptômes ou précisions
           <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
@@ -481,72 +436,12 @@
 
     byId('downloadBlankOrder')?.addEventListener('click', () => {
       try {
-        if (!window.EDMPdfLite?.build) throw new Error('Générateur PDF indisponible.');
-        const controlGroups = [
-          ['FREINAGE', [
-            'Plaquettes avant gauche','Plaquettes avant droite','Plaquettes arrière gauche','Plaquettes arrière droite',
-            'Disque avant gauche','Disque avant droit','Disque arrière gauche','Disque arrière droit','Flexibles de frein'
-          ]],
-          ['PNEUMATIQUES - ÉTAT', [
-            'Pneu avant gauche','Pneu avant droit','Pneu arrière gauche','Pneu arrière droit'
-          ]],
-          ['LIAISON AU SOL', [
-            'Jeu dans les roues','Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets'
-          ]],
-          ['CONTRÔLES COMPLÉMENTAIRES - PRESSION DES PNEUS', [
-            'Pression avant gauche','Pression avant droite','Pression arrière gauche','Pression arrière droite'
-          ]],
-          ['CONTRÔLES COMPLÉMENTAIRES - NIVEAUX', [
-            'Niveau liquide de frein','Niveau huile moteur','Niveau liquide de refroidissement','Niveau lave-glace'
-          ]],
-          ['CONTRÔLES COMPLÉMENTAIRES - ÉQUIPEMENTS ET ÉCLAIRAGE', [
-            'Essuie-glaces avant','Essuie-glace arrière','Klaxon',
-            'Feu de position avant gauche','Feu de position avant droit','Feu de position arrière gauche','Feu de position arrière droit',
-            'Feu de croisement gauche','Feu de croisement droit','Feu de route gauche','Feu de route droit',
-            'Feu stop gauche','Feu stop droit','Troisième feu stop',
-            'Feu de recul gauche','Feu de recul droit',
-            'Antibrouillard avant gauche','Antibrouillard avant droit','Antibrouillard arrière',
-            'Éclairage de plaque gauche','Éclairage de plaque droit',
-            'Clignotant avant gauche','Clignotant avant droit','Clignotant arrière gauche','Clignotant arrière droit',
-            'Répétiteur latéral gauche','Répétiteur latéral droit','Feux de détresse'
-          ]]
-        ];
-        const lines = [
-          { text:'EDM28', bold:true, size:22 },
-          { text:'ORDRE DE RÉPARATION - MODÈLE VIERGE', bold:true, size:16, gap:6 },
-          { text:'Document de préparation à compléter avant intervention.', size:9, gap:4 },
-          { text:'CLIENT', bold:true, size:11, gap:14 },
-          'Nom / Prénom : ____________________________________________',
-          'Téléphone : ______________________________________________',
-          'Email : ___________________________________________________',
-          { text:'VÉHICULE', bold:true, size:11, gap:12 },
-          'Immatriculation : __________________________________________',
-          'Marque / Modèle : __________________________________________',
-          'Kilométrage : ______________________________________________',
-          { text:'TRAVAUX AUTORISÉS / DEMANDE CLIENT', bold:true, size:11, gap:12 },
-          '____________________________________________________________',
-          '____________________________________________________________',
-          '____________________________________________________________',
-          { text:'POINTS DE CONTRÔLE EDM28', bold:true, size:11, gap:14 },
-          { text:'À partir de 100 € TTC facturés chez EDM28 : contrôle complet de cette liste.', bold:true, size:9, gap:4 },
-          ...controlGroups.flatMap(([group, labels]) => [
-            { text:group, bold:true, size:9, gap:9 },
-            ...labels.map((label) => '[ ] ' + label)
-          ]),
-          { text:'OBSERVATIONS / MESURES', bold:true, size:11, gap:14 },
-          '____________________________________________________________',
-          '____________________________________________________________',
-          '____________________________________________________________',
-          { text:'VALIDATION', bold:true, size:11, gap:14 },
-          'Date : _______________________   Technicien : _______________________',
-          'Nom client : _____________________________________________________',
-          'Signature client : __________________   Visa technicien : _____________'
-        ];
-        const blob = window.EDMPdfLite.build(lines);
+        if (!window.EDMPdfLite?.buildAdvantagesOrder) throw new Error('Générateur PDF indisponible.');
+        const blob = window.EDMPdfLite.buildAdvantagesOrder();
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'ordre-reparation-vierge-edm28.pdf';
+        link.download = 'mes-avantages-et-or-vierge-edm28.pdf';
         document.body.appendChild(link);
         link.click();
         link.remove();
