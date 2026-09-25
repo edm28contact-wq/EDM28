@@ -243,17 +243,27 @@
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Pression des 4 pneus</span>
-              <span role="cell">Pas automatique</span>
-              <span role="cell" class="comparison-highlight comparison-yes">Inclus</span>
+              <span role="cell" class="comparison-yes">Automatique</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Automatique</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">État des 4 pneus</span>
+              <span role="cell">Selon besoin</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Contrôle complet</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">Jeu dans les roues / liaison au sol : roulements, rotules, silentblocs, soufflets</span>
+              <span role="cell">Selon besoin</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Contrôle complet</span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Niveaux : frein, huile moteur, refroidissement, lave-glace</span>
-              <span role="cell">Pas automatique</span>
+              <span role="cell">Selon besoin</span>
               <span role="cell" class="comparison-highlight comparison-yes">Inclus</span>
             </div>
             <div class="comparison-row" role="row">
               <span role="cell">Essuie-glaces, klaxon et éclairage complet</span>
-              <span role="cell">Pas automatique</span>
+              <span role="cell">Selon besoin</span>
               <span role="cell" class="comparison-highlight comparison-yes">Inclus</span>
             </div>
             <div class="comparison-row" role="row">
@@ -262,7 +272,7 @@
               <span role="cell" class="comparison-highlight comparison-yes">Incluse</span>
             </div>
           </div>
-          <p class="comparison-note">À partir de 100 € TTC facturés, la checklist complète est renseignée et rattachée au dossier de l’intervention.</p>
+          <p class="comparison-note">La pression des pneus est vérifiée automatiquement. À partir de 100 € TTC facturés, EDM28 ajoute le contrôle complet de l’état des pneus, des jeux et éléments de liaison au sol, des niveaux, des équipements et de l’éclairage, puis rattache la checklist complète au dossier.</p>
         </div>
         <label style="display:block;margin-top:18px">Symptômes ou précisions
           <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
