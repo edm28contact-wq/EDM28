@@ -585,7 +585,7 @@
     page.rect(0, 0, PAGE_W, PAGE_H, { fill: [0.985, 0.98, 0.97] });
     page.rect(0, 742, PAGE_W, 100, { fill: ADV_NAVY });
     page.text(40, 797, 'EDM28', { size: 25, bold: true, color: WHITE });
-    page.text(40, 775, 'MES AVANTAGES', { size: 16, bold: true, color: WHITE });
+    page.text(40, 775, 'MES AVANTAGES À PARTIR DE 100 €', { size: 16, bold: true, color: WHITE });
     page.text(40, 724, 'Des contrôles simples et clairement définis selon le montant TTC facturé.', { size: 10, color: DARK });
     page.text(40, 705, 'Le seuil de 100 € est calculé sur le total TTC facturé par EDM28 pour l’intervention.', { size: 8.5, color: GRAY });
 
