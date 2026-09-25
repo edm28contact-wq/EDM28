@@ -96,6 +96,18 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(blankOrder, /window\.EDMPdfLite = \{ build, buildDocument, buildAdvantagesOrder \}/);
 });
 
+test('la création de compte impose la confirmation email', async () => {
+  const client = await read('public-client.js');
+  assert.match(client, /emailRedirectTo: confirmationRedirect\(\)/);
+  assert.match(client, /https:\/\/edm28\.fr\//);
+  assert.match(client, /Renvoyer l’email de confirmation/);
+  assert.match(client, /auth\.resend/);
+  assert.match(client, /type: 'signup'/);
+  assert.match(client, /Adresse email non confirmée/);
+  assert.match(client, /Adresse email confirmée/);
+  assert.match(client, /confirmation de votre adresse email est obligatoire/);
+});
+
 test('la demande valide les plaques françaises et bloque les prestations qui se recouvrent', async () => {
   const [client, api] = await Promise.all([
     read('public-client.js'),
