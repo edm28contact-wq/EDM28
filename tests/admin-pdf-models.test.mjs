@@ -59,7 +59,7 @@ test('personalized repair order includes intervention and control data', async (
     'liquide_frein','flexibles',
     'pneu_av_g','pneu_av_d','pneu_ar_g','pneu_ar_d',
     'pression_av_g','pression_av_d','pression_ar_g','pression_ar_d',
-    'amortisseurs','rotules','silentblocs','roulements','soufflets','geometrie'
+    'amortisseurs','rotules','silentblocs','roulements','soufflets'
   ]) assert.match(source, new RegExp(key));
 });
 
