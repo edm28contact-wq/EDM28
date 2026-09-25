@@ -530,7 +530,7 @@ ${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="http
 <div class="wrap content">${bodyContent}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
-${['/','/demande','/mes-interventions'].includes(page.path) ? `<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=3"><\/script>' : ''}<script src="/public-client.js?v=3" defer><\/script>` : ''}
+${['/','/demande','/mes-interventions'].includes(page.path) ? `<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=4"><\/script>' : ''}<script src="/public-client.js?v=3" defer><\/script>` : ''}
 <script src="/public-site.js?v=2" defer></script></body>
 </html>`;
 }
