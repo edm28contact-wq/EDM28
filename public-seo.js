@@ -495,7 +495,7 @@ function renderPage(page, origin, services = [], clientConfig = null) {
 <meta property="og:image" content="${esc(origin)}/logo-edm.svg">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<link rel="stylesheet" href="/public-site.css?v=6">
+<link rel="stylesheet" href="/public-site.css?v=7">
 ${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>' : ''}
 </head>
 <body>
