@@ -69,6 +69,7 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
 
   assert.match(seo, /nettoie les points de corrosion accessibles/);
   assert.match(seo, /Freinage <b>•<\/b> Liaison au sol/);
+  assert.match(seo, /<div class="hero-logo"[^>]*><img src="\/logo-edm\.svg"/);
   assert.match(seo, /Pas de marge sur les pièces/);
   assert.match(seo, /Suivi client transparent/);
   assert.match(seo, /graisse adaptée/);
