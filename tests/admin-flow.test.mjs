@@ -77,6 +77,9 @@ test('admin reset is red, requires an exact phrase and preserves administrators 
     read('supabase/migrations/20260823234500_admin_reset_operational_data.sql')
   ]);
   assert.match(route, /admin-reset-data\.js/);
+  assert.match(html, /adminResetPasswordBtn/);
+  assert.match(core, /resetPasswordForEmail\(ADMIN_EMAIL/);
+  assert.match(core, /https:\/\/edm28\.fr\/admin/);
   assert.match(reset, /className = 'btn danger'/);
   assert.match(reset, /REINITIALISER EDM28/);
   assert.match(reset, /insertBefore\(button, logout\)/);
