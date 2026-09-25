@@ -71,23 +71,29 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(seo, /graisse adaptée/);
   assert.match(seo, /jamais sur les surfaces de friction/);
   assert.match(client, /Que faut-il faire \?/);
-  assert.match(client, /Contrôles EDM28 selon le montant facturé/);
-  assert.match(client, /Moins de 100 € TTC/);
-  assert.match(client, /100 € TTC et plus/);
-  assert.match(client, /Pression des 4 pneus/);
-  assert.match(client, /État du système de freinage/);
-  assert.match(client, /comparison-status yes/);
-  assert.match(client, /comparison-status no/);
-  assert.match(client, /Automatique/);
-  assert.match(client, /État des 4 pneus/);
-  assert.match(client, /Jeu dans les roues/);
+  assert.doesNotMatch(client, /control-comparison-table/);
+  assert.doesNotMatch(client, /comparison-status yes/);
+  assert.match(client, /Mes avantages EDM28/);
+  assert.match(client, /id="downloadBlankOrder"/);
+  assert.match(client, /EDMPdfLite\.buildAdvantagesOrder/);
+  assert.match(client, /mes-avantages-et-or-vierge-edm28\.pdf/);
   assert.doesNotMatch(client, /Géométrie/);
-  assert.match(client, /downloadBlankOrder/);
-  assert.match(client, /EDMPdfLite\.build/);
-  assert.match(client, /ordre-reparation-vierge-edm28\.pdf/);
-  assert.match(client, /ORDRE DE RÉPARATION - MODÈLE VIERGE/);
-  assert.match(client, /À partir de 100 € TTC facturés chez EDM28/);
-  assert.match(blankOrder, /window\.EDMPdfLite = \{ build, buildDocument \}/);
+
+  assert.match(blankOrder, /function buildAdvantagesOrder/);
+  assert.match(blankOrder, /MES AVANTAGES/);
+  assert.match(blankOrder, /Moins de 100 € TTC/);
+  assert.match(blankOrder, /100 € TTC et plus/);
+  assert.match(blankOrder, /Pression des 4 pneus/);
+  assert.match(blankOrder, /État du système de freinage/);
+  assert.match(blankOrder, /État des 4 pneus/);
+  assert.match(blankOrder, /Jeu dans les roues/);
+  assert.match(blankOrder, /ORDRE DE RÉPARATION - MODÈLE VIERGE/);
+  assert.match(blankOrder, /CHECKLIST COMPLÈTE EDM28/);
+  assert.match(blankOrder, /drawAdvantagePage\(doc\)/);
+  assert.match(blankOrder, /drawBlankOrderMainPage\(doc\)/);
+  assert.match(blankOrder, /drawMechanicalChecklistPage\(doc\)/);
+  assert.match(blankOrder, /drawEquipmentChecklistPage\(doc\)/);
+  assert.match(blankOrder, /window\.EDMPdfLite = \{ build, buildDocument, buildAdvantagesOrder \}/);
 });
 
 test('la demande valide les plaques françaises et bloque les prestations qui se recouvrent', async () => {
