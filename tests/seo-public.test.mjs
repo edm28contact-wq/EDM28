@@ -76,7 +76,9 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(client, /Mes avantages à partir de 100 €/);
   assert.match(client, /id="downloadBlankOrder"/);
   assert.match(client, /EDMPdfLite\.buildAdvantagesOrder/);
-  assert.match(client, /mes-avantages-et-or-vierge-edm28\.pdf/);
+  assert.doesNotMatch(client, /link\.download = 'mes-avantages-et-or-vierge-edm28\.pdf'/);
+  assert.match(client, /window\.open\(url, '_blank'/);
+  assert.match(client, /Le PDF s’ouvre dans un nouvel onglet/);
   assert.doesNotMatch(client, /Géométrie/);
 
   assert.match(blankOrder, /function buildAdvantagesOrder/);
