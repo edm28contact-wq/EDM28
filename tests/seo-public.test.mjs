@@ -76,6 +76,8 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(client, /100 € TTC et plus/);
   assert.match(client, /Pression des 4 pneus/);
   assert.match(client, /État du système de freinage/);
+  assert.match(client, /comparison-status yes/);
+  assert.match(client, /comparison-status no/);
   assert.match(client, /Automatique/);
   assert.match(client, /État des 4 pneus/);
   assert.match(client, /Jeu dans les roues/);
