@@ -216,6 +216,16 @@
 
   const ADMIN_EMAIL = 'admin@edm28.fr';
 
+  async function sendAdminPasswordReset() {
+    app.status('loginStatus', 'Envoi du lien de réinitialisation…');
+    const redirectTo = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      ? `${location.origin}/admin`
+      : 'https://edm28.fr/admin';
+    const { error } = await client.auth.resetPasswordForEmail(ADMIN_EMAIL, { redirectTo });
+    if (error) return app.status('loginStatus', error.message || 'Impossible d’envoyer le lien de réinitialisation.', true);
+    app.status('loginStatus', 'Email de réinitialisation envoyé à admin@edm28.fr. Vérifie aussi les courriers indésirables.');
+  }
+
   async function login() {
     const password = app.$('adminPassword').value;
     if (!password) return app.status('loginStatus', 'Mot de passe obligatoire.', true);
@@ -235,6 +245,7 @@
     document.querySelectorAll('[data-page]').forEach((button) => button.addEventListener('click', () => app.page(button.dataset.page)));
     app.$('requestRefresh')?.addEventListener('click', () => window.EDMAdminRequests?.load().catch((error) => app.status('requestStatus', error.message || 'Actualisation impossible.', true)));
     app.$('loginBtn').addEventListener('click', login);
+    app.$('adminResetPasswordBtn')?.addEventListener('click', sendAdminPasswordReset);
     app.$('adminPassword').addEventListener('keydown', (event) => { if (event.key === 'Enter') login(); });
     app.$('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); location.reload(); });
     const { data } = await client.auth.getSession();
