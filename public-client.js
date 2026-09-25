@@ -217,12 +217,52 @@
         <h2>Que faut-il faire ?</h2>
         <p>Sélectionnez une ou plusieurs prestations. EDM28 confirmera ensuite le périmètre réel avant travaux.</p>
         <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
-        <div class="benefit-card">
-          <div>
-            <strong>Contrôle complet dès 100 € TTC facturés chez EDM28</strong>
-            <p>À partir de 100 € dépensés chez EDM28, la liste complète des points de contrôle EDM28 est vérifiée et rattachée au dossier de l’intervention.</p>
+        <div class="control-comparison">
+          <div class="control-comparison-head">
+            <div>
+              <strong>Contrôles EDM28 selon le montant facturé</strong>
+              <p>Le seuil est calculé sur le total TTC facturé par EDM28 pour l’intervention.</p>
+            </div>
+            <button class="secondary-action" type="button" id="downloadBlankOrder">Voir l’OR vierge</button>
           </div>
-          <button class="secondary-action" type="button" id="downloadBlankOrder">Télécharger l’OR vierge</button>
+          <div class="control-comparison-table" role="table" aria-label="Comparatif des contrôles EDM28">
+            <div class="comparison-row comparison-header" role="row">
+              <span role="columnheader">Contrôle</span>
+              <strong role="columnheader">Moins de 100 € TTC</strong>
+              <strong role="columnheader" class="comparison-highlight">100 € TTC et plus</strong>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">Points directement liés à l’intervention demandée</span>
+              <span role="cell">Contrôlés</span>
+              <span role="cell" class="comparison-highlight">Contrôlés</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">Contrôles nécessaires selon l’état constaté du véhicule</span>
+              <span role="cell">Selon besoin</span>
+              <span role="cell" class="comparison-highlight">Selon besoin</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">Pression des 4 pneus</span>
+              <span role="cell">Pas automatique</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Inclus</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">Niveaux : frein, huile moteur, refroidissement, lave-glace</span>
+              <span role="cell">Pas automatique</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Inclus</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">Essuie-glaces, klaxon et éclairage complet</span>
+              <span role="cell">Pas automatique</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Inclus</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <span role="cell">Checklist complémentaire complète EDM28</span>
+              <span role="cell">Non automatique</span>
+              <span role="cell" class="comparison-highlight comparison-yes">Incluse</span>
+            </div>
+          </div>
+          <p class="comparison-note">À partir de 100 € TTC facturés, la checklist complète est renseignée et rattachée au dossier de l’intervention.</p>
         </div>
         <label style="display:block;margin-top:18px">Symptômes ou précisions
           <textarea id="requestNotes" rows="5" placeholder="Bruit, vibration, remarque du contrôle technique, contexte…"></textarea>
