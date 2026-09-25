@@ -437,12 +437,34 @@
     byId('downloadBlankOrder')?.addEventListener('click', () => {
       try {
         if (!window.EDMPdfLite?.build) throw new Error('Générateur PDF indisponible.');
-        const checks = [
-          'Plaquettes avant gauche','Plaquettes avant droite','Plaquettes arrière gauche','Plaquettes arrière droite',
-          'Disque avant gauche','Disque avant droit','Disque arrière gauche','Disque arrière droit',
-          'Liquide de frein','Flexibles de frein','Pneu avant gauche','Pneu avant droit','Pneu arrière gauche','Pneu arrière droit',
-          'Pressions pneumatiques','Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets',
-          'Géométrie / comportement','État visible du véhicule','Photos avant / après','Observations générales'
+        const controlGroups = [
+          ['FREINAGE', [
+            'Plaquettes avant gauche','Plaquettes avant droite','Plaquettes arrière gauche','Plaquettes arrière droite',
+            'Disque avant gauche','Disque avant droit','Disque arrière gauche','Disque arrière droit','Flexibles de frein'
+          ]],
+          ['PNEUMATIQUES - ÉTAT', [
+            'Pneu avant gauche','Pneu avant droit','Pneu arrière gauche','Pneu arrière droit'
+          ]],
+          ['LIAISON AU SOL', [
+            'Amortisseurs','Rotules','Silentblocs','Roulements','Soufflets','Géométrie'
+          ]],
+          ['CONTRÔLES COMPLÉMENTAIRES - PRESSION DES PNEUS', [
+            'Pression avant gauche','Pression avant droite','Pression arrière gauche','Pression arrière droite'
+          ]],
+          ['CONTRÔLES COMPLÉMENTAIRES - NIVEAUX', [
+            'Niveau liquide de frein','Niveau huile moteur','Niveau liquide de refroidissement','Niveau lave-glace'
+          ]],
+          ['CONTRÔLES COMPLÉMENTAIRES - ÉQUIPEMENTS ET ÉCLAIRAGE', [
+            'Essuie-glaces avant','Essuie-glace arrière','Klaxon',
+            'Feu de position avant gauche','Feu de position avant droit','Feu de position arrière gauche','Feu de position arrière droit',
+            'Feu de croisement gauche','Feu de croisement droit','Feu de route gauche','Feu de route droit',
+            'Feu stop gauche','Feu stop droit','Troisième feu stop',
+            'Feu de recul gauche','Feu de recul droit',
+            'Antibrouillard avant gauche','Antibrouillard avant droit','Antibrouillard arrière',
+            'Éclairage de plaque gauche','Éclairage de plaque droit',
+            'Clignotant avant gauche','Clignotant avant droit','Clignotant arrière gauche','Clignotant arrière droit',
+            'Répétiteur latéral gauche','Répétiteur latéral droit','Feux de détresse'
+          ]]
         ];
         const lines = [
           { text:'EDM28', bold:true, size:22 },
@@ -462,7 +484,10 @@
           '____________________________________________________________',
           { text:'POINTS DE CONTRÔLE EDM28', bold:true, size:11, gap:14 },
           { text:'À partir de 100 € TTC facturés chez EDM28 : contrôle complet de cette liste.', bold:true, size:9, gap:4 },
-          ...checks.map((label) => '[ ] ' + label),
+          ...controlGroups.flatMap(([group, labels]) => [
+            { text:group, bold:true, size:9, gap:9 },
+            ...labels.map((label) => '[ ] ' + label)
+          ]),
           { text:'OBSERVATIONS / MESURES', bold:true, size:11, gap:14 },
           '____________________________________________________________',
           '____________________________________________________________',
