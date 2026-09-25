@@ -798,3 +798,90 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
   .drawer-nav a{min-height:54px}
   .mobile-drawer{width:min(365px,92vw)}
 }
+
+.control-comparison{
+  margin-top:18px;
+  border:1px solid #ded7cf;
+  border-radius:16px;
+  overflow:hidden;
+  background:#fff
+}
+.control-comparison-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px;
+  background:#fbf8f4;
+  border-bottom:1px solid #e6dfd7
+}
+.control-comparison-head strong{display:block;font-size:1rem;color:#222a36}
+.control-comparison-head p{margin:4px 0 0;font-size:.9rem;line-height:1.5;color:#697381}
+.control-comparison-table{display:grid}
+.comparison-row{
+  display:grid;
+  grid-template-columns:minmax(0,1.55fr) minmax(150px,.72fr) minmax(150px,.72fr);
+  align-items:stretch;
+  border-bottom:1px solid #ece6df
+}
+.comparison-row:last-child{border-bottom:0}
+.comparison-row>span,.comparison-row>strong{
+  padding:13px 14px;
+  display:flex;
+  align-items:center;
+  min-width:0
+}
+.comparison-row>span+span,.comparison-row>span+strong{
+  border-left:1px solid #ece6df
+}
+.comparison-header{
+  background:#f7f3ee;
+  font-size:.84rem
+}
+.comparison-header strong{font-size:.84rem}
+.comparison-highlight{background:#fff8f1}
+.comparison-yes{font-weight:900;color:#77502f}
+.comparison-note{
+  padding:14px 18px;
+  margin:0!important;
+  border-top:1px solid #e6dfd7;
+  background:#fbf8f4;
+  font-size:.88rem!important
+}
+
+@media(max-width:820px){
+  .control-comparison{border-radius:13px}
+  .control-comparison-head{align-items:flex-start;flex-direction:column;padding:14px}
+  .control-comparison-head .secondary-action{width:100%;justify-content:center}
+  .control-comparison-table{display:block}
+  .comparison-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    border-bottom:1px solid #e8e1d9
+  }
+  .comparison-row>span:first-child,
+  .comparison-row>strong:first-child{
+    grid-column:1/-1;
+    padding:12px 12px 7px;
+    font-weight:800
+  }
+  .comparison-row>span:nth-child(2),
+  .comparison-row>strong:nth-child(2),
+  .comparison-row>span:nth-child(3),
+  .comparison-row>strong:nth-child(3){
+    border-left:0;
+    padding:9px 12px 12px;
+    font-size:.86rem
+  }
+  .comparison-row>span:nth-child(3),
+  .comparison-row>strong:nth-child(3){border-left:1px solid #ece6df}
+  .comparison-header>span:first-child{display:none}
+  .comparison-header{grid-template-columns:1fr 1fr}
+  .comparison-header>strong:nth-child(2),
+  .comparison-header>strong:nth-child(3){
+    grid-column:auto;
+    padding:10px 12px;
+    font-size:.78rem
+  }
+  .comparison-note{padding:12px 14px}
+}
