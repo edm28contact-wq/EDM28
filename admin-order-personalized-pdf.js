@@ -48,8 +48,7 @@
     { key: 'rotules', label: 'Rotules', unit: '', group: 'LIAISON AU SOL' },
     { key: 'silentblocs', label: 'Silentblocs', unit: '', group: 'LIAISON AU SOL' },
     { key: 'roulements', label: 'Roulements', unit: '', group: 'LIAISON AU SOL' },
-    { key: 'soufflets', label: 'Soufflets', unit: '', group: 'LIAISON AU SOL' },
-    { key: 'geometrie', label: 'Géométrie', unit: '', group: 'LIAISON AU SOL' }
+    { key: 'soufflets', label: 'Soufflets', unit: '', group: 'LIAISON AU SOL' }
   ];
 
   async function one(table, id) {
