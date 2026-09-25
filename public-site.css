@@ -953,15 +953,19 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
   padding:0 18px;
   border:0;
   border-radius:12px;
-  background:var(--accent);
+  background:var(--navy);
   color:#fff;
   font:inherit;
   font-weight:900;
   cursor:pointer;
-  box-shadow:0 8px 20px rgba(201,119,62,.22);
-  transition:transform .16s ease,filter .16s ease
+  box-shadow:0 8px 20px rgba(16,24,39,.16);
+  transition:transform .16s ease,background .16s ease,box-shadow .16s ease
 }
-.advantage-action:hover{transform:translateY(-1px);filter:brightness(.96)}
+.advantage-action:hover{
+  transform:translateY(-1px);
+  background:var(--navy-soft);
+  box-shadow:0 10px 22px rgba(16,24,39,.20)
+}
 .advantage-action:focus-visible{outline:3px solid rgba(201,119,62,.25);outline-offset:3px}
 .advantage-action span{font-size:1.2rem}
 @media(max-width:820px){
