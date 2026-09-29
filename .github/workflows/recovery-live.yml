@@ -1,0 +1,45 @@
+name: Recovery Live Browser
+
+on:
+  pull_request:
+    branches: [pwa-edm28]
+  push:
+    branches: [pwa-edm28]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recovery-live-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  recovery:
+    if: github.event_name == 'push' || github.head_ref == 'fix/password-recovery-admin-clients'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      RECOVERY_ORIGIN: ${{ github.event_name == 'push' && 'https://edm28.fr' || 'https://edm-28-git-fix-password-recovery-admin-3d99bb-edm-28-s-projects.vercel.app' }}
+      RECOVERY_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install isolated browser test tools
+        run: |
+          mkdir -p "$RUNNER_TEMP/edm-recovery-tools"
+          npm install --prefix "$RUNNER_TEMP/edm-recovery-tools" --ignore-scripts --no-audit --no-fund playwright@1.58.2
+          "$RUNNER_TEMP/edm-recovery-tools/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify deployed pages and mocked Auth flows
+        run: |
+          cp tests/recovery-live-check.mjs "$RUNNER_TEMP/edm-recovery-tools/recovery-live-check.mjs"
+          node "$RUNNER_TEMP/edm-recovery-tools/recovery-live-check.mjs"
+      - name: Upload safe report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-live-${{ github.run_id }}
+          path: recovery-browser-artifacts
+          retention-days: 5
+          if-no-files-found: warn
