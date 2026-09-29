@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#111827">
+  <title>Réinitialiser le mot de passe — EDM28</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+<main id="adminApp">
+  <section class="login">
+    <h1>Réinitialiser le mot de passe</h1>
+    <p>Choisissez un nouveau mot de passe pour le compte administrateur EDM28.</p>
+    <label>Nouveau mot de passe
+      <input id="newPassword" type="password" autocomplete="new-password" minlength="8">
+    </label>
+    <label>Confirmer le mot de passe
+      <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8">
+    </label>
+    <button id="resetPasswordBtn" class="btn primary" type="button" disabled>Enregistrer le nouveau mot de passe</button>
+    <div id="resetStatus" class="status">Validation du lien de récupération…</div>
+    <p><a href="/admin">Retour au back-office</a></p>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const recoveryInUrl = new URLSearchParams(location.hash.slice(1)).get('type') === 'recovery'
+    || new URLSearchParams(location.search).get('type') === 'recovery';
+  const client = window.supabase.createClient(
+    'https://ojjbnwpkfvzjfukgqddz.supabase.co',
+    'sb_publishable_pB4h3KASp9MHM6upvCAcCA_b_9vKHiX'
+  );
+  const button = document.getElementById('resetPasswordBtn');
+  const status = document.getElementById('resetStatus');
+  const passwordInput = document.getElementById('newPassword');
+  const confirmInput = document.getElementById('confirmPassword');
+  let recoveryReady = false;
+
+  function setStatus(message, error = false) {
+    status.textContent = message;
+    status.className = `status ${error ? 'error' : 'ok'}`;
+  }
+
+  function enableRecovery() {
+    recoveryReady = true;
+    button.disabled = false;
+    setStatus('Lien valide. Vous pouvez définir votre nouveau mot de passe.');
+  }
+
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY' && session) enableRecovery();
+  });
+
+  async function boot() {
+    const { data, error } = await client.auth.getSession();
+    if (error) return setStatus('Impossible de valider le lien de récupération.', true);
+    if (recoveryInUrl && data?.session) return enableRecovery();
+    if (!recoveryInUrl) setStatus('Ce lien de récupération est absent ou invalide. Demandez un nouveau lien depuis le back-office.', true);
+  }
+
+  button.addEventListener('click', async () => {
+    if (!recoveryReady) return setStatus('Le lien de récupération n’est pas valide.', true);
+    const newPassword = passwordInput.value;
+    const confirmation = confirmInput.value;
+    if (newPassword.length < 8) return setStatus('Le mot de passe doit contenir au moins 8 caractères.', true);
+    if (newPassword !== confirmation) return setStatus('Les deux mots de passe ne correspondent pas.', true);
+
+    button.disabled = true;
+    setStatus('Mise à jour du mot de passe…');
+    const { error } = await client.auth.updateUser({ password: newPassword });
+    if (error) {
+      button.disabled = false;
+      return setStatus(error.message || 'Impossible de modifier le mot de passe.', true);
+    }
+    await client.auth.signOut();
+    location.replace('/admin?password-reset=success');
+  });
+
+  boot().catch(() => setStatus('Impossible de valider le lien de récupération.', true));
+})();
+</script>
+</body>
+</html>
