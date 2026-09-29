@@ -74,8 +74,9 @@ test('completed inspections generate a PDF before final client availability', as
 
 test('quote and invoice publication attach the generated PDF to email', async () => {
   const source = await read('admin-publish-email.js');
-  assert.match(source, /generateFor\('quote', complete\.data\)/);
-  assert.match(source, /attachmentName:\s*`devis-\$\{quoteNumber\}\.pdf`/);
+  const basket = await read('admin-supplier-basket.js');
+  assert.match(basket, /generateFor\('quote', complete\.data\)/);
+  assert.match(basket, /attachmentName:\s*`devis-\$\{saved\.quote_number\}\.pdf`/);
   assert.match(source, /generateFor\('invoice', full\.data\)/);
   assert.match(source, /attachmentName:\s*`facture-\$\{current\.data\.invoice_number \|\| invoiceId\}\.pdf`/);
 });

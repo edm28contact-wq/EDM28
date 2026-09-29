@@ -525,7 +525,7 @@
     client.auth.onAuthStateChange(()=>window.setTimeout(renderAccount,0));
   }
 
-  function eventCard(type,title,date,status,details=[],documentPath='') {
+  function eventCard(type,title,date,status,details=[],documentPath='',actions='') {
     const detailHtml = details.filter(Boolean).map(([label,value]) => value ? `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>` : '').join('');
     return `<article class="intervention-event">
       <div class="event-head"><span class="event-type">${esc(type)}</span><span class="event-status">${esc(status || '')}</span></div>
@@ -533,7 +533,25 @@
       <p class="event-date">${esc(date)}</p>
       ${detailHtml ? `<div class="event-details">${detailHtml}</div>` : ''}
       ${documentPath ? `<button class="text-action" type="button" data-doc-path="${esc(documentPath)}">Ouvrir le document</button>` : ''}
+      ${actions}
     </article>`;
+  }
+
+  function supplierQuoteActions(quote) {
+    const basket = Array.isArray(quote.quote_parts_baskets) ? quote.quote_parts_baskets[0] : quote.quote_parts_baskets;
+    let html = '';
+    if (basket) {
+      html += `<p>${esc(window.EDMSupplierBasketPolicy.terms)}</p>`;
+      if (basket.requires_parts) {
+        const url = window.EDMSupplierBasketPolicy.safeUrl(basket.supplier_url);
+        html += `<p><a class="primary-action as-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Ouvrir mon panier fournisseur</a></p><p><strong>Pi\u00e8ces pr\u00e9conis\u00e9es</strong></p><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(basket.recommended_parts)}</p><p>${esc(window.EDMSupplierBasketPolicy.partsAdvice)}</p>`;
+      }
+    }
+    if (quote.status === 'sent') {
+      const expired = quote.valid_until && quote.valid_until < new Date().toISOString().slice(0,10);
+      html += `<div class="action-row">${expired ? '<span>Devis expir\u00e9</span>' : `<button type="button" class="primary-action" data-quote-response="accepted" data-quote-id="${esc(quote.id)}">Accepter ce devis</button>`}<button type="button" class="secondary-action" data-quote-response="refused" data-quote-id="${esc(quote.id)}">Refuser ce devis</button></div>`;
+    }
+    return html;
   }
 
   async function openDocument(path) {
@@ -560,8 +578,7 @@
       const results = await Promise.all([
         client.from('vehicles').select('id,plate,brand,model,year,energy,engine,mileage,created_at').eq('user_id',uid).order('created_at'),
         client.from('service_requests').select('id,vehicle_id,status,services,notes,submitted_at,created_at').eq('user_id',uid).order('created_at',{ascending:false}),
-        client.from('quotes').select('id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,visible_to_client,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
-        client.from('disbursements').select('id,vehicle_id,service_request_id,quote_id,status,description,authorized_limit,provision_required,provision_received,parts_status,amount,refunded_amount,created_at').eq('user_id',uid).order('created_at',{ascending:false}),
+        client.from('quotes').select('id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,visible_to_client,created_at,valid_until,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts)').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
         client.from('appointments').select('id,vehicle_id,service_request_id,starts_at,ends_at,status,notes,visible_to_client,created_at').eq('user_id',uid).eq('visible_to_client',true).order('starts_at',{ascending:false}),
         client.from('repair_orders').select('id,vehicle_id,service_request_id,order_number,status,pdf_path,visible_to_client,signed_at,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
         client.from('inspection_reports').select('id,vehicle_id,report_number,status,observations,pdf_path,visible_to_client,completed_at,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
@@ -569,7 +586,7 @@
       ]);
       const failed = results.find((result)=>result.error);
       if (failed?.error) throw failed.error;
-      const [vehicles,requests,quotes,disbursements,appointments,orders,inspections,invoices] = results.map((result)=>result.data || []);
+      const [vehicles,requests,quotes,appointments,orders,inspections,invoices] = results.map((result)=>result.data || []);
 
       const byVehicle = new Map(vehicles.map((vehicle)=>[vehicle.id,{vehicle,events:[]}]));
       const add = (vehicleId,html,stamp) => {
@@ -587,16 +604,7 @@
 
       quotes.forEach((row)=>add(row.vehicle_id,eventCard(
         'Devis',row.quote_number || row.title || 'Devis',dateTime(row.created_at),row.status,
-        [['Total',money(row.total)]],row.pdf_path
-      ),row.created_at));
-
-      disbursements.forEach((row)=>add(row.vehicle_id,eventCard(
-        'Pièces',row.description || 'Pièces / débours',dateTime(row.created_at),row.parts_status || row.status,
-        [
-          ['Provision demandée',row.provision_required ? money(row.provision_required) : ''],
-          ['Provision reçue',row.provision_received ? money(row.provision_received) : ''],
-          ['Montant réel',row.amount ? money(row.amount) : '']
-        ]
+        [[row.commercial_model === 'customer_supplied_v1' ? 'Prestations EDM28 (hors pi\u00e8ces)' : 'Total',money(row.total)]],row.pdf_path, supplierQuoteActions(row)
       ),row.created_at));
 
       appointments.forEach((row)=>add(row.vehicle_id,eventCard(
@@ -642,6 +650,17 @@
         ${nextAppointment ? `<section class="next-appointment"><div class="section-kicker">Prochain rendez-vous</div><h2>${esc(dateTime(nextAppointment.starts_at))}</h2><p>Le rendez-vous est aussi conservé dans le dossier du véhicule concerné.</p></section>` : ''}
         ${cards || '<section class="client-panel"><div class="notice">Aucun véhicule enregistré.</div></section>'}`;
 
+      host.querySelectorAll('[data-quote-response]').forEach((button)=>button.addEventListener('click',async()=>{
+        const response = button.dataset.quoteResponse;
+        if (!window.confirm(response === 'accepted' ? 'Confirmez-vous avoir lu et accepter ce devis ?' : 'Confirmez-vous le refus de ce devis ?')) return;
+        button.disabled = true;
+        try {
+          const { error } = await client.rpc('client_respond_quote',{p_quote_id:button.dataset.quoteId,p_response:response});
+          if (error) throw error;
+          await render();
+        } catch (error) { window.alert(error.message || 'R\u00e9ponse non enregistr\u00e9e.'); }
+        finally { button.disabled = false; }
+      }));
       byId('historySignOut')?.addEventListener('click',async()=>{await signOut();await render();});
       host.querySelectorAll('[data-doc-path]').forEach((button)=>button.addEventListener('click',async()=>{
         try { await openDocument(button.dataset.docPath); }
