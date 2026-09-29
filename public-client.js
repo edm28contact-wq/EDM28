@@ -118,20 +118,19 @@
     if (error) throw error;
   }
 
-  function authBlock(context) {
+  function authBlock(context, mode = 'signin') {
+    const signup = mode === 'signup';
     return `
       <div class="account-box" data-auth-box="${context}">
-        <div class="section-kicker">Compte client</div>
-        <h2>Connexion EDM28</h2>
-        <p>Connectez-vous pour retrouver vos véhicules et suivre votre demande. Nouveau client ? Créez votre compte, puis confirmez votre email grâce au lien reçu.</p>
+        <div class="section-kicker">${signup ? '3 · Compte client' : 'Déjà client'}</div>
+        <h2>${signup ? 'Créer mon compte' : 'Me connecter'}</h2>
+        <p>${signup ? 'Créez votre compte, puis confirmez votre email grâce au lien reçu. Vous pourrez envoyer votre demande et retrouver vos devis, rendez-vous et documents.' : 'Connectez-vous pour retrouver vos véhicules enregistrés. Votre demande en cours est conservée.'}</p>
         <div class="form-grid two">
           <label>Email<input id="${context}AuthEmail" type="email" autocomplete="email" placeholder="vous@exemple.fr"></label>
-          <label>Mot de passe<input id="${context}AuthPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 caractères minimum"></label>
+          <label>Mot de passe<input id="${context}AuthPassword" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="8" placeholder="8 caractères minimum"></label>
         </div>
         <div class="action-row">
-          <button class="primary-action" type="button" data-auth-signin="${context}">Se connecter</button>
-          <button class="secondary-action" type="button" data-auth-signup="${context}">Créer mon compte</button>
-          <button class="text-action" type="button" data-auth-reset="${context}">Mot de passe oublié</button>
+          ${signup ? `<button class="primary-action" type="button" data-auth-signup="${context}">Créer mon compte</button><a class="text-action" href="#connexion">J’ai déjà un compte : me connecter</a>` : `<button class="primary-action" type="button" data-auth-signin="${context}">Se connecter</button><button class="text-action" type="button" data-auth-reset="${context}">Mot de passe oublié</button>`}
           <button class="text-action" type="button" data-auth-resend="${context}" hidden>Renvoyer l’email de confirmation</button>
         </div>
         <div id="${context}AuthStatus" class="inline-status"></div>
@@ -168,7 +167,8 @@
         const email = byId(`${context}AuthEmail`)?.value.trim().toLowerCase();
         const password = byId(`${context}AuthPassword`)?.value || '';
         if (!email || !password) throw new Error('Email et mot de passe obligatoires.');
-        await signIn(email,password);
+        const session = await signIn(email,password);
+        if (!session?.user) throw new Error('Connexion non confirmée. Réessayez.');
         message(`${context}AuthStatus`, 'Connecté.', 'okbox');
         await onReady();
       } catch (error) {
@@ -258,7 +258,7 @@
     if (!host) return;
 
     host.innerHTML = `
-      <section class="client-panel" id="connexion"><div id="requestAccountArea"></div></section>
+      <section class="client-panel" id="connexion" hidden><div id="requestAccountArea"></div></section>
       <section class="client-panel">
         <div class="section-kicker">1 · Véhicule</div>
         <h2>Votre véhicule</h2>
@@ -279,7 +279,7 @@
       </section>
 
       <section class="client-panel">
-        <div class="section-kicker">2 · Intervention</div>
+        <div class="section-kicker">2 · Prestation</div>
         <h2>Que faut-il faire ?</h2>
         <p>Choisissez les prestations souhaitées. Le devis précisera le travail prévu et le prix.</p>
         <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
@@ -297,23 +297,22 @@
         </label>
       </section>
 
+      <section class="client-panel" id="requestAccountStep"><div id="requestSignupArea"></div></section>
+
       <section class="client-panel">
-        <div class="section-kicker">3 · Coordonnées</div>
-        <h2>Vos coordonnées (facultatif)</h2>
+        <h2>Vérifier et envoyer ma demande</h2>
+        <p>Vos coordonnées (facultatif)</p>
         <div class="form-grid three">
           <label>Prénom<input id="requestFirstName" autocomplete="given-name"></label>
           <label>Nom<input id="requestLastName" autocomplete="family-name"></label>
           <label>Téléphone<input id="requestPhone" autocomplete="tel"></label>
         </div>
-      </section>
 
-      <section class="client-panel">
-        <div class="section-kicker">4 · Vérification</div>
-        <h2>Transmettre la demande</h2>
         <p>Nous étudions votre demande et vous envoyons un devis par email. Aucune intervention ne commence sans votre accord.</p>
         <div class="action-row">
           <button id="requestSubmit" class="primary-action" type="button" disabled>Envoyer ma demande</button>
         </div>
+        <p id="requestAccountHint">Créez votre compte ci-dessus ou utilisez « Me connecter » pour envoyer votre demande.</p>
         <div id="requestSubmitStatus" class="inline-status"></div>
       </section>`;
 
@@ -403,6 +402,21 @@
     let savedVehicles = [];
     let currentRequestUser = null;
     let accountGeneration = 0;
+    function openLogin() {
+      if (currentRequestUser) return;
+      byId('connexion').hidden = false;
+      byId('connexion').scrollIntoView({behavior:'smooth'});
+      byId('requestAuthEmail')?.focus({preventScroll:true});
+    }
+    document.addEventListener('click', event => {
+      if (event.target.closest('a[href="#connexion"]')) {
+        event.preventDefault();
+        openLogin();
+      }
+    });
+    window.addEventListener('hashchange', () => {
+      if (location.hash === '#connexion') openLogin();
+    });
     function renderVehicleOptions() {
       const selected = byId('requestVehicleSelect').value;
       const term = byId('requestVehicleSearch').value.trim().toLowerCase();
@@ -431,7 +445,16 @@
       currentRequestUser = uid;
       byId('requestSubmit').disabled = !uid || byId('requestSubmit').dataset.sent === 'true';
       byId('requestVehiclePicker').hidden = !uid;
+      byId('requestAccountStep').hidden = Boolean(uid);
+      byId('requestAccountHint').hidden = Boolean(uid);
+      const signupArea = byId('requestSignupArea');
       if (!uid) {
+        if (!signupArea.hasChildNodes()) {
+          signupArea.innerHTML = authBlock('requestSignup', 'signup');
+          bindAuth('requestSignup', renderAccount);
+        }
+        if (area.querySelector('[data-auth-signin="request"]')) return;
+        byId('connexion').hidden = location.hash !== '#connexion';
         area.innerHTML = authBlock('request');
         bindAuth('request', async()=>{
           await renderAccount();
@@ -443,8 +466,11 @@
             location.replace(target.href);
           }
         });
+        if (location.hash === '#connexion') openLogin();
         return;
       }
+      signupArea.replaceChildren();
+      byId('connexion').hidden = false;
       area.innerHTML = `<div class="signed-box"><div><strong>Connect\u00e9</strong><p>${esc(session.user.email || '')}</p></div><button class="secondary-action" type="button" id="requestSignOut">Me d\u00e9connecter</button></div>`;
       byId('requestSignOut').addEventListener('click', async()=>{await signOut();await renderAccount();});
       const [profileResult,vehicleResult] = await Promise.all([
@@ -474,9 +500,9 @@
         message('requestSubmitStatus','Enregistrement de la demande…');
         const session = await getSession();
         if (!session?.user) {
-          byId('connexion').scrollIntoView({behavior:'smooth'});
-          byId('requestAuthEmail')?.focus();
-          throw new Error('Connectez-vous en haut de cette page pour envoyer la demande.');
+          await renderAccount();
+          byId('requestAccountStep').scrollIntoView({behavior:'smooth'});
+          throw new Error('Créez votre compte ou utilisez « Me connecter » pour envoyer la demande.');
         }
 
         const parsedPlate = refreshPlateStatus(true);

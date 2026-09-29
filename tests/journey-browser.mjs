@@ -11,7 +11,7 @@ function fixture(){
  f.user={id:uid,email:'client@example.test',email_confirmed_at:'2026-01-01'};
  f.emit=()=>f.listeners.forEach(fn=>fn('SIGNED_IN',f.logged?{user:f.user,access_token:'fixture-only'}:null));
  f.makeHold=()=>{const r={id:rid,user_id:uid,vehicle_id:vid,quote_id:qid,status:'held',created_at:new Date().toISOString(),starts_at:new Date(Date.now()+10*86400000).toISOString(),ends_at:new Date(Date.now()+10*86400000+3600000).toISOString(),expires_at:new Date(Date.now()+48*3600000).toISOString()};f.rows.booking_reservations=[r];return r;};
- f.db={auth:{getSession:async()=>({data:{session:f.logged?{user:f.user,access_token:'fixture-only'}:null},error:null}),onAuthStateChange:fn=>{f.listeners.push(fn);return{data:{subscription:{unsubscribe(){}}}};},signInWithPassword:async()=>{f.logged=true;localStorage.setItem('journey-test-login','yes');f.emit();return{data:{session:{user:f.user,access_token:'fixture-only'}},error:null};},signOut:async()=>{f.logged=false;localStorage.removeItem('journey-test-login');f.emit();return{error:null};}},
+ f.db={auth:{getSession:async()=>({data:{session:f.logged?{user:f.user,access_token:'fixture-only'}:null},error:null}),onAuthStateChange:fn=>{f.listeners.push(fn);return{data:{subscription:{unsubscribe(){}}}};},signUp:async(args)=>{f.calls.push('auth:signup');f.signup=args;return{data:{user:f.user,session:null},error:null};},signInWithPassword:async()=>{if(f.loginError)return{data:{session:null},error:{message:'Identifiants incorrects.'}};f.logged=true;localStorage.setItem('journey-test-login','yes');f.emit();return{data:{session:{user:f.user,access_token:'fixture-only'}},error:null};},signOut:async()=>{f.logged=false;localStorage.removeItem('journey-test-login');f.emit();return{error:null};}},
  from(table){const filters=[];let mutation=null;const b={};for(const method of ['select','order','limit','not'])b[method]=()=>b;b.eq=(k,v)=>{filters.push(row=>row[k]===v);return b;};b.in=(k,v)=>{filters.push(row=>v.includes(row[k]));return b;};b.neq=(k,v)=>{filters.push(row=>row[k]!==v);return b;};for(const method of ['insert','upsert','update'])b[method]=value=>{mutation={method,value};return b;};
  const rows=()=>{
   if(mutation){f.calls.push(table+':'+mutation.method);if(mutation.method==='update'){for(const row of f.rows[table]||[])if(filters.every(fn=>fn(row)))Object.assign(row,mutation.value);}else{const record={id:table==='vehicles'?vid:'55555555-5555-4555-8555-555555555555',...mutation.value};if(table==='vehicles')return[record];f.rows[table]=[...(f.rows[table]||[]),record];return[record];}}
@@ -40,9 +40,44 @@ try{
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
   await page.goto(origin+'/mes-interventions?devis=22222222-2222-4222-8222-222222222222',{waitUntil:'networkidle'});
   await page.waitForURL('**/demande?**');assert.equal(await page.locator('[data-client-only]:visible').count(),0);
+  await page.locator('#requestAuthEmail').waitFor({state:'visible'});
+  await page.locator('#requestAuthEmail').fill('client@example.test');await page.locator('#requestAuthPassword').fill('fixture-password');await page.locator('[data-auth-signin]').click();
+  await page.waitForURL('**/mes-interventions?devis=22222222-2222-4222-8222-222222222222');
+  await page.evaluate(()=>localStorage.removeItem('journey-test-login'));
   await page.goto(origin+'/demande',{waitUntil:'networkidle'});
   assert.equal(await page.locator('.hero [data-request-cta]').innerText(),'Me connecter');assert.equal(await page.locator('#requestSubmit').isDisabled(),true);
-  assert.ok(await page.locator('#requestAccountArea').evaluate(el=>!!(el.compareDocumentPosition(document.getElementById('requestPlate'))&Node.DOCUMENT_POSITION_FOLLOWING)));
+  await page.locator('#requestSignupAuthEmail').waitFor({state:'visible'});
+  assert.equal(await page.locator('#connexion').isVisible(),false);
+  assert.ok(await page.locator('#requestServices').evaluate(el=>!!(el.compareDocumentPosition(document.getElementById('requestAccountStep'))&Node.DOCUMENT_POSITION_FOLLOWING)));
+  assert.deepEqual(await page.locator('#edmRequestApp .section-kicker:visible').allTextContents(),['1 \u00b7 V\u00e9hicule','2 \u00b7 Prestation','3 \u00b7 Compte client']);
+  await page.locator('#requestPlate').fill('AB-123-CD');await page.locator('#requestBrand').fill('Renault');
+  await page.locator('#requestNotes').fill('Bruit au freinage');await page.locator('.service-choice input').first().check();
+  await page.screenshot({path:`${out}/guest-request-${width}.png`,fullPage:true});
+  await page.locator('#requestSignupAuthEmail').fill('client@example.test');await page.locator('#requestSignupAuthPassword').fill('fixture-password');
+  await page.locator('[data-auth-signup="requestSignup"]').click();
+  await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Compte cr\u00e9\u00e9'));
+  assert.equal(await page.locator('#requestSubmit').isDisabled(),true);assert.equal(await page.locator('#requestAccountStep').isVisible(),true);
+  assert.deepEqual(await page.evaluate(()=>__journey.calls),['auth:signup']);
+  assert.equal(await page.evaluate(()=>__journey.signup.options.emailRedirectTo),origin+'/');
+  await page.evaluate(()=>__journey.emit());
+  await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Compte cr\u00e9\u00e9'));
+  assert.equal(await page.locator('#requestSignupAuthEmail').inputValue(),'client@example.test');
+  await page.locator('.hero [data-request-cta]').click();await page.locator('#requestAuthEmail').waitFor({state:'visible'});
+  await page.locator('#requestAuthEmail').fill('client@example.test');await page.locator('#requestAuthPassword').fill('fixture-password');
+  await page.evaluate(()=>__journey.loginError=true);await page.locator('[data-auth-signin]').click();
+  await page.waitForFunction(()=>document.getElementById('requestAuthStatus').textContent.includes('Identifiants incorrects'));
+  assert.equal(await page.locator('#requestAccountStep').isVisible(),true);assert.equal(await page.locator('#requestSubmit').isDisabled(),true);
+  await page.evaluate(()=>__journey.loginError=false);await page.locator('[data-auth-signin]').click();
+  await page.locator('#requestAccountStep').waitFor({state:'hidden'});
+  assert.equal(await page.locator('[data-auth-signup]').count(),0);
+  assert.equal(await page.locator('#requestPlate').inputValue(),'AB-123-CD');assert.equal(await page.locator('#requestBrand').inputValue(),'Renault');
+  assert.equal(await page.locator('#requestNotes').inputValue(),'Bruit au freinage');assert.equal(await page.locator('.service-choice input:checked').count(),1);
+  assert.equal((await page.evaluate(()=>__journey.calls)).includes('service_requests:insert'),false);
+  await page.reload({waitUntil:'networkidle'});await page.locator('#requestVehiclePicker').waitFor({state:'visible'});
+  assert.equal(await page.locator('#requestAccountStep').isVisible(),false);assert.equal(await page.locator('[data-auth-signup]').count(),0);
+  await page.locator('#requestSignOut').click();await page.locator('#requestSignupAuthEmail').waitFor({state:'visible'});
+  assert.equal(await page.locator('#requestSubmit').isDisabled(),true);assert.equal(await page.locator('#requestVehiclePicker').isVisible(),false);
+  await page.locator('#requestAccountStep a[href="#connexion"]').click();
   await page.locator('#requestAuthEmail').fill('client@example.test');await page.locator('#requestAuthPassword').fill('fixture-password');await page.locator('[data-auth-signin]').click();
   await page.locator('#requestVehiclePicker').waitFor({state:'visible'});await page.locator('#requestVehicleSelect option[value="12121212-1212-4212-8212-121212121212"]').waitFor({state:'attached'});
   await page.locator('#requestVehicleSearch').fill('Renault');assert.equal(await page.locator('#requestVehicleSelect option').count(),2);
@@ -54,7 +89,7 @@ try{
   await page.locator('#requestPlate').fill('AA-123-BB');for(const field of ['requestBrand','requestModel','requestYear','requestEnergy','requestMileage','requestFirstName','requestLastName','requestPhone'])await page.locator('#'+field).fill('');
   await page.locator('#requestSubmit').click();await page.waitForFunction(()=>document.getElementById('requestSubmit').dataset.sent==='true');
   assert.equal((await page.evaluate(()=>__journey.calls)).filter(x=>x==='service_requests:insert').length,1);
-  report.checks.push(`guest navigation, early login, vehicle filter, plate-only request and orange selection ${width}: PASS`);
+  report.checks.push(`guest vehicle/prestation/signup, email confirmation pending, login failure/success, draft preservation, signed-in reload, logout, vehicle filter and plate-only request ${width}: PASS`);
 
   await page.goto(origin+'/mes-interventions?devis=22222222-2222-4222-8222-222222222222&action=accepter',{waitUntil:'networkidle'});
   await page.locator('[data-response="accepted"]').waitFor();assert.equal(await page.evaluate(()=>__journey.q.status),'sent');
