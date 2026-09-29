@@ -4,7 +4,7 @@
 
   const A = () => window.EDMAdmin;
   const clean = (value) => String(value ?? '').replace(/[\u00A0\u202F]/g, ' ').trim();
-  const money = (value) => Number(value || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+  const money = (value) => clean(Number(value || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }));
   const dateTime = (value) => {
     if (!value) return '';
     const parsed = new Date(value);
@@ -201,7 +201,7 @@
     doc.line(32, 70, 563, 70);
 
     drawBox(doc, 32, 88, 255, 92, 'DONNÉES INTERVENTION', [
-      `Statut OR : ${clean(row.status || 'ready')}`,
+      `Travaux : ${{draft:'À préparer',ready:'Prévus au rendez-vous',signed:'Acceptés',in_progress:'En cours',completed:'Terminés',invoiced:'Terminés',cancelled:'Annulés'}[row.status] || 'À préparer'}`,
       `Kilométrage entrée : ${Number(report.mileage ?? row.mileage_in ?? row.vehicles?.mileage ?? 0).toLocaleString('fr-FR')} km`,
       `Technicien : ${clean(report.technician_name) || 'À renseigner'}`,
       appointment.starts_at ? `Rendez-vous : ${dateTime(appointment.starts_at)}` : 'Rendez-vous : à renseigner'
