@@ -5,12 +5,13 @@ import { chromium } from 'playwright';
 const origin = process.env.RECOVERY_ORIGIN;
 const expectedBuild = String(process.env.RECOVERY_SHA || '').slice(0, 7);
 const allowed = new Set([
+  'http://127.0.0.1:4180',
   'https://edm28.fr',
   'https://edm-28-git-fix-password-recovery-admin-3d99bb-edm-28-s-projects.vercel.app'
 ]);
 assert.ok(allowed.has(origin), 'Unexpected target origin');
 assert.match(expectedBuild, /^[a-f0-9]{7}$/, 'Missing candidate SHA');
-const report = { origin, expectedBuild, checks: [], realAuthWrites: 0 };
+const report = { origin, expectedBuild, mode: origin.startsWith('http://127.0.0.1') ? 'local-handlers' : 'deployed', checks: [], realAuthWrites: 0 };
 const output = 'recovery-browser-artifacts';
 await mkdir(output, { recursive: true });
 let browser;
@@ -22,7 +23,12 @@ async function waitForBuild() {
     });
     assert.ok(![401, 403].includes(res.status), 'Deployment access is restricted; no bypass attempted');
     const build = res.headers.get('x-edm-build');
+    const location = res.headers.get('location');
     await res.body?.cancel();
+    if (location && res.status >= 300 && res.status < 400) {
+      const target = new URL(location, origin);
+      throw new Error(`Unexpected HTTP ${res.status} redirect to ${target.origin}${target.pathname}`);
+    }
     if (res.status === 200 && build === expectedBuild) return;
     if (attempt % 5 === 0) console.log(`Waiting for build ${expectedBuild}: HTTP ${res.status}, build ${build || 'unknown'}`);
     await new Promise((resolve) => setTimeout(resolve, 5000));
