@@ -1,0 +1,31 @@
+name: Basket Migration Scaffold
+on:
+  push:
+    branches: [fix/supplier-basket-quote-flow]
+    paths: [.github/workflows/basket-migration.yml]
+permissions:
+  contents: read
+jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Generate migration using pinned Supabase CLI
+        run: |
+          npx --yes supabase@2.81.3 --help
+          npx --yes supabase@2.81.3 migration --help
+          npx --yes supabase@2.81.3 migration new --help
+          npx --yes supabase@2.81.3 migration new supplier_basket_quote_flow
+          git ls-files --others --exclude-standard supabase/migrations > migration-path.txt
+          cat migration-path.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supplier-basket-migration-path
+          path: migration-path.txt
+          retention-days: 5
