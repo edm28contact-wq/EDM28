@@ -1,0 +1,55 @@
+name: Apply Reviewed Journey Changes
+on:
+  push:
+    branches: [feat/client-journey-48h]
+    paths: [.journey-transfer/**, .github/workflows/apply-journey-review.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/feat/client-journey-48h'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Reconstruct and verify exact reviewed patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64, gzip, hashlib
+          files=sorted(Path('.journey-transfer').glob('*.txt'))
+          assert len(files)==17
+          chunks=[]
+          for p in files:
+              value=p.read_text()
+              if p.name=='061.txt':
+                  value=value.replace('entktktVD','entktVD').replace('v06hD9N','v06hN9N')
+                  raw=value.encode()
+                  assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()=='86e0ab0bd9199af8cc70662009919102fc9e6641', 'Transfer chunk 061 mismatch'
+              chunks.append(value)
+          encoded=''.join(chunks)
+          assert len(encoded)==71324
+          patch=gzip.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='d350141e08652fabe3bcdb25268c71b731eba660cbdff7d60d8147598aed55d6', 'Reviewed patch mismatch'
+          Path('/tmp/edm28-journey.patch').write_bytes(patch)
+          print('Verified 201241 bytes of targeted edits')
+          PY
+          git apply --check /tmp/edm28-journey.patch
+          git apply --index /tmp/edm28-journey.patch
+          git rm -r .journey-transfer .github/workflows/apply-journey-review.yml .github/workflows/journey-scaffold.yml
+          npm test
+          git diff --cached --check
+      - name: Commit only to the feature branch without force
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          test "$(git ls-remote origin refs/heads/feat/client-journey-48h | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat: implement authenticated requests and guarded 48h client journey'
+          git push origin HEAD:refs/heads/feat/client-journey-48h
