@@ -80,27 +80,27 @@ test('admin reset is red, requires an exact phrase and preserves administrators 
     read('admin-reset.html'),
     read('vercel.json')
   ]);
-  assert.match(route, /admin-reset-data\\.js/);
+  assert.match(route, /admin-reset-data\.js/);
   assert.match(html, /adminResetPasswordBtn/);
   assert.match(html, /Mot de passe oublié/);
-  assert.match(core, /resetPasswordForEmail\\(ADMIN_EMAIL/);
-  assert.match(core, /https:\\/\\/edm28\\.fr\\/admin-reset/);
+  assert.match(core, /resetPasswordForEmail\(ADMIN_EMAIL/);
+  assert.match(core, /https:\/\/edm28\.fr\/admin-reset/);
   assert.match(passwordReset, /PASSWORD_RECOVERY/);
-  assert.match(passwordReset, /updateUser\\(\\{ password: newPassword \\}\\)/);
-  assert.match(passwordReset, /location\\.replace\\('\/admin\\?password-reset=success'\\)/);
-  assert.match(vercelConfig, /"src": "\\/admin-reset"/);
+  assert.match(passwordReset, /updateUser\(\{ password: newPassword \}\)/);
+  assert.match(passwordReset, /location\.replace\('\/admin\?password-reset=success'\)/);
+  assert.match(vercelConfig, /"src": "\/admin-reset"/);
   assert.match(reset, /className = 'btn danger'/);
   assert.match(reset, /REINITIALISER EDM28/);
-  assert.match(reset, /insertBefore\\(button, logout\\)/);
+  assert.match(reset, /insertBefore\(button, logout\)/);
   assert.match(reset, /admin_reset_storage_paths/);
   assert.match(reset, /admin_reset_operational_data/);
-  assert.match(migration, /if not private\\.is_admin\\(\\)/);
-  assert.match(migration, /profile\\.role, 'customer'\\) <> 'admin'/);
-  assert.match(migration, /delete from auth\\.users/);
-  assert.match(migration, /delete from public\\.document_sequences/);
-  assert.doesNotMatch(migration, /delete from public\\.business_configuration/);
-  assert.doesNotMatch(migration, /delete from public\\.site_services/);
-  assert.doesNotMatch(migration, /delete from public\\.automation_settings/);
+  assert.match(migration, /if not private\.is_admin\(\)/);
+  assert.match(migration, /profile\.role, 'customer'\) <> 'admin'/);
+  assert.match(migration, /delete from auth\.users/);
+  assert.match(migration, /delete from public\.document_sequences/);
+  assert.doesNotMatch(migration, /delete from public\.business_configuration/);
+  assert.doesNotMatch(migration, /delete from public\.site_services/);
+  assert.doesNotMatch(migration, /delete from public\.automation_settings/);
 });
 
 test('admin authentication uses password only and no email OTP', async () => {
