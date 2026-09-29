@@ -78,7 +78,7 @@ try{
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   report.checks.push(`quote response, 48h hold, proof, pending review, confirmation and 24h history ${width}: PASS`);
 
-  await page.goto(origin+'/contact',{waitUntil:'networkidle'});assert.equal(await page.locator('a[href^="tel:000"]').count(),0);assert.equal(await page.locator('.contact-panel a[href^="mailto:"]').count(),1);assert.equal(await page.locator('.contact-panel a[href*="maps/dir"]').count(),1);await page.screenshot({path:`${out}/contact-${width}.png`,fullPage:true});
+  await page.goto(origin+'/contact',{waitUntil:'networkidle'});assert.equal(await page.locator('a[href^="tel:000"]').count(),0);assert.equal(await page.locator('.contact-card a[href^="mailto:"]').count(),1);assert.equal(await page.locator('.contact-card a[href*="maps/dir"]').count(),1);await page.screenshot({path:`${out}/contact-${width}.png`,fullPage:true});
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   await page.goto(origin+'/admin-reset',{waitUntil:'networkidle'});await page.setContent(`<html><head><link rel="stylesheet" href="${origin}/admin.css"></head><body><main style="padding:16px"><section id="operations"></section></main></body></html>`);
   await page.evaluate(()=>{const f=__journey;f.q.status='accepted';const r=f.makeHold();r.status='review_pending';r.proof_path=f.uid+'/'+r.id+'/test.pdf';r.review_deadline=new Date(Date.now()+86400000).toISOString();f.calls=[];
