@@ -69,8 +69,15 @@
         many('quote_items', 'quote_id', base.id)
       ]);
       const summary = requestSummary(request);
+      let basket = null;
+      if (base.commercial_model === 'customer_supplied_v1') {
+        const result = await A().db.from('quote_parts_baskets').select('*').eq('quote_id', base.id).maybeSingle();
+        if (result.error) throw result.error;
+        basket = result.data;
+      }
       return {
         ...common,
+        quote_parts_baskets: basket,
         service_requests: request,
         quote_items: items,
         title: base.title || serviceNames(request).join(' - ') || 'Devis EDM28',

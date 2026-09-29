@@ -325,6 +325,59 @@
     page.text(40, 14, `Merci pour votre confiance - ${companyName(cfg)} - ${clean(cfg.email || 'contact@edm28.fr')} - ${clean(cfg.website || 'www.edm28.fr')}`, { size: 7, width: 515, align: 'center' });
   }
 
+  function drawSupplierBasket(doc, cfg, row) {
+    const source = row.quote_parts_baskets;
+    const basket = Array.isArray(source) ? source[0] : source;
+    if (!basket) throw new Error('Le panier associ\u00e9 au devis est introuvable.');
+    const paragraphs = [
+      'Tarifs par prestation, consommables d\u2019atelier inclus, hors pi\u00e8ces de remplacement.',
+      'Le client ach\u00e8te les pi\u00e8ces directement au fournisseur et les apporte au rendez-vous.',
+      '',
+      ...(basket.requires_parts ? [
+        'PI\u00c8CES PR\u00c9CONIS\u00c9ES', String(basket.recommended_parts || ''), '',
+        'PANIER FOURNISSEUR (lien \u00e9galement transmis dans l\u2019email)', String(basket.supplier_url || ''), '',
+        'Toute autre r\u00e9f\u00e9rence doit \u00eatre valid\u00e9e par EDM28 avant le rendez-vous.',
+        'Les r\u00e9f\u00e9rences apport\u00e9es sont compar\u00e9es aux pr\u00e9conisations. Une incompatibilit\u00e9 peut emp\u00eacher ou interrompre l\u2019intervention ; son origine est examin\u00e9e avec le client.'
+      ] : ['Cette prestation ne pr\u00e9voit pas de pi\u00e8ces de remplacement \u00e0 acheter.']),
+      '', 'Le paiement du panier est distinct du montant des prestations \u00e0 r\u00e9gler \u00e0 EDM28.'
+    ];
+    let page, y, pageNumber = 0;
+    const newPage = () => {
+      page = doc.addPage(); pageNumber += 1;
+      decorativeCorners(page, RED); drawBrand(page, cfg, 42, 775, RED);
+      page.text(42, 704, 'ANNEXE AU DEVIS - PI\u00c8CES CLIENT', { size: 15, bold: true, color: RED });
+      page.text(42, 682, `Devis ${numberFor('quote', row) || ''} - ${customerName(row)}`, { size: 9 });
+      page.text(42, 30, `Annexe ${pageNumber} - \u00e0 conserver avec le devis`, { size: 8, color: GRAY });
+      y = 650;
+    };
+    newPage();
+    for (const paragraph of paragraphs) {
+      // Split long references and URLs too; no content is silently truncated.
+      for (const logicalLine of paragraph.split(/\r?\n/)) {
+        let remaining = clean(logicalLine);
+        if (!remaining) { y -= 13; continue; }
+        while (remaining) {
+          let end = 0, width = 0;
+          while (end < remaining.length) {
+            const char = remaining[end];
+            const weight = /[WwMm@%]/.test(char) ? 1.02 : /[A-Z]/.test(char) ? 0.85 : /[ilI.,:;!'|]/.test(char) ? 0.30 : char === ' ' ? 0.35 : 0.65;
+            if (width + weight * 9.5 > 505) break;
+            width += weight * 9.5; end += 1;
+          }
+          if (end < remaining.length) {
+            const space = remaining.lastIndexOf(' ', end);
+            if (space > 35) end = space;
+          }
+          if (y < 65) newPage();
+          page.text(42, y, remaining.slice(0, end), { size: 9.5 });
+          remaining = remaining.slice(end).trimStart();
+          y -= 14;
+        }
+      }
+      y -= 4;
+    }
+  }
+
   function buildCommerce(type, cfg, row) {
     const doc = new PdfDocument();
     const items = commerceRows(row, type);
@@ -340,6 +393,10 @@
         drawDocTitle(page, type === 'quote' ? 'DEVIS' : 'FACTURE', row, type, RED);
         drawCompanyBlock(page, cfg, 45, 650, 245, RED);
         drawCustomerBlock(page, row, 340, 650, 215, type === 'quote' ? 'DEVIS POUR' : 'CLIENT', RED);
+        if (row.commercial_model === 'customer_supplied_v1' || row.quotes?.commercial_model === 'customer_supplied_v1') {
+          page.text(42, 541, 'PRESTATIONS EDM28 - CONSOMMABLES D\u2019ATELIER INCLUS', { size: 8, bold: true, color: RED });
+          page.text(42, 528, 'Pi\u00e8ces de remplacement hors forfait, achet\u00e9es au fournisseur et apport\u00e9es par le client.', { size: 8 });
+        }
         tableTop = 515;
       } else {
         drawBrand(page, cfg, 42, 775, RED);
@@ -353,6 +410,7 @@
       else page.text(42, 35, 'Suite du document sur la page suivante.', { size: 7.5, color: GRAY });
       first = false;
     }
+    if (type === 'quote' && row.commercial_model === 'customer_supplied_v1') drawSupplierBasket(doc, cfg, row);
     return doc.build();
   }
 

@@ -4,15 +4,15 @@
   const money = (v) => A().money(n(v));
   const nearly = (a, b) => Math.abs(n(a) - n(b)) < 0.005;
 
-  function invoiceLine(item = {}, locked = false) {
+  function invoiceLine(item = {}, locked = false, serviceOnly = false) {
     const disabled = locked ? ' disabled' : '';
     return `<div class="card" data-invoice-line data-source-id="${A().esc(item.source_quote_item_id || '')}" style="padding:12px;margin:10px 0">
       <div class="grid2">
         <label>Type<select data-line="type"${disabled}>
-          <option value="labor" ${item.item_type === 'labor' ? 'selected' : ''}>Main-d’œuvre</option>
-          <option value="part" ${item.item_type === 'part' ? 'selected' : ''}>Pièce</option>
+          <option value="labor" ${item.item_type === 'labor' ? 'selected' : ''}>Prestation (consommables inclus)</option>
+          ${serviceOnly ? '' : `<option value="part" ${item.item_type === 'part' ? 'selected' : ''}>Pièce</option>
           <option value="delivery" ${item.item_type === 'delivery' ? 'selected' : ''}>Livraison</option>
-          <option value="discount" ${item.item_type === 'discount' ? 'selected' : ''}>Remise</option>
+          <option value="discount" ${item.item_type === 'discount' ? 'selected' : ''}>Remise</option>`}
           <option value="other" ${!['labor','part','delivery','discount'].includes(item.item_type) ? 'selected' : ''}>Autre</option>
         </select></label>
         <label>Référence<input data-line="reference" value="${A().esc(item.supplier_reference || '')}"${disabled}></label>
@@ -151,7 +151,7 @@
   function bindDraft(root) {
     const lines = root.querySelector('[data-lines]');
     root.querySelector('[data-add-line]').onclick = () => {
-      lines.insertAdjacentHTML('beforeend', invoiceLine({ item_type: 'labor', quantity: 1, vat_rate: 0 }, false));
+      lines.insertAdjacentHTML('beforeend', invoiceLine({ item_type: 'labor', quantity: 1, vat_rate: 0 }, false, root.dataset.serviceOnly === 'true'));
       bindDraft(root);
       recalculate(root);
     };
@@ -171,13 +171,13 @@
       const vehicleName = [invoice.vehicles?.brand, invoice.vehicles?.model, invoice.vehicles?.plate].filter(Boolean).join(' · ') || 'Véhicule';
       const paymentForm = ['issued','partially_paid'].includes(invoice.status) && balance > 0 ? `<div class="toolbar"><input data-field="amount" type="number" min="0.01" max="${balance}" step="0.01" placeholder="Montant"><select data-field="method"><option value="card">Carte</option><option value="cash">Espèces</option><option value="transfer">Virement</option><option value="check">Chèque</option></select><input data-field="reference" placeholder="Référence"><button class="btn primary" data-pay="${invoice.id}">Enregistrer le règlement</button></div>` : '';
       const draftActions = draft ? `<div class="toolbar"><button class="btn ghost" data-save="${invoice.id}">Enregistrer les modifications</button><button class="btn ghost" data-open-pdf>Ouvrir le module PDF</button><button class="btn primary" data-issue="${invoice.id}">Émettre au client</button></div>` : '';
-      return `<article class="card" data-invoice-action="${invoice.id}" data-variance-count="${varianceCount}" style="margin:12px 0">
+      return `<article class="card" data-invoice-action="${invoice.id}" data-service-only="${invoice.quotes?.commercial_model === 'customer_supplied_v1'}" data-variance-count="${varianceCount}" style="margin:12px 0">
         <div class="top"><div><span class="pill">${A().esc(invoice.status)}</span><h3>${A().esc(invoice.invoice_number || invoice.title || 'Facture')}</h3></div><strong>${money(invoice.total)}</strong></div>
         <div class="grid2"><p><strong>Client :</strong><br>${A().esc(clientName)}<br>${A().esc(invoice.profiles?.phone || '')}<br>${A().esc(invoice.profiles?.email || '')}</p><p><strong>Véhicule :</strong><br>${A().esc(vehicleName)}<br>${A().esc(invoice.vehicles?.energy || '')} · ${A().esc(invoice.vehicles?.mileage || '')} km</p></div>
         <p><strong>Devis lié :</strong> ${A().esc(invoice.quotes?.quote_number || '—')} · ${money(invoice.quotes?.total || 0)}</p>
         ${draft ? `<div class="grid2"><label>Titre<input data-field="title" value="${A().esc(invoice.title || 'Facture EDM28')}"></label><label>Échéance<input data-field="dueAt" type="date" value="${invoice.due_at ? new Date(invoice.due_at).toISOString().slice(0,10) : ''}"></label></div><label>Description<textarea data-field="description" rows="3">${A().esc(invoice.description || '')}</textarea></label>` : `<p>${A().esc(invoice.description || '')}</p>`}
         <h4>Comparaison devis / facture réelle</h4>${comparisonHtml(comparison)}
-        <h4>Lignes de facture</h4><div data-lines>${(invoice.invoice_items || []).map((item) => invoiceLine(item, !draft)).join('')}</div>
+        <h4>Lignes de facture</h4><div data-lines>${(invoice.invoice_items || []).map((item) => invoiceLine(item, !draft, invoice.quotes?.commercial_model === 'customer_supplied_v1')).join('')}</div>
         ${draft ? '<button type="button" class="btn ghost" data-add-line>Ajouter une ligne</button>' : ''}
         <div class="grid2" style="margin-top:12px"><p>Total HT : <strong data-total="subtotal">${money(invoice.subtotal)}</strong></p><p>TVA : <strong data-total="vat">—</strong></p><p>Total TTC : <strong data-total="total">${money(invoice.total)}</strong></p><p>Payé : <strong>${money(invoice.amount_paid)}</strong> · Reste : <strong>${money(balance)}</strong></p></div>
         ${draft && varianceCount ? '<label><input type="checkbox" data-confirm-variance> J’ai vérifié et validé les écarts avec le devis accepté.</label>' : ''}
@@ -212,7 +212,7 @@
     const host = A()?.$('invoiceActionList');
     if (!host) return;
     host.innerHTML = '<p class="muted">Chargement…</p>';
-    const invoicesResult = await A().db.from('invoices').select('id,user_id,vehicle_id,quote_id,repair_order_id,invoice_number,status,title,description,subtotal,discount,total,amount_paid,due_at,pdf_path,visible_to_client,created_at,profiles(first_name,last_name,email,phone),vehicles(plate,brand,model,year,energy,engine,mileage),quotes(quote_number,total)').in('status', ['draft','issued','partially_paid','paid','overdue']).order('created_at', { ascending: false });
+    const invoicesResult = await A().db.from('invoices').select('id,user_id,vehicle_id,quote_id,repair_order_id,invoice_number,status,title,description,subtotal,discount,total,amount_paid,due_at,pdf_path,visible_to_client,created_at,profiles(first_name,last_name,email,phone),vehicles(plate,brand,model,year,energy,engine,mileage),quotes(quote_number,total,commercial_model)').in('status', ['draft','issued','partially_paid','paid','overdue']).order('created_at', { ascending: false });
     if (invoicesResult.error) throw invoicesResult.error;
     const invoices = invoicesResult.data || [];
     const invoiceIds = invoices.map((invoice) => invoice.id);

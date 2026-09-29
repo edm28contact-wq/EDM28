@@ -19,12 +19,19 @@ test('service requests require guarded workflow transitions', async () => {
   assert.match(source, /status: 'quoted'/);
 });
 
-test('quotes stay private until guarded publication', async () => {
-  const source = await read('admin-quotes.js');
-  assert.match(source, /validUntil < currentDate\(\)/);
-  assert.match(source, /status:\s*'sent',\s*visible_to_client:\s*true/);
-  assert.match(source, /\.eq\('status', 'draft'\)/);
-  assert.match(source, /Seul un brouillon peut être modifié ou publié/);
+test('new service quotes stay private until the atomic publication RPC', async () => {
+  const [source, helper, migration] = await Promise.all([
+    read('admin-quotes.js'), read('admin-supplier-basket.js'),
+    read('supabase/migrations/20260929153243_supplier_basket_quote_flow.sql')
+  ]);
+  assert.match(source, /const workflow = window\.EDMAdminSupplierBasket/);
+  assert.match(source, /workflow\.saveDraft\(root\)/);
+  assert.match(helper, /rpc\('admin_save_service_quote'/);
+  assert.match(helper, /rpc\('admin_publish_service_quote'/);
+  assert.ok(helper.indexOf("generateFor('quote'") < helper.indexOf("rpc('admin_publish_service_quote'"));
+  assert.match(migration, /q\.status <> 'draft'/);
+  assert.match(migration, /visible_to_client=false/);
+  assert.match(migration, /new\.valid_until < current_date/);
 });
 
 test('localized draft quote labels remain visible in the active quote queue', async () => {

@@ -83,7 +83,7 @@ const PAGES = {
     sections: [
       ['Ce qui est contrôlé', 'L’état et l’usure des plaquettes du train concerné sont vérifiés, ainsi que l’état visible des éléments de freinage associés lorsque cela est accessible et pertinent pour la prestation.'],
       ['Quand faire contrôler les plaquettes ?', 'Un bruit, un voyant, une remarque au contrôle technique ou une évolution du comportement au freinage sont des motifs de contrôle. L’intervention n’est pas décidée sur le seul kilométrage.'],
-      ['Ce qui est inclus ou non', 'Le devis précise la prestation retenue. Les pièces, opérations complémentaires ou débours qui ne font pas partie de la prestation initiale doivent être identifiés avant d’être ajoutés.']
+      ['Ce qui est inclus ou non', 'Le devis précise la prestation retenue. Le tarif est un forfait par prestation, consommables d’atelier inclus. Les pièces de remplacement sont achetées par le client auprès du fournisseur puis apportées au rendez-vous. Toute prestation supplémentaire est soumise à validation.']
     ],
     links: [['/freinage/disques-de-frein', 'Voir les disques de frein'], ['/freinage/liquide-de-frein', 'Voir le liquide de frein'], ['/tarifs', 'Tarifs freinage'], ['/demande', 'Faire une demande']],
     faq: [
@@ -185,11 +185,11 @@ const PAGES = {
     title: 'Tarifs des prestations | EDM28',
     description: 'Consultez les tarifs publics EDM28 issus du catalogue site_services. Le devis précise le périmètre final avant toute intervention.',
     h1: 'Tarifs des prestations EDM28',
-    lede: 'Les montants affichés ci-dessous proviennent directement du catalogue public EDM28. Ils ne sont pas recopiés en dur dans cette page.',
+    lede: 'Tarifs par prestation, consommables d’atelier inclus, hors pièces de remplacement. Le client achète les pièces préconisées et les apporte au rendez-vous.',
     serviceType: 'Catalogue tarifaire des prestations automobiles EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/tarifs', 'Tarifs']],
     sections: [
-      ['Ce qui est compris dans le travail', 'Le prix affiché correspond à la prestation publique configurée. Pour les démontages de freinage concernés, la préparation comprend le nettoyage des points de corrosion accessibles et un remontage avec graisse adaptée uniquement sur les portées prévues, jamais sur les surfaces de friction, afin de limiter la corrosion future. Les pièces, débours ou éléments complémentaires restent précisés au devis.'],
+      ['Ce qui est compris dans le travail', 'Le prix affiché correspond à la prestation publique configurée. Pour les démontages de freinage concernés, la préparation comprend le nettoyage des points de corrosion accessibles et un remontage avec graisse adaptée uniquement sur les portées prévues, jamais sur les surfaces de friction, afin de limiter la corrosion future. Le forfait inclut les consommables d’atelier, mais pas les pièces de remplacement. EDM28 prépare leur panier et transmet son lien avec le devis ; le client les paie directement au fournisseur.'],
       ['Le devis reste la référence', 'Le véhicule et la demande réelle déterminent le périmètre final. EDM28 fait valider le devis avant intervention et n’ajoute pas de travaux supplémentaires sans validation.']
     ],
     links: [['/', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/demande', 'Faire une demande']],
@@ -204,13 +204,14 @@ const PAGES = {
     serviceType: 'Parcours client et intervention automobile EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/fonctionnement', 'Fonctionnement']],
     sections: [
-      ['1. Demande → devis → acceptation', 'Le client formule sa demande. EDM28 prépare la proposition adaptée, puis le devis est présenté avant travaux. L’acceptation du client conditionne la suite.'],
-      ['2. Débours lorsque nécessaire → préparation atelier', 'Lorsqu’un débours fait partie du dossier, il est géré dans le flux prévu avant la préparation atelier. Les éléments nécessaires à l’intervention sont ensuite préparés.'],
+      ['1. Devis de prestation et panier dans le même email', 'EDM28 étudie la demande, prépare le panier fournisseur et transmet son lien avec le devis. Le devis précise les références des pièces. Le forfait EDM28 comprend la prestation et les consommables d’atelier, hors pièces de remplacement.'],
+      ['2. Le client achète et apporte ses pièces', 'Après validation du devis, le client commande et paie les pièces directement au fournisseur. Il les apporte au rendez-vous. Toute autre référence doit être validée par EDM28 avant le rendez-vous.'],
+      ['Vérification avant intervention', 'Les références apportées sont comparées aux préconisations du devis. Une incompatibilité peut empêcher ou interrompre l’intervention ; son origine est examinée avec le client. Aucun travail supplémentaire n’est engagé sans son accord.'],
       ['3. Intervention → clôture → facture', 'L’intervention est réalisée dans le périmètre validé. Le dossier est ensuite clôturé et la facture correspondante est produite.'],
       ['4. Encaissement → historique client', 'L’encaissement est enregistré puis les éléments du dossier et les documents utiles restent accessibles dans l’historique client selon le fonctionnement de l’application.']
     ],
     links: [['/transparence', 'Conseils & FAQ'], ['/', 'Prestations et tarifs'], ['/?page=history', 'Mes interventions'], ['/demande', 'Faire une demande']],
-    faq: [['Comment fonctionne une intervention chez EDM28 ?', 'Demande, devis, acceptation, débours si nécessaire, préparation atelier, intervention, clôture, facture, encaissement puis historique client.']]
+    faq: [['Comment fonctionne une intervention chez EDM28 ?', 'EDM28 envoie le devis de prestation et le lien du panier dans le même email. Le client valide le devis, achète les pièces chez le fournisseur et les apporte au rendez-vous. La prestation est réalisée, facturée puis conservée dans l’historique client.']]
   },
   transparence: {
     path: '/transparence',
@@ -530,7 +531,7 @@ ${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="http
 <div class="wrap content">${bodyContent}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
-${['/','/demande','/mes-interventions'].includes(page.path) ? `<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/public-client.js?v=3" defer><\/script>` : ''}
+${['/','/demande','/mes-interventions'].includes(page.path) ? `<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/public-client.js?v=4" defer><\/script>` : ''}
 <script src="/public-site.js?v=2" defer></script></body>
 </html>`;
 }

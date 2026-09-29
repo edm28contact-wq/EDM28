@@ -5,13 +5,13 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-test('client disbursement flow explains choices and requires an explicit mandate', async () => {
+test('archived client disbursement flow is no longer loaded', async () => {
   const [loader, account, client] = await Promise.all([
     read('client-simple-flow.js'),
     read('client-account-safe.js'),
     read('client-disbursements.js')
   ]);
-  assert.match(loader, /client-disbursements\.js\?v=1/);
+  assert.doesNotMatch(loader, /client-disbursements\.js/);
   assert.doesNotMatch(account, /protectedPages/);
   assert.match(client, /Achat direct client/);
   assert.match(client, /Débours EDM/);
@@ -22,13 +22,13 @@ test('client disbursement flow explains choices and requires an explicit mandate
   assert.match(client, /montant exact du justificatif/i);
 });
 
-test('admin disbursement flow blocks over-limit purchases and requires proof', async () => {
+test('archived admin disbursement flow is retired but historical invoice guards remain', async () => {
   const [admin, invoiceLock, adminLoader] = await Promise.all([
     read('admin-disbursements.js'),
     read('admin-disbursement-invoice-lock.js'),
     read('api/admin.js')
   ]);
-  assert.match(adminLoader, /admin-disbursements\.js/);
+  assert.doesNotMatch(adminLoader, /admin-disbursements\.js/);
   assert.match(adminLoader, /admin-disbursement-invoice-lock\.js/);
   assert.match(admin, /amount > n\(row\.authorized_limit\)/);
   assert.match(admin, /supplier_invoice_in_customer_name:\s*true/);

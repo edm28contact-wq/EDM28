@@ -1,0 +1,54 @@
+name: Supplier Basket Browser
+on:
+  pull_request:
+    branches: [pwa-edm28]
+  push:
+    branches: [fix/supplier-basket-quote-flow]
+permissions:
+  contents: read
+concurrency:
+  group: basket-browser-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      RECOVERY_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      RECOVERY_ORIGIN: http://127.0.0.1:4180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install isolated browser tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/basket-tools" --ignore-scripts --no-audit --no-fund playwright@1.58.2
+          "$RUNNER_TEMP/basket-tools/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Start real application handlers with isolated data
+        run: |
+          node tests/recovery-test-server.mjs > /tmp/basket-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4180/admin >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/basket-server.log
+          exit 1
+      - name: Verify recovery remains functional
+        run: |
+          cp tests/recovery-live-check.mjs "$RUNNER_TEMP/basket-tools/recovery.mjs"
+          node "$RUNNER_TEMP/basket-tools/recovery.mjs"
+      - name: Verify customer basket and administrator quote editor
+        run: |
+          cp tests/supplier-basket-browser.mjs "$RUNNER_TEMP/basket-tools/basket.mjs"
+          node "$RUNNER_TEMP/basket-tools/basket.mjs"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: basket-browser-${{ github.run_id }}
+          path: |
+            basket-browser-artifacts
+            recovery-browser-artifacts
+          retention-days: 5
