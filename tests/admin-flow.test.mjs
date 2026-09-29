@@ -88,7 +88,10 @@ test('admin reset is red, requires an exact phrase and preserves administrators 
   assert.match(passwordReset, /PASSWORD_RECOVERY/);
   assert.match(passwordReset, /updateUser\(\{ password: newPassword \}\)/);
   assert.match(passwordReset, /location\.replace\('\/admin\?password-reset=success'\)/);
-  assert.match(vercelConfig, /"src": "\/admin-reset"/);
+  assert.equal(
+    JSON.parse(vercelConfig).routes.find((entry) => entry.src === '/admin-reset')?.dest,
+    '/api/app?authRecovery=admin'
+  );
   assert.match(reset, /className = 'btn danger'/);
   assert.match(reset, /REINITIALISER EDM28/);
   assert.match(reset, /insertBefore\(button, logout\)/);
