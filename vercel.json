@@ -12,6 +12,9 @@
     },
     "api/admin.js": {
       "includeFiles": "{admin.html,admin-core.js,admin-transactional.js}"
+    },
+    "api/health.js": {
+      "includeFiles": "journey-model.js"
     }
   },
   "headers": [
@@ -239,6 +242,10 @@
     {
       "src": "/mes-interventions",
       "dest": "/api/app?seo=page&slug=mes-interventions"
+    },
+    {
+      "src": "/journey-model.js",
+      "dest": "/api/health?journey=model"
     },
     {
       "handle": "filesystem"
