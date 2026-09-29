@@ -75,10 +75,13 @@ test('provider error is retriable and never reported as sent',async t=>{
 test('GET cannot dispatch, accept a quote, or confirm a booking',async t=>{
  const f=await dispatch(t,{method:'GET'});assert.equal(f.res.statusCode,405);assert.equal(f.calls.length,0);
 });
-test('contact links and placeholder are intentional; auth appears before the vehicle form',async()=>{
+test('contact links stay intentional; guest signup follows vehicle and prestation',async()=>{
  const [seo,client,journey]=await Promise.all(['public-seo.js','public-client.js','client-journey.js'].map(read));
  assert.match(seo,/mailto:/);assert.match(seo,/maps\/dir\/\?api=1/);assert.doesNotMatch(seo,/tel:0000000000/);
- assert.match(seo,/data-client-only hidden/);assert.ok(client.indexOf('id="requestAccountArea"')<client.indexOf('id="requestPlate"'));
+ assert.match(seo,/data-client-only hidden/);assert.ok(client.indexOf('id="requestPlate"')<client.indexOf('id="requestServices"'));
+ assert.ok(client.indexOf('id="requestServices"')<client.indexOf('id="requestAccountStep"'));
+ assert.match(client,/byId\('requestAccountStep'\)\.hidden = Boolean\(uid\)/);
+ assert.match(client,/authBlock\('requestSignup', 'signup'\)/);
  assert.equal((client.match(/id="requestAccountArea"/g)||[]).length,1);assert.match(client,/id="requestPlate" required/);assert.match(client,/is-selected/);
  assert.match(journey,/location\.replace\(target.href\)/);assert.match(journey,/createSignedUrl\(path,120\)/);
 });

@@ -33,9 +33,9 @@ const PAGES = {
   demande: {
     path: '/demande',
     title: 'Faire une demande d’intervention | EDM28',
-    description: 'Préparez votre demande d’intervention EDM28 : véhicule, prestation, symptômes et coordonnées, puis transmettez le dossier après connexion.',
+    description: 'Préparez votre demande EDM28 : véhicule, prestation, puis création du compte. Déjà client ? Connectez-vous pour retrouver vos véhicules.',
     h1: 'Faire une demande d’intervention',
-    lede: 'Connectez-vous pour retrouver vos véhicules. Choisissez ensuite les prestations souhaitées : nous vous enverrons un devis avant tout rendez-vous.',
+    lede: 'Renseignez votre véhicule, choisissez une prestation, puis créez votre compte. Déjà client ? Utilisez « Me connecter » pour retrouver vos véhicules et passer cette étape.',
     serviceType: 'Demande d’intervention automobile EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/demande', 'Faire une demande']],
     sections: [],
@@ -206,7 +206,7 @@ const PAGES = {
     serviceType: 'Parcours client et intervention automobile EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/fonctionnement', 'Fonctionnement']],
     sections: [
-      ['1. Vous faites votre demande', 'Connectez-vous pour retrouver vos véhicules. Renseignez la plaque et choisissez les prestations. Les autres informations sont facultatives.'],
+      ['1. Vous faites votre demande', 'Renseignez votre plaque, choisissez les prestations, puis créez votre compte. Si vous avez déjà un compte, connectez-vous : vos véhicules sont disponibles et l’étape de création du compte disparaît.'],
       ['2. Vous recevez le devis et le panier', 'EDM28 vous envoie le devis PDF et le lien du panier dans le même email. Les références et les prix indicatifs des pièces sont indiqués. EDM28 ne vend pas de pièces : vous payez directement le vendeur, sans marge cachée du garage.'],
       ['3. Vous choisissez votre rendez-vous', 'Acceptez ou refusez le devis dans Mes interventions. En cas de refus, expliquez le motif par email pour demander un nouveau devis. Après acceptation, choisissez une date dans le planning.'],
       ['4. Votre créneau est gardé 48 h', 'Achetez les pièces et joignez le justificatif dans Mes interventions avant la fin des 48 h. Sans justificatif, le créneau est libéré. Vous pouvez acheter les mêmes références ailleurs. Toute autre référence doit être validée par EDM28.'],
@@ -543,7 +543,7 @@ function renderPage(page, origin, services = [], clientConfig = null) {
 <div class="wrap content">${['/','/demande','/tarifs','/fonctionnement'].includes(page.path) ? '<section class="parts-transparency"><h2>EDM28 ne vend pas de pièces</h2><p>Vous achetez les pièces directement auprès du vendeur de votre choix. Nous préparons votre panier et vous donnons les références : aucune marge sur les pièces, aucun prix caché. Vous réglez à EDM28 uniquement la prestation, consommables compris.</p></section>' : ''}${bodyContent}</div>
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Email : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
-${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=5" defer><\/script>`}
+${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
 <script src="/public-site.js?v=2" defer></script></body>
 </html>`;
 }
