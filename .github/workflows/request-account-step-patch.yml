@@ -1,0 +1,51 @@
+name: Request Account Step Patch
+on:
+  push:
+    branches: [fix/request-account-step]
+    paths: [.github/workflows/request-account-step-patch.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/request-account-step
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply reviewed substitutions with before and after checksums
+        run: |
+          python3 - <<'PY'
+          import base64, gzip, hashlib, json
+          from pathlib import Path
+          payload = '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'
+          raw = gzip.decompress(base64.b64decode(payload))
+          assert hashlib.sha256(raw).hexdigest() == 'b506d27457327fe70b6ce7c08ca8988469701ecf4feb8dadf8b506573c44f0d3'
+          edits = json.loads(raw)
+          assert set(edits) == {'public-client.js','public-seo.js','tests/journey.test.mjs','tests/journey-browser.mjs'}
+          for name, edit in edits.items():
+              path = Path(name)
+              assert hashlib.sha256(path.read_bytes()).hexdigest() == edit['before'], name
+              text = path.read_text()
+              for old, new in edit['replacements']:
+                  assert text.count(old) == 1, name
+                  text = text.replace(old, new)
+              assert hashlib.sha256(text.encode()).hexdigest() == edit['after'], name
+              path.write_text(text)
+              print(name, edit['after'])
+          PY
+      - name: Validate exact patched application
+        run: |
+          git diff --check
+          npm test
+      - name: Commit only reviewed files and remove this temporary workflow
+        run: |
+          git config user.name 'edm28contact-wq'
+          git config user.email 'edm28.contact@gmail.com'
+          rm .github/workflows/request-account-step-patch.yml
+          git add public-client.js public-seo.js tests/journey.test.mjs tests/journey-browser.mjs .github/workflows/request-account-step-patch.yml
+          git commit -m 'fix: keep signup after vehicle and prestation only for guests'
+          git push origin HEAD:fix/request-account-step
