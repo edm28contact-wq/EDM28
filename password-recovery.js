@@ -3,7 +3,9 @@ export function recoveryBridge() {
   const current = new URL(window.location.href);
   const hash = new URLSearchParams(current.hash.slice(1));
   const type = hash.get('type') || current.searchParams.get('type');
-  if (type === 'recovery') {
+  const errorCode = hash.get('error_code') || current.searchParams.get('error_code');
+  const expiredEmailLink = !type && errorCode === 'otp_expired';
+  if (type === 'recovery' || expiredEmailLink) {
     const target = new URL('/reinitialiser-mot-de-passe', current.origin);
     for (const key of ['type', 'token_hash', 'code', 'error', 'error_code']) {
       if (current.searchParams.has(key)) target.searchParams.set(key, current.searchParams.get(key));
@@ -35,6 +37,7 @@ export async function recoveryBoot(config) {
   const incoming = new URL(window.location.href);
   const hash = new URLSearchParams(incoming.hash.slice(1));
   const type = hash.get('type') || incoming.searchParams.get('type');
+  const errorCode = hash.get('error_code') || incoming.searchParams.get('error_code');
   const admin = config.mode === 'admin' || incoming.searchParams.get('espace') === 'admin';
   const requestMode = config.mode === 'request';
   const adminEmail = 'admin@edm28.fr';
@@ -50,7 +53,9 @@ export async function recoveryBoot(config) {
     $('savePassword').disabled = true;
     $('newPassword').disabled = true;
     $('confirmPassword').disabled = true;
-    status('Lien absent, invalide ou expir\u00e9. Demandez un nouveau lien de r\u00e9initialisation.', true);
+    status(!type && errorCode === 'otp_expired'
+      ? 'Ce lien email est expir\u00e9 ou a d\u00e9j\u00e0 \u00e9t\u00e9 utilis\u00e9. Pour un mot de passe oubli\u00e9, demandez un nouveau lien. Pour confirmer votre compte, retournez \u00e0 la connexion et renvoyez l\u2019email de confirmation.'
+      : 'Lien absent, invalide ou expir\u00e9. Demandez un nouveau lien de r\u00e9initialisation.', true);
   };
   const returnTo = (email) => email === adminEmail ? '/admin' : '/mes-interventions';
   $('recoverySpace').textContent = admin ? 'Compte administrateur' : 'Compte EDM28';
@@ -140,7 +145,8 @@ export async function recoveryBoot(config) {
   }
   status('V\u00e9rification du lien de r\u00e9initialisation...');
   try {
-    if (type !== 'recovery' || hash.has('error') || incoming.searchParams.has('error')) return invalidLink();
+    if (type !== 'recovery' || hash.has('error') || incoming.searchParams.has('error')
+      || hash.has('error_code') || incoming.searchParams.has('error_code')) return invalidLink();
     const tokenHash = incoming.searchParams.get('token_hash');
     let result;
     if (tokenHash) {
