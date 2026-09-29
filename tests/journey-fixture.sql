@@ -9,6 +9,11 @@ create table public.vehicles(id uuid primary key,user_id uuid references public.
 insert into public.vehicles values('12121212-1212-4212-8212-121212121212','11111111-1111-4111-8111-111111111111','AA-123-BB'),('34343434-3434-4434-8434-343434343434','33333333-3333-4333-8333-333333333333','CC-456-DD');
 create table public.appointments(id uuid primary key default gen_random_uuid(),user_id uuid,vehicle_id uuid,service_request_id uuid,external_appointment_id text,starts_at timestamptz not null,ends_at timestamptz,status text default 'proposed' check(status in ('proposed','confirmed','completed','cancelled','rescheduled')),notes text,visible_to_client boolean default true,labor_duration_minutes integer,buffer_minutes integer default 30,created_at timestamptz default now(),updated_at timestamptz default now());
 create table public.repair_orders(id uuid primary key default gen_random_uuid(),user_id uuid,vehicle_id uuid,service_request_id uuid,quote_id uuid references public.quotes,appointment_id uuid references public.appointments,order_number text,status text default 'draft' check(status in ('draft','ready','signed','in_progress','completed','invoiced','cancelled')),authorized_work jsonb default '[]',pdf_path text,visible_to_client boolean default true,created_at timestamptz default now(),updated_at timestamptz default now());
+grant select on public.appointments,public.repair_orders to authenticated;
+alter table public.appointments enable row level security;
+alter table public.repair_orders enable row level security;
+create policy fixture_appointment_read on public.appointments for select to authenticated using(private.is_admin() or (user_id=auth.uid() and visible_to_client));
+create policy fixture_order_read on public.repair_orders for select to authenticated using(private.is_admin() or (user_id=auth.uid() and visible_to_client));
 create table public.automation_settings(id boolean primary key,messages_enabled boolean,test_mode boolean,test_recipient text);
 insert into public.automation_settings values(true,true,true,'isolated@example.test');
 create table public.business_configuration(id boolean primary key,address_line1 text,address_line2 text,postal_code text,city text);

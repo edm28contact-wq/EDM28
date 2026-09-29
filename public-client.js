@@ -267,7 +267,7 @@
         <div class="form-grid three">
           <label>Immatriculation (obligatoire)
             <input id="requestPlate" required aria-required="true" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AA-123-AA ou 1234 AB 28" aria-describedby="requestPlateHelp requestPlateStatus">
-            <small id="requestPlateHelp" class="field-help">Formats acceptés : nouveau SIV AA-123-AA ou ancien FNI 1234 AB 28.</small>
+            <small id="requestPlateHelp" class="field-help">Exemples : AA-123-AA ou 1234 AB 28.</small>
             <small id="requestPlateStatus" class="plate-status"></small>
           </label>
           <label>Marque<input id="requestBrand" placeholder="Renault"></label>
@@ -287,7 +287,7 @@
           <div>
             <span class="advantage-badge">Dès 100 € TTC</span>
             <strong>Mes avantages à partir de 100 €</strong>
-            <p>Comparatif des contrôles, OR vierge et checklist complète EDM28.</p>
+            <p>Détail des contrôles et exemple du document qui décrit les travaux prévus.</p>
             <small>Le PDF s’ouvre dans un nouvel onglet.</small>
           </div>
           <button class="advantage-action" type="button" id="downloadBlankOrder">Mes avantages à partir de 100 € <span aria-hidden="true">→</span></button>
@@ -480,7 +480,7 @@
         }
 
         const parsedPlate = refreshPlateStatus(true);
-        if (!parsedPlate.valid) throw new Error('Immatriculation obligatoire au format AA-123-AA ou ancien format FNI, par exemple 1234 AB 28.');
+        if (!parsedPlate.valid) throw new Error('Renseignez votre plaque, par exemple AA-123-AA ou 1234 AB 28.');
         const plate = parsedPlate.display;
         const plateNormalized = parsedPlate.normalized;
 

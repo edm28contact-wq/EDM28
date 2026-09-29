@@ -90,10 +90,19 @@ select public.fixture_assert((select count(id)=0 from public.journey_email_deliv
 reset role;
 select public.fixture_assert((select sent_at is not null from public.journey_email_deliveries where kind='confirmed'),'sent timestamp recorded');
 
+-- Check the 24 hour boundary using fixture times only.
+update public.booking_reservations set starts_at=now()+interval '25 hours',ends_at=now()+interval '26 hours' where status='confirmed';
+update public.appointments a set starts_at=b.starts_at,ends_at=b.ends_at from public.booking_reservations b where a.id=b.appointment_id;
+select private.process_journey();
+select public.fixture_assert((select count(*)=0 from public.journey_email_deliveries where kind='reminder'),'no reminder before the 24 hour window');
+update public.booking_reservations set starts_at=now()+interval '23 hours',ends_at=now()+interval '24 hours' where status='confirmed';
+update public.appointments a set starts_at=b.starts_at,ends_at=b.ends_at from public.booking_reservations b where a.id=b.appointment_id;
 -- The scheduler uses a fixture HTTP sink, never the network.
 update private.journey_settings set enabled=true;
 select private.process_journey();
 select public.fixture_assert((select count(*)>=1 from net.fixture_requests),'scheduled dispatch targets existing messages');
+select private.process_journey();
+select public.fixture_assert((select count(*)=1 from public.journey_email_deliveries where kind='reminder'),'one reminder inside 24 hours, deduplicated');
 select public.fixture_assert(not exists(select 1 from net.fixture_requests where url<>'https://edm28.fr/api/health?journey=dispatch'),'no attacker-controlled destination');
 update public.repair_orders set status='completed';
 select public.fixture_assert((select completed_at is not null from public.repair_orders),'completion is timestamped on server');

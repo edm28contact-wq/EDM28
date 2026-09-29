@@ -429,16 +429,16 @@
     if (quote.commercial_model === 'customer_supplied_v1') {
       doc.addPage();
       doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(23, 27, 33);
-      doc.text('COMMENT LA PRESTATION EST PREPAREE', 32, 43);
+      doc.text('COMMENT SE DÉROULE LA PRESTATION', 32, 43);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
       const steps = [
-        'Avant de commencer : verification des pieces apportees et des references indiquees dans le devis.',
-        'Pour les elements demontes : nettoyage des surfaces d appui accessibles et controle de leur etat.',
-        'Graissage seulement aux endroits prevus par le constructeur, avec un produit adapte. Jamais sur les surfaces de freinage.',
-        'Montage et serrage selon les instructions du constructeur. Controle du serrage avec l outillage adapte.',
-        'Verification apres montage et photos de l intervention pour le dossier client.',
-        'Tout travail supplementaire doit etre explique et accepte avant sa realisation.',
-        'Les pieces de remplacement sont achetees par le client. Le forfait EDM28 comprend la prestation et les consommables d atelier.'
+        'Avant de commencer : vérification des pièces apportées et des références indiquées dans le devis.',
+        'Pour les éléments démontés : nettoyage des surfaces de contact accessibles et contrôle de leur état.',
+        'Graissage seulement aux endroits prévus par le constructeur, avec un produit adapté. Jamais sur les surfaces de freinage.',
+        'Montage selon les instructions du constructeur. Serrage à la clé dynamométrique et respect des méthodes prescrites.',
+        'Vérification après montage et photos de l’intervention pour le dossier client.',
+        'Tout travail supplémentaire doit être expliqué et accepté avant sa réalisation.',
+        'Les pièces de remplacement sont achetées par le client. Le forfait EDM28 comprend la prestation et les consommables d’atelier.'
       ];
       let position = 82;
       for (const step of steps) { const lines = doc.splitTextToSize(step, 531); doc.text(lines, 32, position); position += lines.length * 14 + 16; }

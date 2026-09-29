@@ -48,7 +48,7 @@ try{
   await page.locator('#requestVehicleSearch').fill('Renault');assert.equal(await page.locator('#requestVehicleSelect option').count(),2);
   await page.locator('#requestVehicleSelect').selectOption('12121212-1212-4212-8212-121212121212');assert.equal(await page.locator('#requestPlate').inputValue(),'AA-123-BB');
   await page.locator('.service-choice input').first().check();assert.equal(await page.locator('.service-choice.is-selected').count(),1);
-  assert.match(await page.locator('.service-choice.is-selected').evaluate(e=>getComputedStyle(e).backgroundColor),/rgba/);
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.service-choice.is-selected')).backgroundColor==='rgba(235, 136, 62, 0.13)');
   await page.screenshot({path:`${out}/request-${width}.png`,fullPage:true});
   await page.locator('#requestPlate').fill('');await page.locator('#requestSubmit').click();assert.equal((await page.evaluate(()=>__journey.calls)).includes('service_requests:insert'),false);
   await page.locator('#requestPlate').fill('AA-123-BB');for(const field of ['requestBrand','requestModel','requestYear','requestEnergy','requestMileage','requestFirstName','requestLastName','requestPhone'])await page.locator('#'+field).fill('');

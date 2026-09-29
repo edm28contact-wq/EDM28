@@ -1094,7 +1094,7 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 
 /* Customer journey: visible selection and compact, readable contact information. */
 [hidden]{display:none!important}
-.service-choice.is-selected{border:2px solid #db762f;background:rgba(235,136,62,.13);box-shadow:0 0 0 2px rgba(235,136,62,.09)}
+.service-choice.is-selected:has(input:checked){border:2px solid #db762f;background:rgba(235,136,62,.13);box-shadow:0 0 0 2px rgba(235,136,62,.09)}
 .service-choice:focus-within{outline:2px solid #ac551d;outline-offset:3px}
 #connexion,#requestVehiclePicker{scroll-margin-top:100px}
 #requestVehiclePicker{display:grid;gap:14px;margin-bottom:20px}
