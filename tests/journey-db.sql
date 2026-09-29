@@ -86,7 +86,13 @@ do $$ begin
 end $$;
 update public.journey_email_deliveries set status='sending' where status='dispatching' returning id;
 update public.journey_email_deliveries set status='sent',provider_message_id='test-provider' where status='sending';
-select public.fixture_assert((select count(id)=0 from public.journey_email_deliveries),'capability cannot replay sent delivery');
+select public.fixture_assert((select count(id)=1 and bool_and(status='sent') from public.journey_email_deliveries),'acknowledgement remains readable only during its lease');
+with replay as (update public.journey_email_deliveries set status='sending' where status='sent' returning id)
+ select public.fixture_assert((select count(*)=0 from replay),'capability cannot replay sent delivery');
+reset role;
+update public.journey_email_deliveries set lease_until=now()-interval '1 second' where kind='confirmed';
+set role anon;
+select public.fixture_assert((select count(id)=0 from public.journey_email_deliveries),'expired capability cannot read acknowledged delivery');
 reset role;
 select public.fixture_assert((select sent_at is not null from public.journey_email_deliveries where kind='confirmed'),'sent timestamp recorded');
 

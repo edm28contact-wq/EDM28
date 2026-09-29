@@ -105,7 +105,7 @@ grant select(id,payload,status,lease_until),update(status,provider_message_id,la
 grant all on public.journey_email_deliveries to service_role;
 create index journey_deliveries_pending on public.journey_email_deliveries(available_at) where status in ('pending','dispatching','sending');
 create policy delivery_capability_read on public.journey_email_deliveries for select to anon using(
- lease_until>now() and status in ('dispatching','sending') and
+ lease_until>now() and status in ('dispatching','sending','sent','pending','failed') and
  dispatch_hash=encode(extensions.digest(coalesce(nullif(current_setting('request.headers',true),'')::jsonb->>'x-edm-delivery-token',''),'sha256'),'hex')
 );
 create policy delivery_capability_ack on public.journey_email_deliveries for update to anon using(

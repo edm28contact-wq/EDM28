@@ -10,6 +10,7 @@ require('jspdf-autotable');
   for (const count of [1, 18]) {
     const row = {
       id: '22222222-2222-4222-8222-222222222222', user_id: '11111111-1111-4111-8111-111111111111',
+      vehicle_id: '55555555-5555-4555-8555-555555555555', appointment_id: '66666666-6666-4666-8666-666666666666',
       quote_id: '44444444-4444-4444-8444-444444444444', order_number: 'EXEMPLE-OR', status: 'ready',
       profiles: { first_name: 'Client', last_name: 'Exemple', email: 'client@example.test' },
       vehicles: { plate: 'AA-123-BB', brand: 'Renault', model: 'Clio', mileage: 80000 },
@@ -22,9 +23,11 @@ require('jspdf-autotable');
     let captured;
     const app = { businessConfiguration: { business_name: 'EDM28 — DOCUMENT DE TEST', email: 'contact@example.test' }, db: {
       from(table) {
-        const result = { data: table === 'repair_orders' ? row : [], error: null };
+        const fixture = { repair_orders: row, profiles: row.profiles, vehicles: row.vehicles, appointments: row.appointments, quotes: row.quotes, quote_items: row.quotes.quote_items, inspection_reports: {}, business_configuration: app.businessConfiguration };
+        assert.ok(Object.hasOwn(fixture, table), 'Unexpected PDF query: ' + table);
+        const result = { data: fixture[table], error: null };
         const query = { select() { return query; }, eq() { return query; }, order() { return query; }, limit() { return query; },
-          update() { result.data = [{ id: row.id }]; return query; }, maybeSingle() { return Promise.resolve(result); },
+          update() { result.data = [{ id: row.id }]; return query; }, maybeSingle() { return Promise.resolve(result); }, single() { return Promise.resolve(result); },
           then(resolve, reject) { return Promise.resolve(result).then(resolve, reject); }
         };
         return query;

@@ -74,7 +74,7 @@ try{
   await page.locator('.journey-card.is-green').waitFor();await page.screenshot({path:`${out}/finished-${width}.png`,fullPage:true});
   await page.evaluate(()=>{__journey.rows.repair_orders[0].completed_at=new Date(Date.now()-25*3600000).toISOString();__journey.emit();});
   await page.waitForFunction(()=>document.getElementById('edmInterventionsApp').textContent.includes('Aucune intervention en cours'));
-  await page.locator('.vehicle-archive').first().locator('summary').first().click();await page.locator('.intervention-archive summary').first().click();assert.equal(await page.locator('.intervention-archive [data-file]').count(),2);
+  await page.locator('.vehicle-archive').first().locator('summary').first().click();await page.locator('.intervention-archive summary').first().click();assert.equal(await page.locator('.intervention-archive [data-file]').count(),3);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   report.checks.push(`quote response, 48h hold, proof, pending review, confirmation and 24h history ${width}: PASS`);
 
