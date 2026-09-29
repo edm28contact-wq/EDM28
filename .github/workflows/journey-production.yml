@@ -1,0 +1,72 @@
+name: Client Journey Production
+on:
+  push:
+    branches: [pwa-edm28]
+permissions:
+  contents: read
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for this exact build and compare deployed source files
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,mkdir,writeFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          const sha=process.env.EXPECTED_SHA.slice(0,7),origin='https://edm28.fr';
+          const report={origin,sha,checks:[],businessWrites:0,realEmails:0};
+          await mkdir('journey-production-artifacts',{recursive:true});
+          const get=path=>fetch(origin+path+'?validation='+sha,{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(15000)});
+          const digest=s=>createHash('sha256').update(s).digest('hex');
+          try {
+            let r;
+            for(let i=0;i<36;i++) {r=await get('/admin');if(r.status===200&&r.headers.get('x-edm-build')===sha)break;await new Promise(done=>setTimeout(done,5000));}
+            assert.equal(r.status,200);assert.equal(r.headers.get('x-edm-build'),sha);
+            assert.match(await r.text(),/admin-reservation-review\.js/);
+            for(const path of ['/client-journey.js','/journey-model.js','/public-client.js','/public-site.css','/admin-reservation-review.js','/supplier-basket-policy.js']) {
+              const r=await get(path);assert.equal(r.status,200,path);const text=await r.text();
+              assert.equal(digest(text),digest(await readFile('.'+path,'utf8')),path);
+              report.checks.push({path,sourceMatches:true});
+            }
+            const denial=await fetch(origin+'/api/health?journey=dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(10000)});
+            assert.equal(denial.status,403,'Uncredentialed dispatch must not send an email');
+            report.status='PASS';
+          }catch(e){report.status='FAIL';report.error=e.message;process.exitCode=1;}
+          await writeFile('journey-production-artifacts/assets.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report,null,2));
+          JS
+      - name: Install isolated browser tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/journey-tools" --ignore-scripts --no-audit --no-fund playwright@1.58.2
+          "$RUNNER_TEMP/journey-tools/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Run the same browser journey against the deployed pages with mocked Auth and data
+        env:
+          JOURNEY_TOOLS: ${{ runner.temp }}/journey-tools
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          source=Path('tests/journey-browser.mjs').read_text()
+          old="const origin='http://127.0.0.1:4180',out="
+          assert source.count(old)==1
+          Path(os.environ['JOURNEY_TOOLS'],'live.mjs').write_text(source.replace(old,"const origin='https://edm28.fr',out="))
+          PY
+          node "$JOURNEY_TOOLS/live.mjs"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: journey-production-${{ github.run_id }}
+          path: |
+            journey-production-artifacts
+            journey-browser-artifacts
+          retention-days: 5

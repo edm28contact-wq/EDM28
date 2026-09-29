@@ -1,0 +1,29 @@
+name: Client Journey PDF
+on:
+  push:
+    branches: [feat/client-journey-48h]
+  pull_request:
+    branches: [pwa-edm28]
+permissions:
+  contents: read
+jobs:
+  pdf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Use exactly the PDF libraries pinned by the application
+        run: |
+          npm install --prefix "$RUNNER_TEMP/pdf-tools" --ignore-scripts --no-audit --no-fund jspdf@2.5.2 jspdf-autotable@3.8.4
+          NODE_PATH="$RUNNER_TEMP/pdf-tools/node_modules" node tests/journey-pdf.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: journey-pdf-${{ github.run_id }}
+          path: journey-pdf-artifacts
+          retention-days: 5

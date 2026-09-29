@@ -1,6 +1,8 @@
 import { resolveSupabasePublicConfig } from './supabase-config.js';
 
 const PUBLIC_EMAIL = 'contact@edm28.fr';
+const PUBLIC_ADDRESS = '17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye';
+const DIRECTIONS_URL = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(PUBLIC_ADDRESS);
 
 const NAV_ITEMS = [
   ['/', 'Accueil'],
@@ -17,23 +19,23 @@ const PAGES = {
     title: 'Freinage et liaison au sol | EDM28',
     description: 'Découvrez EDM28 en freinage et liaison au sol, avec demande d’intervention, devis avant travaux, suivi client et tarifs publics.',
     h1: 'EDM28',
-    lede: 'Freinage et interventions ciblées de liaison au sol. Retrouvez ici les travaux proposés, les tarifs et l’accès direct à votre demande d’intervention.',
+    lede: 'Nous entretenons vos freins et les éléments qui relient les roues au véhicule. Nos forfaits comprennent la prestation et les consommables d’atelier, hors pièces de remplacement.',
     serviceType: 'Interventions automobiles EDM28',
     breadcrumbs: [['/', 'Accueil']],
     sections: [
       ['Freinage', 'Plaquettes, disques et purge du liquide de frein font partie des interventions proposées. Lors des démontages concernés, EDM28 nettoie les points de corrosion accessibles et remonte avec une graisse adaptée sur les portées prévues, jamais sur les surfaces de friction, afin de limiter le retour de corrosion.'],
       ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des interventions publiées.'],
-      ['Un périmètre clair', 'Chaque demande est rapprochée d’un besoin réel. Si le véhicule nécessite autre chose, la proposition doit être révisée avant travaux.']
+      ['Des travaux expliqués', 'Nous vous expliquons les travaux prévus et leur prix. Rien n’est ajouté sans votre accord.']
     ],
-    links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs et catalogue'], ['/transparence', 'Conseils & FAQ'], ['/demande', 'Faire une demande']],
-    faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 se positionne principalement sur le freinage et des interventions ciblées de liaison au sol. La demande doit rester compatible avec le périmètre réel du garage.']]
+    links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs des prestations'], ['/transparence', 'Conseils & FAQ'], ['/demande', 'Faire une demande']],
+    faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 intervient sur les freins, la suspension et certaines pièces de direction. Nous vérifions votre demande avant de vous proposer un devis.']]
   },
   demande: {
     path: '/demande',
     title: 'Faire une demande d’intervention | EDM28',
     description: 'Préparez votre demande d’intervention EDM28 : véhicule, prestation, symptômes et coordonnées, puis transmettez le dossier après connexion.',
     h1: 'Faire une demande d’intervention',
-    lede: 'Commencez par votre véhicule et votre besoin. Le compte n’est demandé qu’au moment de transmettre la demande et de suivre le dossier.',
+    lede: 'Connectez-vous pour retrouver vos véhicules. Choisissez ensuite les prestations souhaitées : nous vous enverrons un devis avant tout rendez-vous.',
     serviceType: 'Demande d’intervention automobile EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/demande', 'Faire une demande']],
     sections: [],
@@ -45,7 +47,7 @@ const PAGES = {
     title: 'Mes interventions | EDM28',
     description: 'Espace client EDM28 : véhicules, demandes, devis, pièces, rendez-vous, ordres de réparation, contrôles, factures et documents.',
     h1: 'Mes interventions',
-    lede: 'Tous vos véhicules et tous leurs dossiers au même endroit, dans la même interface EDM28.',
+    lede: 'Suivez vos demandes et vos rendez-vous. Retrouvez vos documents dans l’historique de chaque véhicule.',
     breadcrumbs: [['/', 'Accueil'], ['/mes-interventions', 'Mes interventions']],
     sections: [],
     links: [['/demande', 'Faire une nouvelle demande'], ['/', 'Prestations'], ['/transparence', 'Conseils & FAQ']],
@@ -183,7 +185,7 @@ const PAGES = {
   tarifs: {
     path: '/tarifs',
     title: 'Tarifs des prestations | EDM28',
-    description: 'Consultez les tarifs publics EDM28 issus du catalogue site_services. Le devis précise le périmètre final avant toute intervention.',
+    description: 'Consultez nos forfaits par prestation, consommables compris et hors pièces. Vous connaissez le prix avant les travaux.',
     h1: 'Tarifs des prestations EDM28',
     lede: 'Tarifs par prestation, consommables d’atelier inclus, hors pièces de remplacement. Le client achète les pièces préconisées et les apporte au rendez-vous.',
     serviceType: 'Catalogue tarifaire des prestations automobiles EDM28',
@@ -193,22 +195,24 @@ const PAGES = {
       ['Le devis reste la référence', 'Le véhicule et la demande réelle déterminent le périmètre final. EDM28 fait valider le devis avant intervention et n’ajoute pas de travaux supplémentaires sans validation.']
     ],
     links: [['/', 'Voir les prestations'], ['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/demande', 'Faire une demande']],
-    faq: [['Les prix de cette page sont-ils saisis manuellement ?', 'Non. La page charge les prestations publiées depuis la table publique site_services afin d’éviter une copie divergente des tarifs.']]
+    faq: [['Les pièces sont-elles comprises dans le prix ?', 'Non. Vous payez les pièces directement au vendeur de votre choix. Le forfait EDM28 comprend le travail prévu et les consommables d’atelier.']]
   },
   fonctionnement: {
     path: '/fonctionnement',
     title: 'Comment fonctionne une intervention | EDM28',
-    description: 'Découvrez le parcours EDM28 : demande, devis, validation, préparation, intervention, facture, encaissement et historique client.',
+    description: 'Demande, devis, panier de pièces, pré-réservation de 48 h et historique : les étapes de votre intervention EDM28.',
     h1: 'Comment fonctionne une intervention chez EDM28 ?',
     lede: 'Le parcours est conçu pour garder une trace claire de la demande, de la validation du client, des documents et de la clôture de l’intervention.',
     serviceType: 'Parcours client et intervention automobile EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/fonctionnement', 'Fonctionnement']],
     sections: [
-      ['1. Devis de prestation et panier dans le même email', 'EDM28 étudie la demande, prépare le panier fournisseur et transmet son lien avec le devis. Le devis précise les références des pièces. Le forfait EDM28 comprend la prestation et les consommables d’atelier, hors pièces de remplacement.'],
-      ['2. Le client achète et apporte ses pièces', 'Après validation du devis, le client commande et paie les pièces directement au fournisseur. Il les apporte au rendez-vous. Toute autre référence doit être validée par EDM28 avant le rendez-vous.'],
-      ['Vérification avant intervention', 'Les références apportées sont comparées aux préconisations du devis. Une incompatibilité peut empêcher ou interrompre l’intervention ; son origine est examinée avec le client. Aucun travail supplémentaire n’est engagé sans son accord.'],
-      ['3. Intervention → clôture → facture', 'L’intervention est réalisée dans le périmètre validé. Le dossier est ensuite clôturé et la facture correspondante est produite.'],
-      ['4. Encaissement → historique client', 'L’encaissement est enregistré puis les éléments du dossier et les documents utiles restent accessibles dans l’historique client selon le fonctionnement de l’application.']
+      ['1. Vous faites votre demande', 'Connectez-vous pour retrouver vos véhicules. Renseignez la plaque et choisissez les prestations. Les autres informations sont facultatives.'],
+      ['2. Vous recevez le devis et le panier', 'EDM28 vous envoie le devis PDF et le lien du panier dans le même email. Les références et les prix indicatifs des pièces sont indiqués. EDM28 ne vend pas de pièces : vous payez directement le vendeur, sans marge cachée du garage.'],
+      ['3. Vous choisissez votre rendez-vous', 'Acceptez ou refusez le devis dans Mes interventions. En cas de refus, expliquez le motif par email pour demander un nouveau devis. Après acceptation, choisissez une date dans le planning.'],
+      ['4. Votre créneau est gardé 48 h', 'Achetez les pièces et joignez le justificatif dans Mes interventions avant la fin des 48 h. Sans justificatif, le créneau est libéré. Vous pouvez acheter les mêmes références ailleurs. Toute autre référence doit être validée par EDM28.'],
+      ['5. EDM28 confirme sous 24 h', 'Après réception du justificatif, EDM28 vérifie la commande et le délai de livraison. Vous recevez la confirmation par email après notre validation. Votre ordre de réparation, qui décrit les travaux prévus, est alors disponible dans votre espace. Un rappel est prévu 24 h avant le rendez-vous. Pour une prestation sans pièces à acheter, nous vérifions directement la date demandée.'],
+      ['6. Vous apportez les pièces, nous réalisons la prestation', 'Le forfait comprend les travaux prévus et les consommables d’atelier. Les pièces sont vérifiées avant intervention. Aucun travail supplémentaire ne commence sans votre accord.'],
+      ['7. Tout reste dans votre historique', 'Une fois terminée, l’intervention reste en vert pendant 24 h dans la liste en cours. Elle rejoint ensuite l’historique du véhicule, avec son titre, sa date et les documents disponibles. Rien n’est supprimé.']
     ],
     links: [['/transparence', 'Conseils & FAQ'], ['/', 'Prestations et tarifs'], ['/?page=history', 'Mes interventions'], ['/demande', 'Faire une demande']],
     faq: [['Comment fonctionne une intervention chez EDM28 ?', 'EDM28 envoie le devis de prestation et le lien du panier dans le même email. Le client valide le devis, achète les pièces chez le fournisseur et les apporte au rendez-vous. La prestation est réalisée, facturée puis conservée dans l’historique client.']]
@@ -252,9 +256,9 @@ const PAGES = {
     serviceType: 'Garage automobile spécialisé freinage et liaison au sol',
     breadcrumbs: [['/', 'Accueil'], ['/a-propos', 'À propos']],
     sections: [
-      ['Un périmètre volontairement lisible', 'Le freinage constitue le cœur du positionnement. Les interventions de liaison au sol complètent ce périmètre avec des prestations ciblées du train roulant.'],
-      ['Une relation client documentée', 'Le parcours associe demande, devis, validation, intervention, facture et historique afin de réduire les zones floues entre ce qui est demandé, accepté et réalisé.'],
-      ['Pas de localisation inventée', 'Les informations locales ne sont publiées que lorsqu’elles sont réellement renseignées dans la configuration EDM28.']
+      ['Nos spécialités', 'Le freinage constitue le cœur du positionnement. Les interventions de liaison au sol complètent ce périmètre avec des prestations ciblées du train roulant.'],
+      ['Vos documents toujours disponibles', 'Le parcours associe demande, devis, validation, intervention, facture et historique afin de réduire les zones floues entre ce qui est demandé, accepté et réalisé.'],
+      ['Où nous trouver', 'Le garage se trouve au 17 bis route du Videlet, à Saint-Lubin-de-la-Haye (28410). Les interventions se font sur rendez-vous.']
     ],
     links: [['/', 'Prestations'], ['/transparence', 'Conseils & FAQ'], ['/fonctionnement', 'Fonctionnement'], ['/contact', 'Contact']],
     faq: [['Quelle est la spécialité principale d’EDM28 ?', 'Le freinage. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant.']]
@@ -264,7 +268,7 @@ const PAGES = {
     title: 'Contact | EDM28',
     description: 'Contactez EDM28 pour une demande liée au freinage ou à la liaison au sol. Email public : contact@edm28.fr.',
     h1: 'Contacter EDM28',
-    lede: 'Pour une demande de prestation, utilisez le parcours de rendez-vous du site. Pour un contact général, l’adresse publique EDM28 est contact@edm28.fr.',
+    lede: 'Un email pour vos questions. Une adresse pour venir au garage.',
     breadcrumbs: [['/', 'Accueil'], ['/contact', 'Contact']],
     sections: [
       ['Demande de rendez-vous', 'Le parcours en ligne permet de préparer la demande et de la relier aux prestations disponibles avant l’étude du dossier.'],
@@ -456,15 +460,15 @@ function renderPage(page, origin, services = [], clientConfig = null) {
           </div>
           <div class="service-body">
             <div class="service-top"><h2>Tarifs</h2><span class="service-arrow" aria-hidden="true">›</span></div>
-            <p>Consultez le catalogue public EDM28. Le devis confirme ensuite le périmètre exact avant intervention.</p>
+            <p>Consultez nos forfaits. Le devis précise le travail prévu et son prix.</p>
           </div>
         </a>
       </div>
       <section class="scope-card"><h2>${esc(page.sections[2][0])}</h2><p>${esc(page.sections[2][1])}</p></section>`
     : page.sections.map(([title, text]) => `<section><h2>${esc(title)}</h2><p>${esc(text)}</p></section>`).join('');
-  const links = page.links.map(([path, label]) => `<a class="link-card" href="${esc(path)}">${esc(label)}<span aria-hidden="true">→</span></a>`).join('');
-  const faq = page.faq?.length ? `<section aria-labelledby="faq-title"><h2 id="faq-title">Questions fréquentes</h2><div class="faq">${page.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p><strong>Réponse courte :</strong> ${esc(a)}</p></details>`).join('')}</div></section>` : '';
-  const shorts = page.shorts?.length ? `<section class="shorts-section" aria-labelledby="shorts-title"><div class="section-kicker">Bientôt en vidéo</div><h2 id="shorts-title">Les shorts EDM28</h2><p class="shorts-intro">De courtes vidéos TikTok viendront compléter ces réponses. Aucun lien officiel EDM28 n’est encore configuré, donc aucun faux lien n’est affiché.</p><div class="shorts-grid">${page.shorts.map(([title, description]) => `<article class="short-card"><div class="short-badge" aria-hidden="true">▶</div><div><h3>${esc(title)}</h3><p>${esc(description)}</p><span class="short-coming">Lien TikTok à ajouter</span></div></article>`).join('')}</div></section>` : '';
+  const links = page.links.map(([path, label]) => `<a class="link-card" href="${esc(path)}"${path === '/mes-interventions' ? ' data-client-only hidden' : ''}>${esc(label)}<span aria-hidden="true">→</span></a>`).join('');
+  const faq = page.faq?.length ? `<section aria-labelledby="faq-title"><h2 id="faq-title">Questions fréquentes</h2><div class="faq">${page.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></section>` : '';
+  const shorts = page.shorts?.length ? `<section class="shorts-section" aria-labelledby="shorts-title"><div class="section-kicker">Bientôt en vidéo</div><h2 id="shorts-title">Les shorts EDM28</h2><p class="shorts-intro">De courtes vidéos TikTok viendront compléter ces réponses. </p><div class="shorts-grid">${page.shorts.map(([title, description]) => `<article class="short-card"><div class="short-badge" aria-hidden="true">▶</div><div><h3>${esc(title)}</h3><p>${esc(description)}</p><span class="short-coming">Bientôt disponible</span></div></article>`).join('')}</div></section>` : '';
   const tariffs = page.path === '/tarifs' ? renderTariffs(services) : '';
   const clientSurface = page.path === '/'
     ? '<div id="edmHomeClientApp"></div>'
@@ -473,7 +477,15 @@ function renderPage(page, origin, services = [], clientConfig = null) {
       : page.path === '/mes-interventions'
         ? '<div id="edmInterventionsApp"></div>'
         : '';
-  const bodyContent = (page.path === '/demande' || page.path === '/mes-interventions')
+  const contact = `<section class="contact-card" aria-label="Coordonnées du garage">
+    <p>Une question sur votre véhicule ou votre devis ? Contactez-nous par email.</p>
+    <dl class="contact-details">
+      <div><dt>Email</dt><dd><a href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></dd></div>
+      <div><dt>Adresse</dt><dd><a href="${esc(DIRECTIONS_URL)}" target="_blank" rel="noopener noreferrer">17 bis route du Videlet<br>28410 Saint-Lubin-de-la-Haye<span class="contact-hint">Voir l’itinéraire</span></a></dd></div>
+      <div><dt>Téléphone</dt><dd><span>00 00 00 00 00</span><small class="contact-hint">Numéro provisoire — utilisez l’email pour le moment.</small></dd></div>
+    </dl><p>Accueil sur rendez-vous.</p>
+  </section>`;
+  const bodyContent = page.path === '/contact' ? contact : (page.path === '/demande' || page.path === '/mes-interventions')
     ? `${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>`
     : `${sections}${tariffs}${shorts}${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
   const jsonLd = structuredData(page, origin);
@@ -485,7 +497,7 @@ function renderPage(page, origin, services = [], clientConfig = null) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(page.title)}</title>
 <meta name="description" content="${esc(page.description)}">
-<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="robots" content="${page.path === '/mes-interventions' ? 'noindex,nofollow,noarchive' : 'index,follow,max-image-preview:large'}">
 <link rel="canonical" href="${esc(canonical)}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
@@ -496,11 +508,11 @@ function renderPage(page, origin, services = [], clientConfig = null) {
 <meta property="og:image" content="${esc(origin)}/logo-edm.svg">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<link rel="stylesheet" href="/public-site.css?v=7">
-${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>' : ''}
+<link rel="stylesheet" href="/public-site.css?v=8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script>
 </head>
 <body>
-<header class="site-header"><div class="wrap header-row"><a class="brand" href="/">EDM28</a><nav class="desktop-nav" aria-label="Navigation principale">${NAV_ITEMS.map(([path, label]) => `<a href="${path}"${page.path === path ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav><button class="menu-toggle" type="button" data-menu-toggle aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div></header>
+<header class="site-header"><div class="wrap header-row"><a class="brand" href="/">EDM28</a><nav class="desktop-nav" aria-label="Navigation principale">${NAV_ITEMS.map(([path, label]) => `<a href="${path}"${path === '/mes-interventions' ? ' data-client-only hidden' : ''}${page.path === path ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav><button class="menu-toggle" type="button" data-menu-toggle aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div></header>
 <div class="menu-backdrop" data-menu-backdrop></div>
 <aside class="mobile-drawer" id="mobile-menu" data-mobile-drawer aria-hidden="true">
   <div class="drawer-head"><span class="drawer-brand">EDM28</span><button class="drawer-close" type="button" data-menu-close aria-label="Fermer le menu"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -518,20 +530,20 @@ ${['/','/demande','/mes-interventions'].includes(page.path) ? '<script src="http
         '/a-propos':'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-4 2-6 6-6s6 2 6 6M14 15c3.5 0 6 1.6 7 5"/></svg>',
         '/contact':'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 7l8 6 8-6"/></svg>'
       };
-      return `<a href="${path}"${page.path === path ? ' aria-current="page"' : ''}><span class="nav-icon">${icons[path] || ''}</span><span class="nav-label">${label}</span><span class="nav-arrow" aria-hidden="true">›</span></a>`;
+      return `<a href="${path}"${path === '/mes-interventions' ? ' data-client-only hidden' : ''}${page.path === path ? ' aria-current="page"' : ''}><span class="nav-icon">${icons[path] || ''}</span><span class="nav-label">${label}</span><span class="nav-arrow" aria-hidden="true">›</span></a>`;
     }).join('')}
   </nav>
   <div class="drawer-bottom">
-    <a class="drawer-cta" href="/demande"><span>Faire une demande</span><span aria-hidden="true">→</span></a>
+    <a class="drawer-cta" data-request-cta href="${page.path === '/demande' ? '#connexion' : '/demande'}"><span>${page.path === '/demande' ? 'Me connecter' : 'Faire ma demande'}</span><span aria-hidden="true">→</span></a>
     <div class="drawer-contact">Une question ?<a href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></div>
   </div>
 </aside>
 <main>
-<div class="hero${page.path === '/' ? ' hero-home' : ''}"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1>${page.path === '/' ? '<div class="hero-kicker"><span></span>Freinage <b>•</b> Liaison au sol</div><div class="hero-logo" aria-hidden="true"><img src="/logo-edm.svg" alt=""></div>' : ''}<p class="lead">${esc(page.lede)}</p><a class="cta" href="/demande">Faire une demande</a>${page.path === '/' ? '<div class="hero-trust" aria-label="Engagements EDM28"><span>Devis avant travaux</span><span>Pas de marge sur les pièces</span><span>Suivi client transparent</span></div>' : ''}</div></div>
-<div class="wrap content">${bodyContent}</div>
+<div class="hero${page.path === '/' ? ' hero-home' : ''}"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1>${page.path === '/' ? '<div class="hero-kicker"><span></span>Freinage <b>•</b> Liaison au sol</div><div class="hero-logo" aria-hidden="true"><img src="/logo-edm.svg" alt=""></div>' : ''}<p class="lead">${esc(page.lede)}</p><a class="cta" data-request-cta href="${page.path === '/demande' ? '#connexion' : '/demande'}">${page.path === '/demande' ? 'Me connecter' : 'Faire ma demande'}</a>${page.path === '/' ? '<div class="hero-trust" aria-label="Engagements EDM28"><span>Devis avant travaux</span><span>Pas de marge sur les pièces</span><span>Suivi client transparent</span></div>' : ''}</div></div>
+<div class="wrap content">${['/','/demande','/tarifs','/fonctionnement'].includes(page.path) ? '<section class="parts-transparency"><h2>EDM28 ne vend pas de pièces</h2><p>Vous achetez les pièces directement auprès du vendeur de votre choix. Nous préparons votre panier et vous donnons les références : aucune marge sur les pièces, aucun prix caché. Vous réglez à EDM28 uniquement la prestation, consommables compris.</p></section>' : ''}${bodyContent}</div>
 </main>
-<footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Contact public : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
-${['/','/demande','/mes-interventions'].includes(page.path) ? `<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/public-client.js?v=4" defer><\/script>` : ''}
+<footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Email : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
+${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=5" defer><\/script>`}
 <script src="/public-site.js?v=2" defer></script></body>
 </html>`;
 }
@@ -547,10 +559,10 @@ export default async function handler(req, res) {
     return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1><p><a href="/">Retour à l’accueil</a></p></main></body></html>');
   }
   const services = page.path === '/tarifs' ? await loadPublishedServices() : [];
-  const clientConfig = ['/','/demande','/mes-interventions'].includes(page.path) ? resolveSupabasePublicConfig() : null;
+  const clientConfig = resolveSupabasePublicConfig();
   const html = renderPage(page, getOrigin(req), services, clientConfig);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', page.path === '/tarifs' ? 'public, max-age=0, s-maxage=120, stale-while-revalidate=300' : 'public, max-age=0, s-maxage=120, stale-while-revalidate=300');
+  res.setHeader('Cache-Control', page.path === '/mes-interventions' || page.path === '/demande' ? 'private, no-store' : 'public, max-age=0, s-maxage=120, stale-while-revalidate=300');
   if (req.method === 'HEAD') return res.status(200).end();
   return res.status(200).send(html);
 }

@@ -123,7 +123,7 @@
       <div class="account-box" data-auth-box="${context}">
         <div class="section-kicker">Compte client</div>
         <h2>Connexion EDM28</h2>
-        <p>Votre compte sert uniquement à transmettre et suivre vos dossiers. Après création, la confirmation de votre adresse email est obligatoire avant la première connexion.</p>
+        <p>Connectez-vous pour retrouver vos véhicules et suivre votre demande. Nouveau client ? Créez votre compte, puis confirmez votre email grâce au lien reçu.</p>
         <div class="form-grid two">
           <label>Email<input id="${context}AuthEmail" type="email" autocomplete="email" placeholder="vous@exemple.fr"></label>
           <label>Mot de passe<input id="${context}AuthPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 caractères minimum"></label>
@@ -190,7 +190,7 @@
         if (!email || password.length < 8) throw new Error('Email valide et mot de passe de 8 caractères minimum obligatoires.');
         const data = await signUp(email,password);
         if (data?.session) {
-          message(`${context}AuthStatus`, 'Compte créé. La confirmation de l’adresse email doit rester activée dans Supabase Auth avant utilisation du compte.', 'errorbox');
+          message(`${context}AuthStatus`, 'Le compte ne peut pas encore être utilisé. Contactez EDM28 par email.', 'errorbox');
           await signOut();
         } else {
           rememberPendingConfirmation(email);
@@ -228,7 +228,7 @@
       );
       if (justConfirmed) clearPendingConfirmation();
       if (!session?.user) {
-        host.innerHTML = `<section class="home-client-card"><div><div class="section-kicker">Espace client</div><h2>Suivez vos interventions</h2><p>Connectez-vous depuis Mes interventions pour retrouver vos véhicules, documents et rendez-vous.</p></div><a class="primary-action as-link" href="/mes-interventions">Mes interventions</a></section>`;
+        host.innerHTML = '';
         return;
       }
       const { data, error } = await client.from('appointments')
@@ -258,13 +258,16 @@
     if (!host) return;
 
     host.innerHTML = `
+      <section class="client-panel" id="connexion"><div id="requestAccountArea"></div></section>
       <section class="client-panel">
         <div class="section-kicker">1 · Véhicule</div>
         <h2>Votre véhicule</h2>
+        <div id="requestVehiclePicker" hidden><label>Rechercher un véhicule<input id="requestVehicleSearch" type="search" placeholder="Plaque, marque ou modèle"></label><label>Mes véhicules enregistrés<select id="requestVehicleSelect"><option value="">Ajouter un autre véhicule</option></select></label></div>
+        <p>Seule la plaque est obligatoire. Les autres informations nous aident à préparer votre devis.</p>
         <div class="form-grid three">
-          <label>Immatriculation
-            <input id="requestPlate" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AA-123-AA ou 1234 AB 28" aria-describedby="requestPlateHelp requestPlateStatus">
-            <small id="requestPlateHelp" class="field-help">Formats acceptés : nouveau SIV AA-123-AA ou ancien FNI 1234 AB 28.</small>
+          <label>Immatriculation (obligatoire)
+            <input id="requestPlate" required aria-required="true" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AA-123-AA ou 1234 AB 28" aria-describedby="requestPlateHelp requestPlateStatus">
+            <small id="requestPlateHelp" class="field-help">Exemples : AA-123-AA ou 1234 AB 28.</small>
             <small id="requestPlateStatus" class="plate-status"></small>
           </label>
           <label>Marque<input id="requestBrand" placeholder="Renault"></label>
@@ -278,13 +281,13 @@
       <section class="client-panel">
         <div class="section-kicker">2 · Intervention</div>
         <h2>Que faut-il faire ?</h2>
-        <p>Sélectionnez une ou plusieurs prestations. EDM28 confirmera ensuite le périmètre réel avant travaux.</p>
+        <p>Choisissez les prestations souhaitées. Le devis précisera le travail prévu et le prix.</p>
         <div id="requestServices" class="service-choice-grid"><div class="notice">Chargement des prestations…</div></div>
         <div class="benefit-card advantage-card">
           <div>
             <span class="advantage-badge">Dès 100 € TTC</span>
             <strong>Mes avantages à partir de 100 €</strong>
-            <p>Comparatif des contrôles, OR vierge et checklist complète EDM28.</p>
+            <p>Détail des contrôles et exemple du document qui décrit les travaux prévus.</p>
             <small>Le PDF s’ouvre dans un nouvel onglet.</small>
           </div>
           <button class="advantage-action" type="button" id="downloadBlankOrder">Mes avantages à partir de 100 € <span aria-hidden="true">→</span></button>
@@ -296,21 +299,20 @@
 
       <section class="client-panel">
         <div class="section-kicker">3 · Coordonnées</div>
-        <h2>Vos coordonnées</h2>
+        <h2>Vos coordonnées (facultatif)</h2>
         <div class="form-grid three">
           <label>Prénom<input id="requestFirstName" autocomplete="given-name"></label>
           <label>Nom<input id="requestLastName" autocomplete="family-name"></label>
           <label>Téléphone<input id="requestPhone" autocomplete="tel"></label>
         </div>
-        <div id="requestAccountArea" style="margin-top:18px"></div>
       </section>
 
       <section class="client-panel">
         <div class="section-kicker">4 · Vérification</div>
         <h2>Transmettre la demande</h2>
-        <p>La demande est étudiée par EDM28 avant devis. Aucun travail supplémentaire n’est ajouté sans validation.</p>
+        <p>Nous étudions votre demande et vous envoyons un devis par email. Aucune intervention ne commence sans votre accord.</p>
         <div class="action-row">
-          <button id="requestSubmit" class="primary-action" type="button">Envoyer ma demande pour étude</button>
+          <button id="requestSubmit" class="primary-action" type="button" disabled>Envoyer ma demande</button>
         </div>
         <div id="requestSubmitStatus" class="inline-status"></div>
       </section>`;
@@ -378,6 +380,7 @@
       inputs.forEach((input) => {
         const label = input.closest('.service-choice');
         const note = label?.querySelector('.service-conflict-note');
+        label?.classList.toggle('is-selected', input.checked);
         if (input.checked) {
           input.disabled = false;
           label?.classList.remove('is-conflict-disabled');
@@ -397,32 +400,87 @@
     });
     refreshServiceConflicts();
 
+    let savedVehicles = [];
+    let currentRequestUser = null;
+    let accountGeneration = 0;
+    function renderVehicleOptions() {
+      const selected = byId('requestVehicleSelect').value;
+      const term = byId('requestVehicleSearch').value.trim().toLowerCase();
+      byId('requestVehicleSelect').innerHTML = '<option value="">Ajouter un autre v\u00e9hicule</option>' + savedVehicles
+        .filter(v => [v.plate,v.brand,v.model].join(' ').toLowerCase().includes(term))
+        .map(v=>`<option value="${esc(v.id)}">${esc([v.plate,v.brand,v.model].filter(Boolean).join(' \u00b7 '))}</option>`).join('');
+      byId('requestVehicleSelect').value = selected;
+    }
+    byId('requestVehicleSearch').addEventListener('input',renderVehicleOptions);
+    byId('requestVehicleSelect').addEventListener('change',()=>{
+      const vehicle = savedVehicles.find(v=>v.id===byId('requestVehicleSelect').value);
+      const fields = {plate:'requestPlate',brand:'requestBrand',model:'requestModel',year:'requestYear',energy:'requestEnergy',mileage:'requestMileage'};
+      for (const [key,id] of Object.entries(fields)) byId(id).value = vehicle?.[key] ?? '';
+      refreshPlateStatus(true);
+    });
     async function renderAccount() {
+      const generation = ++accountGeneration;
       const area = byId('requestAccountArea');
       const session = await getSession();
-      if (!session?.user) {
+      if (generation !== accountGeneration) return;
+      const uid = session?.user?.id || null;
+      if (currentRequestUser && currentRequestUser !== uid) {
+        for (const id of ['requestPlate','requestBrand','requestModel','requestYear','requestEnergy','requestMileage','requestFirstName','requestLastName','requestPhone']) byId(id).value = '';
+        savedVehicles = [];
+      }
+      currentRequestUser = uid;
+      byId('requestSubmit').disabled = !uid || byId('requestSubmit').dataset.sent === 'true';
+      byId('requestVehiclePicker').hidden = !uid;
+      if (!uid) {
         area.innerHTML = authBlock('request');
-        bindAuth('request', renderAccount);
+        bindAuth('request', async()=>{
+          await renderAccount();
+          const params = new URLSearchParams(location.search);
+          if (params.get('retour') === 'interventions') {
+            const target = new URL('/mes-interventions',location.origin);
+            const quote = params.get('devis');
+            if (/^[0-9a-f-]{36}$/i.test(quote || '')) target.searchParams.set('devis',quote);
+            location.replace(target.href);
+          }
+        });
         return;
       }
-      const { data: profile } = await client.from('profiles').select('first_name,last_name,phone').eq('id',session.user.id).maybeSingle();
-      if (profile) {
-        byId('requestFirstName').value = profile.first_name || byId('requestFirstName').value;
-        byId('requestLastName').value = profile.last_name || byId('requestLastName').value;
-        byId('requestPhone').value = profile.phone || byId('requestPhone').value;
+      area.innerHTML = `<div class="signed-box"><div><strong>Connect\u00e9</strong><p>${esc(session.user.email || '')}</p></div><button class="secondary-action" type="button" id="requestSignOut">Me d\u00e9connecter</button></div>`;
+      byId('requestSignOut').addEventListener('click', async()=>{await signOut();await renderAccount();});
+      const [profileResult,vehicleResult] = await Promise.all([
+        client.from('profiles').select('first_name,last_name,phone').eq('id',uid).maybeSingle(),
+        client.from('vehicles').select('id,plate,brand,model,year,energy,mileage').eq('user_id',uid).order('plate')
+      ]);
+      if (generation !== accountGeneration || currentRequestUser !== uid) return;
+      const profile = profileResult.data;
+      for (const [key,id] of Object.entries({first_name:'requestFirstName',last_name:'requestLastName',phone:'requestPhone'})) {
+        if (!byId(id).value && profile?.[key]) byId(id).value = profile[key];
       }
-      area.innerHTML = `<div class="signed-box"><div><strong>Connecté</strong><p>${esc(session.user.email || '')}</p></div><button class="secondary-action" type="button" id="requestSignOut">Se déconnecter</button></div>`;
-      byId('requestSignOut')?.addEventListener('click', async () => { await signOut(); await renderAccount(); });
+      if (vehicleResult.error) {
+        message('requestSubmitStatus','Vos v\u00e9hicules ne peuvent pas \u00eatre charg\u00e9s. Vous pouvez renseigner votre plaque.','notice');
+      }
+      savedVehicles = vehicleResult.data || [];
+      renderVehicleOptions();
     }
 
+    let submitting = false;
+    let draftRequestId = null;
+    let draftOwner = null;
     async function submit() {
+      if (submitting) return;
+      submitting = true;
+      byId('requestSubmit').disabled = true;
       try {
         message('requestSubmitStatus','Enregistrement de la demande…');
         const session = await getSession();
-        if (!session?.user) throw new Error('Connectez-vous ou créez votre compte avant de transmettre la demande.');
+        if (!session?.user) {
+          byId('connexion').scrollIntoView({behavior:'smooth'});
+          byId('requestAuthEmail')?.focus();
+          throw new Error('Connectez-vous en haut de cette page pour envoyer la demande.');
+        }
 
         const parsedPlate = refreshPlateStatus(true);
-        if (!parsedPlate.valid) throw new Error('Immatriculation obligatoire au format AA-123-AA ou ancien format FNI, par exemple 1234 AB 28.');
+        if (!parsedPlate.valid) throw new Error('Renseignez votre plaque, par exemple AA-123-AA ou 1234 AB 28.');
         const plate = parsedPlate.display;
         const plateNormalized = parsedPlate.normalized;
 
@@ -439,22 +497,23 @@
         const firstName = byId('requestFirstName').value.trim();
         const lastName = byId('requestLastName').value.trim();
         const phone = byId('requestPhone').value.trim();
-        if (!firstName || !lastName || !phone) throw new Error('Prénom, nom et téléphone obligatoires.');
 
-        const { error: profileError } = await client.from('profiles').update({
-          first_name:firstName,last_name:lastName,phone
-        }).eq('id',session.user.id);
-        if (profileError) throw profileError;
+
+        const profilePatch = Object.fromEntries(Object.entries({ first_name:firstName, last_name:lastName, phone }).filter(([,value])=>value));
+        if (Object.keys(profilePatch).length) {
+          const { error: profileError } = await client.from('profiles').update(profilePatch).eq('id',session.user.id);
+          if (profileError) throw profileError;
+        }
 
         const { data: vehicle, error: vehicleError } = await client.from('vehicles').upsert({
           user_id:session.user.id,
           plate,
           plate_normalized:plateNormalized,
-          brand:byId('requestBrand').value.trim() || null,
-          model:byId('requestModel').value.trim() || null,
-          year:intOrNull(byId('requestYear').value),
-          energy:byId('requestEnergy').value.trim() || null,
-          mileage:intOrNull(byId('requestMileage').value)
+          ...Object.fromEntries(Object.entries({
+            brand:byId('requestBrand').value.trim(), model:byId('requestModel').value.trim(),
+            year:intOrNull(byId('requestYear').value), energy:byId('requestEnergy').value.trim(),
+            mileage:intOrNull(byId('requestMileage').value)
+          }).filter(([,value])=>value !== null && value !== ''))
         },{onConflict:'user_id,plate_normalized'}).select('id').single();
         if (vehicleError) throw vehicleError;
 
@@ -464,12 +523,14 @@
           name:service.name,
           category:service.category,
           labor:Number(service.labor_price || service.displayed_price || 0),
-          duration_minutes:Number(service.duration_minutes || 0)
+          duration_minutes:Number(service.duration_minutes || 0),
+          durationMinutes:Number(service.duration_minutes || 0)
         }));
         const laborTotal = serviceRows.reduce((sum,row)=>sum+Number(row.labor||0),0);
         const totals = { laborBase:laborTotal,laborTotal,totalMin:laborTotal,totalMax:laborTotal,totalAllMin:laborTotal,totalAllMax:laborTotal };
 
-        const { data: request, error: requestError } = await client.from('service_requests').insert({
+        if (draftOwner !== session.user.id) draftRequestId = null;
+        const requestPayload = {
           user_id:session.user.id,
           vehicle_id:vehicle.id,
           status:'draft',
@@ -480,8 +541,14 @@
           j7_accepted:false,
           refuse_control:false,
           submitted_at:null
-        }).select('id').single();
+        };
+        const mutation = draftRequestId
+          ? client.from('service_requests').update(requestPayload).eq('id',draftRequestId).eq('user_id',session.user.id).eq('status','draft')
+          : client.from('service_requests').insert(requestPayload);
+        const { data: request, error: requestError } = await mutation.select('id').single();
         if (requestError) throw requestError;
+        draftRequestId = request.id;
+        draftOwner = session.user.id;
 
         const response = await fetch('/api/submit-request-v2',{
           method:'POST',
@@ -493,9 +560,15 @@
 
         message('requestSubmitStatus',result.emailSent === false
           ? 'Demande enregistrée. La notification email est momentanément indisponible, mais le dossier est bien dans le back-office.'
-          : 'Demande transmise. EDM28 l’étudiera avant de vous proposer la suite.','okbox');
+          : 'Demande envoyée. Vous recevrez votre devis et votre panier par email.','okbox');
+        draftRequestId = null;
+        byId('requestSubmit').textContent = 'Demande envoyée';
+        byId('requestSubmit').dataset.sent = 'true';
       } catch (error) {
         message('requestSubmitStatus',error.message || 'Envoi impossible.','errorbox');
+      } finally {
+        submitting = false;
+        byId('requestSubmit').disabled = byId('requestSubmit').dataset.sent === 'true' || !currentRequestUser;
       }
     }
 
@@ -561,121 +634,33 @@
   }
 
   async function installInterventionsPage() {
-    const host = byId('edmInterventionsApp');
-    if (!host) return;
+    if (!byId('edmInterventionsApp')) return;
+    await window.EDMClientJourney.install({client,getSession,signOut,esc,money,dateTime});
+  }
 
-    async function render() {
-      const session = await getSession();
-      if (!session?.user) {
-        host.innerHTML = `<section class="client-panel">${authBlock('history')}</section>`;
-        bindAuth('history',render);
-        return;
-      }
-
-      host.innerHTML = '<section class="client-panel"><div class="notice">Chargement de vos interventions…</div></section>';
-
-      const uid = session.user.id;
-      const results = await Promise.all([
-        client.from('vehicles').select('id,plate,brand,model,year,energy,engine,mileage,created_at').eq('user_id',uid).order('created_at'),
-        client.from('service_requests').select('id,vehicle_id,status,services,notes,submitted_at,created_at').eq('user_id',uid).order('created_at',{ascending:false}),
-        client.from('quotes').select('id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,visible_to_client,created_at,valid_until,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts)').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
-        client.from('appointments').select('id,vehicle_id,service_request_id,starts_at,ends_at,status,notes,visible_to_client,created_at').eq('user_id',uid).eq('visible_to_client',true).order('starts_at',{ascending:false}),
-        client.from('repair_orders').select('id,vehicle_id,service_request_id,order_number,status,pdf_path,visible_to_client,signed_at,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
-        client.from('inspection_reports').select('id,vehicle_id,report_number,status,observations,pdf_path,visible_to_client,completed_at,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false}),
-        client.from('invoices').select('id,vehicle_id,invoice_number,status,total,amount_paid,pdf_path,visible_to_client,issued_at,created_at').eq('user_id',uid).eq('visible_to_client',true).order('created_at',{ascending:false})
-      ]);
-      const failed = results.find((result)=>result.error);
-      if (failed?.error) throw failed.error;
-      const [vehicles,requests,quotes,appointments,orders,inspections,invoices] = results.map((result)=>result.data || []);
-
-      const byVehicle = new Map(vehicles.map((vehicle)=>[vehicle.id,{vehicle,events:[]}]));
-      const add = (vehicleId,html,stamp) => {
-        if (!vehicleId || !byVehicle.has(vehicleId)) return;
-        byVehicle.get(vehicleId).events.push({html,stamp:new Date(stamp || 0).getTime() || 0});
-      };
-
-      requests.forEach((row)=>add(row.vehicle_id,eventCard(
-        'Demande',
-        (row.services || []).map((s)=>s.name || s.label || s.id).filter(Boolean).join(' · ') || 'Demande d’intervention',
-        dateTime(row.submitted_at || row.created_at),
-        row.status,
-        [['Notes',row.notes || '']]
-      ),row.submitted_at || row.created_at));
-
-      quotes.forEach((row)=>add(row.vehicle_id,eventCard(
-        'Devis',row.quote_number || row.title || 'Devis',dateTime(row.created_at),row.status,
-        [[row.commercial_model === 'customer_supplied_v1' ? 'Prestations EDM28 (hors pi\u00e8ces)' : 'Total',money(row.total)]],row.pdf_path, supplierQuoteActions(row)
-      ),row.created_at));
-
-      appointments.forEach((row)=>add(row.vehicle_id,eventCard(
-        'Rendez-vous',dateTime(row.starts_at),dateTime(row.created_at),row.status,
-        [['Fin',row.ends_at ? dateTime(row.ends_at) : ''],['Informations',row.notes || '']]
-      ),row.starts_at || row.created_at));
-
-      orders.forEach((row)=>add(row.vehicle_id,eventCard(
-        'Intervention',row.order_number || 'Ordre de réparation',dateTime(row.signed_at || row.created_at),row.status,[],row.pdf_path
-      ),row.signed_at || row.created_at));
-
-      inspections.forEach((row)=>add(row.vehicle_id,eventCard(
-        'Contrôle',row.report_number || 'Fiche de contrôle',dateTime(row.completed_at || row.created_at),row.status,
-        [['Observations',row.observations || '']],row.pdf_path
-      ),row.completed_at || row.created_at));
-
-      invoices.forEach((row)=>add(row.vehicle_id,eventCard(
-        'Facture',row.invoice_number || 'Facture',dateTime(row.issued_at || row.created_at),row.status,
-        [['Total',money(row.total)],['Payé',money(row.amount_paid)]],row.pdf_path
-      ),row.issued_at || row.created_at));
-
-      const nextAppointment = appointments
-        .filter((row)=>row.starts_at && new Date(row.starts_at) > new Date() && row.status !== 'cancelled')
-        .sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at))[0];
-
-      const cards = [...byVehicle.values()].map(({vehicle,events})=>{
-        events.sort((a,b)=>b.stamp-a.stamp);
-        const title = [vehicle.brand,vehicle.model].filter(Boolean).join(' ') || 'Véhicule';
-        return `<section class="vehicle-history-card">
-          <div class="vehicle-head">
-            <div><span class="vehicle-plate">${esc(vehicle.plate || 'Sans plaque')}</span><h2>${esc(title)}</h2><p>${esc([vehicle.year,vehicle.energy,vehicle.mileage ? vehicle.mileage+' km' : ''].filter(Boolean).join(' · '))}</p></div>
-            <span class="event-count">${events.length} élément${events.length>1?'s':''}</span>
-          </div>
-          <div class="timeline-list">${events.length ? events.map((event)=>event.html).join('') : '<div class="notice">Aucun dossier pour ce véhicule.</div>'}</div>
-        </section>`;
-      }).join('');
-
-      host.innerHTML = `
-        <section class="client-panel account-strip">
-          <div><strong>${esc(session.user.email || '')}</strong><p>Compte client EDM28</p></div>
-          <div class="action-row"><a class="primary-action as-link" href="/demande">Nouvelle demande</a><button class="secondary-action" id="historySignOut" type="button">Se déconnecter</button></div>
-        </section>
-        ${nextAppointment ? `<section class="next-appointment"><div class="section-kicker">Prochain rendez-vous</div><h2>${esc(dateTime(nextAppointment.starts_at))}</h2><p>Le rendez-vous est aussi conservé dans le dossier du véhicule concerné.</p></section>` : ''}
-        ${cards || '<section class="client-panel"><div class="notice">Aucun véhicule enregistré.</div></section>'}`;
-
-      host.querySelectorAll('[data-quote-response]').forEach((button)=>button.addEventListener('click',async()=>{
-        const response = button.dataset.quoteResponse;
-        if (!window.confirm(response === 'accepted' ? 'Confirmez-vous avoir lu et accepter ce devis ?' : 'Confirmez-vous le refus de ce devis ?')) return;
-        button.disabled = true;
-        try {
-          const { error } = await client.rpc('client_respond_quote',{p_quote_id:button.dataset.quoteId,p_response:response});
-          if (error) throw error;
-          await render();
-        } catch (error) { window.alert(error.message || 'R\u00e9ponse non enregistr\u00e9e.'); }
-        finally { button.disabled = false; }
-      }));
-      byId('historySignOut')?.addEventListener('click',async()=>{await signOut();await render();});
-      host.querySelectorAll('[data-doc-path]').forEach((button)=>button.addEventListener('click',async()=>{
-        try { await openDocument(button.dataset.docPath); }
-        catch (error) { window.alert(error.message || 'Document indisponible.'); }
-      }));
+  async function installAccountNavigation() {
+    let generation = 0;
+    async function update() {
+      const turn = ++generation;
+      let session = null;
+      try { session = await getSession(); } catch (_) {}
+      if (turn !== generation) return;
+      const connected = Boolean(session?.user);
+      document.querySelectorAll('[data-client-only]').forEach(node=>node.hidden=!connected);
+      if (location.pathname === '/demande') document.querySelectorAll('[data-request-cta]').forEach(link=>{
+        link.href = connected ? '#requestVehiclePicker' : '#connexion';
+        const label = link.querySelector('span') || link;
+        label.textContent = connected ? 'Mes v\u00e9hicules' : 'Me connecter';
+      });
     }
-
-    try { await render(); }
-    catch (error) { host.innerHTML = `<section class="client-panel"><div class="errorbox">${esc(error.message || 'Chargement impossible.')}</div></section>`; }
-    client.auth.onAuthStateChange(()=>window.setTimeout(()=>render().catch(()=>{}),0));
+    await update();
+    client.auth.onAuthStateChange(()=>setTimeout(()=>void update(),0));
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded',()=>{ void installHomePage(); void installRequestPage(); void installInterventionsPage(); },{once:true});
+    document.addEventListener('DOMContentLoaded',()=>{ void installAccountNavigation(); void installHomePage(); void installRequestPage(); void installInterventionsPage(); },{once:true});
   } else {
+    void installAccountNavigation();
     void installHomePage();
     void installRequestPage();
     void installInterventionsPage();

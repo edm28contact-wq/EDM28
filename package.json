@@ -9,8 +9,9 @@
     "test:admin": "node --test tests/admin-flow.test.mjs tests/admin-transactional.test.mjs tests/admin-pwa.test.mjs tests/admin-pdf-models.test.mjs",
     "test:seo": "node --test tests/seo-public.test.mjs tests/seo-symptoms.test.mjs tests/seo-local.test.mjs",
     "test:recovery": "node --test tests/password-recovery.test.mjs tests/password-recovery-integration.test.mjs tests/password-recovery-errors.test.mjs",
-    "test": "npm run check:syntax && npm run test:client && npm run test:admin && npm run test:seo && npm run test:recovery && npm run test:supplier-basket",
+    "test": "npm run check:syntax && npm run test:client && npm run test:admin && npm run test:seo && npm run test:recovery && npm run test:supplier-basket && npm run test:journey",
     "dev": "vercel dev",
+    "test:journey": "node --test tests/journey.test.mjs",
     "test:supplier-basket": "node --test tests/supplier-basket.test.mjs tests/supplier-basket-email.test.mjs tests/supplier-basket-admin.test.mjs"
   },
   "engines": {

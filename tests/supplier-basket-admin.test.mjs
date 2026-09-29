@@ -6,7 +6,7 @@ import policy from '../supplier-basket-policy.js';
 const source = await readFile(new URL('../admin-supplier-basket.js', import.meta.url), 'utf8');
 function fixture(failure = '') {
   const events = [], statuses = [];
-  const fields = { requiresParts: { checked: true }, supplierUrl: { value: 'https://supplier.example/basket/1' }, recommendedParts: { value: 'REF-123 x 2' }, number: { value: '' }, title: { value: 'Prestation freinage' }, description: { value: 'Consommables inclus' }, discount: { value: '0' }, validUntil: { value: '2030-01-01' } };
+  const fields = { requiresParts: { checked: true }, priceDetails: { value: 'REF-123 - 25 EUR TTC x 2' }, priceObservedAt: { value: '2026-09-01' }, supplierUrl: { value: 'https://supplier.example/basket/1' }, recommendedParts: { value: 'REF-123 x 2' }, number: { value: '' }, title: { value: 'Prestation freinage' }, description: { value: 'Consommables inclus' }, discount: { value: '0' }, validUntil: { value: '2030-01-01' } };
   const meta = { dataset: { basketRevision: '' } };
   const line = { type: 'labor', designation: 'Prestation', description: 'Consommables inclus', quantity: '1', unit_price: '99', vat_rate: '0' };
   const root = { dataset: { quoteId: 'q1' }, querySelector(selector) { if (selector === '[data-supplier-basket]') return meta; return fields[selector.match(/"([^"]+)"/)[1]]; }, querySelectorAll() { return [{ querySelector(selector) { return { value: line[selector.match(/"([^"]+)"/)[1]] }; } }]; } };

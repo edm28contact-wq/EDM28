@@ -4,7 +4,7 @@
 
   const A = () => window.EDMAdmin;
   const clean = (value) => String(value ?? '').replace(/[\u00A0\u202F]/g, ' ').trim();
-  const money = (value) => Number(value || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+  const money = (value) => clean(Number(value || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }));
   const dateTime = (value) => {
     if (!value) return '';
     const parsed = new Date(value);
@@ -18,7 +18,7 @@
   const serviceNames = (request) => (Array.isArray(request?.services) ? request.services : [])
     .map((service) => typeof service === 'string' ? service : service?.name || service?.label || service?.id)
     .filter(Boolean);
-  const itemType = (value) => ({ labor: 'Main-d’œuvre', part: 'Pièce', delivery: 'Livraison', other: 'Autre' }[value] || 'Prestation');
+  const itemType = (value) => ({ labor: 'Prestation', part: 'Pièce', delivery: 'Livraison', other: 'Autre' }[value] || 'Prestation');
   const CONTROL_STATUS_LABELS = {
     non_controle: 'Non contrôlé',
     conforme: 'Conforme',
@@ -201,7 +201,7 @@
     doc.line(32, 70, 563, 70);
 
     drawBox(doc, 32, 88, 255, 92, 'DONNÉES INTERVENTION', [
-      `Statut OR : ${clean(row.status || 'ready')}`,
+      `Travaux : ${{draft:'À préparer',ready:'Prévus au rendez-vous',signed:'Acceptés',in_progress:'En cours',completed:'Terminés',invoiced:'Terminés',cancelled:'Annulés'}[row.status] || 'À préparer'}`,
       `Kilométrage entrée : ${Number(report.mileage ?? row.mileage_in ?? row.vehicles?.mileage ?? 0).toLocaleString('fr-FR')} km`,
       `Technicien : ${clean(report.technician_name) || 'À renseigner'}`,
       appointment.starts_at ? `Rendez-vous : ${dateTime(appointment.starts_at)}` : 'Rendez-vous : à renseigner'
@@ -426,6 +426,23 @@
     doc.text(`Réception prévue : ${appointment.starts_at ? dateTime(appointment.starts_at) : date(row.created_at)}`, 319, y + 40);
     doc.text('Nom / signature :', 319, y + 63);
 
+    if (quote.commercial_model === 'customer_supplied_v1') {
+      doc.addPage();
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(23, 27, 33);
+      doc.text('COMMENT SE DÉROULE LA PRESTATION', 32, 43);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      const steps = [
+        'Avant de commencer : vérification des pièces apportées et des références indiquées dans le devis.',
+        'Pour les éléments démontés : nettoyage des surfaces de contact accessibles et contrôle de leur état.',
+        'Graissage seulement aux endroits prévus par le constructeur, avec un produit adapté. Jamais sur les surfaces de freinage.',
+        'Montage selon les instructions du constructeur. Serrage à la clé dynamométrique et respect des méthodes prescrites.',
+        'Vérification après montage et photos de l’intervention pour le dossier client.',
+        'Tout travail supplémentaire doit être expliqué et accepté avant sa réalisation.',
+        'Les pièces de remplacement sont achetées par le client. Le forfait EDM28 comprend la prestation et les consommables d’atelier.'
+      ];
+      let position = 82;
+      for (const step of steps) { const lines = doc.splitTextToSize(step, 531); doc.text(lines, 32, position); position += lines.length * 14 + 16; }
+    }
     drawInterventionControls(doc, row);
 
     const pageCount = doc.getNumberOfPages();

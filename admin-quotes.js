@@ -141,7 +141,7 @@
   async function load() {
     const host = app()?.$('quoteList'); if (!host) return;
     host.innerHTML = '<p class="muted">Chargement…</p>';
-    const { data, error } = await app().db.from('quotes').select('id,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts,revision),status,title,description,quote_number,subtotal,discount,total,valid_until,visible_to_client,created_at,profiles(first_name,last_name,email,phone),vehicles(plate,brand,model,year,energy,engine,mileage),service_requests(notes,services,totals,selected_basket),quote_items(id,item_type,supplier_reference,designation,description,quantity,unit_price,vat_rate,purchase_total,total,display_order)').in('status', ['draft','sent','accepted','refused']).order('created_at', { ascending: false });
+    const { data, error } = await app().db.from('quotes').select('id,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts,price_details,price_observed_at,revision),status,title,description,quote_number,subtotal,discount,total,valid_until,visible_to_client,created_at,profiles(first_name,last_name,email,phone),vehicles(plate,brand,model,year,energy,engine,mileage),service_requests(notes,services,totals,selected_basket),quote_items(id,item_type,supplier_reference,designation,description,quantity,unit_price,vat_rate,purchase_total,total,display_order)').in('status', ['draft','sent','accepted','refused']).order('created_at', { ascending: false });
     if (error) throw error;
     render(data || []);
   }

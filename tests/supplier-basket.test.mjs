@@ -48,7 +48,8 @@ test('archived modules are no longer loaded and current public copy matches the 
   assert.doesNotMatch(client, /src: '\/client-disbursements/);
   assert.doesNotMatch(publicClient, /from\('disbursements'\)/);
   assert.doesNotMatch(seo, /d[e\u00e9]bours|mandat d'achat|provision/i);
-  assert.match(publicClient, /client_respond_quote/);
+  assert.match(publicClient, /EDMClientJourney/);
+  assert.match(await read('client-journey.js'), /client_respond_quote/);
   assert.ok(html.indexOf('/supplier-basket-policy.js') < html.indexOf('/admin-supplier-basket.js'));
   assert.ok(html.indexOf('/admin-supplier-basket.js') < html.indexOf('/admin-quotes.js'));
 });

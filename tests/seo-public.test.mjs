@@ -108,7 +108,7 @@ test('la création de compte impose la confirmation email', async () => {
   assert.match(client, /type: 'signup'/);
   assert.match(client, /Adresse email non confirmée/);
   assert.match(client, /Adresse email confirmée/);
-  assert.match(client, /confirmation de votre adresse email est obligatoire/);
+  assert.match(client, /confirmez votre email/);
 });
 
 test('la demande valide les plaques françaises et bloque les prestations qui se recouvrent', async () => {
@@ -165,7 +165,7 @@ test('les pages SEO rendent canonical, H1, Open Graph et structured data', async
   for (const type of ['Organization', 'AutoRepair', 'Service', 'BreadcrumbList']) assert.match(source, new RegExp(`'@type': '${type}'`));
   assert.match(source, /'@type': 'FAQPage'/);
   assert.match(source, /Question/);
-  assert.match(source, /Réponse courte/);
+  assert.match(source, /Questions fréquentes/);
 });
 
 test('les pages SEO secondaires reçoivent la même identité locale EDM28', async () => {
