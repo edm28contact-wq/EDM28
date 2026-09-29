@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { resolveSupabasePublicConfig } from './supabase-config.js';
+import { injectRecoveryBridge } from '../password-recovery.js';
 
 const ADMIN_PATH = join(process.cwd(), 'admin.html');
 const ADMIN_CORE_PATH = join(process.cwd(), 'admin-core.js');
@@ -147,7 +148,7 @@ export default function handler(req, res) {
     res.setHeader('X-EDM-Environment', supabase.environment);
     res.setHeader('X-EDM-Build', build);
     if (req.method === 'HEAD') return res.status(200).end();
-    return res.status(200).send(html);
+    return res.status(200).send(injectRecoveryBridge(html));
   } catch (error) {
     console.error('admin loader error', error);
     return res.status(500).send('<h1>Gestion EDM28</h1><p>Interface temporairement indisponible.</p>');

@@ -22,3 +22,7 @@ jobs:
           node-version: 24
       - name: Run full test suite
         run: npm test
+      - name: Run full test suite with compact Vercel configuration
+        run: |
+          node --input-type=module -e "import { readFileSync, writeFileSync } from 'node:fs'; const path = 'vercel.json'; writeFileSync(path, JSON.stringify(JSON.parse(readFileSync(path, 'utf8'))));"
+          npm test

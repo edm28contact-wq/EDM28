@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveSupabasePublicConfig } from './supabase-config.js';
+import { injectRecoveryBridge, serveRecoveryPage } from '../password-recovery.js';
 import publicSeoHandler from '../public-seo.js';
 import symptomSeoHandler from '../public-seo-symptoms.js';
 
@@ -208,7 +209,7 @@ function enrichSeoHtml(html, req) {
 
 function handleSeoDocument(delegate, req, res) {
   const originalSend = res.send.bind(res);
-  res.send = (body) => originalSend(enrichSeoHtml(body, req));
+  res.send = (body) => originalSend(injectRecoveryBridge(enrichSeoHtml(body, req)));
   return delegate(canonicalSeoRequest(req), res);
 }
 
@@ -243,6 +244,7 @@ function handleRobots(req, res) {
 }
 
 export default function handler(req, res) {
+  if (serveRecoveryPage(req, res, resolveSupabasePublicConfig())) return;
   const seoMode = getSeoMode(req);
   if (seoMode === 'page') {
     if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');

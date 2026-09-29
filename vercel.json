@@ -205,8 +205,20 @@
       "dest": "/api/app?seo=page&slug=accueil"
     },
     {
+      "src": "/mot-de-passe-oublie",
+      "dest": "/api/app?authRecovery=request"
+    },
+    {
+      "src": "/reinitialiser-mot-de-passe",
+      "dest": "/api/app?authRecovery=reset"
+    },
+    {
       "src": "/admin-reset",
-      "dest": "/admin-reset.html"
+      "dest": "/api/app?authRecovery=admin"
+    },
+    {
+      "src": "/admin-reset.html",
+      "dest": "/api/app?authRecovery=admin"
     },
     {
       "src": "/admin",
