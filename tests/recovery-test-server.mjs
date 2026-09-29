@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import appHandler from '../api/app.js';
 import adminHandler from '../api/admin.js';
+import healthHandler from '../api/health.js';
 
 const root = process.cwd();
 const config = JSON.parse(await readFile(resolve(root, 'vercel.json'), 'utf8'));
@@ -27,6 +28,7 @@ createServer(async (req, res) => {
     if (destination.pathname === '/api/app') return await appHandler(req, res);
     if (destination.pathname === '/api/admin') return await adminHandler(req, res);
     if (!['GET', 'HEAD'].includes(req.method)) return res.status(405).end();
+    if (destination.pathname === '/api/health' && req.query.journey === 'model') return await healthHandler(req, res);
     const path = resolve(root, '.' + decodeURIComponent(destination.pathname));
     if (!path.startsWith(root + sep) || destination.pathname.startsWith('/api/')) return res.status(404).end();
     const body = await readFile(path);
