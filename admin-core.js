@@ -219,8 +219,8 @@
   async function sendAdminPasswordReset() {
     app.status('loginStatus', 'Envoi du lien de réinitialisation…');
     const redirectTo = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-      ? `${location.origin}/admin`
-      : 'https://edm28.fr/admin';
+      ? `${location.origin}/admin-reset`
+      : 'https://edm28.fr/admin-reset';
     const { error } = await client.auth.resetPasswordForEmail(ADMIN_EMAIL, { redirectTo });
     if (error) return app.status('loginStatus', error.message || 'Impossible d’envoyer le lien de réinitialisation.', true);
     app.status('loginStatus', 'Email de réinitialisation envoyé à admin@edm28.fr. Vérifie aussi les courriers indésirables.');
