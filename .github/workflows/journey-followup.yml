@@ -1,0 +1,66 @@
+name: Apply Journey Validation Corrections
+on:
+  push:
+    branches: [feat/client-journey-48h]
+    paths: [.github/workflows/journey-followup.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify and apply specific corrections
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          hashes={
+          'public-site.css':('08cbc7fa949ac0fe6a4d2dac67dbeb972dc6c954f84417a9ae33da199db8ac31','847836d984d5d3990e69a7a837e0ee69c43b3401f78aede1fcc4721ab6620c3a'),
+          'tests/journey-browser.mjs':('e302a4d5ee7922f38c424d932292bf920a3ad884347c84017f2a70d151fad165','71166a5636e6de68c300248e77917ac4e2a4be4661904b54646e7e884f649bba'),
+          'tests/journey-fixture.sql':('f8330e2b299c1b5052555e0bdee9c059733e4af52960f4c3d9511f765e10498c','cdcf396c5a889812d8935ad93144bdb1824bbaf5aa696932932b9e3fedaf93a4'),
+          'tests/journey-db.sql':('2e7120866195e76cf10ab1b2719083df3867a12df4254b49bc111f6bccb8b55b','e2d26c2a620bdb37c1928a568b0fdfef157239daae2296ecc60d97adb9ced475'),
+          'public-client.js':('694e8a3b7c054f0299c146b76f8d2d61f7e0b5cdc10069571f7d864aadde0543','3a68d4e878cb6e7cd740564d12c1ad5358a9c3467b4fda986bdfdd41b0683bcc'),
+          'admin-order-personalized-pdf.js':('c8a8a98aad8da2c3b3eec8edd234967a021bc2f387df4a25ab35ba4f5e4059de','f938cf0ef4596c0908b8f39cfbe29f2d2a7ff96a5c2928f46e6aabefbe2f8e8c')}
+          for path,(before,after) in hashes.items():
+              assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==before,path
+          def edit(path,old,new):
+              p=Path(path);s=p.read_text();assert s.count(old)==1,(path,old);p.write_text(s.replace(old,new))
+          edit('public-site.css','.service-choice.is-selected{border:2px','.service-choice.is-selected:has(input:checked){border:2px')
+          edit('tests/journey-browser.mjs',"  assert.match(await page.locator('.service-choice.is-selected').evaluate(e=>getComputedStyle(e).backgroundColor),/rgba/);","  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.service-choice.is-selected')).backgroundColor==='rgba(235, 136, 62, 0.13)');")
+          edit('tests/journey-fixture.sql','create table public.automation_settings',"grant select on public.appointments,public.repair_orders to authenticated;\nalter table public.appointments enable row level security;\nalter table public.repair_orders enable row level security;\ncreate policy fixture_appointment_read on public.appointments for select to authenticated using(private.is_admin() or (user_id=auth.uid() and visible_to_client));\ncreate policy fixture_order_read on public.repair_orders for select to authenticated using(private.is_admin() or (user_id=auth.uid() and visible_to_client));\ncreate table public.automation_settings")
+          edit('tests/journey-db.sql','-- The scheduler uses a fixture HTTP sink, never the network.',"-- Check the 24 hour boundary using fixture times only.\nupdate public.booking_reservations set starts_at=now()+interval '25 hours',ends_at=now()+interval '26 hours' where status='confirmed';\nupdate public.appointments a set starts_at=b.starts_at,ends_at=b.ends_at from public.booking_reservations b where a.id=b.appointment_id;\nselect private.process_journey();\nselect public.fixture_assert((select count(*)=0 from public.journey_email_deliveries where kind='reminder'),'no reminder before the 24 hour window');\nupdate public.booking_reservations set starts_at=now()+interval '23 hours',ends_at=now()+interval '24 hours' where status='confirmed';\nupdate public.appointments a set starts_at=b.starts_at,ends_at=b.ends_at from public.booking_reservations b where a.id=b.appointment_id;\n-- The scheduler uses a fixture HTTP sink, never the network.")
+          edit('tests/journey-db.sql',"select public.fixture_assert((select count(*)>=1 from net.fixture_requests),'scheduled dispatch targets existing messages');","select public.fixture_assert((select count(*)>=1 from net.fixture_requests),'scheduled dispatch targets existing messages');\nselect private.process_journey();\nselect public.fixture_assert((select count(*)=1 from public.journey_email_deliveries where kind='reminder'),'one reminder inside 24 hours, deduplicated');")
+          for old,new in [('Formats acceptés : nouveau SIV AA-123-AA ou ancien FNI 1234 AB 28.','Exemples : AA-123-AA ou 1234 AB 28.'),('Comparatif des contrôles, OR vierge et checklist complète EDM28.','Détail des contrôles et exemple du document qui décrit les travaux prévus.'),('Immatriculation obligatoire au format AA-123-AA ou ancien format FNI, par exemple 1234 AB 28.','Renseignez votre plaque, par exemple AA-123-AA ou 1234 AB 28.')]:
+              edit('public-client.js',old,new)
+          for old,new in [
+          ('COMMENT LA PRESTATION EST PREPAREE','COMMENT SE DÉROULE LA PRESTATION'),
+          ('Avant de commencer : verification des pieces apportees et des references indiquees dans le devis.','Avant de commencer : vérification des pièces apportées et des références indiquées dans le devis.'),
+          ('Pour les elements demontes : nettoyage des surfaces d appui accessibles et controle de leur etat.','Pour les éléments démontés : nettoyage des surfaces de contact accessibles et contrôle de leur état.'),
+          ('Graissage seulement aux endroits prevus par le constructeur, avec un produit adapte. Jamais sur les surfaces de freinage.','Graissage seulement aux endroits prévus par le constructeur, avec un produit adapté. Jamais sur les surfaces de freinage.'),
+          ('Montage et serrage selon les instructions du constructeur. Controle du serrage avec l outillage adapte.','Montage selon les instructions du constructeur. Serrage à la clé dynamométrique et respect des méthodes prescrites.'),
+          ('Verification apres montage et photos de l intervention pour le dossier client.','Vérification après montage et photos de l’intervention pour le dossier client.'),
+          ('Tout travail supplementaire doit etre explique et accepte avant sa realisation.','Tout travail supplémentaire doit être expliqué et accepté avant sa réalisation.'),
+          ('Les pieces de remplacement sont achetees par le client. Le forfait EDM28 comprend la prestation et les consommables d atelier.','Les pièces de remplacement sont achetées par le client. Le forfait EDM28 comprend la prestation et les consommables d’atelier.')]:
+              edit('admin-order-personalized-pdf.js',old,new)
+          for path,(before,after) in hashes.items():
+              assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==after,path
+          PY
+          npm test
+          git diff --check
+          git add public-site.css public-client.js admin-order-personalized-pdf.js tests/journey-browser.mjs tests/journey-fixture.sql tests/journey-db.sql
+      - name: Commit on feature branch only
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          test "$(git ls-remote origin refs/heads/feat/client-journey-48h | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: verify orange selection and reservation workflow boundaries'
+          git push origin HEAD:refs/heads/feat/client-journey-48h
