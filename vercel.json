@@ -205,6 +205,10 @@
       "dest": "/api/app?seo=page&slug=accueil"
     },
     {
+      "src": "/admin-reset",
+      "dest": "/admin-reset.html"
+    },
+    {
       "src": "/admin",
       "dest": "/api/admin"
     },
