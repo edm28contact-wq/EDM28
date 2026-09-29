@@ -1,4 +1,4 @@
-name: Recovery Live Browser
+name: Recovery Browser
 
 on:
   pull_request:
@@ -19,19 +19,49 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     env:
-      RECOVERY_ORIGIN: ${{ github.event_name == 'push' && 'https://edm28.fr' || 'https://edm-28-git-fix-password-recovery-admin-3d99bb-edm-28-s-projects.vercel.app' }}
+      RECOVERY_ORIGIN: ${{ github.event_name == 'push' && 'https://edm28.fr' || 'http://127.0.0.1:4180' }}
       RECOVERY_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Read public routing diagnostics without credentials
+        run: |
+          mkdir -p recovery-browser-artifacts
+          node --input-type=module <<'JS'
+          import { writeFile } from 'node:fs/promises';
+          const result = [];
+          for (const origin of ['https://edm28.fr', 'https://edm-28-git-fix-password-recovery-admin-3d99bb-edm-28-s-projects.vercel.app']) {
+            for (const path of ['/admin', '/admin-reset', '/mot-de-passe-oublie']) {
+              try {
+                const res = await fetch(origin + path, { redirect: 'manual', signal: AbortSignal.timeout(10000) });
+                const location = res.headers.get('location');
+                const target = location ? new URL(location, origin) : null;
+                const body = await res.text();
+                result.push({ origin, path, status: res.status, redirect: target ? target.origin + target.pathname : null, build: res.headers.get('x-edm-build'), recovery: res.headers.get('x-edm-recovery'), title: body.match(/<title>([^<]*)<\/title>/i)?.[1] || null });
+              } catch (error) { result.push({ origin, path, error: error.message }); }
+            }
+          }
+          console.log(JSON.stringify(result, null, 2));
+          await writeFile('recovery-browser-artifacts/routing.json', JSON.stringify(result, null, 2));
+          JS
       - name: Install isolated browser test tools
         run: |
           mkdir -p "$RUNNER_TEMP/edm-recovery-tools"
           npm install --prefix "$RUNNER_TEMP/edm-recovery-tools" --ignore-scripts --no-audit --no-fund playwright@1.58.2
           "$RUNNER_TEMP/edm-recovery-tools/node_modules/.bin/playwright" install --with-deps chromium
-      - name: Verify deployed pages and mocked Auth flows
+      - name: Start isolated real application handlers for pull request
+        if: github.event_name == 'pull_request'
+        run: |
+          node tests/recovery-test-server.mjs > /tmp/edm-recovery-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4180/admin >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/edm-recovery-server.log
+          exit 1
+      - name: Verify browser flow with mocked Auth
         run: |
           cp tests/recovery-live-check.mjs "$RUNNER_TEMP/edm-recovery-tools/recovery-live-check.mjs"
           node "$RUNNER_TEMP/edm-recovery-tools/recovery-live-check.mjs"
