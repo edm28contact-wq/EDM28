@@ -50,10 +50,15 @@ jobs:
             for(const path of ['/fonctionnement','/tarifs','/transparence']){
               const {response,text}=await get(path);
               assert.equal(response.status,200,path);
-              assert.match(text,/consommables/i,path);
-              assert.match(text,/fournisseur/i,path);
+              if(path!=='/transparence'){
+                assert.match(text,/consommables/i,path);
+                assert.match(text,/fournisseur/i,path);
+              }else{
+                assert.match(text,/Conseils &amp; FAQ|Conseils & FAQ/i,path);
+                assert.match(text,/devis/i,path);
+              }
               assert.doesNotMatch(text,/d[e\u00e9]bours/i,path);
-              report.checks.push({page:path,status:200,prestationAndSupplierModel:true,legacyDisbursementCopy:false});
+              report.checks.push({page:path,status:200,commercialCopyChecked:path!=='/transparence',legacyDisbursementCopy:false});
             }
             for(const path of ['/supplier-basket-policy.js','/admin-supplier-basket.js','/admin-quotes.js','/public-client.js','/pdf-lite.js']){
               const {response,text}=await get(path);
