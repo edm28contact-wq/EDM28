@@ -1,0 +1,83 @@
+name: Supplier Basket Production Check
+on:
+  push:
+    branches: [verify/supplier-basket-production]
+permissions:
+  contents: read
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify deployed build and public assets using GET only
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { mkdir, readFile, writeFile } from 'node:fs/promises';
+          import { createHash } from 'node:crypto';
+          import vm from 'node:vm';
+          const origin='https://edm28.fr';
+          const expectedBuild='d0cf104';
+          const report={origin,expectedBuild,checks:[],authWrites:0,businessWrites:0};
+          await mkdir('basket-production-artifacts',{recursive:true});
+          const digest=s=>createHash('sha256').update(s).digest('hex');
+          async function get(path){
+            const url=new URL(path,origin);url.searchParams.set('edm_validation',expectedBuild);
+            const response=await fetch(url,{redirect:'manual',headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(15000)});
+            const text=await response.text();
+            return {response,text};
+          }
+          try{
+            let admin;
+            for(let attempt=0;attempt<20;attempt++){
+              admin=await get('/admin');
+              if(admin.response.status===200&&admin.response.headers.get('x-edm-build')===expectedBuild)break;
+              console.log(`Awaiting production ${expectedBuild}: HTTP ${admin.response.status}, build ${admin.response.headers.get('x-edm-build')||'unknown'}`);
+              await new Promise(r=>setTimeout(r,10000));
+            }
+            assert.equal(admin.response.status,200);
+            assert.equal(admin.response.headers.get('x-edm-build'),expectedBuild);
+            assert.match(admin.text,/supplier-basket-policy\.js/);
+            assert.match(admin.text,/admin-supplier-basket\.js/);
+            assert.doesNotMatch(admin.text,/<script[^>]*src="\/admin-disbursements\.js/);
+            report.checks.push({page:'/admin',status:200,build:expectedBuild,basketScripts:true,legacyDisbursementModule:false});
+            for(const path of ['/fonctionnement','/tarifs','/transparence']){
+              const {response,text}=await get(path);
+              assert.equal(response.status,200,path);
+              assert.match(text,/consommables/i,path);
+              assert.match(text,/fournisseur/i,path);
+              assert.doesNotMatch(text,/d[e\u00e9]bours/i,path);
+              report.checks.push({page:path,status:200,prestationAndSupplierModel:true,legacyDisbursementCopy:false});
+            }
+            for(const path of ['/supplier-basket-policy.js','/admin-supplier-basket.js','/admin-quotes.js','/public-client.js','/pdf-lite.js']){
+              const {response,text}=await get(path);
+              assert.equal(response.status,200,path);
+              new vm.Script(text,{filename:path});
+              const expected=await readFile('.'+path,'utf8');
+              assert.equal(digest(text),digest(expected),`Deployed asset differs: ${path}`);
+              report.checks.push({asset:path,status:200,sha256:digest(text),matchesReviewedSource:true});
+            }
+            for(const path of ['/mot-de-passe-oublie','/admin-reset','/reinitialiser-mot-de-passe']){
+              const {response,text}=await get(path);
+              assert.equal(response.status,200,path);
+              assert.equal(response.headers.get('x-edm-recovery'),'admin-client-v1');
+              assert.match(text,/id="passwordForm"/);
+              report.checks.push({page:path,status:200,recoveryRetained:true});
+            }
+            report.status='PASS';
+          }catch(error){report.status='FAIL';report.error=error.message;process.exitCode=1;}
+          await writeFile('basket-production-artifacts/report.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report,null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: basket-production-check-${{ github.run_id }}
+          path: basket-production-artifacts
+          retention-days: 5
