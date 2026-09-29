@@ -8,11 +8,11 @@ const browser = await chromium.launch();
 const report = {checks:[], realBusinessWrites:0};
 function fixtures() {
   const user = {id:'11111111-1111-4111-8111-111111111111',email:'client@example.test'};
-  const q = {id:'22222222-2222-4222-8222-222222222222',user_id:user.id,vehicle_id:'vehicle-fixture',status:'sent',visible_to_client:true,commercial_model:'customer_supplied_v1',quote_number:'TEST-099',title:'Prestation freinage',subtotal:99,discount:0,total:99,valid_until:'2099-12-31',created_at:'2026-09-29T12:00:00Z',pdf_path:user.id+'/quote/test.pdf',profiles:{email:user.email},vehicles:{plate:'AA-123-BB'},quote_items:[{item_type:'labor',designation:'Prestation freinage',description:'Consommables inclus',quantity:1,unit_price:99,vat_rate:0}],quote_parts_baskets:{requires_parts:true,supplier_url:'https://supplier.example/basket/client-1',recommended_parts:'REF-123 x 2\nREF-456 x 1',revision:'revision-1'}};
+  const q = {id:'22222222-2222-4222-8222-222222222222',user_id:user.id,vehicle_id:'vehicle-fixture',status:'sent',visible_to_client:true,commercial_model:'customer_supplied_v1',quote_number:'TEST-099',title:'Prestation freinage',subtotal:99,discount:0,total:99,valid_until:'2099-12-31',created_at:'2026-09-29T12:00:00Z',pdf_path:user.id+'/quote/test.pdf',profiles:{email:user.email},vehicles:{plate:'AA-123-BB'},quote_items:[{item_type:'labor',designation:'Prestation freinage',description:'Consommables inclus',quantity:1,unit_price:99,vat_rate:0}],quote_parts_baskets:{requires_parts:true,supplier_url:'https://supplier.example/basket/client-1',recommended_parts:'REF-123 x 2\nREF-456 x 1',price_details:'REF-123: 25 EUR TTC x 2',price_observed_at:'2026-09-01',revision:'revision-1'}};
   const calls = [];
   const db = {
     auth:{getSession:async()=>({data:{session:{user,access_token:'test-only'}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},
-    from(table) {const builder={}; for(const key of ['select','eq','order','in','limit']) builder[key]=()=>builder;
+    from(table) {const builder={}; for(const key of ['select','eq','order','in','limit','neq']) builder[key]=()=>builder;
       const rows=()=>table==='quotes'?[q]:table==='vehicles'?[{id:q.vehicle_id,plate:'AA-123-BB',brand:'Vehicule',model:'Test'}]:[];
       builder.then=(resolve,reject)=>Promise.resolve({data:rows(),error:null}).then(resolve,reject);
       builder.single=async()=>({data:q,error:null});return builder;},
@@ -37,13 +37,14 @@ try {
       const text=await page.locator('body').innerText();assert.doesNotMatch(text,/d[ée]bours|mandat d.achat/i);assert.match(text,/consommables/i);
     }
     await page.goto(origin+'/mes-interventions',{waitUntil:'networkidle'});
-    await page.locator('[data-quote-response="accepted"]').waitFor();
+    await page.locator('[data-response="accepted"]').waitFor();
+    await page.locator('.basket-details summary').click();
     const link=page.getByRole('link',{name:'Ouvrir mon panier fournisseur'});
     assert.equal(await link.getAttribute('href'),'https://supplier.example/basket/client-1');
     assert.match(await page.locator('#edmInterventionsApp').innerText(),/REF-123/);
     assert.doesNotMatch(await page.locator('#edmInterventionsApp').innerText(),/d[ée]bours|60\s*%/i);
     await page.screenshot({path:`${output}/client-${width}.png`,fullPage:true});
-    page.once('dialog',dialog=>dialog.accept());await page.locator('[data-quote-response="accepted"]').click();
+    page.once('dialog',dialog=>dialog.accept());await page.locator('[data-response="accepted"]').click();
     await page.waitForFunction(()=>window.__basketFixture.q.status==='accepted');
     assert.deepEqual(errors,[]);report.checks.push(`public information and customer basket/acceptance ${width}: PASS`);
 

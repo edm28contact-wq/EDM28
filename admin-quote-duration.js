@@ -27,7 +27,7 @@
       const minutes = Number(values.get(article.dataset.quoteId) || 0);
       const validUntil = article.querySelector('[data-field="validUntil"]')?.closest('label');
       const label = document.createElement('label');
-      label.innerHTML = `Temps de main-d’œuvre prévu (minutes)<input data-field="laborDuration" type="number" min="15" max="480" step="15" value="${minutes || ''}" ${locked ? 'disabled' : ''}><span class="muted" data-duration-summary>${minutes ? `Créneau bloqué : ${durationText(minutes)} avec 30 min entre clients.` : 'Obligatoire avant publication. 30 min seront ajoutées automatiquement.'}</span>`;
+      label.innerHTML = `Durée prévue de la prestation (minutes)<input data-field="laborDuration" type="number" min="15" max="480" step="15" value="${minutes || ''}" ${locked ? 'disabled' : ''}><span class="muted" data-duration-summary>${minutes ? `Créneau bloqué : ${durationText(minutes)} avec 30 min entre clients.` : 'Obligatoire avant publication. 30 min seront ajoutées automatiquement.'}</span>`;
       (validUntil?.parentElement || article).appendChild(label);
       const input = label.querySelector('input');
       input?.addEventListener('input', () => {

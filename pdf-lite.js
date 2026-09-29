@@ -334,7 +334,7 @@
       'Le client ach\u00e8te les pi\u00e8ces directement au fournisseur et les apporte au rendez-vous.',
       '',
       ...(basket.requires_parts ? [
-        'PI\u00c8CES PR\u00c9CONIS\u00c9ES', String(basket.recommended_parts || ''), '',
+        'PI\u00c8CES PR\u00c9CONIS\u00c9ES', String(basket.recommended_parts || ''), '', ...(basket.price_details ? ['PRIX INDICATIFS TTC - ' + String(basket.price_observed_at || ''), String(basket.price_details), 'Memes references disponibles chez le vendeur de votre choix. Prix et livraison selon le vendeur.', ''] : []),
         'PANIER FOURNISSEUR (lien \u00e9galement transmis dans l\u2019email)', String(basket.supplier_url || ''), '',
         'Toute autre r\u00e9f\u00e9rence doit \u00eatre valid\u00e9e par EDM28 avant le rendez-vous.',
         'Les r\u00e9f\u00e9rences apport\u00e9es sont compar\u00e9es aux pr\u00e9conisations. Une incompatibilit\u00e9 peut emp\u00eacher ou interrompre l\u2019intervention ; son origine est examin\u00e9e avec le client.'

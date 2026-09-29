@@ -15,14 +15,17 @@
     if (!value || typeof value.requires_parts !== 'boolean') throw new Error('Pr\u00e9cisez si des pi\u00e8ces sont n\u00e9cessaires.');
     const references = String(value.recommended_parts || '').trim();
     const rawUrl = String(value.supplier_url || '').trim();
+    const prices = String(value.price_details || '').trim();
+    const observed = value.price_observed_at || null;
+    if (prices.length > 6000 || (observed && (!/^\d{4}-\d{2}-\d{2}$/.test(observed) || !Number.isFinite(Date.parse(observed))))) throw new Error('Prix indicatifs ou date invalides.');
     if (references.length > 6000) throw new Error('La liste des pi\u00e8ces est trop longue (6000 caract\u00e8res maximum).');
     if (!value.requires_parts) {
-      if (rawUrl || references) throw new Error('Retirez les pi\u00e8ces et le panier si la prestation ne n\u00e9cessite pas de pi\u00e8ces de remplacement.');
+      if (rawUrl || references || prices || observed) throw new Error('Retirez les pi\u00e8ces et le panier si la prestation ne n\u00e9cessite pas de pi\u00e8ces de remplacement.');
       return { requires_parts: false, supplier_url: null, recommended_parts: '' };
     }
     const supplierUrl = rawUrl ? safeUrl(rawUrl) : null;
     if (complete && (!supplierUrl || !references)) throw new Error('Ajoutez le lien du panier et les r\u00e9f\u00e9rences des pi\u00e8ces avant publication.');
-    return { requires_parts: true, supplier_url: supplierUrl, recommended_parts: references };
+    return { requires_parts: true, supplier_url: supplierUrl, recommended_parts: references, ...(prices || observed ? { price_details: prices, price_observed_at: observed } : {}) };
   }
   function serviceItems(values) {
     if (!Array.isArray(values) || !values.length || values.length > 100) throw new Error('Pr\u00e9voyez de 1 \u00e0 100 lignes de prestation.');
@@ -56,8 +59,8 @@
       `Bonjour ${clientName || 'Client'},`, '',
       `Votre devis ${quote.quote_number || 'EDM28'} est joint \u00e0 cet email.`,
       `Montant des prestations \u00e0 r\u00e9gler \u00e0 EDM28 : ${total}. Validit\u00e9 : ${quote.valid_until || ''}.`, terms, '',
-      ...(parts.requires_parts ? ['Votre panier fournisseur pr\u00e9par\u00e9 par EDM28 :', parts.supplier_url, '', 'Pi\u00e8ces pr\u00e9conis\u00e9es :', parts.recommended_parts, '', partsAdvice] : ['Cette prestation ne pr\u00e9voit pas de pi\u00e8ces de remplacement \u00e0 acheter.']),
-      '', 'Consultez et r\u00e9pondez au devis dans votre espace client : https://edm28.fr/mes-interventions',
+      ...(parts.requires_parts ? ['Votre panier fournisseur pr\u00e9par\u00e9 par EDM28 :', parts.supplier_url, '', 'Pi\u00e8ces pr\u00e9conis\u00e9es :', parts.recommended_parts, '', ...(parts.price_details ? ['Prix indicatifs TTC' + (parts.price_observed_at ? ' relev\u00e9s le ' + parts.price_observed_at : '') + ' :', parts.price_details, 'Vous pouvez acheter ces m\u00eames r\u00e9f\u00e9rences ailleurs. Le prix et la livraison d\u00e9pendent du vendeur.', ''] : []), partsAdvice] : ['Cette prestation ne pr\u00e9voit pas de pi\u00e8ces de remplacement \u00e0 acheter.']),
+      '', 'Consultez le PDF, puis acceptez ou refusez le devis dans votre espace client : https://edm28.fr/mes-interventions' + (quote.id ? '?devis=' + encodeURIComponent(quote.id) : ''),
       '', 'Cordialement,', businessName
     ].join('\n');
   }

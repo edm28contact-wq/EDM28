@@ -18,7 +18,7 @@
   const serviceNames = (request) => (Array.isArray(request?.services) ? request.services : [])
     .map((service) => typeof service === 'string' ? service : service?.name || service?.label || service?.id)
     .filter(Boolean);
-  const itemType = (value) => ({ labor: 'Main-d’œuvre', part: 'Pièce', delivery: 'Livraison', other: 'Autre' }[value] || 'Prestation');
+  const itemType = (value) => ({ labor: 'Prestation', part: 'Pièce', delivery: 'Livraison', other: 'Autre' }[value] || 'Prestation');
   const CONTROL_STATUS_LABELS = {
     non_controle: 'Non contrôlé',
     conforme: 'Conforme',
@@ -426,6 +426,23 @@
     doc.text(`Réception prévue : ${appointment.starts_at ? dateTime(appointment.starts_at) : date(row.created_at)}`, 319, y + 40);
     doc.text('Nom / signature :', 319, y + 63);
 
+    if (quote.commercial_model === 'customer_supplied_v1') {
+      doc.addPage();
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(23, 27, 33);
+      doc.text('COMMENT LA PRESTATION EST PREPAREE', 32, 43);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      const steps = [
+        'Avant de commencer : verification des pieces apportees et des references indiquees dans le devis.',
+        'Pour les elements demontes : nettoyage des surfaces d appui accessibles et controle de leur etat.',
+        'Graissage seulement aux endroits prevus par le constructeur, avec un produit adapte. Jamais sur les surfaces de freinage.',
+        'Montage et serrage selon les instructions du constructeur. Controle du serrage avec l outillage adapte.',
+        'Verification apres montage et photos de l intervention pour le dossier client.',
+        'Tout travail supplementaire doit etre explique et accepte avant sa realisation.',
+        'Les pieces de remplacement sont achetees par le client. Le forfait EDM28 comprend la prestation et les consommables d atelier.'
+      ];
+      let position = 82;
+      for (const step of steps) { const lines = doc.splitTextToSize(step, 531); doc.text(lines, 32, position); position += lines.length * 14 + 16; }
+    }
     drawInterventionControls(doc, row);
 
     const pageCount = doc.getNumberOfPages();

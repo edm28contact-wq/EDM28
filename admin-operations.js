@@ -127,7 +127,7 @@
     const host = A()?.$('operationList');
     if (!host) return;
     host.innerHTML = '<p class="muted">Chargement…</p>';
-    const { data, error } = await A().db.from('quotes').select('id,user_id,vehicle_id,service_request_id,quote_number,total,status,labor_duration_minutes,profiles(email),vehicles(plate)').eq('status', 'accepted').order('updated_at', { ascending: false });
+    const { data, error } = await A().db.from('quotes').select('id,user_id,vehicle_id,service_request_id,quote_number,total,status,commercial_model,labor_duration_minutes,profiles(email),vehicles(plate)').eq('status', 'accepted').order('updated_at', { ascending: false });
     if (error) throw error;
     const { data: orders, error: orderError } = await A().db.from('repair_orders')
       .select('id,quote_id,order_number,status,visible_to_client,pdf_path,appointments(starts_at,ends_at,status)')
@@ -140,6 +140,7 @@
     });
 
     const pendingRows = (data || []).filter((q) => {
+      if (q.commercial_model === 'customer_supplied_v1') return false;
       if (Number(q.labor_duration_minutes || 0) < 15) return false;
       const order = orderByQuote.get(q.id);
       if (!order) return true;
