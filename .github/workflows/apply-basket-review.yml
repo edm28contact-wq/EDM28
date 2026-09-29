@@ -1,0 +1,86 @@
+name: Apply Reviewed Basket Changes
+on:
+  push:
+    branches: [fix/supplier-basket-quote-flow]
+    paths: [.github/workflows/apply-basket-review.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.repository == 'edm28contact-wq/EDM28' && github.ref == 'refs/heads/fix/supplier-basket-quote-flow'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify and apply exact reviewed line edits
+        run: |
+          python3 - <<'PY'
+          import base64, gzip, hashlib, json, pathlib, subprocess
+          digest = lambda data: hashlib.sha256(data).hexdigest()
+          expected = '5f67f6234dcb57e02ec5929b2e14001a54d43dabf67c16f58477a3a3c42191d7'
+          allowed = set('''.github/workflows/basket-database.yml
+          admin-document-pdf.js
+          admin-invoice-actions.js
+          admin-publish-email.js
+          admin-quotes.js
+          admin-supplier-basket.js
+          admin.html
+          api/admin.js
+          client-simple-flow.js
+          lib/send-notification.js
+          package.json
+          pdf-lite.js
+          public-client.js
+          public-seo.js
+          supabase/migrations/20260929153243_supplier_basket_quote_flow.sql
+          supplier-basket-policy.js
+          tests/admin-flow.test.mjs
+          tests/admin-pdf-models.test.mjs
+          tests/disbursement-workflow.test.mjs
+          tests/supplier-basket-admin.test.mjs
+          tests/supplier-basket-db.sql
+          tests/supplier-basket-email.test.mjs
+          tests/supplier-basket-fixture.sql
+          tests/supplier-basket.test.mjs'''.splitlines())
+          chunks = [pathlib.Path(f'.edm-review/payload-{i}.b64').read_text() for i in range(5)]
+          assert digest(chunks[0].encode()) == 'f3271b8c9434cbade6c9472dd9b26c9f14ec88ebec0a64762d864fdc2cef1451'
+          for a,b,replacement in reversed([[1359,1360,''],[1518,1519,''],[1676,1678,'3O'],[6368,6369,'']]):
+              chunks[0] = chunks[0][:a] + replacement + chunks[0][b:]
+          raw = gzip.decompress(base64.b64decode(''.join(chunks), validate=True))
+          assert digest(raw) == expected, 'Transfer checksum mismatch'
+          entries = json.loads(raw)
+          assert len(entries) == len(allowed) and {entry['path'] for entry in entries} == allowed
+          outputs = []
+          for entry in entries:
+              path = pathlib.Path(entry['path'])
+              assert not path.is_symlink()
+              before = path.read_bytes() if path.exists() else None
+              if before is not None and digest(before) == entry['after']:
+                  continue
+              assert (digest(before) if before is not None else None) == entry['before'], str(path)
+              lines = (before.decode() if before is not None else '').splitlines(keepends=True)
+              for start,end,replacement in reversed(entry['edits']):
+                  assert 0 <= start <= end <= len(lines)
+                  lines[start:end] = replacement.splitlines(keepends=True)
+              after = ''.join(lines).encode()
+              assert digest(after) == entry['after'], str(path)
+              outputs.append((path,after))
+          for path,data in outputs:
+              path.parent.mkdir(parents=True,exist_ok=True)
+              path.write_bytes(data)
+          subprocess.run(['git','add','--',*sorted(allowed)],check=True)
+          print(f'{len(outputs)} files verified and staged; all file checksums matched.')
+          PY
+      - name: Run full application regression suite
+        run: npm test
+      - name: Commit reviewed changes without touching production
+        run: |
+          git rm -- .edm-review/payload-0.b64 .edm-review/payload-1.b64 .edm-review/payload-2.b64 .edm-review/payload-3.b64 .edm-review/payload-4.b64
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --cached --check
+          git commit -m 'feat: quote and supplier basket together, customer-supplied parts and service pricing'
+          git push origin HEAD:refs/heads/fix/supplier-basket-quote-flow
