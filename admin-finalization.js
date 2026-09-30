@@ -18,7 +18,7 @@
     const dueDays = Number(root.querySelector('[data-field="dueDays"]').value || 30);
     if (!invoiceNumber) throw new Error('Numéro de facture obligatoire.');
     if (!Number.isFinite(dueDays) || dueDays < 0 || dueDays > 365) throw new Error('Échéance comprise entre 0 et 365 jours.');
-    if (!['ready','signed','in_progress','completed','invoiced'].includes(order.status)) throw new Error('Ordre non clôturable.');
+    if (order.status !== 'completed') throw new Error('La checklist de contrôle doit être terminée et publiée avant la clôture.');
 
     const finalized = await A().db.rpc('admin_finalize_repair_order', {
       p_order_id: order.id,
@@ -62,7 +62,7 @@
     const host = A()?.$('finalizationList');
     if (!host) return;
     host.innerHTML = '<p class="muted">Chargement…</p>';
-    const { data, error } = await A().db.from('repair_orders').select('id,user_id,vehicle_id,quote_id,order_number,status,profiles(email),vehicles(plate),quotes(total)').in('status', ['ready','signed','in_progress','completed']).order('updated_at', { ascending: false });
+    const { data, error } = await A().db.from('repair_orders').select('id,user_id,vehicle_id,quote_id,order_number,status,profiles(email),vehicles(plate),quotes(total)').eq('status', 'completed').order('updated_at', { ascending: false });
     if (error) throw error;
     render(data || []);
   }
