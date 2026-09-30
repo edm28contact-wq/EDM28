@@ -6,9 +6,28 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 test('admin shell exposes core workflow pages', async () => {
   const source = await read('admin.html');
-  for (const id of ['dashboard','requests','quotes','notifications','clients','services','documents','accounting','business','settings']) {
+  for (const id of ['dashboard','requests','quotes','operations','interventions','finalization','invoice-actions','accounting','notifications','clients','services','document-pdf','business','settings','audit-log']) {
     assert.match(source, new RegExp(`id="${id}"`));
   }
+});
+
+test('admin navigation follows the client journey and removes the legacy Documents screen', async () => {
+  const [html, core] = await Promise.all([read('admin.html'), read('admin-core.js')]);
+  const pages = ['requests','quotes','operations','interventions','finalization','invoice-actions','accounting'];
+  let previous = -1;
+  for (const page of pages) {
+    const index = html.indexOf(`data-page="${page}"`);
+    assert.ok(index > previous, `${page} must follow the client journey order`);
+    previous = index;
+  }
+  assert.match(html, /data-page="requests">1 · Demandes/);
+  assert.match(html, /data-page="quotes">2 · Devis & panier/);
+  assert.match(html, /data-page="operations">3 · Rendez-vous/);
+  assert.doesNotMatch(html, /data-page="documents"/);
+  assert.doesNotMatch(html, /id="documents"/);
+  assert.doesNotMatch(html, /admin-docs\.js/);
+  assert.doesNotMatch(core, /EDMAdminDocs/);
+  assert.match(html, /data-page="document-pdf">PDF · outil/);
 });
 
 test('service requests require guarded workflow transitions', async () => {
