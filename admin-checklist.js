@@ -257,6 +257,19 @@
         let photoPaths = Array.isArray(report.photo_paths) ? [...report.photo_paths] : [];
         const photoHost = detail.querySelector('[data-photo-list]');
         await previewPaths(photoPaths, photoHost);
+        const bindRemovePhotos = () => photoHost.querySelectorAll('[data-remove-photo]').forEach((remove) => remove.onclick = async () => {
+          const path = remove.dataset.removePhoto;
+          const storage = await A().db.storage.from('repair-documents').remove([path]);
+          if (storage.error) return A().status('checklistStatus', storage.error.message, true);
+          photoPaths = photoPaths.filter((item) => item !== path);
+          if (report.status === 'draft') {
+            const saved = await A().db.from('inspection_reports').update({ photo_paths: photoPaths, updated_at: new Date().toISOString() }).eq('id', report.id).eq('status', 'draft');
+            if (saved.error) return A().status('checklistStatus', saved.error.message, true);
+          }
+          await previewPaths(photoPaths, photoHost);
+          bindRemovePhotos();
+        });
+        bindRemovePhotos();
         const signature = installSignature(detail.querySelector('[data-signature]'), detail.querySelector('[data-clear-signature]'));
 
         detail.querySelectorAll('[data-control-status]').forEach((choice) => choice.onclick = () => {
