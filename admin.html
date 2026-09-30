@@ -32,9 +32,10 @@
       <button class="btn ghost" data-page="quotes">2 · Devis & panier</button>
       <button class="btn ghost" data-page="operations">3 · Rendez-vous</button>
       <button class="btn ghost" data-page="interventions">4 · Interventions</button>
-      <button class="btn ghost" data-page="finalization">5 · Clôture</button>
-      <button class="btn ghost" data-page="invoice-actions">6 · Factures</button>
-      <button class="btn ghost" data-page="accounting">7 · Comptabilité</button>
+      <button class="btn ghost" data-page="checklist">5 · Checklist de contrôle</button>
+      <button class="btn ghost" data-page="finalization">6 · Clôture</button>
+      <button class="btn ghost" data-page="invoice-actions">7 · Factures</button>
+      <button class="btn ghost" data-page="accounting">8 · Comptabilité</button>
       <button class="btn ghost" data-page="clients">Clients</button>
       <button class="btn ghost" data-page="notifications">Emails & notifications</button>
       <button class="btn ghost" data-page="services">Services & tarifs</button>
@@ -56,7 +57,8 @@
     <section id="requests" class="page"><div class="card"><div class="top"><div><h2>Demandes clients</h2><p class="muted">Demandes reçues et étudiées, classées de la plus récente à la plus ancienne.</p></div><button id="requestRefresh" class="btn ghost">Actualiser</button></div><div id="requestStatus" class="status hidden"></div><div id="requestList"></div></div></section>
     <section id="quotes" class="page"><div class="card"><div class="top"><div><h2>Devis</h2><p class="muted">Compléter les devis puis les publier explicitement au client.</p></div><button id="quoteRefresh" class="btn ghost">Actualiser</button></div><div id="quoteStatus" class="status hidden"></div><div id="quoteList"></div></div></section>
     <section id="operations" class="page"><div class="card"><div class="top"><div><h2>Rendez-vous</h2><p class="muted">Vérifier les pré-réservations et justificatifs, confirmer le rendez-vous puis préparer l’ordre de réparation.</p></div><button id="operationRefresh" class="btn ghost">Actualiser</button></div><div id="operationStatus" class="status hidden"></div><div id="operationList"></div></div></section>
-    <section id="interventions" class="page"><div class="card"><div class="top"><div><h2>Interventions</h2><p class="muted">Suivre l’ordre de réparation, les contrôles, les mesures, les photos et l’avancement de l’intervention.</p></div><button id="interventionRefresh" class="btn ghost">Actualiser</button></div><div id="interventionStatus" class="status hidden"></div><div id="interventionList"></div></div></section>
+    <section id="interventions" class="page"><div class="card"><div class="top"><div><h2>Interventions</h2><p class="muted">Démarrer les travaux, suivre leur avancement puis envoyer le dossier vers le contrôle final.</p></div><button id="interventionRefresh" class="btn ghost">Actualiser</button></div><div id="interventionStatus" class="status hidden"></div><div id="interventionList"></div></div></section>
+    <section id="checklist" class="page"><div class="card"><div class="top"><div><h2>Checklist de contrôle</h2><p class="muted">Après les travaux : checklist essentielle sous 100 € TTC, checklist complète à partir de 100 € TTC. La clôture reste bloquée jusqu’à publication du contrôle.</p></div><button id="checklistRefresh" class="btn ghost">Actualiser</button></div><div id="checklistStatus" class="status hidden"></div><div id="checklistList"></div></div></section>
     <section id="finalization" class="page"><div class="card"><div class="top"><div><h2>Clôture</h2><p class="muted">Terminer l’intervention, conserver son historique et préparer la facture brouillon.</p></div><button id="finalizationRefresh" class="btn ghost">Actualiser</button></div><div id="finalizationStatus" class="status hidden"></div><div id="finalizationList"></div></div></section>
     <section id="invoice-actions" class="page"><div class="card"><div class="top"><div><h2>Gestion des factures</h2><p class="muted">Comparer le devis, ajuster le réel, générer le PDF, émettre et enregistrer les règlements.</p></div><button id="invoiceActionRefresh" class="btn ghost">Actualiser</button></div><div id="invoiceActionStatus" class="status hidden"></div><div id="invoiceActionList"></div></div></section>
     <section id="notifications" class="page"><div class="card"><div class="top"><div><h2>Notifications client</h2><p class="muted">Envoyer les devis, confirmations, factures et relances avec traçabilité.</p></div><button id="notificationRefresh" class="btn ghost">Actualiser</button></div><div id="notificationStatus" class="status hidden"></div><div id="notificationList"></div></div></section>
@@ -83,6 +85,7 @@
 <script src="/admin-quote-workflow.js?v=__EDM_BUILD__"></script>
 <script src="/admin-operations.js?v=__EDM_BUILD__"></script>
 <script src="/admin-interventions.js?v=__EDM_BUILD__"></script>
+<script src="/admin-checklist.js?v=__EDM_BUILD__"></script>
 <script src="/admin-finalization.js?v=__EDM_BUILD__"></script>
 <script src="/admin-invoice-actions.js?v=__EDM_BUILD__"></script>
 <script src="/admin-notifications.js?v=__EDM_BUILD__"></script>
