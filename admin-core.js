@@ -36,7 +36,6 @@
         'invoice-actions': () => window.EDMAdminInvoiceActions?.load(),
         clients: () => window.EDMAdminClients?.load(),
         services: () => window.EDMAdminServices?.load(),
-        documents: () => window.EDMAdminDocs?.load(),
         accounting: () => window.EDMAdminAccounting?.load(),
         business: () => window.EDMAdminBusiness?.load(),
         settings: () => window.EDMAdminSettings?.load(),
@@ -202,7 +201,6 @@
         ['Demandes', () => window.EDMAdminRequests?.load()],
         ['Clients', () => window.EDMAdminClients?.load()],
         ['Services', () => window.EDMAdminServices?.load()],
-        ['Documents', () => window.EDMAdminDocs?.load()],
         ['Comptabilité', () => window.EDMAdminAccounting?.load()],
         ['Entreprise', () => window.EDMAdminBusiness?.load()],
         ['Automatisations', () => window.EDMAdminSettings?.load()]
