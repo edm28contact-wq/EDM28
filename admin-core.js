@@ -32,6 +32,7 @@
         notifications: () => window.EDMAdminNotifications?.load(),
         operations: () => window.EDMAdminOperations?.load(),
         interventions: () => window.EDMAdminInterventions?.load(),
+        checklist: () => window.EDMAdminChecklist?.load(),
         finalization: () => window.EDMAdminFinalization?.load(),
         'invoice-actions': () => window.EDMAdminInvoiceActions?.load(),
         clients: () => window.EDMAdminClients?.load(),
@@ -44,7 +45,7 @@
       };
       const errorTargets = {
         overview: 'anomalies', requests: 'requestStatus', quotes: 'quoteStatus', notifications: 'notificationStatus',
-        operations: 'operationStatus', interventions: 'interventionStatus', finalization: 'finalizationStatus',
+        operations: 'operationStatus', interventions: 'interventionStatus', checklist: 'checklistStatus', finalization: 'finalizationStatus',
         'invoice-actions': 'invoiceActionStatus', clients: 'clientDetail', services: 'serviceStatus',
         accounting: 'accountingStatus', business: 'businessStatus', settings: 'automationStatus',
         'document-pdf': 'documentPdfStatus', 'audit-log': 'auditLogStatus'
@@ -116,7 +117,7 @@
         client.from('service_requests').select('id,status,vehicle_id,created_at,updated_at'),
         client.from('quotes').select('id,status,quote_number,total,valid_until,pdf_path,created_at,updated_at'),
         client.from('appointments').select('id,status,starts_at,user_id,vehicle_id').gte('starts_at', today.toISOString()).lt('starts_at', afterTomorrow.toISOString()),
-        client.from('repair_orders').select('id,status,order_number,quote_id,appointment_id,pdf_path,created_at,updated_at'),
+        client.from('repair_orders').select('id,status,order_number,quote_id,appointment_id,pdf_path,workshop_checks,created_at,updated_at'),
         client.from('inspection_reports').select('id,repair_order_id,status,pdf_path,visible_to_client,created_at,updated_at'),
         client.from('invoices').select('id,status,invoice_number,total,amount_paid,due_at,pdf_path,visible_to_client,repair_order_id,created_at,updated_at'),
         client.from('business_configuration').select('*').eq('id', true).single()
@@ -157,12 +158,13 @@
 
       const inspectionByOrder = new Map(inspections.map((r) => [r.repair_order_id, r]));
       const activeOrders = orders.filter((o) => ['ready','signed','in_progress','completed'].includes(o.status));
-      const ordersWithoutInspection = activeOrders.filter((o) => !inspectionByOrder.has(o.id));
+      const ordersWaitingChecklist = activeOrders.filter((o) => o.status === 'in_progress' && Boolean(o.workshop_checks?.intervention_completed_at));
+      const ordersWithoutInspection = ordersWaitingChecklist.filter((o) => !inspectionByOrder.has(o.id));
       const incompleteInspections = inspections.filter((r) => r.status !== 'completed');
       const completedWithoutPdf = inspections.filter((r) => r.status === 'completed' && !r.pdf_path);
       push(activeOrders.length, 'info', 'Dossiers atelier actifs', `${activeOrders.length} intervention(s) sont en préparation ou en cours.`, 'interventions');
-      push(ordersWithoutInspection.length, 'warning', 'Contrôles non créés', `${ordersWithoutInspection.length} ordre(s) actif(s) n’ont pas encore de fiche de contrôle.`, 'interventions');
-      push(incompleteInspections.length, 'warning', 'Contrôles incomplets', `${incompleteInspections.length} fiche(s) de contrôle restent à terminer.`, 'interventions');
+      push(ordersWithoutInspection.length, 'warning', 'Contrôles non créés', `${ordersWithoutInspection.length} intervention(s) terminée(s) attendent leur checklist.`, 'checklist');
+      push(incompleteInspections.length, 'warning', 'Contrôles incomplets', `${incompleteInspections.length} fiche(s) de contrôle restent à terminer.`, 'checklist');
       push(completedWithoutPdf.length, 'error', 'Contrôles sans PDF', `${completedWithoutPdf.length} contrôle(s) terminé(s) n’ont pas de PDF.`, 'document-pdf');
       const completedOrders = orders.filter((o) => o.status === 'completed');
       push(completedOrders.length, 'warning', 'Interventions à facturer', `${completedOrders.length} intervention(s) terminée(s) attendent une facture.`, 'finalization');

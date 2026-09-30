@@ -11,6 +11,7 @@
   const BLUE = [224, 234, 247];
 
   const controlMeta = {
+    freinage_visuel: ['Freinage', 'Système de freinage accessible - contrôle visuel', ''],
     plaquettes_av_g: ['Freinage', 'Plaquettes avant gauche', 'mm'],
     plaquettes_av_d: ['Freinage', 'Plaquettes avant droite', 'mm'],
     plaquettes_ar_g: ['Freinage', 'Plaquettes arrière gauche', 'mm'],
@@ -447,7 +448,10 @@
     const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
     if (typeof doc.autoTable !== 'function') throw new Error('Le moteur de tableaux PDF n’est pas chargé. Rechargez le back-office.');
 
-    drawHeader(doc, data);
+    const controlLevel = Number(data.report.quote_snapshot?.total || 0) >= 100
+      ? 'Contrôle complet - 100 € TTC et plus'
+      : 'Contrôle essentiel - moins de 100 € TTC';
+    drawHeader(doc, data, controlLevel);
     let y = infoBlock(doc, data);
     y = drawControlTables(doc, data, y);
     await addSummaryAndSignature(doc, data, y);

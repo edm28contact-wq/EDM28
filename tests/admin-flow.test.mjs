@@ -6,14 +6,14 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 test('admin shell exposes core workflow pages', async () => {
   const source = await read('admin.html');
-  for (const id of ['dashboard','requests','quotes','operations','interventions','finalization','invoice-actions','accounting','notifications','clients','services','document-pdf','business','settings','audit-log']) {
+  for (const id of ['dashboard','requests','quotes','operations','interventions','checklist','finalization','invoice-actions','accounting','notifications','clients','services','document-pdf','business','settings','audit-log']) {
     assert.match(source, new RegExp(`id="${id}"`));
   }
 });
 
 test('admin navigation follows the client journey and removes the legacy Documents screen', async () => {
   const [html, core] = await Promise.all([read('admin.html'), read('admin-core.js')]);
-  const pages = ['requests','quotes','operations','interventions','finalization','invoice-actions','accounting'];
+  const pages = ['requests','quotes','operations','interventions','checklist','finalization','invoice-actions','accounting'];
   let previous = -1;
   for (const page of pages) {
     const index = html.indexOf(`data-page="${page}"`);
@@ -23,6 +23,9 @@ test('admin navigation follows the client journey and removes the legacy Documen
   assert.match(html, /data-page="requests">1 · Demandes/);
   assert.match(html, /data-page="quotes">2 · Devis & panier/);
   assert.match(html, /data-page="operations">3 · Rendez-vous/);
+  assert.match(html, /data-page="interventions">4 · Interventions/);
+  assert.match(html, /data-page="checklist">5 · Checklist de contrôle/);
+  assert.match(html, /data-page="finalization">6 · Clôture/);
   assert.doesNotMatch(html, /data-page="documents"/);
   assert.doesNotMatch(html, /id="documents"/);
   assert.doesNotMatch(html, /admin-docs\.js/);
@@ -83,6 +86,35 @@ test('publishing a repair order creates an OR-specific client message after PDF 
   assert.match(source, /Ordre de réparation \$\{order\.order_number \|\| 'EDM28'\} disponible/);
   assert.match(source, /rpc\('admin_send_message'/);
   assert.match(source, /await notifyPublishedOrder\(\{ \.\.\.current\.data, pdf_path: pdfPath, visible_to_client: true \}\)/);
+});
+
+
+test('post-intervention checklist selects the control set from the TTC threshold and gates finalization', async () => {
+  const [html, interventions, checklist, finalization, pdf, migration] = await Promise.all([
+    read('admin.html'),
+    read('admin-interventions.js'),
+    read('admin-checklist.js'),
+    read('admin-finalization.js'),
+    read('admin-inspection-complete-pdf.js'),
+    read('supabase/migrations/20260930230000_post_intervention_checklist_gate.sql')
+  ]);
+  assert.match(html, /5 · Checklist de contrôle/);
+  assert.match(html, /admin-checklist\.js/);
+  assert.doesNotMatch(interventions, /inspection_reports/);
+  assert.match(interventions, /intervention_completed_at/);
+  assert.match(checklist, /Number\(total \|\| 0\) >= 100/);
+  assert.match(checklist, /freinage_visuel/);
+  assert.match(checklist, /niveau_huile_moteur/);
+  assert.match(checklist, /feux_detresse/);
+  assert.match(checklist, /status: 'completed'/);
+  assert.match(checklist, /generateFor\('inspection'/);
+  assert.match(finalization, /order\.status !== 'completed'/);
+  assert.match(finalization, /\.eq\('status', 'completed'\)/);
+  assert.match(pdf, /Contrôle essentiel - moins de 100 € TTC/);
+  assert.match(pdf, /Contrôle complet - 100 € TTC et plus/);
+  assert.match(migration, /intervention_completed_at/);
+  assert.match(migration, /inspection_reports/);
+  assert.match(migration, /visible_to_client/);
 });
 
 test('finalization uses the atomic RPC and automatically generates the draft invoice PDF', async () => {
