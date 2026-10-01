@@ -5,7 +5,7 @@ const origin='http://127.0.0.1:4180',out='journey-browser-artifacts';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch();const report={checks:[],realEmails:0,realBusinessWrites:0};
 function fixture(){
- const uid='11111111-1111-4111-8111-111111111111',qid='22222222-2222-4222-8222-222222222222',vid='12121212-1212-4212-8212-121212121212',rid='77777777-7777-4777-8777-777777777777',oid='88888888-8888-4888-8888-888888888888';
+ const uid='11111111-1111-4111-8111-111111111111',qid='22222222-2222-4222-8222-222222222222',vid='12121212-1212-4212-8212-121212121212',rid='77777777-7777-4777-8777-777777777777',oid='88888888-8888-4888-8888-888888888888',iid='99999999-9999-4999-8999-999999999999';
  const q={id:qid,user_id:uid,vehicle_id:vid,status:'sent',visible_to_client:true,commercial_model:'customer_supplied_v1',quote_number:'TEST-99',title:'Freinage avant',subtotal:99,total:99,discount:0,valid_until:'2099-12-31',created_at:new Date().toISOString(),pdf_path:uid+'/quote/test.pdf',quote_parts_baskets:{requires_parts:true,supplier_url:'https://supplier.example/panier',recommended_parts:'REF-123 x 2\nREF-456 x 1',price_details:'REF-123 : 25 EUR TTC x 2',price_observed_at:'2026-09-01'}};
  const f={uid,q,rows:{quotes:[q],vehicles:[{id:vid,user_id:uid,plate:'AA-123-BB',brand:'Renault',model:'Clio',created_at:new Date().toISOString()},{id:'98989898-9898-4989-8989-989898989898',user_id:uid,plate:'CC-456-DD',brand:'Peugeot',model:'208',created_at:new Date().toISOString()}],profiles:[{id:uid,email:'client@example.test',role:'customer'}],service_requests:[],appointments:[],repair_orders:[],invoices:[],inspection_reports:[],interventions:[],booking_reservations:[],site_services:[{id:'service-1',name:'Freinage avant',slug:'disques-plaquettes-avant',displayed_price:99,labor_price:99,duration_minutes:60,client_description:'Prestation avec consommables',active:true,published_at:'2026-01-01'}]},calls:[],listeners:[],logged:localStorage.getItem('journey-test-login')==='yes'};
  f.user={id:uid,email:'client@example.test',email_confirmed_at:'2026-01-01'};
@@ -26,6 +26,17 @@ function fixture(){
   if(name==='submit_reservation_proof')Object.assign(f.rows.booking_reservations[0],{status:'review_pending',proof_path:args.p_path,proof_received_at:new Date().toISOString(),review_deadline:new Date(Date.now()+86400000).toISOString()});
   if(name==='admin_prepare_reservation'){f.rows.repair_orders=[{id:oid,user_id:uid,vehicle_id:vid,quote_id:qid,status:'ready',visible_to_client:false,created_at:new Date().toISOString()}];data=oid;}
   if(name==='admin_confirm_reservation'){f.rows.booking_reservations[0].status='confirmed';Object.assign(f.rows.repair_orders[0],{visible_to_client:true,pdf_path:args.p_pdf_path});}
+  if(name==='next_document_number')data='CTRL-TEST-001';
+  if(name==='admin_finalize_repair_order'){
+   const order=f.rows.repair_orders.find(row=>row.id===args.p_order_id);
+   if(order){order.status='invoiced';order.completed_at=order.completed_at||new Date().toISOString();order.updated_at=new Date().toISOString();}
+   let invoice=f.rows.invoices.find(row=>row.id===iid);
+   if(!invoice){
+    invoice={id:iid,user_id:uid,vehicle_id:vid,quote_id:qid,repair_order_id:oid,invoice_number:args.p_invoice_number,status:'draft',title:'Facture freinage avant',description:'Prestation selon devis accepté',subtotal:q.total,discount:0,total:q.total,amount_paid:0,visible_to_client:false,pdf_path:null,issued_at:null,due_at:new Date(Date.now()+30*86400000).toISOString(),created_at:new Date().toISOString(),profiles:{email:f.user.email},vehicles:{plate:'AA-123-BB'},quotes:q};
+    f.rows.invoices=[invoice];
+   }
+   data=iid;
+  }
   return{data,error:null};}
  };window.__journey=f;window.supabase={createClient:()=>f.db};
 }
@@ -105,14 +116,48 @@ try{
   await page.evaluate(()=>{const f=__journey;f.rows.booking_reservations[0].status='confirmed';f.rows.repair_orders=[{id:'88888888-8888-4888-8888-888888888888',user_id:f.uid,vehicle_id:f.q.vehicle_id,quote_id:f.q.id,status:'ready',visible_to_client:true,pdf_path:f.uid+'/order/test.pdf',created_at:new Date().toISOString()}];f.emit();});
   await page.waitForFunction(()=>document.getElementById('edmInterventionsApp').textContent.includes('Rendez-vous valid\u00e9'));
   assert.match(await page.locator('[data-case]').innerText(),/Ordre de r\u00e9paration/);
-  await page.evaluate(()=>{Object.assign(__journey.rows.repair_orders[0],{status:'completed',completed_at:new Date().toISOString()});__journey.emit();});
-  await page.locator('.journey-card.is-green').waitFor();await page.screenshot({path:`${out}/finished-${width}.png`,fullPage:true});
+  await page.evaluate(()=>{
+   const f=__journey,o=f.rows.repair_orders[0];
+   Object.assign(o,{status:'ready',order_number:'OR-TEST-001',workshop_checks:{},profiles:{email:f.user.email},vehicles:{plate:'AA-123-BB',brand:'Renault',model:'Clio'},quotes:f.q,service_requests:{notes:'Bruit au freinage',services:[{id:'FR_PLAQ_AV',name:'Plaquettes avant'}]}});
+   const shell=document.createElement('div');shell.id='adminJourneyFixture';shell.innerHTML='<section id="interventions"><div id="interventionStatus"></div><div id="interventionList"></div></section><section id="checklist"><div id="checklistStatus"></div><div id="checklistList"></div></section><section id="finalization"><div id="finalizationStatus"></div><div id="finalizationList"></div></section>';document.body.append(shell);
+   window.EDMAdmin={db:f.db,profile:{id:'admin-fixture'},esc:x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),money:x=>Number(x||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}),$:id=>document.getElementById(id),status:(id,msg,error=false)=>{const n=document.getElementById(id);if(n){n.textContent=msg;n.className=error?'status error':'status ok';}},overview:async()=>{}};
+   window.EDMAdminDocumentPdf={generateFor:async(type,row)=>{
+    f.calls.push('generate:'+type);
+    if(type==='inspection'){const current=f.rows.inspection_reports.find(item=>item.id===row.id);if(current)current.pdf_path=f.uid+'/inspection/'+row.id+'.pdf';return f.uid+'/inspection/'+row.id+'.pdf';}
+    if(type==='invoice'){const current=f.rows.invoices.find(item=>item.id===row.id);if(current)current.pdf_path=f.uid+'/invoice/'+row.id+'.pdf';return f.uid+'/invoice/'+row.id+'.pdf';}
+    return f.uid+'/'+type+'/test.pdf';
+   }};
+  });
+  await page.addScriptTag({url:origin+'/admin-interventions.js'});
+  await page.addScriptTag({url:origin+'/admin-checklist.js'});
+  await page.addScriptTag({url:origin+'/admin-finalization.js'});
+  await page.evaluate(()=>EDMAdminInterventions.load());
+  await page.locator('#interventionList [data-start]').click();await page.waitForFunction(()=>__journey.rows.repair_orders[0].status==='in_progress');
+  await page.locator('#interventionList [data-finish]').click();await page.waitForFunction(()=>!!__journey.rows.repair_orders[0].workshop_checks?.intervention_completed_at);
+  await page.evaluate(()=>EDMAdminChecklist.load());await page.locator('#checklistList [data-open]').click();
+  assert.equal(await page.locator('#checklistList [data-control]').count(),5);
+  const thresholdSets=await page.evaluate(()=>({under:EDMAdminChecklist.controlsFor(99).map(c=>c.key),over:EDMAdminChecklist.controlsFor(129).map(c=>c.key)}));
+  assert.deepEqual(thresholdSets.under,['freinage_visuel','pression_av_g','pression_av_d','pression_ar_g','pression_ar_d']);
+  assert.ok(thresholdSets.over.includes('niveau_huile_moteur')&&thresholdSets.over.includes('feux_detresse')&&thresholdSets.over.length>thresholdSets.under.length);
+  await page.locator('#checklistList [data-tech]').fill('Technicien test');
+  for(const row of await page.locator('#checklistList [data-control]').all())await row.locator('[data-control-status="conforme"]').click();
+  await page.screenshot({path:`${out}/checklist-${width}.png`,fullPage:true});
+  await page.locator('#checklistList [data-complete]').click();
+  await page.waitForFunction(()=>__journey.rows.repair_orders[0].status==='completed'&&__journey.rows.inspection_reports[0]?.visible_to_client===true&&!!__journey.rows.inspection_reports[0]?.pdf_path);
+  await page.evaluate(()=>EDMAdminFinalization.load());await page.locator('#finalizationList [data-finalize]').click();
+  await page.waitForFunction(()=>__journey.rows.repair_orders[0].status==='invoiced'&&__journey.rows.invoices[0]?.status==='draft'&&!!__journey.rows.invoices[0]?.pdf_path);
+  await page.evaluate(()=>{const invoice=__journey.rows.invoices[0];Object.assign(invoice,{status:'issued',visible_to_client:true,issued_at:new Date().toISOString()});__journey.emit();});
+  await page.locator('.journey-card.is-green').waitFor();
+  await page.waitForFunction(()=>document.getElementById('edmInterventionsApp').textContent.includes('Facture'));
+  assert.equal(await page.locator('.journey-card.is-green .journey-files [data-file]').count(),4);
+  await page.screenshot({path:`${out}/finished-${width}.png`,fullPage:true});
   await page.evaluate(()=>{__journey.rows.repair_orders[0].completed_at=new Date(Date.now()-25*3600000).toISOString();__journey.emit();});
   await page.waitForFunction(()=>document.getElementById('edmInterventionsApp').textContent.includes('Aucune intervention en cours'));
-  await page.locator('.vehicle-archive').first().locator('summary').first().click();await page.locator('.intervention-archive summary').first().click();assert.equal(await page.locator('.intervention-archive [data-file]').count(),3);
+  await page.locator('.vehicle-archive').first().locator('summary').first().click();await page.locator('.intervention-archive summary').first().click();
+  assert.equal(await page.locator('.intervention-archive .journey-files [data-file]').count(),4);
+  assert.match(await page.locator('.intervention-archive').innerText(),/Historique/);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-  report.checks.push(`quote response, 48h hold, proof, pending review, confirmation and 24h history ${width}: PASS`);
-
+  report.checks.push(`quote, 48h hold, proof, admin approval, OR, intervention, threshold checklist, invoice and 24h history ${width}: PASS`);
   await page.goto(origin+'/contact',{waitUntil:'networkidle'});assert.equal(await page.locator('a[href^="tel:000"]').count(),0);assert.equal(await page.locator('.contact-card a[href^="mailto:"]').count(),1);assert.equal(await page.locator('.contact-card a[href*="maps/dir"]').count(),1);await page.screenshot({path:`${out}/contact-${width}.png`,fullPage:true});
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   await page.goto(origin+'/admin-reset',{waitUntil:'networkidle'});await page.setContent(`<html><head><link rel="stylesheet" href="${origin}/admin.css"></head><body><main style="padding:16px"><section id="operations"></section></main></body></html>`);
