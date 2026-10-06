@@ -25,31 +25,68 @@
     surveiller: 'À surveiller',
     remplacer: 'À remplacer'
   };
-  const CONTROLS = [
-    { key: 'plaquettes_av_g', label: 'Plaquettes avant gauche', unit: 'mm', group: 'FREINAGE' },
-    { key: 'plaquettes_av_d', label: 'Plaquettes avant droite', unit: 'mm', group: 'FREINAGE' },
-    { key: 'plaquettes_ar_g', label: 'Plaquettes arrière gauche', unit: 'mm', group: 'FREINAGE' },
-    { key: 'plaquettes_ar_d', label: 'Plaquettes arrière droite', unit: 'mm', group: 'FREINAGE' },
-    { key: 'disque_av_g', label: 'Disque avant gauche', unit: 'mm', group: 'FREINAGE' },
-    { key: 'disque_av_d', label: 'Disque avant droit', unit: 'mm', group: 'FREINAGE' },
-    { key: 'disque_ar_g', label: 'Disque arrière gauche', unit: 'mm', group: 'FREINAGE' },
-    { key: 'disque_ar_d', label: 'Disque arrière droit', unit: 'mm', group: 'FREINAGE' },
-    { key: 'liquide_frein', label: 'Liquide de frein', unit: '', group: 'FREINAGE' },
-    { key: 'flexibles', label: 'Flexibles de frein', unit: '', group: 'FREINAGE' },
-    { key: 'pneu_av_g', label: 'Pneu avant gauche', unit: 'mm', group: 'PNEUMATIQUES' },
-    { key: 'pneu_av_d', label: 'Pneu avant droit', unit: 'mm', group: 'PNEUMATIQUES' },
-    { key: 'pneu_ar_g', label: 'Pneu arrière gauche', unit: 'mm', group: 'PNEUMATIQUES' },
-    { key: 'pneu_ar_d', label: 'Pneu arrière droit', unit: 'mm', group: 'PNEUMATIQUES' },
-    { key: 'pression_av_g', label: 'Pression avant gauche', unit: 'bar', group: 'PNEUMATIQUES' },
-    { key: 'pression_av_d', label: 'Pression avant droite', unit: 'bar', group: 'PNEUMATIQUES' },
-    { key: 'pression_ar_g', label: 'Pression arrière gauche', unit: 'bar', group: 'PNEUMATIQUES' },
-    { key: 'pression_ar_d', label: 'Pression arrière droite', unit: 'bar', group: 'PNEUMATIQUES' },
+  const INK = [32, 40, 45];
+  const COPPER = [211, 154, 114];
+  const SOFT = [247, 244, 241];
+
+  const ESSENTIAL_CONTROLS = [
+    { key: 'freinage_visuel', label: 'Système de freinage accessible - contrôle visuel', unit: '', group: 'FREINAGE' },
+    { key: 'pression_av_g', label: 'Pression pneu avant gauche', unit: 'bar', group: 'PRESSION DES PNEUS' },
+    { key: 'pression_av_d', label: 'Pression pneu avant droit', unit: 'bar', group: 'PRESSION DES PNEUS' },
+    { key: 'pression_ar_g', label: 'Pression pneu arrière gauche', unit: 'bar', group: 'PRESSION DES PNEUS' },
+    { key: 'pression_ar_d', label: 'Pression pneu arrière droit', unit: 'bar', group: 'PRESSION DES PNEUS' }
+  ];
+
+  const EXTENDED_CONTROLS = [
+    { key: 'pneu_av_g', label: 'État pneu avant gauche', unit: 'mm', group: 'PNEUMATIQUES' },
+    { key: 'pneu_av_d', label: 'État pneu avant droit', unit: 'mm', group: 'PNEUMATIQUES' },
+    { key: 'pneu_ar_g', label: 'État pneu arrière gauche', unit: 'mm', group: 'PNEUMATIQUES' },
+    { key: 'pneu_ar_d', label: 'État pneu arrière droit', unit: 'mm', group: 'PNEUMATIQUES' },
     { key: 'amortisseurs', label: 'Amortisseurs', unit: '', group: 'LIAISON AU SOL' },
     { key: 'rotules', label: 'Rotules', unit: '', group: 'LIAISON AU SOL' },
     { key: 'silentblocs', label: 'Silentblocs', unit: '', group: 'LIAISON AU SOL' },
     { key: 'roulements', label: 'Roulements', unit: '', group: 'LIAISON AU SOL' },
-    { key: 'soufflets', label: 'Soufflets', unit: '', group: 'LIAISON AU SOL' }
+    { key: 'soufflets', label: 'Soufflets et protections', unit: '', group: 'LIAISON AU SOL' },
+    { key: 'liquide_frein', label: 'Niveau liquide de frein', unit: '', group: 'NIVEAUX' },
+    { key: 'niveau_huile_moteur', label: 'Niveau huile moteur', unit: '', group: 'NIVEAUX' },
+    { key: 'niveau_liquide_refroidissement', label: 'Niveau liquide de refroidissement', unit: '', group: 'NIVEAUX' },
+    { key: 'niveau_lave_glace', label: 'Niveau lave-glace', unit: '', group: 'NIVEAUX' },
+    { key: 'essuie_glace_av', label: 'Essuie-glaces avant', unit: '', group: 'ÉQUIPEMENTS' },
+    { key: 'essuie_glace_ar', label: 'Essuie-glace arrière', unit: '', group: 'ÉQUIPEMENTS' },
+    { key: 'klaxon', label: 'Klaxon', unit: '', group: 'ÉQUIPEMENTS' },
+    { key: 'feu_position_av_g', label: 'Feu de position avant gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_position_av_d', label: 'Feu de position avant droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_position_ar_g', label: 'Feu de position arrière gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_position_ar_d', label: 'Feu de position arrière droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_croisement_g', label: 'Feu de croisement gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_croisement_d', label: 'Feu de croisement droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_route_g', label: 'Feu de route gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_route_d', label: 'Feu de route droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_stop_g', label: 'Feu stop gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_stop_d', label: 'Feu stop droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_stop_central', label: 'Troisième feu stop', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_recul_g', label: 'Feu de recul gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feu_recul_d', label: 'Feu de recul droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'antibrouillard_av_g', label: 'Antibrouillard avant gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'antibrouillard_av_d', label: 'Antibrouillard avant droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'antibrouillard_ar', label: 'Antibrouillard arrière', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'eclairage_plaque_g', label: 'Éclairage de plaque gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'eclairage_plaque_d', label: 'Éclairage de plaque droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'clignotant_av_g', label: 'Clignotant avant gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'clignotant_av_d', label: 'Clignotant avant droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'clignotant_ar_g', label: 'Clignotant arrière gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'clignotant_ar_d', label: 'Clignotant arrière droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'repetiteur_g', label: 'Répétiteur latéral gauche', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'repetiteur_d', label: 'Répétiteur latéral droit', unit: '', group: 'ÉCLAIRAGE' },
+    { key: 'feux_detresse', label: 'Feux de détresse', unit: '', group: 'ÉCLAIRAGE' }
   ];
+
+  const controlsFor = (row) => Number(row?.quotes?.total || 0) >= 100
+    ? [...ESSENTIAL_CONTROLS, ...EXTENDED_CONTROLS]
+    : ESSENTIAL_CONTROLS;
+  const controlLevelLabel = (row) => Number(row?.quotes?.total || 0) >= 100
+    ? 'CONTRÔLE COMPLET - 100 € TTC ET PLUS'
+    : 'CONTRÔLE ESSENTIEL - MOINS DE 100 € TTC';
 
   async function one(table, id) {
     if (!id) return null;
@@ -155,11 +192,34 @@
     };
   }
 
+  function drawEdmBrand(doc, x = 32, y = 30) {
+    doc.setDrawColor(...INK);
+    doc.setLineWidth(4);
+    doc.circle(x + 20, y + 15, 16, 'S');
+    doc.setDrawColor(...COPPER);
+    doc.setLineWidth(3);
+    doc.circle(x + 20, y + 15, 6, 'S');
+    doc.setDrawColor(...INK);
+    doc.setLineWidth(4);
+    doc.line(x + 7, y + 15, x + 33, y + 15);
+    doc.setDrawColor(...COPPER);
+    doc.line(x + 20, y + 1, x + 34, y - 8);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(...INK);
+    doc.text('EDM', x + 48, y + 21);
+    doc.setTextColor(...COPPER);
+    doc.text('28', x + 101, y + 21);
+    doc.setFontSize(6.5);
+    doc.setTextColor(...INK);
+    doc.text('SPÉCIALISTE DU FREINAGE', x + 48, y + 32);
+  }
+
   function drawBox(doc, x, y, w, h, title, lines) {
     doc.setDrawColor(185, 190, 197);
     doc.setFillColor(247, 248, 250);
     doc.roundedRect(x, y, w, h, 5, 5, 'FD');
-    doc.setTextColor(28, 32, 38);
+    doc.setTextColor(32, 40, 45);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.text(title, x + 10, y + 15);
@@ -176,7 +236,8 @@
   function drawInterventionControls(doc, row) {
     const report = row.inspection_report || {};
     const appointment = row.appointments || {};
-    const checks = CONTROLS.map((control) => {
+    const controls = controlsFor(row);
+    const checks = controls.map((control) => {
       const value = controlValue(report, control);
       const measure = value.measure != null ? `${Number(value.measure).toLocaleString('fr-FR')} ${control.unit}`.trim() : '';
       return [
@@ -189,14 +250,17 @@
     });
 
     doc.addPage();
-    doc.setTextColor(23, 27, 33);
+    doc.setTextColor(32, 40, 45);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('INTERVENTION ET CONTRÔLES', 32, 43);
+    doc.text('POINTS DE CONTRÔLE PRÉVUS', 32, 43);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.text(`OR ${clean(row.order_number || '')}${report.report_number ? ` · Fiche ${clean(report.report_number)}` : ''}`, 32, 58);
-    doc.setDrawColor(210, 13, 22);
+    doc.setTextColor(...COPPER);
+    doc.setFont('helvetica', 'bold');
+    doc.text(controlLevelLabel(row), 563, 58, { align: 'right' });
+    doc.setDrawColor(211, 154, 114);
     doc.setLineWidth(1.2);
     doc.line(32, 70, 563, 70);
 
@@ -216,12 +280,12 @@
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
-    doc.setTextColor(23, 27, 33);
-    doc.text('MESURES ET CONTRÔLES', 32, 202);
+    doc.setTextColor(32, 40, 45);
+    doc.text('CHECKLIST DE CONTRÔLE', 32, 202);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.2);
     doc.setTextColor(78, 82, 88);
-    doc.text('Les valeurs enregistrées dans la rubrique « Interventions et contrôles » sont reprises automatiquement lors d’une régénération de l’OR.', 32, 215);
+    doc.text('Les points ci-dessous correspondent au contrôle prévu après l’intervention. Les valeurs réellement relevées sont conservées dans le compte rendu de contrôle.', 32, 215);
 
     doc.autoTable({
       startY: 227,
@@ -245,7 +309,7 @@
       doc.addPage();
       y = 42;
     }
-    doc.setTextColor(23, 27, 33);
+    doc.setTextColor(32, 40, 45);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.text('OBSERVATIONS GÉNÉRALES', 32, y);
@@ -286,16 +350,10 @@
     const totalAuthorized = Number(quote.total || rows.reduce((sum, item) => sum + item.total, 0));
     const requestText = [quote.description, request.notes, serviceNames(request).join(' · ')].map(clean).filter(Boolean).filter((value, index, array) => array.indexOf(value) === index).join(' — ');
 
-    doc.setTextColor(23, 27, 33);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(24);
-    doc.text('EDM', 32, 43);
-    doc.setTextColor(210, 13, 22);
-    doc.text('28', 82, 43);
-    doc.setTextColor(23, 27, 33);
-    doc.setFontSize(7);
-    doc.text('MÉCANIQUE · DIAGNOSTIC · SERVICES', 32, 56);
+    drawEdmBrand(doc, 32, 26);
 
+    doc.setTextColor(...INK);
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text('ORDRE DE RÉPARATION', 563, 40, { align: 'right' });
     doc.setFont('helvetica', 'normal');
@@ -303,7 +361,7 @@
     doc.text(`N° ${clean(row.order_number || 'Non attribué')}`, 563, 55, { align: 'right' });
     doc.text(`Devis accepté : ${clean(quote.quote_number || 'Non renseigné')}`, 563, 68, { align: 'right' });
 
-    doc.setDrawColor(210, 13, 22);
+    doc.setDrawColor(211, 154, 114);
     doc.setLineWidth(1.2);
     doc.line(32, 78, 563, 78);
 
@@ -325,7 +383,7 @@
       appointment.starts_at ? `Rendez-vous : ${dateTime(appointment.starts_at)}` : ''
     ]);
 
-    doc.setTextColor(23, 27, 33);
+    doc.setTextColor(32, 40, 45);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.text('TRAVAUX ET PIÈCES AUTORISÉS PAR LE DEVIS ACCEPTÉ', 32, 231);
@@ -365,7 +423,7 @@
       y = 42;
     }
 
-    doc.setTextColor(23, 27, 33);
+    doc.setTextColor(32, 40, 45);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.text('DEMANDE CLIENT / PÉRIMÈTRE DE L’INTERVENTION', 32, y);
@@ -381,7 +439,7 @@
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.text('MONTANT AUTORISÉ', 44, y + 17);
-    doc.setTextColor(210, 13, 22);
+    doc.setTextColor(211, 154, 114);
     doc.setFontSize(15);
     doc.text(money(totalAuthorized), 551, y + 20, { align: 'right' });
     doc.setTextColor(50, 54, 60);
@@ -393,7 +451,7 @@
     const conditionText = 'Aucun travail ni remplacement non listé ci-dessus ne doit être exécuté sans accord préalable du client. Toute découverte pendant l’intervention fait l’objet d’une information et, si nécessaire, d’un devis complémentaire.';
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
-    doc.setTextColor(23, 27, 33);
+    doc.setTextColor(32, 40, 45);
     doc.text('CONDITIONS ET MODIFICATIONS', 32, y);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.4);
@@ -416,7 +474,7 @@
     doc.rect(308, y, 255, 22, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
-    doc.setTextColor(23, 27, 33);
+    doc.setTextColor(32, 40, 45);
     doc.text('ACCEPTATION DU CLIENT', 159.5, y + 14, { align: 'center' });
     doc.text('VISA EDM28', 435.5, y + 14, { align: 'center' });
     doc.setFont('helvetica', 'normal');
@@ -428,17 +486,22 @@
 
     if (quote.commercial_model === 'customer_supplied_v1') {
       doc.addPage();
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(23, 27, 33);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(32, 40, 45);
       doc.text('COMMENT SE DÉROULE LA PRESTATION', 32, 43);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      doc.setTextColor(...COPPER); doc.setFontSize(9);
+      doc.text(controlLevelLabel(row), 563, 43, { align: 'right' });
+      doc.setTextColor(...INK);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.2);
       const steps = [
-        'Avant de commencer : vérification des pièces apportées et des références indiquées dans le devis.',
-        'Pour les éléments démontés : nettoyage des surfaces de contact accessibles et contrôle de leur état.',
-        'Graissage seulement aux endroits prévus par le constructeur, avec un produit adapté. Jamais sur les surfaces de freinage.',
-        'Montage selon les instructions du constructeur. Serrage à la clé dynamométrique et respect des méthodes prescrites.',
-        'Vérification après montage et photos de l’intervention pour le dossier client.',
-        'Tout travail supplémentaire doit être expliqué et accepté avant sa réalisation.',
-        'Les pièces de remplacement sont achetées par le client. Le forfait EDM28 comprend la prestation et les consommables d’atelier.'
+        '1. Mise en sécurité du véhicule : positionnement, points de levage prévus par le constructeur et protection de la zone de travail.',
+        '2. Dépose des éléments nécessaires à la prestation : roue puis, selon le travail prévu, étrier et chape de frein, disque, amortisseur, rotule, bras, biellette ou roulement. Les pièces déposées sont repérées pour éviter toute inversion.',
+        '3. Nettoyage des portées et surfaces de contact accessibles : moyeu, appuis, logements et filetages concernés. Recherche de corrosion, jeu, fuite, soufflet détérioré ou usure anormale.',
+        '4. Préparation au remontage : contrôle des pièces neuves, des fixations et des éléments réutilisés. Les vis ou écrous à usage unique sont remplacés lorsque le constructeur le prévoit.',
+        '5. Lubrification uniquement aux points prévus : coulisseaux, appuis ou articulations concernés avec un produit adapté. Aucune graisse sur les disques, plaquettes ou autres surfaces de friction.',
+        '6. Remontage dans l’ordre technique prévu. Les couples et angles de serrage sont ceux du constructeur pour le véhicule concerné ; aucune valeur générique n’est appliquée.',
+        '7. Remise en service et vérification fonctionnelle : contrôle visuel, absence d’interférence ou de fuite et, pour le freinage, remise en appui de la pédale avant déplacement du véhicule.',
+        '8. Contrôle final EDM28 : photos utiles au dossier puis checklist correspondant au montant de la prestation. Tout travail supplémentaire reste soumis à l’accord préalable du client.',
+        'Les pièces de remplacement sont achetées par le client. EDM28 facture la prestation et les consommables d’atelier, sans marge cachée sur les pièces.'
       ];
       let position = 82;
       for (const step of steps) { const lines = doc.splitTextToSize(step, 531); doc.text(lines, 32, position); position += lines.length * 14 + 16; }
