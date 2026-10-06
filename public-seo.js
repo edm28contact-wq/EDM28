@@ -1,8 +1,16 @@
 import { resolveSupabasePublicConfig } from './supabase-config.js';
 
-const PUBLIC_EMAIL = 'contact@edm28.fr';
-const PUBLIC_ADDRESS = '17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye';
-const DIRECTIONS_URL = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(PUBLIC_ADDRESS);
+const DEFAULT_PUBLIC_BUSINESS = Object.freeze({
+  business_name: 'EDM28',
+  email: 'contact@edm28.fr',
+  phone: '',
+  address_line1: '',
+  address_line2: '',
+  postal_code: '',
+  city: '',
+  country: 'France',
+  website: 'https://edm28.fr/'
+});
 
 const NAV_ITEMS = [
   ['/', 'Accueil'],
@@ -306,6 +314,63 @@ function getSlug(req) {
   }
 }
 
+function normalizePublicBusiness(row = {}) {
+  const business = { ...DEFAULT_PUBLIC_BUSINESS, ...row };
+  business.business_name = String(business.business_name || 'EDM28').trim() || 'EDM28';
+  business.email = String(business.email || '').trim();
+  business.phone = String(business.phone || '').trim();
+  business.address_line1 = String(business.address_line1 || '').trim();
+  business.address_line2 = String(business.address_line2 || '').trim();
+  business.postal_code = String(business.postal_code || '').trim();
+  business.city = String(business.city || '').trim();
+  business.country = String(business.country || '').trim();
+  business.website = String(business.website || '').trim();
+  business.address = [business.address_line1, business.address_line2, [business.postal_code, business.city].filter(Boolean).join(' '), business.country].filter(Boolean).join(', ');
+  business.directions_url = business.address ? 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(business.address) : '';
+  return business;
+}
+
+async function loadPublicBusiness() {
+  try {
+    const supabase = resolveSupabasePublicConfig();
+    if (!supabase.url || !supabase.key) return normalizePublicBusiness();
+    const params = new URLSearchParams({
+      select: 'business_name,address_line1,address_line2,postal_code,city,country,phone,email,website,logo_url,timezone,booking_url,updated_at',
+      id: 'eq.true',
+      limit: '1'
+    });
+    const response = await fetch(`${supabase.url}/rest/v1/public_business_profile?${params}`, {
+      headers: { apikey: supabase.key, Authorization: `Bearer ${supabase.key}` }
+    });
+    if (!response.ok) return normalizePublicBusiness();
+    const rows = await response.json();
+    return normalizePublicBusiness(Array.isArray(rows) ? rows[0] : null);
+  } catch (error) {
+    console.error('SEO business profile load error', error);
+    return normalizePublicBusiness();
+  }
+}
+
+function pageWithBusiness(page, business) {
+  if (page.path === '/a-propos') {
+    const copy = { ...page, sections: page.sections.map((section) => [...section]) };
+    copy.sections[2] = ['Où nous trouver', business.address
+      ? `Le garage se trouve au ${business.address}. Les interventions se font sur rendez-vous.`
+      : 'Les interventions se font sur rendez-vous. Les coordonnées publiques sont mises à jour depuis le back-office.'];
+    return copy;
+  }
+  if (page.path === '/contact') {
+    const copy = { ...page, sections: page.sections.map((section) => [...section]), faq: page.faq.map((item) => [...item]) };
+    const channels = [business.email ? `email : ${business.email}` : '', business.phone ? `téléphone : ${business.phone}` : ''].filter(Boolean).join(' ; ');
+    copy.description = channels ? `Contactez ${business.business_name} - ${channels}.` : `Contactez ${business.business_name} via le formulaire de demande en ligne.`;
+    copy.lede = business.phone ? 'Un email ou un téléphone pour vos questions. Les coordonnées viennent directement du back-office.' : 'Un email pour vos questions. Les coordonnées viennent directement du back-office.';
+    copy.sections[1] = ['Coordonnées publiques', channels || 'Les coordonnées officielles seront affichées dès qu’elles seront renseignées dans le back-office.'];
+    copy.faq[0] = ['Comment contacter EDM28 ?', channels || 'Utilisez la demande en ligne. Les coordonnées seront affichées dès qu’elles seront renseignées.'];
+    return copy;
+  }
+  return page;
+}
+
 async function loadPublishedServices() {
   try {
     const supabase = resolveSupabasePublicConfig();
@@ -344,23 +409,27 @@ function renderTariffs(services) {
   return `<section aria-labelledby="catalogue-tarifs"><h2 id="catalogue-tarifs">Catalogue public actuel</h2><div class="price-grid">${cards}</div><p class="small">Tarifs chargés depuis le catalogue public EDM28. Le devis confirme le périmètre final de l’intervention.</p></section>`;
 }
 
-function structuredData(page, origin) {
+function structuredData(page, origin, business) {
   const canonical = `${origin}${page.path}`;
   const graph = [
     {
       '@type': 'Organization',
       '@id': `${origin}/#organization`,
-      name: 'EDM28',
-      url: `${origin}/`,
-      email: PUBLIC_EMAIL,
+      name: business.business_name,
+      url: business.website || `${origin}/`,
+      ...(business.email ? { email: business.email } : {}),
+      ...(business.phone ? { telephone: business.phone } : {}),
+      ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
       description: 'Garage automobile spécialisé freinage et liaison au sol, avec parcours client transparent et devis avant intervention.'
     },
     {
       '@type': 'AutoRepair',
       '@id': `${origin}/#autorepair`,
-      name: 'EDM28',
-      url: `${origin}/`,
-      email: PUBLIC_EMAIL,
+      name: business.business_name,
+      url: business.website || `${origin}/`,
+      ...(business.email ? { email: business.email } : {}),
+      ...(business.phone ? { telephone: business.phone } : {}),
+      ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
       description: 'Garage automobile spécialisé freinage et liaison au sol.'
     },
     {
@@ -396,7 +465,7 @@ function structuredData(page, origin) {
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replaceAll('<', '\\u003c');
 }
 
-function renderPage(page, origin, services = [], clientConfig = null) {
+function renderPage(page, origin, services = [], clientConfig = null, business = normalizePublicBusiness()) {
   const canonical = `${origin}${page.path}`;
   const breadcrumbs = page.breadcrumbs.map(([path, name], index) => {
     const current = index === page.breadcrumbs.length - 1;
@@ -479,17 +548,17 @@ function renderPage(page, origin, services = [], clientConfig = null) {
         ? '<div id="edmInterventionsApp"></div>'
         : '';
   const contact = `<section class="contact-card" aria-label="Coordonnées du garage">
-    <p>Une question sur votre véhicule ou votre devis ? Contactez-nous par email.</p>
+    <p>Une question sur votre véhicule ou votre devis ? Utilisez les coordonnées officielles ci-dessous.</p>
     <dl class="contact-details">
-      <div><dt>Email</dt><dd><a href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></dd></div>
-      <div><dt>Adresse</dt><dd><a href="${esc(DIRECTIONS_URL)}" target="_blank" rel="noopener noreferrer">17 bis route du Videlet<br>28410 Saint-Lubin-de-la-Haye<span class="contact-hint">Voir l’itinéraire</span></a></dd></div>
-      <div><dt>Téléphone</dt><dd><span>00 00 00 00 00</span><small class="contact-hint">Numéro provisoire — utilisez l’email pour le moment.</small></dd></div>
+      ${business.email ? `<div><dt>Email</dt><dd><a href="mailto:${esc(business.email)}">${esc(business.email)}</a></dd></div>` : ''}
+      ${business.address ? `<div><dt>Adresse</dt><dd>${business.directions_url ? `<a href="${esc(business.directions_url)}" target="_blank" rel="noopener noreferrer">${esc(business.address)}<span class="contact-hint">Voir l’itinéraire</span></a>` : esc(business.address)}</dd></div>` : ''}
+      ${business.phone ? `<div><dt>Téléphone</dt><dd><a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></dd></div>` : ''}
     </dl><p>Accueil sur rendez-vous.</p>
   </section>`;
   const bodyContent = page.path === '/contact' ? contact : (page.path === '/demande' || page.path === '/mes-interventions')
     ? `${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>`
     : `${sections}${tariffs}${shorts}${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
-  const jsonLd = structuredData(page, origin);
+  const jsonLd = structuredData(page, origin, business);
 
   return `<!doctype html>
 <html lang="fr">
@@ -536,14 +605,14 @@ function renderPage(page, origin, services = [], clientConfig = null) {
   </nav>
   <div class="drawer-bottom">
     <a class="drawer-cta" data-request-cta href="${page.path === '/demande' ? '#connexion' : '/demande'}"><span>${page.path === '/demande' ? 'Me connecter' : 'Faire ma demande'}</span><span aria-hidden="true">→</span></a>
-    <div class="drawer-contact">Une question ?<a href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></div>
+    <div class="drawer-contact">Une question ?${business.email ? `<a href="mailto:${esc(business.email)}">${esc(business.email)}</a>` : ''}</div>
   </div>
 </aside>
 <main>
 <div class="hero${page.path === '/' ? ' hero-home' : ''}"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1>${page.path === '/' ? '<div class="hero-kicker"><span></span>Freinage <b>•</b> Liaison au sol</div><div class="hero-logo" aria-hidden="true"><img src="/logo-edm.svg" alt=""></div>' : ''}<p class="lead">${esc(page.lede)}</p><a class="cta" data-request-cta href="${page.path === '/demande' ? '#connexion' : '/demande'}">${page.path === '/demande' ? 'Me connecter' : 'Faire ma demande'}</a>${page.path === '/' ? '<div class="hero-trust" aria-label="Engagements EDM28"><span>Devis avant travaux</span><span>Pas de marge sur les pièces</span><span>Suivi client transparent</span></div>' : ''}</div></div>
 <div class="wrap content">${['/','/demande','/tarifs','/fonctionnement'].includes(page.path) ? '<section class="parts-transparency"><h2>EDM28 ne vend pas de pièces</h2><p>Vous achetez les pièces directement auprès du vendeur de votre choix. Nous préparons votre panier et vous donnons les références : aucune marge sur les pièces, aucun prix caché. Vous réglez à EDM28 uniquement la prestation, consommables compris.</p></section>' : ''}${bodyContent}</div>
 </main>
-<footer class="site-footer"><div class="wrap"><p><strong>EDM28</strong> — Garage automobile spécialisé freinage et liaison au sol.</p><p>Email : <a class="email" href="mailto:${PUBLIC_EMAIL}">${PUBLIC_EMAIL}</a></p></div></footer>
+<footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}</div></footer>
 ${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
 <script src="/public-site.js?v=2" defer></script></body>
 </html>`;
@@ -554,16 +623,20 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).end();
   }
-  const page = PAGES[getSlug(req)];
-  if (!page) {
+  const basePage = PAGES[getSlug(req)];
+  if (!basePage) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1><p><a href="/">Retour à l’accueil</a></p></main></body></html>');
   }
-  const services = page.path === '/tarifs' ? await loadPublishedServices() : [];
+  const [services, business] = await Promise.all([
+    basePage.path === '/tarifs' ? loadPublishedServices() : Promise.resolve([]),
+    loadPublicBusiness()
+  ]);
+  const page = pageWithBusiness(basePage, business);
   const clientConfig = resolveSupabasePublicConfig();
-  const html = renderPage(page, getOrigin(req), services, clientConfig);
+  const html = renderPage(page, getOrigin(req), services, clientConfig, business);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', page.path === '/mes-interventions' || page.path === '/demande' ? 'private, no-store' : 'public, max-age=0, s-maxage=120, stale-while-revalidate=300');
+  res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'HEAD') return res.status(200).end();
   return res.status(200).send(html);
 }
