@@ -107,7 +107,7 @@ try {
     }; } };
   })();`;
 
-  await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) =>
+  await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0', (route) =>
     route.fulfill({ status: 200, contentType: 'text/javascript', body: supabaseStub })
   );
 
