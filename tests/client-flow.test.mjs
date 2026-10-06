@@ -269,3 +269,17 @@ test('legacy unauthenticated request email endpoint stays removed', async () => 
   assert.match(source, /\/api\/submit-request-v2/);
   assert.doesNotMatch(source, /fetch\(['"]\/api\/submit-request['"]/);
 });
+
+
+test('unused public vehicle and basket helper endpoints stay removed', async () => {
+  for (const path of ['../api/ai-basket.js','../api/vin.js','../api/plate.js']) {
+    await assert.rejects(access(new URL(path, import.meta.url)));
+  }
+  const source = (await Promise.all([
+    read('public-client.js'),
+    read('request-submit-safe.js'),
+    read('integration.js'),
+    read('client-journey.js')
+  ])).join('\n');
+  assert.doesNotMatch(source, /\/api\/(?:ai-basket|vin|plate)(?:['"?/]|$)/);
+});
