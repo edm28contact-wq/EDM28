@@ -177,9 +177,20 @@
       push(invoicesWithoutPdf.length, 'error', 'Factures émises sans PDF', `${invoicesWithoutPdf.length} facture(s) visible(s) par les clients n’ont pas de PDF.`, 'document-pdf');
       push(overdueInvoices.length, 'error', 'Factures échues', `${overdueInvoices.length} facture(s) sont échues pour ${this.money(overdueInvoices.reduce((sum, i) => sum + Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0)), 0))}.`, 'accounting');
 
-      const requiredBusiness = ['business_name','legal_name','siret','siren','vat_status','address_line1','postal_code','city','country','phone','email','payment_terms','late_penalty_text','recovery_fee_text','logo_url','calendar_id','timezone'];
-      const missingBusiness = requiredBusiness.filter((key) => !String(business?.[key] || '').trim());
-      push(missingBusiness.length, 'error', 'Entreprise non prête', `${missingBusiness.length} information(s) obligatoire(s) manquent pour les documents et automatisations.`, 'business');
+      const requirements = window.EDMBusinessRequirements;
+      const missingBusiness = requirements?.missing
+        ? requirements.missing(business)
+        : ['business_name','legal_name','siret','siren','vat_status','address_line1','postal_code','city','country','phone','email','payment_terms','late_penalty_text','recovery_fee_text','logo_url','calendar_id','booking_url','timezone']
+            .filter((key) => !String(business?.[key] || '').trim())
+            .map((key) => ({ key, label: key }));
+      const missingLabels = missingBusiness.map((item) => item.label).join(', ');
+      push(
+        missingBusiness.length,
+        'error',
+        'Entreprise non prête',
+        `${missingBusiness.length} information(s) obligatoire(s) manquent : ${missingLabels}. Complétez-les avant d’activer les automatisations ou d’émettre les documents définitifs.`,
+        'business'
+      );
 
       const operational = this.$('overviewOperationalKpis');
       if (operational) operational.innerHTML = [
