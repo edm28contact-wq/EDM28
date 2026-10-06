@@ -256,3 +256,30 @@ test('production security headers force HTTPS for one year', async () => {
   assert.ok(globalHeaders.some((header) => header.key === 'X-Frame-Options' && header.value === 'DENY'));
   assert.ok(globalHeaders.some((header) => header.key === 'X-Content-Type-Options' && header.value === 'nosniff'));
 });
+
+
+test('legacy unauthenticated request email endpoint stays removed', async () => {
+  await assert.rejects(access(new URL('../api/submit-request.js', import.meta.url)));
+  const [client, safe, integration] = await Promise.all([
+    read('public-client.js'),
+    read('request-submit-safe.js'),
+    read('integration.js')
+  ]);
+  const source = client + safe + integration;
+  assert.match(source, /\/api\/submit-request-v2/);
+  assert.doesNotMatch(source, /fetch\(['"]\/api\/submit-request['"]/);
+});
+
+
+test('unused public vehicle and basket helper endpoints stay removed', async () => {
+  for (const path of ['../api/ai-basket.js','../api/vin.js','../api/plate.js']) {
+    await assert.rejects(access(new URL(path, import.meta.url)));
+  }
+  const source = (await Promise.all([
+    read('public-client.js'),
+    read('request-submit-safe.js'),
+    read('integration.js'),
+    read('client-journey.js')
+  ])).join('\n');
+  assert.doesNotMatch(source, /\/api\/(?:ai-basket|vin|plate)(?:['"?/]|$)/);
+});
