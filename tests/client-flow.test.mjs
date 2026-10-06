@@ -246,3 +246,13 @@ test('orphan paid plate estimate endpoint stays removed', async () => {
   assert.doesNotMatch(client + integration + routing, /\/api\/estimate/);
   assert.doesNotMatch(client + integration + routing, /TokenDemo2026B/);
 });
+
+
+test('production security headers force HTTPS for one year', async () => {
+  const config = JSON.parse(await read('vercel.json'));
+  const globalHeaders = config.headers.find((entry) => entry.source === '/(.*)')?.headers || [];
+  const hsts = globalHeaders.find((header) => header.key === 'Strict-Transport-Security');
+  assert.equal(hsts?.value, 'max-age=31536000');
+  assert.ok(globalHeaders.some((header) => header.key === 'X-Frame-Options' && header.value === 'DENY'));
+  assert.ok(globalHeaders.some((header) => header.key === 'X-Content-Type-Options' && header.value === 'nosniff'));
+});
