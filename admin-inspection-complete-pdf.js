@@ -4,11 +4,11 @@
 
   const A = () => window.EDMAdmin;
   const BUCKET = 'repair-documents';
-  const RED = [206, 13, 20];
-  const DARK = [22, 27, 34];
+  const RED = [211, 154, 114];
+  const DARK = [32, 40, 45];
   const MUTED = [100, 108, 120];
   const LIGHT = [244, 246, 248];
-  const BLUE = [224, 234, 247];
+  const BLUE = [244, 235, 229];
 
   const controlMeta = {
     freinage_visuel: ['Freinage', 'Système de freinage accessible - contrôle visuel', ''],
@@ -200,30 +200,48 @@
     return groups;
   }
 
+  function drawEdmBrand(doc, x = 14, y = 8) {
+    doc.setDrawColor(...DARK);
+    doc.setLineWidth(1.4);
+    doc.circle(x + 6, y + 5, 5.2, 'S');
+    doc.setDrawColor(...RED);
+    doc.setLineWidth(1.1);
+    doc.circle(x + 6, y + 5, 2, 'S');
+    doc.setDrawColor(...DARK);
+    doc.line(x + 2, y + 5, x + 10, y + 5);
+    doc.setDrawColor(...RED);
+    doc.line(x + 6, y + 1, x + 10, y - 2);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(...DARK);
+    doc.text('EDM', x + 14, y + 7);
+    doc.setTextColor(...RED);
+    doc.text('28', x + 29.5, y + 7);
+    doc.setFontSize(4.8);
+    doc.setTextColor(...DARK);
+    doc.text('SPÉCIALISTE DU FREINAGE', x + 14, y + 11);
+  }
+
   function drawHeader(doc, data, subtitle = '') {
     const { cfg, report } = data;
+    drawEdmBrand(doc, 14, 7);
     doc.setTextColor(...DARK);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text('EDM', 14, 16);
-    doc.setTextColor(...RED);
-    doc.text('28', 29, 16);
-    doc.setTextColor(...DARK);
     doc.setFontSize(17);
-    doc.text('FICHE DE CONTRÔLE', 105, 16, { align: 'center' });
+    doc.text('FICHE DE CONTRÔLE', 196, 15, { align: 'right' });
     doc.setDrawColor(...RED);
     doc.setLineWidth(0.8);
-    doc.line(14, 21, 196, 21);
+    doc.line(14, 23, 196, 23);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...MUTED);
-    doc.setFontSize(8);
-    doc.text(String(cfg.business_name || cfg.legal_name || 'EDM28'), 14, 27);
-    doc.text(String(report.report_number || ''), 196, 27, { align: 'right' });
+    doc.setFontSize(7.5);
+    doc.text(String(cfg.business_name || cfg.legal_name || 'EDM28'), 14, 29);
+    doc.text(String(report.report_number || ''), 196, 29, { align: 'right' });
     if (subtitle) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...DARK);
-      doc.setFontSize(9);
-      doc.text(subtitle, 14, 34);
+      doc.setFontSize(8.5);
+      doc.text(subtitle, 14, 35);
     }
   }
 
