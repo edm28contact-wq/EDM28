@@ -3,7 +3,7 @@
   "buildCommand": "npm test",
   "env": {
     "PUBLIC_SITE_ORIGIN": "https://edm28.fr",
-    "RESEND_FROM_EMAIL": "EDM28 <onboarding@resend.dev>",
+    "RESEND_FROM_EMAIL": "EDM28 <contact@edm28.fr>",
     "RESEND_TO_EMAIL": "contact@edm28.fr"
   },
   "functions": {
