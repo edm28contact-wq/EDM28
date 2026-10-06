@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   '/',
   '/demande',
   '/mes-interventions',
+  '/garage-freinage-saint-lubin-de-la-haye',
   '/freinage',
   '/freinage/plaquettes-de-frein',
   '/freinage/disques-de-frein',
@@ -168,21 +169,20 @@ test('les pages SEO rendent canonical, H1, Open Graph et structured data', async
   assert.match(source, /Questions fréquentes/);
 });
 
-test('les pages SEO secondaires reçoivent la même identité locale EDM28', async () => {
+test('les pages SEO secondaires reçoivent l’identité entreprise synchronisée', async () => {
   const source = await read('api/app.js');
+  assert.match(source, /async function loadPublicBusiness/);
+  assert.match(source, /rest\/v1\/public_business_profile/);
   assert.match(source, /function buildSecondaryEntityStructuredData/);
-  assert.match(source, /function handleSeoDocument/);
+  assert.match(source, /async function handleSeoDocument/);
   assert.match(source, /id="edm-entity-identity"/);
   assert.match(source, /alternateName: \['EDM 28', 'edm28\.fr'\]/);
   assert.match(source, /sameAs: \[PUBLIC_GOOGLE_MAPS_URL\]/);
-  assert.match(source, /streetAddress: PUBLIC_STREET_ADDRESS/);
-  assert.match(source, /addressLocality: PUBLIC_LOCALITY/);
-  assert.match(source, /postalCode: PUBLIC_POSTAL_CODE/);
+  assert.match(source, /streetAddress: \[business\.address_line1, business\.address_line2\]/);
+  assert.match(source, /addressLocality: business\.city/);
+  assert.match(source, /postalCode: business\.postal_code/);
+  assert.match(source, /telephone: business\.phone/);
   assert.match(source, /openingHoursSpecification: openingHours/);
-  assert.match(source, /areaServed: \{ '@type': 'Place', name: 'Saint-Lubin-de-la-Haye et alentours' \}/);
-  assert.match(source, /EDM28 ne vend pas les pièces automobiles et ne prend aucune marge ni commission sur leur prix/);
-  assert.match(source, /Adresse du garage : 17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye/);
-  assert.match(source, /Identité locale vérifiée/);
   assert.match(source, /Pièces automobiles sans marge ni commission/);
 });
 
@@ -247,17 +247,18 @@ test('la page d’accueil reçoit le positionnement local SEO et le maillage int
   assert.match(source, /href="\/tarifs"/);
   assert.match(source, /'@type': 'Organization'/);
   assert.match(source, /'@type': 'AutoRepair'/);
-  assert.match(source, /const PUBLIC_STREET_ADDRESS = '17 bis route du Videlet'/);
-  assert.match(source, /streetAddress: PUBLIC_STREET_ADDRESS/);
-  assert.match(source, /addressLocality: PUBLIC_LOCALITY/);
-  assert.match(source, /postalCode: PUBLIC_POSTAL_CODE/);
+  assert.match(source, /DEFAULT_PUBLIC_BUSINESS/);
+  assert.match(source, /public_business_profile/);
+  assert.match(source, /streetAddress: \[business\.address_line1, business\.address_line2\]/);
+  assert.match(source, /addressLocality: business\.city/);
+  assert.match(source, /postalCode: business\.postal_code/);
   assert.match(source, /openingHoursSpecification: openingHours/);
   assert.match(source, /dayOfWeek: 'https:\/\/schema\.org\/Sunday'/);
   assert.match(source, /opens: '09:00'/);
   assert.match(source, /closes: '13:00'/);
   assert.match(source, /opens: '14:00'/);
   assert.match(source, /closes: '18:00'/);
-  assert.doesNotMatch(source, /telephone/);
+  assert.match(source, /telephone: business\.phone/);
 });
 
 
