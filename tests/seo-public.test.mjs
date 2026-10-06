@@ -259,3 +259,14 @@ test('la page d’accueil reçoit le positionnement local SEO et le maillage int
   assert.match(source, /closes: '18:00'/);
   assert.doesNotMatch(source, /telephone/);
 });
+
+
+test('le fonctionnement public décrit la checklist, la facture et le bon lien vers Mes interventions', async () => {
+  const source = await read('public-seo.js');
+  assert.match(source, /7\. Checklist de contrôle après intervention/);
+  assert.match(source, /contrôle essentiel pour une prestation de moins de 100 € TTC/);
+  assert.match(source, /contrôle complet à partir de 100 € TTC/);
+  assert.match(source, /8\. Clôture, facture et historique/);
+  assert.match(source, /\['\/mes-interventions', 'Mes interventions'\]/);
+  assert.doesNotMatch(source, /\/\?page=history/);
+});
