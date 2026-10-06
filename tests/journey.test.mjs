@@ -48,7 +48,7 @@ test('stored content cannot inject HTML or unsafe supplier links',()=>{
 });
 async function dispatch(t,options={}){
  const old={VERCEL_ENV:process.env.VERCEL_ENV,RESEND_API_KEY:process.env.RESEND_API_KEY,RESEND_FROM_EMAIL:process.env.RESEND_FROM_EMAIL};
- Object.assign(process.env,{VERCEL_ENV:'preview',RESEND_API_KEY:'re_test_fixture',RESEND_FROM_EMAIL:'EDM28 <test@example.test>'});
+ Object.assign(process.env,{VERCEL_ENV:'preview',RESEND_API_KEY:'re_test_fixture',RESEND_FROM_EMAIL:options.sender || 'EDM28 <test@example.test>'});
  t.after(()=>{for(const [k,v] of Object.entries(old)){if(v===undefined)delete process.env[k];else process.env[k]=v;}});
  const calls=[];t.mock.method(globalThis,'fetch',async(input,init)=>{
   const url=new URL(input),body=JSON.parse(init.body);calls.push({url,body,headers:init.headers});
@@ -68,6 +68,10 @@ test('dispatcher cannot turn an arbitrary recipient into an email',async t=>{
 test('dispatcher uses only immutable persisted payload and a stable provider idempotency key',async t=>{
  const f=await dispatch(t,{body:{id,token,recipient:'attacker@example.test'}});assert.equal(f.res.statusCode,200);assert.equal(f.calls.length,3);
  assert.deepEqual(f.calls[1].body.to,[payload.recipient]);assert.equal(f.calls[1].body.reply_to,payload.contact_email);assert.equal(f.calls[1].headers['Idempotency-Key'],'edm28-journey-'+id);assert.equal(f.calls[2].body.status,'sent');
+});
+test('dispatcher replaces the Resend onboarding sender with the verified EDM28 domain',async t=>{
+ const f=await dispatch(t,{sender:'EDM28 <onboarding@resend.dev>'});assert.equal(f.res.statusCode,200);
+ assert.equal(f.calls[1].body.from,'EDM28 <contact@edm28.fr>');
 });
 test('provider error is retriable and never reported as sent',async t=>{
  const f=await dispatch(t,{providerError:true});assert.equal(f.res.statusCode,503);assert.equal(f.calls.at(-1).body.status,'pending');
@@ -93,4 +97,10 @@ test('journey emails use persisted back-office contact information',()=>{
  assert.match(email.text,/02 37 00 00 00/);
  assert.match(email.text,/EDM28 Test/);
  assert.match(email.html,/mailto:garage@example\.test/);
+});
+
+
+test('production Vercel defaults to the verified EDM28 sending domain',async()=>{
+ const config=JSON.parse(await read('vercel.json'));
+ assert.equal(config.env.RESEND_FROM_EMAIL,'EDM28 <contact@edm28.fr>');
 });
