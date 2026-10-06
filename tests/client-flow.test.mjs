@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, access } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
@@ -233,4 +233,16 @@ test('new request notification follows the back-office public email and EDM28 br
   assert.match(api, /to: preview[\s\S]*businessEmail/);
   assert.match(api, /Nouvelle demande \$\{businessName\}/);
   assert.doesNotMatch(api, /Nouvelle demande EDM AUTO/);
+});
+
+
+test('orphan paid plate estimate endpoint stays removed', async () => {
+  await assert.rejects(access(new URL('../api/estimate.js', import.meta.url)));
+  const [client, integration, routing] = await Promise.all([
+    read('public-client.js'),
+    read('integration.js'),
+    read('edge-functions-routing.js')
+  ]);
+  assert.doesNotMatch(client + integration + routing, /\/api\/estimate/);
+  assert.doesNotMatch(client + integration + routing, /TokenDemo2026B/);
 });
