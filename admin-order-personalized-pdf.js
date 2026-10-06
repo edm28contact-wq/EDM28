@@ -192,6 +192,29 @@
     };
   }
 
+  function drawEdmBrand(doc, x = 32, y = 30) {
+    doc.setDrawColor(...INK);
+    doc.setLineWidth(4);
+    doc.circle(x + 20, y + 15, 16, 'S');
+    doc.setDrawColor(...COPPER);
+    doc.setLineWidth(3);
+    doc.circle(x + 20, y + 15, 6, 'S');
+    doc.setDrawColor(...INK);
+    doc.setLineWidth(4);
+    doc.line(x + 7, y + 15, x + 33, y + 15);
+    doc.setDrawColor(...COPPER);
+    doc.line(x + 20, y + 1, x + 34, y - 8);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(...INK);
+    doc.text('EDM', x + 48, y + 21);
+    doc.setTextColor(...COPPER);
+    doc.text('28', x + 101, y + 21);
+    doc.setFontSize(6.5);
+    doc.setTextColor(...INK);
+    doc.text('SPÉCIALISTE DU FREINAGE', x + 48, y + 32);
+  }
+
   function drawBox(doc, x, y, w, h, title, lines) {
     doc.setDrawColor(185, 190, 197);
     doc.setFillColor(247, 248, 250);
@@ -327,16 +350,10 @@
     const totalAuthorized = Number(quote.total || rows.reduce((sum, item) => sum + item.total, 0));
     const requestText = [quote.description, request.notes, serviceNames(request).join(' · ')].map(clean).filter(Boolean).filter((value, index, array) => array.indexOf(value) === index).join(' — ');
 
-    doc.setTextColor(32, 40, 45);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(24);
-    doc.text('EDM', 32, 43);
-    doc.setTextColor(211, 154, 114);
-    doc.text('28', 82, 43);
-    doc.setTextColor(32, 40, 45);
-    doc.setFontSize(7);
-    doc.text('MÉCANIQUE · DIAGNOSTIC · SERVICES', 32, 56);
+    drawEdmBrand(doc, 32, 26);
 
+    doc.setTextColor(...INK);
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text('ORDRE DE RÉPARATION', 563, 40, { align: 'right' });
     doc.setFont('helvetica', 'normal');
@@ -471,15 +488,20 @@
       doc.addPage();
       doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(32, 40, 45);
       doc.text('COMMENT SE DÉROULE LA PRESTATION', 32, 43);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      doc.setTextColor(...COPPER); doc.setFontSize(9);
+      doc.text(controlLevelLabel(row), 563, 43, { align: 'right' });
+      doc.setTextColor(...INK);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.2);
       const steps = [
-        'Avant de commencer : vérification des pièces apportées et des références indiquées dans le devis.',
-        'Pour les éléments démontés : nettoyage des surfaces de contact accessibles et contrôle de leur état.',
-        'Graissage seulement aux endroits prévus par le constructeur, avec un produit adapté. Jamais sur les surfaces de freinage.',
-        'Montage selon les instructions du constructeur. Serrage à la clé dynamométrique et respect des méthodes prescrites.',
-        'Vérification après montage et photos de l’intervention pour le dossier client.',
-        'Tout travail supplémentaire doit être expliqué et accepté avant sa réalisation.',
-        'Les pièces de remplacement sont achetées par le client. Le forfait EDM28 comprend la prestation et les consommables d’atelier.'
+        '1. Mise en sécurité du véhicule : positionnement, points de levage prévus par le constructeur et protection de la zone de travail.',
+        '2. Dépose des éléments nécessaires à la prestation : roue puis, selon le travail prévu, étrier et chape de frein, disque, amortisseur, rotule, bras, biellette ou roulement. Les pièces déposées sont repérées pour éviter toute inversion.',
+        '3. Nettoyage des portées et surfaces de contact accessibles : moyeu, appuis, logements et filetages concernés. Recherche de corrosion, jeu, fuite, soufflet détérioré ou usure anormale.',
+        '4. Préparation au remontage : contrôle des pièces neuves, des fixations et des éléments réutilisés. Les vis ou écrous à usage unique sont remplacés lorsque le constructeur le prévoit.',
+        '5. Lubrification uniquement aux points prévus : coulisseaux, appuis ou articulations concernés avec un produit adapté. Aucune graisse sur les disques, plaquettes ou autres surfaces de friction.',
+        '6. Remontage dans l’ordre technique prévu. Les couples et angles de serrage sont ceux du constructeur pour le véhicule concerné ; aucune valeur générique n’est appliquée.',
+        '7. Remise en service et vérification fonctionnelle : contrôle visuel, absence d’interférence ou de fuite et, pour le freinage, remise en appui de la pédale avant déplacement du véhicule.',
+        '8. Contrôle final EDM28 : photos utiles au dossier puis checklist correspondant au montant de la prestation. Tout travail supplémentaire reste soumis à l’accord préalable du client.',
+        'Les pièces de remplacement sont achetées par le client. EDM28 facture la prestation et les consommables d’atelier, sans marge cachée sur les pièces.'
       ];
       let position = 82;
       for (const step of steps) { const lines = doc.splitTextToSize(step, 531); doc.text(lines, 32, position); position += lines.length * 14 + 16; }
