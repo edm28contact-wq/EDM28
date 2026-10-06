@@ -75,7 +75,7 @@ function resolveProductionSender(value) {
   return sender;
 }
 
-function resolveEmailConfig() {
+function resolveEmailConfig(businessEmail = '') {
   const preview = SUPABASE_ENVIRONMENT !== 'production';
   const configuredFrom = preview
     ? firstNonEmpty(process.env.PREVIEW_RESEND_FROM_EMAIL, process.env.RESEND_FROM_EMAIL)
@@ -88,7 +88,7 @@ function resolveEmailConfig() {
     from: preview ? configuredFrom : resolveProductionSender(configuredFrom),
     to: preview
       ? firstNonEmpty(process.env.PREVIEW_RESEND_TO_EMAIL, process.env.RESEND_TO_EMAIL)
-      : firstNonEmpty(process.env.RESEND_TO_EMAIL)
+      : firstNonEmpty(businessEmail, process.env.RESEND_TO_EMAIL)
   };
 }
 
@@ -112,6 +112,21 @@ async function fetchSingle(path, params, authorization) {
   const rows = await response.json().catch(() => []);
   if (!response.ok) throw new Error('Lecture des données impossible.');
   return Array.isArray(rows) && rows.length === 1 ? rows[0] : null;
+}
+
+async function loadPublicBusiness(authorization) {
+  try {
+    return await fetchSingle('public_business_profile', {
+      id: 'eq.true',
+      select: 'business_name,email,phone,website'
+    }, authorization);
+  } catch (error) {
+    console.error('public business profile unavailable for request notification', {
+      environment: SUPABASE_ENVIRONMENT,
+      message: clean(error?.message, 200)
+    });
+    return null;
+  }
 }
 
 async function loadCanonicalRequest(requestId, user, authorization) {
@@ -221,7 +236,12 @@ export default async function handler(req, res) {
 
     await markSubmitted(request.id, user.id, authorization);
 
-    const email = resolveEmailConfig();
+    const business = await loadPublicBusiness(authorization);
+    const businessName = clean(business?.business_name || 'EDM28', 120) || 'EDM28';
+    const businessEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean(business?.email, 254))
+      ? clean(business.email, 254).toLowerCase()
+      : '';
+    const email = resolveEmailConfig(businessEmail);
     const emailUnavailable = !email.apiKeys.length || !email.from || !email.to;
     if (emailUnavailable) {
       console.error('request email unavailable', {
@@ -254,7 +274,7 @@ export default async function handler(req, res) {
     const receivedAt = request.created_at || request.submitted_at || 'date indisponible';
 
     const text = [
-      'Nouvelle demande EDM AUTO',
+      `Nouvelle demande ${businessName}`,
       `ID Demande : ${request.id}`,
       '',
       'CLIENT',
@@ -297,7 +317,7 @@ export default async function handler(req, res) {
       from: email.from,
       to: [email.to],
       reply_to: clientEmail || undefined,
-      subject: `Nouvelle demande EDM AUTO - ${clientLabel} - ${clean(vehicle.plate, 20)}`,
+      subject: `Nouvelle demande ${businessName} - ${clientLabel} - ${clean(vehicle.plate, 20)}`,
       text,
       tags: [
         { name: 'request_id', value: request.id },
