@@ -285,7 +285,7 @@
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.2);
     doc.setTextColor(78, 82, 88);
-    doc.text('Les points ci-dessous correspondent au contrôle prévu après l'intervention. Les valeurs réellement relevées sont conservées dans le compte rendu de contrôle.', 32, 215);
+    doc.text('Les points ci-dessous correspondent au contrôle prévu après l’intervention. Les valeurs réellement relevées sont conservées dans le compte rendu de contrôle.', 32, 215);
 
     doc.autoTable({
       startY: 227,
