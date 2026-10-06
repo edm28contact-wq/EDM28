@@ -224,3 +224,13 @@ test('guests can browse services before authentication', async () => {
   assert.doesNotMatch(remote, /saveVehicleToSupabase/);
   assert.match(remote, /servicesArea/);
 });
+
+
+test('new request notification follows the back-office public email and EDM28 branding', async () => {
+  const api = await read('api/submit-request-v2.js');
+  assert.match(api, /public_business_profile/);
+  assert.match(api, /resolveEmailConfig\(businessEmail/);
+  assert.match(api, /to: preview[\s\S]*businessEmail/);
+  assert.match(api, /Nouvelle demande \$\{businessName\}/);
+  assert.doesNotMatch(api, /Nouvelle demande EDM AUTO/);
+});
