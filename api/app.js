@@ -146,6 +146,10 @@ function businessAddress(business) {
   return [business.address_line1, business.address_line2, [business.postal_code, business.city].filter(Boolean).join(' '), business.country].filter(Boolean).join(', ');
 }
 
+function oneLine(value) {
+  return String(value ?? '').replace(/[\r\n]+/g, ' ').trim();
+}
+
 function buildSecondaryEntityStructuredData(origin, business) {
   const addressText = businessAddress(business);
   const address = business.address_line1 ? {
@@ -204,6 +208,13 @@ function buildSecondaryEntityStructuredData(origin, business) {
 function enrichSeoHtml(html, req, business) {
   if (typeof html !== 'string' || !html.includes('</head>') || html.includes('noindex,nofollow')) return html;
   let output = html;
+  const publicEmail = oneLine(business.email);
+  if (publicEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicEmail)) {
+    const safeEmail = xmlEscape(publicEmail);
+    output = output
+      .replaceAll('mailto:contact@edm28.fr', `mailto:${safeEmail}`)
+      .replaceAll('>contact@edm28.fr<', `>${safeEmail}<`);
+  }
   if (!output.includes('/#organization')) {
     const entityJson = buildSecondaryEntityStructuredData(getOrigin(req), business);
     output = output.replace('</head>', `<script id="edm-entity-identity" type="application/ld+json">${entityJson}</script></head>`);
@@ -254,6 +265,49 @@ function handleRobots(req, res) {
   return res.status(200).send(body);
 }
 
+async function handleLlms(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
+    return res.status(405).end();
+  }
+  const business = await loadPublicBusiness();
+  const address = oneLine(businessAddress(business));
+  const email = oneLine(business.email);
+  const phone = oneLine(business.phone);
+  const website = oneLine(business.website) || 'https://edm28.fr/';
+  const body = [
+    `# ${oneLine(business.business_name) || 'EDM28'}`,
+    '',
+    'Garage automobile specialise principalement dans le freinage et intervenant aussi sur des prestations ciblees de liaison au sol et de train roulant.',
+    '',
+    `Site officiel: ${website}`,
+    email ? `Contact public: ${email}` : '',
+    phone ? `Telephone public: ${phone}` : '',
+    address ? `Adresse: ${address}` : '',
+    `Google Business Profile: ${PUBLIC_GOOGLE_MAPS_URL}`,
+    '',
+    '## Methode',
+    '- Controle du besoin reel avant intervention.',
+    '- Devis avant travaux et validation du client avant toute extension.',
+    '- EDM28 ne vend pas les pieces de remplacement et ne prend pas de marge cachee sur leur prix.',
+    '- Les informations de contact et de localisation ci-dessus sont synchronisees depuis le back-office EDM28.',
+    '',
+    '## Pages principales',
+    '- Accueil: https://edm28.fr/',
+    '- Freinage: https://edm28.fr/freinage',
+    '- Liaison au sol: https://edm28.fr/liaison-au-sol',
+    '- Tarifs: https://edm28.fr/tarifs',
+    '- Fonctionnement: https://edm28.fr/fonctionnement',
+    '- Contact: https://edm28.fr/contact',
+    ''
+  ].filter((line) => line !== '').join('\n').replace(/\n{3,}/g, '\n\n');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  if (req.method === 'HEAD') return res.status(200).end();
+  return res.status(200).send(body);
+}
+
 export default async function handler(req, res) {
   if (serveRecoveryPage(req, res, resolveSupabasePublicConfig())) return;
   const seoMode = getSeoMode(req);
@@ -267,6 +321,7 @@ export default async function handler(req, res) {
   }
   if (seoMode === 'robots') return handleRobots(req, res);
   if (seoMode === 'sitemap') return handleSitemap(req, res);
+  if (seoMode === 'llms') return await handleLlms(req, res);
   if (seoMode) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1></main></body></html>');
