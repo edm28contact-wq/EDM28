@@ -9,6 +9,14 @@
     ['insurance_policy','Police d’assurance',false],['logo_url','URL du logo',true],['calendar_id','Identifiant Google Agenda',true],
     ['booking_url','Lien public de réservation',true],['timezone','Fuseau horaire',true],['ai_provider','Fournisseur IA',false],['ai_model','Modèle IA',false]
   ];
+  const requiredFields = fields.filter(([, , required]) => required).map(([key, label]) => ({ key, label }));
+  window.EDMBusinessRequirements = {
+    fields: requiredFields,
+    missing(data = {}) {
+      return requiredFields.filter(({ key }) => !String(data?.[key] || '').trim());
+    }
+  };
+
   window.EDMAdminBusiness = {
     data: {},
     async load() {
