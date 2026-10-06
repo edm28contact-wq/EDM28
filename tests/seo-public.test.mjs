@@ -271,3 +271,17 @@ test('le fonctionnement public décrit la checklist, la facture et le bon lien v
   assert.match(source, /\['\/mes-interventions', 'Mes interventions'\]/);
   assert.doesNotMatch(source, /\/\?page=history/);
 });
+
+
+test('symptom contact and llms public identity are synchronized by the app router', async () => {
+  const [app, configText] = await Promise.all([read('api/app.js'), read('vercel.json')]);
+  const config = JSON.parse(configText);
+  const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
+  assert.equal(routes.get('/llms.txt'), '/api/app?seo=llms');
+  assert.equal(routes.get('/garage-freinage-saint-lubin-de-la-haye.html'), '/api/app?seo=page&slug=garage-freinage-saint-lubin-de-la-haye');
+  assert.match(app, /async function handleLlms/);
+  assert.match(app, /seoMode === 'llms'/);
+  assert.match(app, /replaceAll\('mailto:contact@edm28\.fr'/);
+  assert.match(app, /business\.email/);
+  assert.match(app, /businessAddress\(business\)/);
+});

@@ -19,6 +19,7 @@ test('la route locale Saint-Lubin-de-la-Haye est publique et stable', async () =
   const config = JSON.parse(await read('vercel.json'));
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
   assert.equal(routes.get(LOCAL_PATH), '/api/app?seo=page&slug=garage-freinage-saint-lubin-de-la-haye');
+  assert.equal(routes.get(`${LOCAL_PATH}.html`), '/api/app?seo=page&slug=garage-freinage-saint-lubin-de-la-haye');
 });
 
 test('la page locale est rendue par le moteur SEO synchronisé', async () => {
@@ -49,4 +50,18 @@ test('la page d’accueil expose le profil public synchronisé et le maillage lo
 test('la clé IndexNow est servable à la racine', async () => {
   const key = (await read(`${INDEXNOW_KEY}.txt`)).trim();
   assert.equal(key, INDEXNOW_KEY);
+});
+
+
+test('llms.txt is generated from the synchronized public business profile', async () => {
+  const [app, configText] = await Promise.all([read('api/app.js'), read('vercel.json')]);
+  const config = JSON.parse(configText);
+  const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
+  assert.equal(routes.get('/llms.txt'), '/api/app?seo=llms');
+  assert.match(app, /async function handleLlms/);
+  assert.match(app, /await loadPublicBusiness\(\)/);
+  assert.match(app, /Contact public:/);
+  assert.match(app, /Telephone public:/);
+  assert.match(app, /Adresse:/);
+  assert.match(app, /Cache-Control', 'no-store'/);
 });
