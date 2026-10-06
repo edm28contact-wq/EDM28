@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   return res.status(200).json({
     success: true,
-    app: 'EDM AUTO',
+    app: 'EDM28',
     api: 'health',
     time: new Date().toISOString()
   });
