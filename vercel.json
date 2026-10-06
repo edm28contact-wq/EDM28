@@ -125,7 +125,7 @@
     },
     {
       "src": "/garage-freinage-saint-lubin-de-la-haye",
-      "dest": "/garage-freinage-saint-lubin-de-la-haye.html"
+      "dest": "/api/app?seo=page&slug=garage-freinage-saint-lubin-de-la-haye"
     },
     {
       "src": "/symptomes",
