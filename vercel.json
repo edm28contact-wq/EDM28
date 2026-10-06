@@ -120,11 +120,19 @@
       "dest": "/api/app?seo=robots"
     },
     {
+      "src": "/llms.txt",
+      "dest": "/api/app?seo=llms"
+    },
+    {
       "src": "/sitemap.xml",
       "dest": "/api/app?seo=sitemap"
     },
     {
       "src": "/garage-freinage-saint-lubin-de-la-haye",
+      "dest": "/api/app?seo=page&slug=garage-freinage-saint-lubin-de-la-haye"
+    },
+    {
+      "src": "/garage-freinage-saint-lubin-de-la-haye.html",
       "dest": "/api/app?seo=page&slug=garage-freinage-saint-lubin-de-la-haye"
     },
     {
