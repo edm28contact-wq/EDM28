@@ -67,7 +67,7 @@ jobs:
           const report = [];
           let failed = false;
           for (const width of widths) {
-            for (const item of [{name:'public',path:'/',title:'EDM AUTO'},{name:'admin',path:'/admin.html',title:'Gestion EDM28'}]) {
+            for (const item of [{name:'public',path:'/',title:'EDM28'},{name:'admin',path:'/admin.html',title:'Gestion EDM28'}]) {
               const page = await browser.newPage({ viewport:{width,height:width <= 412 ? 844 : 1080}, hasTouch:width <= 412 });
               const errors = [];
               page.on('pageerror', error => errors.push(error.message));
