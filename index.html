@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="EDM AUTO - Demande mécanique simple, estimation claire et reprise manuelle." />
-  <title>EDM AUTO</title>
+  <meta name="description" content="EDM28 - Freinage et liaison au sol, devis avant intervention et suivi client transparent." />
+  <title>EDM28</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#111827">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon.svg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="EDM AUTO">
+  <meta name="apple-mobile-web-app-title" content="EDM28">
   <style>
     :root {
       --bg: #f5f7fb;
@@ -604,6 +604,28 @@
       .service-details { grid-column: 1 / -1; }
       .summary-line { flex-direction: column; }
     }
+
+    @media (max-width: 340px) {
+      .topbar {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
+      }
+      .mobile-menu { order: 1; }
+      .topbar-title {
+        order: 2;
+        margin-left: auto;
+        min-width: 0;
+        font-size: .92rem;
+        line-height: 1.05;
+      }
+      .topbar > [data-jump="appointment"] {
+        order: 3;
+        flex: 1 0 100%;
+        width: 100%;
+        min-height: 44px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -612,8 +634,8 @@
       <div class="brand-block">
         <div class="brand-mark">EDM</div>
         <div>
-          <div class="brand-name">EDM AUTO</div>
-          <div class="brand-sub">Mécano du Dimanche<br>Demande simple · estimation · reprise manuelle</div>
+          <div class="brand-name">EDM28</div>
+          <div class="brand-sub">Freinage • Liaison au sol<br>Demande · devis · suivi transparent</div>
         </div>
       </div>
 
@@ -630,13 +652,13 @@
       </nav>
 
       <div class="sidebar-card" id="accountChip"><b>Non connecté</b><br>Connectez-vous pour retrouver votre garage et vos demandes.</div>
-      <div class="sidebar-card"><b>Fonctionnement actuel</b><br>Le site prépare votre demande et votre estimation. La validation finale reste faite manuellement par EDM AUTO.</div>
+      <div class="sidebar-card"><b>Fonctionnement actuel</b><br>Préparez votre demande. EDM28 étudie le dossier, transmet le devis et le panier, puis confirme le rendez-vous après validation.</div>
     </aside>
 
     <main class="main">
       <header class="topbar">
         <button class="btn btn-secondary mobile-menu" id="openMenu" type="button">Menu</button>
-        <div class="topbar-title"><span>🔧</span><span>EDM AUTO</span></div>
+        <div class="topbar-title"><span>🔧</span><span>EDM28</span></div>
         <button class="btn btn-primary" data-jump="appointment" type="button">Faire une demande</button>
       </header>
 
@@ -779,7 +801,7 @@
                     <input type="checkbox" id="refuseControl">
                     <span>
                       <b>Je refuse le contrôle préalable</b>
-                      <span class="field-hint">En cas de refus du contrôle préalable, la préparation de l’intervention se fera sur la base des informations transmises avant le rendez-vous. Si le panier de pièces a été préparé par EDM AUTO et qu’une erreur de compatibilité provient de notre sélection, EDM AUTO en assumera la responsabilité. Si le client apporte lui-même ses pièces et que celles-ci s’avèrent incompatibles, 70 % de la main-d’œuvre prévue sera facturée.</span>
+                      <span class="field-hint">Les références préconisées sont indiquées dans le devis et le panier. Si vous apportez une autre référence, faites-la valider par EDM28 avant le rendez-vous. Une pièce incompatible peut interrompre l’intervention ; aucun pourcentage automatique n’est appliqué.</span>
                     </span>
                   </label>
                 </div>
@@ -792,10 +814,10 @@
               <div class="card">
                 <h3>4. Vérification avant envoi</h3>
                 <div class="summary" id="summaryBox">
-                  <div class="summary-line"><span>Main-d’œuvre estimée</span><strong id="laborBefore">0 €</strong></div>
+                  <div class="summary-line"><span>Prestations estimées</span><strong id="laborBefore">0 €</strong></div>
                   <div class="summary-line"><span>Remise combo</span><strong id="comboSaving">0 €</strong></div>
                   <div class="summary-line"><span>Contrôle préalable</span><strong id="j7Saving">0 €</strong></div>
-                  <div class="summary-line"><span>Pièces estimées</span><strong id="partsTotal">0 € à 0 €</strong></div>
+                  <div class="summary-line"><span>Pièces indicatives — payées au vendeur</span><strong id="partsTotal">0 € à 0 €</strong></div>
                   <div class="summary-line saving"><span>Économie combo</span><strong id="totalSaving">0 €</strong></div>
                   <div class="summary-line total"><span>Total estimé tout compris</span><strong id="laborAfter">0 €</strong></div>
                 </div>
@@ -856,13 +878,13 @@
       <section id="about" class="page">
         <div class="panel">
           <h2>Qui sommes-nous ?</h2>
-          <p class="lead">EDM AUTO vous permet de préparer simplement votre demande mécanique en ligne avant reprise manuelle. L’objectif est de vous faire gagner du temps et de clarifier les prestations souhaitées avant validation.</p>
+          <p class="lead">EDM28 vous permet de préparer simplement votre demande mécanique en ligne avant reprise manuelle. L’objectif est de vous faire gagner du temps et de clarifier les prestations souhaitées avant validation.</p>
           <div class="grid-3" style="margin-top:18px">
             <div class="card"><span class="pill green">Clair</span><h3 style="margin-top:12px">Demande lisible</h3><p>Vous renseignez votre besoin et obtenez une estimation simple à comprendre.</p></div>
-            <div class="card"><span class="pill blue">Pratique</span><h3 style="margin-top:12px">Préparation rapide</h3><p>Le site vous aide à préparer votre demande avant reprise par EDM AUTO.</p></div>
+            <div class="card"><span class="pill blue">Pratique</span><h3 style="margin-top:12px">Préparation rapide</h3><p>Le site vous aide à préparer votre demande avant reprise par EDM28.</p></div>
             <div class="card"><span class="pill orange">Humain</span><h3 style="margin-top:12px">Validation manuelle</h3><p>Chaque demande est vérifiée manuellement avant confirmation finale.</p></div>
           </div>
-          <div class="notice">Chaque demande est reprise manuellement par EDM AUTO après étude du véhicule, des prestations souhaitées et du panier sélectionné.</div>
+          <div class="notice">Chaque demande est reprise manuellement par EDM28 après étude du véhicule, des prestations souhaitées et du panier sélectionné.</div>
         </div>
       </section>
     </main>
@@ -1378,7 +1400,7 @@
 
       const btn = $("btnSubmit");
       setButtonBusy(btn, true, "Envoi...");
-      $("submitStatus").innerHTML = `<div class="notice">Envoi vers EDM AUTO...</div>`;
+      $("submitStatus").innerHTML = `<div class="notice">Envoi vers EDM28...</div>`;
 
       try {
         const payload = {
@@ -1414,8 +1436,8 @@
         saveState();
         updateStepper(4);
 
-        $("submitStatus").innerHTML = `<div class="okbox"><strong>Demande transmise.</strong><br>EDM AUTO reviendra vers vous après étude de votre véhicule et des prestations demandées.</div>`;
-        toast("Demande envoyée à EDM AUTO.");
+        $("submitStatus").innerHTML = `<div class="okbox"><strong>Demande transmise.</strong><br>EDM28 reviendra vers vous après étude de votre véhicule et des prestations demandées.</div>`;
+        toast("Demande envoyée à EDM28.");
       } catch (error) {
         $("submitStatus").innerHTML = `<div class="errorbox"><strong>Erreur d’envoi.</strong><br>${escapeHtml(error.message || "Réessaie plus tard.")}</div>`;
       } finally {
