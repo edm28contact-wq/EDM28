@@ -61,6 +61,22 @@ const PAGES = {
     links: [['/demande', 'Faire une nouvelle demande'], ['/', 'Prestations'], ['/transparence', 'Conseils & FAQ']],
     faq: []
   },
+  'garage-freinage-saint-lubin-de-la-haye': {
+    path: '/garage-freinage-saint-lubin-de-la-haye',
+    title: 'Garage freinage à Saint-Lubin-de-la-Haye (28410) | EDM28',
+    description: 'EDM28, garage spécialisé en freinage et liaison au sol à Saint-Lubin-de-la-Haye, avec devis avant travaux et suivi client transparent.',
+    h1: 'Garage spécialisé freinage à Saint-Lubin-de-la-Haye',
+    lede: 'EDM28 intervient sur rendez-vous en freinage et liaison au sol. Les coordonnées affichées sur cette page sont synchronisées avec le back-office.',
+    serviceType: 'Garage automobile spécialisé freinage à Saint-Lubin-de-la-Haye',
+    breadcrumbs: [['/', 'Accueil'], ['/garage-freinage-saint-lubin-de-la-haye', 'Garage à Saint-Lubin-de-la-Haye']],
+    sections: [
+      ['Freinage et liaison au sol', 'EDM28 prend en charge des prestations ciblées de freinage et de train roulant, avec validation du besoin avant intervention.'],
+      ['Une prestation cadrée avant travaux', 'La demande est étudiée puis traduite en devis. Les travaux supplémentaires ne sont jamais ajoutés sans accord préalable.'],
+      ['Coordonnées du garage', 'Les coordonnées officielles sont chargées depuis le back-office EDM28.']
+    ],
+    links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs'], ['/demande', 'Faire une demande'], ['/contact', 'Contact']],
+    faq: [['Comment prendre rendez-vous chez EDM28 ?', 'Commencez par une demande en ligne. EDM28 étudie le dossier, transmet le devis puis confirme le rendez-vous selon le parcours prévu.']]
+  },
   freinage: {
     path: '/freinage',
     title: 'Freinage automobile | EDM28',
@@ -352,11 +368,20 @@ async function loadPublicBusiness() {
 }
 
 function pageWithBusiness(page, business) {
-  if (page.path === '/a-propos') {
+  if (page.path === '/a-propos' || page.path === '/garage-freinage-saint-lubin-de-la-haye') {
     const copy = { ...page, sections: page.sections.map((section) => [...section]) };
-    copy.sections[2] = ['Où nous trouver', business.address
-      ? `Le garage se trouve au ${business.address}. Les interventions se font sur rendez-vous.`
-      : 'Les interventions se font sur rendez-vous. Les coordonnées publiques sont mises à jour depuis le back-office.'];
+    if (page.path === '/a-propos') {
+      copy.sections[2] = ['Où nous trouver', business.address
+        ? `Le garage se trouve au ${business.address}. Les interventions se font sur rendez-vous.`
+        : 'Les interventions se font sur rendez-vous. Les coordonnées publiques sont mises à jour depuis le back-office.'];
+    } else {
+      copy.sections[2] = ['Coordonnées du garage', business.address
+        ? `${business.business_name} est situé au ${business.address}. Les interventions se font sur rendez-vous.`
+        : 'Les coordonnées officielles sont mises à jour depuis le back-office.'];
+      copy.description = business.city
+        ? `${business.business_name}, garage spécialisé en freinage et liaison au sol à ${business.city}, avec devis avant travaux et suivi client transparent.`
+        : page.description;
+    }
     return copy;
   }
   if (page.path === '/contact') {
