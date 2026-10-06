@@ -8,7 +8,7 @@ const read=p=>readFile(new URL('../'+p,import.meta.url),'utf8');
 const now=Date.parse('2026-10-10T10:00:00Z');
 const id='22222222-2222-4222-8222-222222222222';
 const token='a'.repeat(64);
-const payload={recipient:'isolated@example.test',kind:'held',quote_id:id,quote_number:'TEST-1',title:'Freinage',starts_at:'2026-10-20T10:00:00Z',expires_at:'2026-10-12T10:00:00Z',review_deadline:'2026-10-13T10:00:00Z',requires_parts:true,supplier_url:'https://supplier.example/basket',recommended_parts:'REF-1 x 2',price_details:'REF-1 : 25 EUR TTC x 2',price_observed_at:'2026-10-10'};
+const payload={recipient:'isolated@example.test',kind:'held',quote_id:id,quote_number:'TEST-1',title:'Freinage',starts_at:'2026-10-20T10:00:00Z',expires_at:'2026-10-12T10:00:00Z',review_deadline:'2026-10-13T10:00:00Z',requires_parts:true,supplier_url:'https://supplier.example/basket',recommended_parts:'REF-1 x 2',price_details:'REF-1 : 25 EUR TTC x 2',price_observed_at:'2026-10-10',business_name:'EDM28 Test',contact_email:'garage@example.test',contact_phone:'02 37 00 00 00'};
 
 test('a held slot expires exactly at its server deadline',()=>{
  const input={quote:{status:'accepted'},reservation:{status:'held',expires_at:'2026-10-10T10:00:00Z'}};
@@ -67,7 +67,7 @@ test('dispatcher cannot turn an arbitrary recipient into an email',async t=>{
 });
 test('dispatcher uses only immutable persisted payload and a stable provider idempotency key',async t=>{
  const f=await dispatch(t,{body:{id,token,recipient:'attacker@example.test'}});assert.equal(f.res.statusCode,200);assert.equal(f.calls.length,3);
- assert.deepEqual(f.calls[1].body.to,[payload.recipient]);assert.equal(f.calls[1].headers['Idempotency-Key'],'edm28-journey-'+id);assert.equal(f.calls[2].body.status,'sent');
+ assert.deepEqual(f.calls[1].body.to,[payload.recipient]);assert.equal(f.calls[1].body.reply_to,payload.contact_email);assert.equal(f.calls[1].headers['Idempotency-Key'],'edm28-journey-'+id);assert.equal(f.calls[2].body.status,'sent');
 });
 test('provider error is retriable and never reported as sent',async t=>{
  const f=await dispatch(t,{providerError:true});assert.equal(f.res.statusCode,503);assert.equal(f.calls.at(-1).body.status,'pending');
@@ -84,4 +84,13 @@ test('contact links stay intentional; guest signup follows vehicle and prestatio
  assert.match(client,/authBlock\('requestSignup', 'signup'\)/);
  assert.equal((client.match(/id="requestAccountArea"/g)||[]).length,1);assert.match(client,/id="requestPlate" required/);assert.match(client,/is-selected/);
  assert.match(journey,/location\.replace\(target.href\)/);assert.match(journey,/createSignedUrl\(path,120\)/);
+});
+
+test('journey emails use persisted back-office contact information',()=>{
+ const email=renderJourneyEmail(payload);
+ assert.equal(email.reply_to,payload.contact_email);
+ assert.match(email.text,/garage@example\.test/);
+ assert.match(email.text,/02 37 00 00 00/);
+ assert.match(email.text,/EDM28 Test/);
+ assert.match(email.html,/mailto:garage@example\.test/);
 });
