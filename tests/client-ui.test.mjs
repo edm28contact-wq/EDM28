@@ -119,3 +119,13 @@ test('public navigation remains available without an account', async () => {
   assert.match(router, /activate\(id\);/);
   assert.doesNotMatch(compatibility, /protectedPages/);
 });
+
+
+test('legacy fallback stays branded EDM28 and fits very small mobile screens', async () => {
+  const html = await read('index.html');
+  assert.doesNotMatch(html, /EDM AUTO/);
+  assert.doesNotMatch(html, /70 % de la main-d’œuvre/);
+  assert.match(html, /@media \(max-width: 340px\)/);
+  assert.match(html, /\.topbar \{[\s\S]*?flex-wrap: wrap/);
+  assert.match(html, /data-jump="appointment"/);
+});
