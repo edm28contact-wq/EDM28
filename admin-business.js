@@ -37,7 +37,14 @@
       });
       if (invalid) return app.status('businessStatus', 'Complétez tous les champs obligatoires en rouge.', true);
       const { error } = await app.db.from('business_configuration').update(payload).eq('id', true);
-      app.status('businessStatus', error ? error.message : 'Informations enregistrées.', Boolean(error));
+      if (error) return app.status('businessStatus', error.message, true);
+      const publicKeys = ['business_name','address_line1','address_line2','postal_code','city','country','phone','email','website','logo_url','timezone','booking_url'];
+      const publicResult = await app.db.from('public_business_profile').select(publicKeys.join(',')).eq('id', true).maybeSingle();
+      if (publicResult.error) return app.status('businessStatus', `Informations enregistrées, mais vérification publique impossible : ${publicResult.error.message}`, true);
+      const mismatch = publicKeys.find((key) => String(publicResult.data?.[key] || '') !== String(payload[key] || ''));
+      if (mismatch) return app.status('businessStatus', `Informations enregistrées, mais la synchronisation publique est incomplète (${mismatch}).`, true);
+      this.data = { ...this.data, ...payload };
+      app.status('businessStatus', 'Informations enregistrées et synchronisées sur le site public, les prochains emails et les prochains PDF.', false);
     }
   };
 })();
