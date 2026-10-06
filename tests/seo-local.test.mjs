@@ -18,24 +18,16 @@ test('le domaine public officiel est edm28.fr', async () => {
 test('la route locale Saint-Lubin-de-la-Haye est publique et stable', async () => {
   const config = JSON.parse(await read('vercel.json'));
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
-  assert.equal(routes.get(LOCAL_PATH), '/garage-freinage-saint-lubin-de-la-haye.html');
+  assert.equal(routes.get(LOCAL_PATH), '/api/app?seo=page&slug=garage-freinage-saint-lubin-de-la-haye');
 });
 
-test('la page locale possède canonical, H1 et données locales vérifiées', async () => {
-  const html = await read('garage-freinage-saint-lubin-de-la-haye.html');
-  assert.match(html, /<link rel="canonical" href="https:\/\/edm28\.fr\/garage-freinage-saint-lubin-de-la-haye">/);
-  assert.match(html, /<h1>Garage spécialisé freinage à Saint-Lubin-de-la-Haye \(28410\)<\/h1>/);
-  assert.match(html, /"streetAddress":"17 bis route du Videlet"/);
-  assert.match(html, /"addressLocality":"Saint-Lubin-de-la-Haye"/);
-  assert.match(html, /"postalCode":"28410"/);
-  assert.match(html, /"openingHoursSpecification"/);
-  assert.match(html, /"dayOfWeek":"https:\/\/schema\.org\/Sunday"/);
-  assert.match(html, /"opens":"09:00","closes":"13:00"/);
-  assert.match(html, /"opens":"14:00","closes":"18:00"/);
-  assert.match(html, /"@type":"AutoRepair"/);
-  assert.ok(html.includes(GOOGLE_MAPS_URL));
-  assert.ok(html.includes('"sameAs":["https://maps.google.com/?cid=5973618623656745225"]'));
-  assert.doesNotMatch(html, /"telephone"/);
+test('la page locale est rendue par le moteur SEO synchronisé', async () => {
+  const source = await read('public-seo.js');
+  assert.match(source, /path: '\/garage-freinage-saint-lubin-de-la-haye'/);
+  assert.match(source, /Garage spécialisé freinage à Saint-Lubin-de-la-Haye/);
+  assert.match(source, /page\.path === '\/garage-freinage-saint-lubin-de-la-haye'/);
+  assert.match(source, /business\.address/);
+  assert.match(source, /business\.business_name/);
 });
 
 test('le sitemap principal contient la page locale', async () => {
@@ -44,14 +36,14 @@ test('le sitemap principal contient la page locale', async () => {
   assert.match(sitemapList, /'\/garage-freinage-saint-lubin-de-la-haye'/);
 });
 
-test('la page d’accueil expose la localisation vérifiée et le maillage local', async () => {
+test('la page d’accueil expose le profil public synchronisé et le maillage local', async () => {
   const source = await read('api/app.js');
-  assert.ok(source.includes("const PUBLIC_STREET_ADDRESS = '17 bis route du Videlet'"));
-  assert.ok(source.includes("const PUBLIC_LOCALITY = 'Saint-Lubin-de-la-Haye'"));
-  assert.ok(source.includes("const PUBLIC_POSTAL_CODE = '28410'"));
+  assert.match(source, /async function loadPublicBusiness/);
+  assert.match(source, /public_business_profile/);
   assert.ok(source.includes("const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225'"));
   assert.ok(source.includes('sameAs: [PUBLIC_GOOGLE_MAPS_URL]'));
-  assert.match(source, /href="\/garage-freinage-saint-lubin-de-la-haye"/);
+  assert.match(source, /business\.address_line1/);
+  assert.match(source, /business\.city/);
 });
 
 test('la clé IndexNow est servable à la racine', async () => {

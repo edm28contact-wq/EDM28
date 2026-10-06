@@ -173,3 +173,19 @@ test('admin authentication uses password only and no email OTP', async () => {
   assert.doesNotMatch(html, /id="adminEmail"/);
   assert.match(html, /id="adminPassword"/);
 });
+
+test('business information save verifies the synchronized public projection', async () => {
+  const [source, migration] = await Promise.all([
+    read('admin-business.js'),
+    read('supabase/migrations/20261006221500_sync_business_info_everywhere.sql')
+  ]);
+  assert.match(source, /public_business_profile/);
+  assert.match(source, /Informations enregistrées et synchronisées/);
+  assert.match(migration, /create table public\.public_business_profile/);
+  assert.match(migration, /create trigger sync_public_business_profile/);
+  assert.match(migration, /private\.sync_public_business_profile/);
+  assert.match(migration, /grant select on public\.public_business_profile to anon, authenticated/);
+  assert.match(migration, /'contact_email', cfg\.email/);
+  assert.match(migration, /'contact_phone', cfg\.phone/);
+  assert.doesNotMatch(migration, /'contact_email','contact@edm28\.fr'/);
+});

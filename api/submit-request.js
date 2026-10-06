@@ -183,7 +183,7 @@ export default async function handler(req, res) {
       j7Accepted: Boolean(body.j7Accepted),
       refuseControl: Boolean(body.refuseControl),
       status: "Nouveau",
-      note: "Demande envoyée depuis le site EDM AUTO.",
+      note: "Demande envoyée depuis le site EDM28.",
     };
 
     if (!normalizedRequest.client.firstName || !normalizedRequest.client.lastName || !normalizedRequest.client.phone || !normalizedRequest.client.email) {
@@ -226,7 +226,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const subject = `Nouvelle demande EDM AUTO - ${normalizedRequest.client.lastName} ${normalizedRequest.client.firstName} - ${normalizedRequest.vehicle.plate}`;
+    const subject = `Nouvelle demande EDM28 - ${normalizedRequest.client.lastName} ${normalizedRequest.client.firstName} - ${normalizedRequest.vehicle.plate}`;
     const servicesHtml = buildServicesHtml(normalizedRequest.services);
     const servicesText = buildServicesText(normalizedRequest.services);
     const totalRange = normalizedRequest.totals.totalAllMin && normalizedRequest.totals.totalAllMax
@@ -235,7 +235,7 @@ export default async function handler(req, res) {
 
     const html = `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
-        <h2>Nouvelle demande EDM AUTO</h2>
+        <h2>Nouvelle demande EDM28</h2>
         <p>Une nouvelle demande a été envoyée depuis le site.</p>
 
         <h3>Client</h3>
@@ -286,7 +286,7 @@ export default async function handler(req, res) {
     `;
 
     const text = [
-      "Nouvelle demande EDM AUTO",
+      "Nouvelle demande EDM28",
       "",
       "CLIENT",
       `Nom : ${normalizedRequest.client.lastName}`,
@@ -336,7 +336,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Demande envoyée à EDM AUTO.",
+      message: "Demande envoyée à EDM28.",
       emailProvider: "resend",
       resendResult,
       sent: {

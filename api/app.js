@@ -7,10 +7,22 @@ import symptomSeoHandler from '../public-seo-symptoms.js';
 
 const INDEX_PATH = join(process.cwd(), 'index.html');
 const ROUTER_PATH = join(process.cwd(), 'client-navigation-visible.js');
-const PUBLIC_EMAIL = 'contact@edm28.fr';
-const PUBLIC_STREET_ADDRESS = '17 bis route du Videlet';
-const PUBLIC_LOCALITY = 'Saint-Lubin-de-la-Haye';
-const PUBLIC_POSTAL_CODE = '28410';
+const DEFAULT_PUBLIC_BUSINESS = Object.freeze({
+  business_name: 'EDM28',
+  email: 'contact@edm28.fr',
+  phone: '',
+  address_line1: '',
+  address_line2: '',
+  postal_code: '',
+  city: '',
+  country: 'France',
+  website: 'https://edm28.fr/'
+});
+// Compatibility defaults are only used by the unreachable legacy loader below.
+const PUBLIC_EMAIL = DEFAULT_PUBLIC_BUSINESS.email;
+const PUBLIC_STREET_ADDRESS = DEFAULT_PUBLIC_BUSINESS.address_line1;
+const PUBLIC_LOCALITY = DEFAULT_PUBLIC_BUSINESS.city;
+const PUBLIC_POSTAL_CODE = DEFAULT_PUBLIC_BUSINESS.postal_code;
 const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
 
 const PUBLIC_PATHS = [
@@ -108,29 +120,55 @@ function getSeoSlug(req) {
   }
 }
 
-function buildSecondaryEntityStructuredData(origin) {
-  const address = {
+async function loadPublicBusiness() {
+  const fallback = { ...DEFAULT_PUBLIC_BUSINESS };
+  try {
+    const supabase = resolveSupabasePublicConfig();
+    if (!supabase.url || !supabase.key) return fallback;
+    const params = new URLSearchParams({
+      select: 'business_name,address_line1,address_line2,postal_code,city,country,phone,email,website,logo_url,timezone,booking_url,updated_at',
+      id: 'eq.true',
+      limit: '1'
+    });
+    const response = await fetch(`${supabase.url}/rest/v1/public_business_profile?${params}`, {
+      headers: { apikey: supabase.key, Authorization: `Bearer ${supabase.key}` }
+    });
+    if (!response.ok) return fallback;
+    const rows = await response.json();
+    return { ...fallback, ...((Array.isArray(rows) && rows[0]) || {}) };
+  } catch (error) {
+    console.error('public business load error', error);
+    return fallback;
+  }
+}
+
+function businessAddress(business) {
+  return [business.address_line1, business.address_line2, [business.postal_code, business.city].filter(Boolean).join(' '), business.country].filter(Boolean).join(', ');
+}
+
+function buildSecondaryEntityStructuredData(origin, business) {
+  const addressText = businessAddress(business);
+  const address = business.address_line1 ? {
     '@type': 'PostalAddress',
-    streetAddress: PUBLIC_STREET_ADDRESS,
-    addressLocality: PUBLIC_LOCALITY,
-    postalCode: PUBLIC_POSTAL_CODE,
-    addressCountry: 'FR'
-  };
+    streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '),
+    addressLocality: business.city || undefined,
+    postalCode: business.postal_code || undefined,
+    addressCountry: business.country || 'FR'
+  } : undefined;
   const openingHours = [
-    {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: 'https://schema.org/Sunday',
-      opens: '09:00',
-      closes: '13:00'
-    },
-    {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: 'https://schema.org/Sunday',
-      opens: '14:00',
-      closes: '18:00'
-    }
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'https://schema.org/Sunday', opens: '09:00', closes: '13:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'https://schema.org/Sunday', opens: '14:00', closes: '18:00' }
   ];
   const knowsAbout = ['freinage automobile', 'plaquettes de frein', 'disques de frein', 'liquide de frein', 'liaison au sol', 'train roulant', 'triangles de suspension', 'direction'];
+  const common = {
+    name: business.business_name || 'EDM28',
+    url: business.website || `${origin}/`,
+    sameAs: [PUBLIC_GOOGLE_MAPS_URL],
+    ...(business.email ? { email: business.email } : {}),
+    ...(business.phone ? { telephone: business.phone } : {}),
+    ...(address ? { address } : {}),
+    knowsAbout
+  };
 
   return JSON.stringify({
     '@context': 'https://schema.org',
@@ -138,78 +176,51 @@ function buildSecondaryEntityStructuredData(origin) {
       {
         '@type': 'Organization',
         '@id': `${origin}/#organization`,
-        name: 'EDM28',
+        ...common,
         alternateName: ['EDM 28', 'edm28.fr'],
-        url: `${origin}/`,
-        sameAs: [PUBLIC_GOOGLE_MAPS_URL],
         logo: `${origin}/logo-edm.svg`,
-        email: PUBLIC_EMAIL,
-        address,
-        contactPoint: {
-          '@type': 'ContactPoint',
-          contactType: 'service client',
-          email: PUBLIC_EMAIL,
-          availableLanguage: ['fr']
-        },
-        knowsAbout,
-        description: 'EDM28 est un garage automobile situé au 17 bis route du Videlet à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et liaison au sol. EDM28 ne vend pas les pièces automobiles et ne prend aucune marge ni commission sur leur prix.'
+        ...(business.email ? { contactPoint: { '@type': 'ContactPoint', contactType: 'service client', email: business.email, ...(business.phone ? { telephone: business.phone } : {}), availableLanguage: ['fr'] } } : {}),
+        description: addressText
+          ? `${business.business_name || 'EDM28'} est un garage automobile situé au ${addressText}, spécialisé en freinage et liaison au sol.`
+          : 'Garage automobile spécialisé en freinage et liaison au sol.'
       },
       {
         '@type': 'AutoRepair',
         '@id': `${origin}/#autorepair`,
-        name: 'EDM28',
+        ...common,
         alternateName: ['EDM 28', 'edm28.fr'],
-        url: `${origin}/`,
-        sameAs: [PUBLIC_GOOGLE_MAPS_URL],
         image: `${origin}/logo-edm.svg`,
-        email: PUBLIC_EMAIL,
-        address,
         openingHoursSpecification: openingHours,
-        areaServed: { '@type': 'Place', name: 'Saint-Lubin-de-la-Haye et alentours' },
-        knowsAbout,
+        areaServed: { '@type': 'Place', name: business.city ? `${business.city} et alentours` : 'Eure-et-Loir et alentours' },
         parentOrganization: { '@id': `${origin}/#organization` },
-        description: 'Garage automobile spécialisé en freinage et interventions ciblées de liaison au sol et de train roulant au 17 bis route du Videlet à Saint-Lubin-de-la-Haye (28410).'
+        description: addressText
+          ? `Garage automobile spécialisé en freinage et liaison au sol au ${addressText}.`
+          : 'Garage automobile spécialisé en freinage et liaison au sol.'
       }
     ]
   }).replaceAll('<', '\\u003c');
 }
 
-function enrichSeoHtml(html, req) {
+function enrichSeoHtml(html, req, business) {
   if (typeof html !== 'string' || !html.includes('</head>') || html.includes('noindex,nofollow')) return html;
-
-  const origin = getOrigin(req);
-  const entityJson = buildSecondaryEntityStructuredData(origin);
-  let output = html.replace('</head>', `<script id="edm-entity-identity" type="application/ld+json">${entityJson}</script></head>`);
+  let output = html;
+  if (!output.includes('/#organization')) {
+    const entityJson = buildSecondaryEntityStructuredData(getOrigin(req), business);
+    output = output.replace('</head>', `<script id="edm-entity-identity" type="application/ld+json">${entityJson}</script></head>`);
+  }
   const slug = getSeoSlug(req);
-
-  if (slug === 'contact') {
-    output = output.replace(
-      'Aucune adresse postale ni aucun numéro de téléphone n’est publié ici tant que ces informations ne sont pas renseignées dans la configuration publique.',
-      'Adresse du garage : 17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye. Aucun numéro de téléphone professionnel n’est publié pour le moment.'
-    );
-  }
-
-  if (slug === 'a-propos') {
-    output = output
-      .replace('<h2>Pas de localisation inventée</h2>', '<h2>Identité locale vérifiée</h2>')
-      .replace(
-        'Les informations locales ne sont publiées que lorsqu’elles sont réellement renseignées dans la configuration EDM28.',
-        'EDM28 est un garage automobile situé au 17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye. Cette adresse correspond à l’identité publique actuellement confirmée du garage.'
-      );
-  }
-
   if (slug === 'transparence') {
     const marker = '<div class="links" aria-label="Pages liées">';
     const partsSection = '<section><h2>Pièces automobiles sans marge ni commission</h2><p>EDM28 ne vend pas les pièces automobiles et ne prend aucune marge ni commission sur leur prix. La rémunération du garage porte sur les prestations réalisées.</p></section>';
     output = output.replace(marker, `${partsSection}${marker}`);
   }
-
   return output;
 }
 
-function handleSeoDocument(delegate, req, res) {
+async function handleSeoDocument(delegate, req, res) {
+  const business = await loadPublicBusiness();
   const originalSend = res.send.bind(res);
-  res.send = (body) => originalSend(injectRecoveryBridge(enrichSeoHtml(body, req)));
+  res.send = (body) => originalSend(injectRecoveryBridge(enrichSeoHtml(body, req, business)));
   return delegate(canonicalSeoRequest(req), res);
 }
 
@@ -243,16 +254,16 @@ function handleRobots(req, res) {
   return res.status(200).send(body);
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (serveRecoveryPage(req, res, resolveSupabasePublicConfig())) return;
   const seoMode = getSeoMode(req);
   if (seoMode === 'page') {
     if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-    return handleSeoDocument(publicSeoHandler, req, res);
+    return await handleSeoDocument(publicSeoHandler, req, res);
   }
   if (seoMode === 'symptom') {
     if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-    return handleSeoDocument(symptomSeoHandler, req, res);
+    return await handleSeoDocument(symptomSeoHandler, req, res);
   }
   if (seoMode === 'robots') return handleRobots(req, res);
   if (seoMode === 'sitemap') return handleSitemap(req, res);
