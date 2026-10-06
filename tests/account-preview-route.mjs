@@ -116,12 +116,12 @@ try {
   await page.locator('#requestAuthEmail').waitFor({ state:'visible' });
   if (await page.locator('[data-client-only]:visible').count()) throw new Error('Client-only navigation visible while signed out');
 
-  await page.evaluate(() => window.__edmTestSetSession({
+  const signedInUser = {
     id:'u1',
     email:'client@example.test',
     user_metadata:{ first_name:'Jean', last_name:'Dupont', phone:'0612345678' }
-  }));
-  await page.waitForFunction(() => document.getElementById('requestAccountStep')?.hidden === true && document.querySelector('#requestAccountArea .signed-box')?.textContent.includes('Connecté'));
+  };
+  await page.evaluate((user) => localStorage.setItem('__edm_preview_user', JSON.stringify(user)), signedInUser);
 
   await page.goto(`http://127.0.0.1:${port}/mes-interventions`, { waitUntil:'networkidle', timeout:30000 });
   await page.waitForFunction(() => document.getElementById('edmInterventionsApp')?.textContent.includes('Votre espace client'));
