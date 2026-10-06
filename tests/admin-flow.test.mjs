@@ -189,3 +189,22 @@ test('business information save verifies the synchronized public projection', as
   assert.match(migration, /'contact_phone', cfg\.phone/);
   assert.doesNotMatch(migration, /'contact_email','contact@edm28\.fr'/);
 });
+
+
+test('business readiness uses one shared required-field definition and names missing fields', async () => {
+  const [business, core, readiness] = await Promise.all([
+    read('admin-business.js'),
+    read('admin-core.js'),
+    read('admin-readiness.js')
+  ]);
+  assert.match(business, /window\.EDMBusinessRequirements/);
+  assert.match(business, /fields: requiredFields/);
+  assert.match(business, /\['booking_url','Lien public de réservation',true\]/);
+  assert.match(core, /window\.EDMBusinessRequirements/);
+  assert.match(core, /missingLabels/);
+  assert.match(core, /Entreprise non prête/);
+  assert.match(core, /documents définitifs/);
+  assert.match(readiness, /window\.EDMBusinessRequirements/);
+  assert.match(readiness, /Lien public de réservation/);
+  assert.match(readiness, /missing\.map\(\(item\) => item\.label\)/);
+});

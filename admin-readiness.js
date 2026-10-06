@@ -1,5 +1,12 @@
 (() => {
-  const requiredBusiness = ['business_name','legal_name','siret','siren','vat_status','address_line1','postal_code','city','country','phone','email','payment_terms','late_penalty_text','recovery_fee_text','logo_url','calendar_id','timezone'];
+  const fallbackRequiredBusiness = [
+    ['business_name','Raison sociale'],['legal_name','Nom légal'],['siret','SIRET'],['siren','SIREN'],
+    ['vat_status','Statut TVA'],['address_line1','Adresse'],['postal_code','Code postal'],['city','Ville'],
+    ['country','Pays'],['phone','Téléphone'],['email','Email'],['payment_terms','Conditions de paiement'],
+    ['late_penalty_text','Pénalités de retard'],['recovery_fee_text','Indemnité de recouvrement'],
+    ['logo_url','URL du logo'],['calendar_id','Identifiant Google Agenda'],['booking_url','Lien public de réservation'],
+    ['timezone','Fuseau horaire']
+  ];
 
   const waitForApp = (fn) => {
     const timer = setInterval(() => {
@@ -32,9 +39,15 @@
         return false;
       }
 
-      const missing = requiredBusiness.filter((key) => !String(data?.[key] || '').trim());
+      const missing = window.EDMBusinessRequirements?.missing
+        ? window.EDMBusinessRequirements.missing(data)
+        : fallbackRequiredBusiness.filter(([key]) => !String(data?.[key] || '').trim()).map(([key, label]) => ({ key, label }));
       if (missing.length) {
-        app.status('automationStatus', `Configuration incomplète : ${missing.length} champ(s) obligatoire(s) à compléter dans Informations entreprise.`, true);
+        app.status(
+          'automationStatus',
+          `Configuration incomplète : ${missing.map((item) => item.label).join(', ')}. Complétez ces champs dans Informations entreprise.`,
+          true
+        );
         return false;
       }
 
