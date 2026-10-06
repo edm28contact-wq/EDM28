@@ -1,8 +1,9 @@
 (() => {
   const PAGE_W = 595;
   const PAGE_H = 842;
-  const RED = [0.82, 0.05, 0.08];
-  const DARK = [0.08, 0.10, 0.12];
+  // EDM28 public identity: graphite #20282d and copper #d39a72.
+  const RED = [0.827, 0.604, 0.447];
+  const DARK = [0.125, 0.157, 0.176];
   const GRAY = [0.55, 0.58, 0.62];
   const LIGHT = [0.94, 0.95, 0.96];
   const BLUE = [0.84, 0.89, 0.96];
@@ -175,7 +176,7 @@
     page.line(x + 28, y + 42, x + 45, y + 54, { color: accent, width: 5 });
     page.text(x + 60, y + 12, 'EDM', { size: 29, bold: true, color: DARK });
     page.text(x + 132, y + 12, '28', { size: 29, bold: true, color: accent });
-    page.text(x + 60, y - 3, clean(cfg.tagline || 'MÉCANIQUE - DIAGNOSTIC - SERVICES'), { size: 6.5, bold: true, color: DARK });
+    page.text(x + 60, y - 3, clean(cfg.tagline || 'SPÉCIALISTE DU FREINAGE'), { size: 6.5, bold: true, color: DARK });
   }
 
   function drawCompanyBlock(page, cfg, x, y, width = 245, accent = RED) {
