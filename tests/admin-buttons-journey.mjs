@@ -90,10 +90,10 @@ try {
   await page.fill('#adminPassword','admin-password');
   await page.click('#loginBtn');
   await page.waitForSelector('#dashboard:not(.hidden)', {timeout:15000});
-  await page.waitForSelector('[data-page="planning"]', {timeout:5000});
-  await page.waitForSelector('[data-page="messages"]', {timeout:5000});
+  await page.waitForSelector('[data-page="checklist"]', {timeout:5000});
+  await page.waitForSelector('[data-page="accounting"]', {timeout:5000});
 
-  const pages=['overview','requests','quotes','operations','planning','interventions','finalization','invoice-actions','notifications','clients','messages','services','documents','document-pdf','accounting','business','settings','audit-log'];
+  const pages=['overview','requests','quotes','operations','interventions','checklist','finalization','invoice-actions','accounting','clients','notifications','services','document-pdf','business','settings','audit-log'];
   for (const id of pages) {
     const nav=page.locator(`[data-page="${id}"]`);
     if (!(await nav.count())) throw new Error(`Missing back-office navigation button: ${id}`);
@@ -102,10 +102,9 @@ try {
   }
 
   const safeIds=[
-    'requestRefresh','quoteRefresh','operationRefresh','planningPrev','planningToday','planningNext','planningRefresh',
-    'businessHoursRefresh','businessHoursSave','exceptionAdd','interventionRefresh','finalizationRefresh','invoiceActionRefresh',
-    'notificationRefresh','adminMessageRefresh','clientSearchBtn','newServiceBtn','createDraftBtn','documentPdfRefresh',
-    'accountingExport','saveBusinessBtn','saveAutomationBtn','auditLogRefresh'
+    'requestRefresh','quoteRefresh','operationRefresh','interventionRefresh','checklistRefresh','finalizationRefresh',
+    'invoiceActionRefresh','accountingExport','clientSearchBtn','notificationRefresh','newServiceBtn','documentPdfRefresh',
+    'saveBusinessBtn','saveAutomationBtn','auditLogRefresh'
   ];
   for (const id of safeIds) {
     const button=page.locator(`#${id}`);

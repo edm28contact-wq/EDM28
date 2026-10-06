@@ -5,28 +5,56 @@ import { join } from 'node:path';
 import appHandler from '../api/app.js';
 
 const port = 4192;
-let html = '';
-const response = {
-  setHeader() {},
-  status() { return this; },
-  send(body) { html = body; return this; },
-  end() { return this; }
-};
-appHandler({ method: 'GET' }, response);
-if (!html.includes('client-account-safe.js?v=13')) throw new Error('Wrong protected routes asset');
-if (!html.includes('__edmMenuRouterV7')) throw new Error('Critical menu router is not inlined');
+
+async function render(pathname, slug) {
+  let body = '';
+  let statusCode = 200;
+  const headers = {};
+  const response = {
+    setHeader(key, value) { headers[String(key).toLowerCase()] = String(value); },
+    status(code) { statusCode = code; return this; },
+    send(value) { body = String(value ?? ''); return this; },
+    end(value) { if (value != null) body = String(value); return this; }
+  };
+  await appHandler({
+    method: 'GET',
+    url: pathname,
+    query: { seo: 'page', slug },
+    headers: { host: `127.0.0.1:${port}`, 'x-forwarded-proto': 'http' }
+  }, response);
+  if (statusCode !== 200) throw new Error(`${pathname} returned ${statusCode}`);
+  return body;
+}
+
+const demandHtml = await render('/demande', 'demande');
+const interventionsHtml = await render('/mes-interventions', 'mes-interventions');
+
+if (!demandHtml.includes('id="edmRequestApp"')) throw new Error('Current request route is missing');
+if (!interventionsHtml.includes('id="edmInterventionsApp"')) throw new Error('Current interventions route is missing');
+for (const html of [demandHtml, interventionsHtml]) {
+  if (!html.includes('/public-client.js?v=6')) throw new Error('Current public client asset is missing');
+  if (!html.includes('/client-journey.js?v=1')) throw new Error('Current journey asset is missing');
+  if (html.includes('__edmMenuRouterV7')) throw new Error('Legacy protected-route router must not be served');
+}
 
 const server = createServer(async (req, res) => {
-  const path = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
-  if (path === '/') {
+  const pathname = new URL(req.url, `http://127.0.0.1:${port}`).pathname;
+  if (pathname === '/demande') {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-    res.end(html);
+    res.end(demandHtml);
+    return;
+  }
+  if (pathname === '/mes-interventions') {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(interventionsHtml);
     return;
   }
   try {
-    const body = await readFile(join(process.cwd(), path.slice(1)));
-    res.writeHead(200, { 'Content-Type': path.endsWith('.js') ? 'text/javascript' : 'application/octet-stream' });
-    res.end(body);
+    const file = pathname === '/' ? 'index.html' : pathname.slice(1);
+    const data = await readFile(join(process.cwd(), file));
+    const type = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': type });
+    res.end(data);
   } catch {
     res.writeHead(404);
     res.end();
@@ -46,7 +74,8 @@ try {
   const supabaseStub = `
   (() => {
     const listeners = [];
-    let session = null;
+    const stored = localStorage.getItem('__edm_preview_user');
+    let session = stored ? { access_token:'test-token', user:JSON.parse(stored) } : null;
     const profile = { id:'u1', first_name:'Jean', last_name:'Dupont', phone:'0612345678', email:'client@example.test' };
     const builder = (table) => {
       const api = {
@@ -61,50 +90,45 @@ try {
     };
     window.__edmTestSetSession = (user) => {
       session = user ? { access_token:'test-token', user } : null;
+      if (user) localStorage.setItem('__edm_preview_user', JSON.stringify(user));
+      else localStorage.removeItem('__edm_preview_user');
       listeners.forEach((listener) => listener(user ? 'SIGNED_IN' : 'SIGNED_OUT', session));
     };
     window.supabase = { createClient(){ return {
       auth: {
         async getSession(){ return { data:{ session }, error:null }; },
         onAuthStateChange(listener){ listeners.push(listener); return { data:{ subscription:{ unsubscribe(){} } } }; },
-        async signOut(){ window.__edmTestSetSession(null); return { error:null }; }
+        async signOut(){ window.__edmTestSetSession(null); return { error:null }; },
+        async signInWithPassword(){ return { data:{ session }, error:null }; }
       },
       from(table){ return builder(table); },
-      rpc(){ return Promise.resolve({ data:null, error:null }); },
+      rpc(){ return Promise.resolve({ data:[], error:null }); },
       storage:{ from(){ return { async createSignedUrl(){ return { data:{ signedUrl:'about:blank' }, error:null }; } }; } }
     }; } };
   })();`;
-  await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: supabaseStub }));
 
-  await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await page.waitForFunction(() => window.__edmMenuRouterV7 === true && typeof window.__edmNavigate === 'function');
+  await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/javascript', body: supabaseStub })
+  );
 
-  for (const pageId of ['account', 'garage', 'history']) {
-    await page.evaluate((id) => window.__edmNavigate(id), pageId);
-    await page.waitForFunction(() => document.getElementById('appointment')?.classList.contains('active'));
-  }
+  await page.goto(`http://127.0.0.1:${port}/mes-interventions?devis=22222222-2222-4222-8222-222222222222`, { waitUntil:'networkidle', timeout:30000 });
+  await page.waitForURL('**/demande?**');
+  await page.locator('#requestAuthEmail').waitFor({ state:'visible' });
+  if (await page.locator('[data-client-only]:visible').count()) throw new Error('Client-only navigation visible while signed out');
 
-  await page.evaluate(() => {
-    window.__edmTestSetSession({
-      id: 'u1',
-      email: 'client@example.test',
-      user_metadata: { first_name:'Jean', last_name:'Dupont', phone:'0612345678' }
-    });
-  });
-  await page.waitForFunction(() => state?.user?.id === 'u1');
+  const signedInUser = {
+    id:'u1',
+    email:'client@example.test',
+    user_metadata:{ first_name:'Jean', last_name:'Dupont', phone:'0612345678' }
+  };
+  await page.evaluate((user) => localStorage.setItem('__edm_preview_user', JSON.stringify(user)), signedInUser);
 
-  for (const pageId of ['home', 'appointment', 'account', 'garage', 'history', 'about']) {
-    await page.evaluate((id) => window.__edmNavigate(id), pageId);
-    await page.waitForFunction((id) => document.getElementById(id)?.classList.contains('active'), pageId);
-    const current = await page.getAttribute(`[data-page="${pageId}"]`, 'aria-current');
-    if (current !== 'page') throw new Error(`Missing aria-current on ${pageId}`);
-  }
-
-  await page.evaluate(() => window.__edmNavigate('appointment'));
-  await page.waitForFunction(() => document.getElementById('appointment')?.classList.contains('active'));
+  await page.goto(`http://127.0.0.1:${port}/mes-interventions`, { waitUntil:'networkidle', timeout:30000 });
+  await page.waitForFunction(() => document.getElementById('edmInterventionsApp')?.textContent.includes('Votre espace client'));
+  await page.waitForFunction(() => document.getElementById('edmInterventionsApp')?.textContent.includes('Aucune intervention en cours'));
 
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('signed-out and signed-in protected routes ok');
+  console.log('current signed-out redirect and signed-in interventions route ok');
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

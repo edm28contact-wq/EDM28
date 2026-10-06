@@ -212,10 +212,11 @@ const PAGES = {
       ['4. Votre créneau est gardé 48 h', 'Achetez les pièces et joignez le justificatif dans Mes interventions avant la fin des 48 h. Sans justificatif, le créneau est libéré. Vous pouvez acheter les mêmes références ailleurs. Toute autre référence doit être validée par EDM28.'],
       ['5. EDM28 confirme sous 24 h', 'Après réception du justificatif, EDM28 vérifie la commande et le délai de livraison. Vous recevez la confirmation par email après notre validation. Votre ordre de réparation, qui décrit les travaux prévus, est alors disponible dans votre espace. Un rappel est prévu 24 h avant le rendez-vous. Pour une prestation sans pièces à acheter, nous vérifions directement la date demandée.'],
       ['6. Vous apportez les pièces, nous réalisons la prestation', 'Le forfait comprend les travaux prévus et les consommables d’atelier. Les pièces sont vérifiées avant intervention. Aucun travail supplémentaire ne commence sans votre accord.'],
-      ['7. Tout reste dans votre historique', 'Une fois terminée, l’intervention reste en vert pendant 24 h dans la liste en cours. Elle rejoint ensuite l’historique du véhicule, avec son titre, sa date et les documents disponibles. Rien n’est supprimé.']
+      ['7. Checklist de contrôle après intervention', 'Une fois les travaux terminés, EDM28 effectue la checklist prévue : contrôle essentiel pour une prestation de moins de 100 € TTC, contrôle complet à partir de 100 € TTC. Le compte rendu PDF est conservé avec le dossier.'],
+      ['8. Clôture, facture et historique', 'Après le contrôle, EDM28 clôture l’intervention et prépare la facture. L’intervention reste en vert pendant 24 h dans la liste en cours, puis rejoint l’historique du véhicule avec le devis, l’ordre de réparation, le compte rendu de contrôle et la facture. Rien n’est supprimé.']
     ],
-    links: [['/transparence', 'Conseils & FAQ'], ['/', 'Prestations et tarifs'], ['/?page=history', 'Mes interventions'], ['/demande', 'Faire une demande']],
-    faq: [['Comment fonctionne une intervention chez EDM28 ?', 'EDM28 envoie le devis de prestation et le lien du panier dans le même email. Le client valide le devis, achète les pièces chez le fournisseur et les apporte au rendez-vous. La prestation est réalisée, facturée puis conservée dans l’historique client.']]
+    links: [['/transparence', 'Conseils & FAQ'], ['/', 'Prestations et tarifs'], ['/mes-interventions', 'Mes interventions'], ['/demande', 'Faire une demande']],
+    faq: [['Comment fonctionne une intervention chez EDM28 ?', 'EDM28 envoie le devis et le panier, le client valide puis apporte les pièces. Après la prestation, EDM28 effectue la checklist de contrôle, clôture le dossier, prépare la facture et conserve les documents dans l’historique du véhicule.']]
   },
   transparence: {
     path: '/transparence',
