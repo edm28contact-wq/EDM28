@@ -208,3 +208,26 @@ test('business readiness uses one shared required-field definition and names mis
   assert.match(readiness, /Lien public de réservation/);
   assert.match(readiness, /missing\.map\(\(item\) => item\.label\)/);
 });
+
+
+test('active customer journey foreign keys are indexed for scale', async () => {
+  const migration = await read('supabase/migrations/20261007183000_core_journey_foreign_key_indexes.sql');
+  for (const indexName of [
+    'idx_quotes_service_request_id',
+    'idx_quotes_vehicle_id',
+    'idx_quote_items_quote_id',
+    'idx_appointments_service_request_id',
+    'idx_repair_orders_quote_id',
+    'idx_repair_orders_user_id',
+    'idx_repair_orders_vehicle_id',
+    'idx_inspection_reports_repair_order_id',
+    'idx_inspection_reports_user_id',
+    'idx_invoices_quote_id',
+    'idx_invoices_vehicle_id',
+    'idx_payments_invoice_id',
+    'idx_client_documents_vehicle_id',
+    'idx_repair_documents_user_id'
+  ]) {
+    assert.match(migration, new RegExp(`create index if not exists ${indexName}`));
+  }
+});
