@@ -170,7 +170,7 @@ insert into public.booking_reservations(
 
 set request.jwt.claim.sub='11111111-1111-4111-8111-111111111111';
 set role authenticated;
-do $ begin
+do $$ begin
  begin
    perform public.admin_resolve_parts_issue(
      '71717171-7171-4717-8717-717171717171',
@@ -180,7 +180,7 @@ do $ begin
    raise exception 'FAIL: customer resolved parts issue';
  exception when insufficient_privilege then null;
  end;
-end $;
+end $$;
 reset role;
 
 set request.jwt.claim.sub='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -303,7 +303,7 @@ insert into public.booking_reservations(
 );
 set request.jwt.claim.sub='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 set role authenticated;
-do $ begin
+do $$ begin
  begin
    perform public.admin_resolve_parts_issue(
      '77777777-7777-4777-8777-777777777777',
@@ -314,7 +314,7 @@ do $ begin
  exception when others then
    if sqlerrm='FAIL: 15 EUR rule applied after intervention start' then raise; end if;
  end;
-end $;
+end $$;
 select public.fixture_assert(
  (select status='in_progress' from public.repair_orders where id='78787878-7878-4787-8787-787878787878')
  and
