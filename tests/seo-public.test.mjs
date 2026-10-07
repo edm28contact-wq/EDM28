@@ -285,3 +285,11 @@ test('symptom contact and llms public identity are synchronized by the app route
   assert.match(app, /business\.email/);
   assert.match(app, /businessAddress\(business\)/);
 });
+
+
+test('production responses enforce HTTPS with HSTS', async () => {
+  const config = JSON.parse(await read('vercel.json'));
+  const globalHeaders = config.headers.find((entry) => entry.source === '/(.*)')?.headers || [];
+  const hsts = globalHeaders.find((entry) => entry.key === 'Strict-Transport-Security');
+  assert.equal(hsts?.value, 'max-age=31536000');
+});
