@@ -72,7 +72,7 @@ const PAGES = {
     path: '/garage-freinage-saint-lubin-de-la-haye',
     title: 'Garage freinage à Saint-Lubin-de-la-Haye (28410) | EDM28',
     description: 'EDM28, garage spécialisé en freinage et liaison au sol à Saint-Lubin-de-la-Haye, avec devis avant travaux et suivi client transparent.',
-    h1: 'Garage spécialisé freinage à Saint-Lubin-de-la-Haye',
+    h1: 'EDM28 — garage spécialisé freinage à Saint-Lubin-de-la-Haye',
     lede: 'EDM28 intervient sur rendez-vous en freinage et liaison au sol. Les coordonnées affichées sur cette page sont synchronisées avec le back-office.',
     serviceType: 'Garage automobile spécialisé freinage à Saint-Lubin-de-la-Haye',
     breadcrumbs: [['/', 'Accueil'], ['/garage-freinage-saint-lubin-de-la-haye', 'Garage à Saint-Lubin-de-la-Haye']],
@@ -281,19 +281,23 @@ const PAGES = {
   },
   'a-propos': {
     path: '/a-propos',
-    title: 'À propos d’EDM28 | Freinage et liaison au sol',
-    description: 'EDM28 est un garage automobile spécialisé en freinage et liaison au sol, avec devis avant intervention et parcours client transparent.',
-    h1: 'EDM28 — Garage automobile spécialisé freinage et liaison au sol',
-    lede: 'EDM28 est une micro-entreprise orientée vers la mécanique de liaison au sol, avec une spécialisation principale en freinage et un parcours client construit autour de la transparence.',
+    title: 'EDM28 (EDM) : garage automobile à Saint-Lubin-de-la-Haye',
+    description: 'Identité officielle d’EDM28, aussi appelé EDM : garage automobile à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et liaison au sol.',
+    h1: 'EDM28 (EDM) — garage automobile à Saint-Lubin-de-la-Haye',
+    lede: 'EDM28 est le nom public du garage automobile situé à Saint-Lubin-de-la-Haye. EDM est le nom court visible dans son identité graphique. Le site officiel est edm28.fr. L’activité est centrée sur le freinage et des prestations ciblées de liaison au sol.',
     serviceType: 'Garage automobile spécialisé freinage et liaison au sol',
     breadcrumbs: [['/', 'Accueil'], ['/a-propos', 'À propos']],
     sections: [
+      ['Identité officielle', 'EDM28, EDM 28 et le nom court EDM renvoient ici au même garage automobile. Le site officiel est edm28.fr et la fiche Google Business reliée au site correspond au même établissement.'],
       ['Nos spécialités', 'Le freinage constitue le cœur du positionnement. Les interventions de liaison au sol complètent ce périmètre avec des prestations ciblées du train roulant.'],
       ['Vos documents toujours disponibles', 'Le parcours associe demande, devis, validation, intervention, facture et historique afin de réduire les zones floues entre ce qui est demandé, accepté et réalisé.'],
       ['Où nous trouver', 'Le garage se trouve au 17 bis route du Videlet, à Saint-Lubin-de-la-Haye (28410). Les interventions se font sur rendez-vous.']
     ],
     links: [['/', 'Prestations'], ['/transparence', 'Conseils & FAQ'], ['/fonctionnement', 'Fonctionnement'], ['/contact', 'Contact']],
-    faq: [['Quelle est la spécialité principale d’EDM28 ?', 'Le freinage. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant.']]
+    faq: [
+      ['EDM et EDM28 désignent-ils le même établissement ?', 'Oui. EDM28 est le nom public du garage et EDM est son nom court utilisé dans son identité graphique. Le site officiel est edm28.fr.'],
+      ['Quelle est la spécialité principale d’EDM28 ?', 'Le freinage. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant.']
+    ]
   },
   contact: {
     path: '/contact',
@@ -304,7 +308,7 @@ const PAGES = {
     breadcrumbs: [['/', 'Accueil'], ['/contact', 'Contact']],
     sections: [
       ['Demande de rendez-vous', 'Le parcours en ligne permet de préparer la demande et de la relier aux prestations disponibles avant l’étude du dossier.'],
-      ['Email public', 'Vous pouvez écrire à contact@edm28.fr. Aucune adresse postale ni aucun numéro de téléphone n’est publié ici tant que ces informations ne sont pas renseignées dans la configuration publique.']
+      ['Coordonnées officielles', 'Vous pouvez écrire à contact@edm28.fr. L’adresse officielle du garage et, lorsqu’il est renseigné, le numéro de téléphone sont affichés depuis la configuration publique EDM28 afin de rester cohérents sur toutes les pages.']
     ],
     links: [['/demande', 'Faire une demande'], ['/', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Conseils & FAQ']],
     faq: [['Comment contacter EDM28 ?', 'L’email public est contact@edm28.fr. Le site permet également de préparer une demande de rendez-vous.']]
