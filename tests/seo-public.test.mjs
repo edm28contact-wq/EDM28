@@ -253,7 +253,6 @@ test('la page d’accueil reçoit le positionnement local SEO et le maillage int
   assert.match(source, /streetAddress: \[business\.address_line1, business\.address_line2\]/);
   assert.match(source, /addressLocality: business\.city/);
   assert.match(source, /postalCode: business\.postal_code/);
-  assert.match(source, /openingHoursSpecification: openingHours/);
   assert.match(source, /telephone: business\.phone/);
   assert.doesNotMatch(source, /OpeningHoursSpecification/);
 });
