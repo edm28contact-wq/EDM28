@@ -138,4 +138,189 @@ do $$ begin
  begin perform public.submit_reservation_proof((select id from public.fixture_state where name='other'),'fake'); raise exception 'FAIL: expired proof accepted'; exception when others then if sqlerrm='FAIL: expired proof accepted' then raise; end if; end;
 end $$;
 reset role;
+
+-- Wrong parts are resolved before work starts: client mismatch => 15 EUR reservation fee only.
+reset role;
+insert into public.appointments(id,user_id,vehicle_id,starts_at,ends_at,status,visible_to_client)
+values(
+ '71717171-7171-4717-8717-717171717171',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ now()+interval '3 days',now()+interval '3 days 1 hour','confirmed',true
+);
+insert into public.repair_orders(id,user_id,vehicle_id,quote_id,appointment_id,order_number,status,visible_to_client)
+values(
+ '72727272-7272-4727-8727-727272727272',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ '22222222-2222-4222-8222-222222222222',
+ '71717171-7171-4717-8717-717171717171',
+ 'OR-PARTS-CLIENT','ready',true
+);
+insert into public.booking_reservations(
+ id,quote_id,user_id,vehicle_id,starts_at,ends_at,status,appointment_id,repair_order_id
+) values(
+ '73737373-7373-4737-8737-737373737373',
+ '22222222-2222-4222-8222-222222222222',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ now()+interval '3 days',now()+interval '3 days 1 hour','confirmed',
+ '71717171-7171-4717-8717-717171717171','72727272-7272-4727-8727-727272727272'
+);
+
+set request.jwt.claim.sub='11111111-1111-4111-8111-111111111111';
+set role authenticated;
+do $ begin
+ begin
+   perform public.admin_resolve_parts_issue(
+     '71717171-7171-4717-8717-717171717171',
+     'client_nonconforming_parts',
+     'REF-WRONG apportee au lieu de REF-1'
+   );
+   raise exception 'FAIL: customer resolved parts issue';
+ exception when insufficient_privilege then null;
+ end;
+end $;
+reset role;
+
+set request.jwt.claim.sub='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+set role authenticated;
+select public.admin_resolve_parts_issue(
+ '71717171-7171-4717-8717-717171717171',
+ 'client_nonconforming_parts',
+ 'REF-WRONG apportee au lieu de REF-1'
+);
+select public.fixture_assert(
+ (select status='cancelled'
+      and parts_resolution='client_nonconforming_parts'
+      and reservation_fee_amount=15
+      and reservation_fee_invoice_id is not null
+  from public.booking_reservations where id='73737373-7373-4737-8737-737373737373'),
+ 'client wrong parts stores a 15 EUR reservation fee'
+);
+select public.fixture_assert(
+ (select status='cancelled' from public.appointments where id='71717171-7171-4717-8717-717171717171')
+ and
+ (select status='cancelled' from public.repair_orders where id='72727272-7272-4727-8727-727272727272'),
+ 'wrong-parts resolution cancels the booking before work'
+);
+select public.fixture_assert(
+ (select count(*)=1 and bool_and(status='draft' and total=15 and visible_to_client=false)
+  from public.invoices
+  where id=(select reservation_fee_invoice_id from public.booking_reservations where id='73737373-7373-4737-8737-737373737373')),
+ 'client wrong parts creates one private 15 EUR draft invoice'
+);
+select public.fixture_assert(
+ (select count(*)=1 and bool_and(item_type='other' and quantity=1 and unit_price=15 and line_total=15)
+  from public.invoice_items
+  where invoice_id=(select reservation_fee_invoice_id from public.booking_reservations where id='73737373-7373-4737-8737-737373737373')),
+ 'reservation invoice contains only the 15 EUR fee'
+);
+select public.fixture_assert(
+ public.admin_resolve_parts_issue(
+   '71717171-7171-4717-8717-717171717171',
+   'client_nonconforming_parts',
+   'retry'
+ )=(select reservation_fee_invoice_id from public.booking_reservations where id='73737373-7373-4737-8737-737373737373'),
+ 'client wrong-parts resolution is idempotent'
+);
+reset role;
+
+-- EDM28 recommendation error => no client invoice and zero fee.
+insert into public.appointments(id,user_id,vehicle_id,starts_at,ends_at,status,visible_to_client)
+values(
+ '74747474-7474-4747-8747-747474747474',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ now()+interval '4 days',now()+interval '4 days 1 hour','confirmed',true
+);
+insert into public.repair_orders(id,user_id,vehicle_id,quote_id,appointment_id,order_number,status,visible_to_client)
+values(
+ '75757575-7575-4757-8757-757575757575',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ '22222222-2222-4222-8222-222222222222',
+ '74747474-7474-4747-8747-747474747474',
+ 'OR-PARTS-EDM','ready',true
+);
+insert into public.booking_reservations(
+ id,quote_id,user_id,vehicle_id,starts_at,ends_at,status,appointment_id,repair_order_id
+) values(
+ '76767676-7676-4767-8767-767676767676',
+ '22222222-2222-4222-8222-222222222222',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ now()+interval '4 days',now()+interval '4 days 1 hour','confirmed',
+ '74747474-7474-4747-8747-747474747474','75757575-7575-4757-8757-757575757575'
+);
+set request.jwt.claim.sub='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+set role authenticated;
+select public.admin_resolve_parts_issue(
+ '74747474-7474-4747-8747-747474747474',
+ 'edm_recommendation_error',
+ 'REF-1 etait la reference EDM28 mais elle est incompatible'
+);
+select public.fixture_assert(
+ (select status='cancelled'
+      and parts_resolution='edm_recommendation_error'
+      and reservation_fee_amount=0
+      and reservation_fee_invoice_id is null
+  from public.booking_reservations where id='76767676-7676-4767-8767-767676767676'),
+ 'EDM28 recommendation error charges the client zero'
+);
+select public.fixture_assert(
+ not exists(select 1 from public.invoices where repair_order_id='75757575-7575-4757-8757-757575757575'),
+ 'EDM28 recommendation error creates no client invoice'
+);
+reset role;
+
+-- Once work started, the 15 EUR shortcut is forbidden.
+insert into public.appointments(id,user_id,vehicle_id,starts_at,ends_at,status,visible_to_client)
+values(
+ '77777777-7777-4777-8777-777777777777',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ now()+interval '5 days',now()+interval '5 days 1 hour','confirmed',true
+);
+insert into public.repair_orders(id,user_id,vehicle_id,quote_id,appointment_id,order_number,status,visible_to_client)
+values(
+ '78787878-7878-4787-8787-787878787878',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ '22222222-2222-4222-8222-222222222222',
+ '77777777-7777-4777-8777-777777777777',
+ 'OR-PARTS-STARTED','in_progress',true
+);
+insert into public.booking_reservations(
+ id,quote_id,user_id,vehicle_id,starts_at,ends_at,status,appointment_id,repair_order_id
+) values(
+ '79797979-7979-4797-8797-797979797979',
+ '22222222-2222-4222-8222-222222222222',
+ '11111111-1111-4111-8111-111111111111',
+ '12121212-1212-4212-8212-121212121212',
+ now()+interval '5 days',now()+interval '5 days 1 hour','confirmed',
+ '77777777-7777-4777-8777-777777777777','78787878-7878-4787-8787-787878787878'
+);
+set request.jwt.claim.sub='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+set role authenticated;
+do $ begin
+ begin
+   perform public.admin_resolve_parts_issue(
+     '77777777-7777-4777-8777-777777777777',
+     'client_nonconforming_parts',
+     'Tentative apres demarrage'
+   );
+   raise exception 'FAIL: 15 EUR rule applied after intervention start';
+ exception when others then
+   if sqlerrm='FAIL: 15 EUR rule applied after intervention start' then raise; end if;
+ end;
+end $;
+select public.fixture_assert(
+ (select status='in_progress' from public.repair_orders where id='78787878-7878-4787-8787-787878787878')
+ and
+ (select parts_resolution is null from public.booking_reservations where id='79797979-7979-4797-8797-797979797979'),
+ 'started intervention cannot use the 15 EUR reservation rule'
+);
+reset role;
+
 select 'ALL JOURNEY DATABASE CHECKS PASSED';
