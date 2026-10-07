@@ -1,6 +1,6 @@
 (function (root) {
   const terms = 'Tarifs par prestation, consommables d\u2019atelier inclus, hors pi\u00e8ces de remplacement. Le client ach\u00e8te les pi\u00e8ces directement au fournisseur et les apporte au rendez-vous.';
-  const partsAdvice = 'Apportez les r\u00e9f\u00e9rences pr\u00e9conis\u00e9es dans ce devis. Toute autre r\u00e9f\u00e9rence doit \u00eatre valid\u00e9e par EDM28 avant le rendez-vous. Une incompatibilit\u00e9 peut emp\u00eacher ou interrompre l\u2019intervention ; son origine est examin\u00e9e avec le client.';
+  const partsAdvice = 'Apportez les r\u00e9f\u00e9rences pr\u00e9conis\u00e9es dans ce devis. Toute autre r\u00e9f\u00e9rence doit \u00eatre valid\u00e9e par EDM28 avant le rendez-vous. Les pi\u00e8ces sont contr\u00f4l\u00e9es avant tout d\u00e9montage. Si des pi\u00e8ces diff\u00e9rentes ou non conformes emp\u00eachent l\u2019intervention, aucune prestation m\u00e9canique n\u2019est commenc\u00e9e et seuls 15 \u20ac de frais de r\u00e9servation sont factur\u00e9s. Si l\u2019incompatibilit\u00e9 provient d\u2019une pr\u00e9conisation EDM28, aucun frais n\u2019est factur\u00e9 au client et EDM28 prend en charge les frais n\u00e9cessaires \u00e0 la correction de son erreur.';
   function safeUrl(value) {
     const raw = String(value || '').trim();
     if (!raw || raw.length > 2000 || /[\u0000-\u0020\u007f\\]/.test(raw)) throw new Error('Lien de panier invalide.');
