@@ -231,3 +231,14 @@ test('active customer journey foreign keys are indexed for scale', async () => {
     assert.match(migration, new RegExp(`create index if not exists ${indexName}`));
   }
 });
+
+
+test('active invoice notification and audit relations are indexed', async () => {
+  const migration = await read('supabase/migrations/20261007184500_active_supporting_indexes.sql');
+  for (const indexName of [
+    'idx_invoice_items_invoice_id',
+    'idx_invoice_items_source_quote_item_id',
+    'idx_outbound_notifications_user_id',
+    'idx_audit_log_actor_id'
+  ]) assert.match(migration, new RegExp(`create index if not exists ${indexName}`));
+});
