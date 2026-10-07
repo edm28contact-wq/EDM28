@@ -141,6 +141,11 @@ reset role;
 
 -- Wrong parts are resolved before work starts: client mismatch => 15 EUR reservation fee only.
 reset role;
+insert into public.quotes(id,user_id,vehicle_id,status,title,total,subtotal,labor_duration_minutes,commercial_model)
+values
+ ('70707070-7070-4070-8070-707070707070','11111111-1111-4111-8111-111111111111','12121212-1212-4212-8212-121212121212','accepted','Wrong parts client',99,99,60,'customer_supplied_v1'),
+ ('80808080-8080-4080-8080-808080808080','11111111-1111-4111-8111-111111111111','12121212-1212-4212-8212-121212121212','accepted','Wrong recommendation EDM28',99,99,60,'customer_supplied_v1'),
+ ('90909090-9090-4090-8090-909090909090','11111111-1111-4111-8111-111111111111','12121212-1212-4212-8212-121212121212','accepted','Already started',99,99,60,'customer_supplied_v1');
 insert into public.appointments(id,user_id,vehicle_id,starts_at,ends_at,status,visible_to_client)
 values(
  '71717171-7171-4717-8717-717171717171',
@@ -153,7 +158,7 @@ values(
  '72727272-7272-4727-8727-727272727272',
  '11111111-1111-4111-8111-111111111111',
  '12121212-1212-4212-8212-121212121212',
- '22222222-2222-4222-8222-222222222222',
+ '70707070-7070-4070-8070-707070707070',
  '71717171-7171-4717-8717-717171717171',
  'OR-PARTS-CLIENT','ready',true
 );
@@ -161,7 +166,7 @@ insert into public.booking_reservations(
  id,quote_id,user_id,vehicle_id,starts_at,ends_at,status,appointment_id,repair_order_id
 ) values(
  '73737373-7373-4737-8737-737373737373',
- '22222222-2222-4222-8222-222222222222',
+ '70707070-7070-4070-8070-707070707070',
  '11111111-1111-4111-8111-111111111111',
  '12121212-1212-4212-8212-121212121212',
  now()+interval '3 days',now()+interval '3 days 1 hour','confirmed',
@@ -239,7 +244,7 @@ values(
  '75757575-7575-4757-8757-757575757575',
  '11111111-1111-4111-8111-111111111111',
  '12121212-1212-4212-8212-121212121212',
- '22222222-2222-4222-8222-222222222222',
+ '80808080-8080-4080-8080-808080808080',
  '74747474-7474-4747-8747-747474747474',
  'OR-PARTS-EDM','ready',true
 );
@@ -247,7 +252,7 @@ insert into public.booking_reservations(
  id,quote_id,user_id,vehicle_id,starts_at,ends_at,status,appointment_id,repair_order_id
 ) values(
  '76767676-7676-4767-8767-767676767676',
- '22222222-2222-4222-8222-222222222222',
+ '80808080-8080-4080-8080-808080808080',
  '11111111-1111-4111-8111-111111111111',
  '12121212-1212-4212-8212-121212121212',
  now()+interval '4 days',now()+interval '4 days 1 hour','confirmed',
@@ -287,7 +292,7 @@ values(
  '78787878-7878-4787-8787-787878787878',
  '11111111-1111-4111-8111-111111111111',
  '12121212-1212-4212-8212-121212121212',
- '22222222-2222-4222-8222-222222222222',
+ '90909090-9090-4090-8090-909090909090',
  '77777777-7777-4777-8777-777777777777',
  'OR-PARTS-STARTED','in_progress',true
 );
@@ -295,7 +300,7 @@ insert into public.booking_reservations(
  id,quote_id,user_id,vehicle_id,starts_at,ends_at,status,appointment_id,repair_order_id
 ) values(
  '79797979-7979-4797-8797-797979797979',
- '22222222-2222-4222-8222-222222222222',
+ '90909090-9090-4090-8090-909090909090',
  '11111111-1111-4111-8111-111111111111',
  '12121212-1212-4212-8212-121212121212',
  now()+interval '5 days',now()+interval '5 days 1 hour','confirmed',
