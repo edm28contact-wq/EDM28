@@ -1,5 +1,7 @@
 import { resolveSupabasePublicConfig } from './supabase-config.js';
 
+const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
+
 const DEFAULT_PUBLIC_BUSINESS = Object.freeze({
   business_name: 'EDM28',
   email: 'contact@edm28.fr',
@@ -457,6 +459,7 @@ function structuredData(page, origin, business) {
       alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
       logo: `${origin}/logo-edm.svg`,
+      sameAs: [PUBLIC_GOOGLE_MAPS_URL],
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
       ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
@@ -469,6 +472,7 @@ function structuredData(page, origin, business) {
       alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
       logo: `${origin}/logo-edm.svg`,
+      sameAs: [PUBLIC_GOOGLE_MAPS_URL],
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
       ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
@@ -576,7 +580,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
           </div>
         </a>
       </div>
-      <section class="scope-card"><h2>${esc(page.sections[2][0])}</h2><p>${esc(page.sections[2][1])}</p></section>`
+      <section class="scope-card"><h2>${esc(page.sections[3][0])}</h2><p>${esc(page.sections[3][1])}</p></section>`
     : page.sections.map(([title, text]) => `<section><h2>${esc(title)}</h2><p>${esc(text)}</p></section>`).join('');
   const links = page.links.map(([path, label]) => `<a class="link-card" href="${esc(path)}"${path === '/mes-interventions' ? ' data-client-only hidden' : ''}>${esc(label)}<span aria-hidden="true">→</span></a>`).join('');
   const faq = page.faq?.length ? `<section aria-labelledby="faq-title"><h2 id="faq-title">Questions fréquentes</h2><div class="faq">${page.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></section>` : '';
