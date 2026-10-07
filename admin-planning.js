@@ -113,7 +113,7 @@
         : 'Rendez-vous clôturé sans facturation client. Erreur de préconisation à la charge d’EDM28.'
     );
     await load();
-    box?.classList?.add?.('hidden');
+    document.getElementById('planningEditor')?.classList.add('hidden');
     await A().overview();
     window.EDMAdminInvoiceActions?.load?.();
   }
