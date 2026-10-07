@@ -6,8 +6,8 @@ alter table public.booking_reservations
   add column if not exists reservation_fee_amount numeric(10,2) not null default 0,
   add column if not exists resolution_note text,
   add column if not exists resolved_at timestamptz,
-  add column if not exists resolved_by uuid references public.profiles(id) on delete set null,
-  add column if not exists reservation_fee_invoice_id uuid references public.invoices(id) on delete set null;
+  add column if not exists resolved_by uuid references public.profiles(id),
+  add column if not exists reservation_fee_invoice_id uuid references public.invoices(id);
 
 alter table public.booking_reservations
   drop constraint if exists booking_reservations_parts_resolution_check,
