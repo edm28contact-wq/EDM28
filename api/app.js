@@ -366,21 +366,6 @@ export default async function handler(req, res) {
       addressCountry: 'FR'
     };
 
-    const openingHours = [
-      {
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: 'https://schema.org/Sunday',
-        opens: '09:00',
-        closes: '13:00'
-      },
-      {
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: 'https://schema.org/Sunday',
-        opens: '14:00',
-        closes: '18:00'
-      }
-    ];
-
     const serviceCatalog = {
       '@type': 'OfferCatalog',
       name: 'Prestations EDM28',
@@ -436,7 +421,6 @@ export default async function handler(req, res) {
           image: `${origin}/logo-edm.svg`,
           email: PUBLIC_EMAIL,
           address: localAddress,
-          openingHoursSpecification: openingHours,
           areaServed: { '@type': 'Place', name: 'Saint-Lubin-de-la-Haye et alentours' },
           knowsAbout: ['freinage automobile', 'plaquettes de frein', 'disques de frein', 'liquide de frein', 'liaison au sol', 'train roulant', 'triangles de suspension', 'direction'],
           hasOfferCatalog: serviceCatalog,
