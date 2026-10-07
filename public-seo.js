@@ -24,19 +24,24 @@ const NAV_ITEMS = [
 const PAGES = {
   accueil: {
     path: '/',
-    title: 'Freinage et liaison au sol | EDM28',
-    description: 'Découvrez EDM28 en freinage et liaison au sol, avec demande d’intervention, devis avant travaux, suivi client et tarifs publics.',
-    h1: 'EDM28',
-    lede: 'Nous entretenons vos freins et les éléments qui relient les roues au véhicule. Nos forfaits comprennent la prestation et les consommables d’atelier, hors pièces de remplacement.',
+    title: 'EDM28 (EDM) | Garage automobile à Saint-Lubin-de-la-Haye',
+    description: 'EDM28, aussi recherché comme EDM, est un garage automobile à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et liaison au sol.',
+    h1: 'EDM28 — garage automobile à Saint-Lubin-de-la-Haye',
+    lede: 'EDM28, aussi identifié par le nom court EDM, est le garage automobile situé à Saint-Lubin-de-la-Haye (28410), spécialisé principalement en freinage et en prestations ciblées de liaison au sol. Nos forfaits comprennent la prestation et les consommables d’atelier, hors pièces de remplacement.',
     serviceType: 'Interventions automobiles EDM28',
     breadcrumbs: [['/', 'Accueil']],
     sections: [
+      ['EDM28, le garage EDM à Saint-Lubin-de-la-Haye', 'EDM28 est le nom public du garage. Le nom court EDM apparaît également sur son identité visuelle. Le site officiel est edm28.fr et les coordonnées du garage sont celles affichées sur ce site.'],
       ['Freinage', 'Plaquettes, disques et purge du liquide de frein font partie des interventions proposées. Lors des démontages concernés, EDM28 nettoie les points de corrosion accessibles et remonte avec une graisse adaptée sur les portées prévues, jamais sur les surfaces de friction, afin de limiter le retour de corrosion.'],
       ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des interventions publiées.'],
       ['Des travaux expliqués', 'Nous vous expliquons les travaux prévus et leur prix. Rien n’est ajouté sans votre accord.']
     ],
     links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs des prestations'], ['/transparence', 'Conseils & FAQ'], ['/demande', 'Faire une demande']],
-    faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 intervient sur les freins, la suspension et certaines pièces de direction. Nous vérifions votre demande avant de vous proposer un devis.']]
+    faq: [
+      ['EDM et EDM28 désignent-ils le même garage ?', 'Oui. EDM28 est le nom public du garage automobile de Saint-Lubin-de-la-Haye et EDM est son nom court utilisé sur l’identité visuelle. Le site officiel est edm28.fr.'],
+      ['Où se trouve EDM28 ?', 'EDM28 est situé à Saint-Lubin-de-la-Haye (28410), en Eure-et-Loir. Les coordonnées officielles et l’itinéraire sont affichés sur le site edm28.fr.'],
+      ['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 intervient sur les freins, la suspension et certaines pièces de direction. Nous vérifions votre demande avant de vous proposer un devis.']
+    ]
   },
   demande: {
     path: '/demande',
@@ -438,10 +443,20 @@ function structuredData(page, origin, business) {
   const canonical = `${origin}${page.path}`;
   const graph = [
     {
+      '@type': 'WebSite',
+      '@id': `${origin}/#website`,
+      url: `${origin}/`,
+      name: 'EDM28',
+      alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
+      publisher: { '@id': `${origin}/#organization` }
+    },
+    {
       '@type': 'Organization',
       '@id': `${origin}/#organization`,
       name: business.business_name,
+      alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
+      logo: `${origin}/logo-edm.svg`,
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
       ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
@@ -451,7 +466,9 @@ function structuredData(page, origin, business) {
       '@type': 'AutoRepair',
       '@id': `${origin}/#autorepair`,
       name: business.business_name,
+      alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
+      logo: `${origin}/logo-edm.svg`,
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
       ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
