@@ -139,7 +139,7 @@ test('Prestations est fusionnée dans l’accueil', async () => {
   const config = JSON.parse(configText);
   const routes = new Map(config.routes.filter((route) => route.src).map((route) => [route.src, route.dest]));
   assert.equal(routes.get('/prestations'), '/');
-  assert.match(source, /h1: 'EDM28'/);
+  assert.match(source, /h1: 'EDM28 — garage automobile à Saint-Lubin-de-la-Haye'/);
   assert.match(source, /const sections = page\.path === '\/'/);
   assert.doesNotMatch(source, /prestations:\s*\{/);
   assert.doesNotMatch(source.split('const NAV_ITEMS = [')[1].split('];')[0], /Prestations/);
@@ -163,7 +163,9 @@ test('les pages SEO rendent canonical, H1, Open Graph et structured data', async
   assert.match(source, /<meta property="og:title"/);
   assert.match(source, /<h1>\$\{esc\(page\.h1\)\}<\/h1>/);
   assert.match(source, /application\/ld\+json/);
-  for (const type of ['Organization', 'AutoRepair', 'Service', 'BreadcrumbList']) assert.match(source, new RegExp(`'@type': '${type}'`));
+  for (const type of ['WebSite', 'Organization', 'AutoRepair', 'Service', 'BreadcrumbList']) assert.match(source, new RegExp(`'@type': '${type}'`));
+  assert.match(source, /alternateName: \['EDM', 'EDM 28', 'edm28\.fr'\]/);
+  assert.match(source, /sameAs: \[PUBLIC_GOOGLE_MAPS_URL\]/);
   assert.match(source, /'@type': 'FAQPage'/);
   assert.match(source, /Question/);
   assert.match(source, /Questions fréquentes/);
@@ -176,13 +178,12 @@ test('les pages SEO secondaires reçoivent l’identité entreprise synchronisé
   assert.match(source, /function buildSecondaryEntityStructuredData/);
   assert.match(source, /async function handleSeoDocument/);
   assert.match(source, /id="edm-entity-identity"/);
-  assert.match(source, /alternateName: \['EDM 28', 'edm28\.fr'\]/);
+  assert.match(source, /alternateName: \['EDM', 'EDM 28', 'edm28\.fr'\]/);
   assert.match(source, /sameAs: \[PUBLIC_GOOGLE_MAPS_URL\]/);
   assert.match(source, /streetAddress: \[business\.address_line1, business\.address_line2\]/);
   assert.match(source, /addressLocality: business\.city/);
   assert.match(source, /postalCode: business\.postal_code/);
   assert.match(source, /telephone: business\.phone/);
-  assert.match(source, /openingHoursSpecification: openingHours/);
   assert.match(source, /Pièces automobiles sans marge ni commission/);
 });
 
@@ -252,13 +253,8 @@ test('la page d’accueil reçoit le positionnement local SEO et le maillage int
   assert.match(source, /streetAddress: \[business\.address_line1, business\.address_line2\]/);
   assert.match(source, /addressLocality: business\.city/);
   assert.match(source, /postalCode: business\.postal_code/);
-  assert.match(source, /openingHoursSpecification: openingHours/);
-  assert.match(source, /dayOfWeek: 'https:\/\/schema\.org\/Sunday'/);
-  assert.match(source, /opens: '09:00'/);
-  assert.match(source, /closes: '13:00'/);
-  assert.match(source, /opens: '14:00'/);
-  assert.match(source, /closes: '18:00'/);
   assert.match(source, /telephone: business\.phone/);
+  assert.doesNotMatch(source, /OpeningHoursSpecification/);
 });
 
 

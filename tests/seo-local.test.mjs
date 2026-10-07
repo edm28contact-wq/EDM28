@@ -25,7 +25,7 @@ test('la route locale Saint-Lubin-de-la-Haye est publique et stable', async () =
 test('la page locale est rendue par le moteur SEO synchronisé', async () => {
   const source = await read('public-seo.js');
   assert.match(source, /path: '\/garage-freinage-saint-lubin-de-la-haye'/);
-  assert.match(source, /Garage spécialisé freinage à Saint-Lubin-de-la-Haye/);
+  assert.match(source, /EDM28 — garage spécialisé freinage à Saint-Lubin-de-la-Haye/);
   assert.match(source, /page\.path === '\/garage-freinage-saint-lubin-de-la-haye'/);
   assert.match(source, /business\.address/);
   assert.match(source, /business\.business_name/);
@@ -60,6 +60,7 @@ test('llms.txt is generated from the synchronized public business profile', asyn
   assert.equal(routes.get('/llms.txt'), '/api/app?seo=llms');
   assert.match(app, /async function handleLlms/);
   assert.match(app, /await loadPublicBusiness\(\)/);
+  assert.match(app, /Noms de marque: EDM28, EDM 28, EDM/);
   assert.match(app, /Contact public:/);
   assert.match(app, /Telephone public:/);
   assert.match(app, /Adresse:/);

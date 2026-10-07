@@ -1,5 +1,7 @@
 import { resolveSupabasePublicConfig } from './supabase-config.js';
 
+const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
+
 const DEFAULT_PUBLIC_BUSINESS = Object.freeze({
   business_name: 'EDM28',
   email: 'contact@edm28.fr',
@@ -24,19 +26,24 @@ const NAV_ITEMS = [
 const PAGES = {
   accueil: {
     path: '/',
-    title: 'Freinage et liaison au sol | EDM28',
-    description: 'Découvrez EDM28 en freinage et liaison au sol, avec demande d’intervention, devis avant travaux, suivi client et tarifs publics.',
-    h1: 'EDM28',
-    lede: 'Nous entretenons vos freins et les éléments qui relient les roues au véhicule. Nos forfaits comprennent la prestation et les consommables d’atelier, hors pièces de remplacement.',
+    title: 'EDM28 (EDM) | Garage automobile à Saint-Lubin-de-la-Haye',
+    description: 'EDM28, aussi recherché comme EDM, est un garage automobile à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et liaison au sol.',
+    h1: 'EDM28 — garage automobile à Saint-Lubin-de-la-Haye',
+    lede: 'EDM28, aussi identifié par le nom court EDM, est le garage automobile situé à Saint-Lubin-de-la-Haye (28410), spécialisé principalement en freinage et en prestations ciblées de liaison au sol. Nos forfaits comprennent la prestation et les consommables d’atelier, hors pièces de remplacement.',
     serviceType: 'Interventions automobiles EDM28',
     breadcrumbs: [['/', 'Accueil']],
     sections: [
+      ['EDM28, le garage EDM à Saint-Lubin-de-la-Haye', 'EDM28 est le nom public du garage. Le nom court EDM apparaît également sur son identité visuelle. Le site officiel est edm28.fr et les coordonnées du garage sont celles affichées sur ce site.'],
       ['Freinage', 'Plaquettes, disques et purge du liquide de frein font partie des interventions proposées. Lors des démontages concernés, EDM28 nettoie les points de corrosion accessibles et remonte avec une graisse adaptée sur les portées prévues, jamais sur les surfaces de friction, afin de limiter le retour de corrosion.'],
       ['Liaison au sol', 'Triangles de suspension, biellettes ou rotules de direction et biellettes de barre stabilisatrice font partie des interventions publiées.'],
       ['Des travaux expliqués', 'Nous vous expliquons les travaux prévus et leur prix. Rien n’est ajouté sans votre accord.']
     ],
     links: [['/freinage', 'Freinage'], ['/liaison-au-sol', 'Liaison au sol'], ['/tarifs', 'Tarifs des prestations'], ['/transparence', 'Conseils & FAQ'], ['/demande', 'Faire une demande']],
-    faq: [['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 intervient sur les freins, la suspension et certaines pièces de direction. Nous vérifions votre demande avant de vous proposer un devis.']]
+    faq: [
+      ['EDM et EDM28 désignent-ils le même garage ?', 'Oui. EDM28 est le nom public du garage automobile de Saint-Lubin-de-la-Haye et EDM est son nom court utilisé sur l’identité visuelle. Le site officiel est edm28.fr.'],
+      ['Où se trouve EDM28 ?', 'EDM28 est situé à Saint-Lubin-de-la-Haye (28410), en Eure-et-Loir. Les coordonnées officielles et l’itinéraire sont affichés sur le site edm28.fr.'],
+      ['EDM28 fait-il toutes les réparations automobiles ?', 'Non. EDM28 intervient sur les freins, la suspension et certaines pièces de direction. Nous vérifions votre demande avant de vous proposer un devis.']
+    ]
   },
   demande: {
     path: '/demande',
@@ -65,7 +72,7 @@ const PAGES = {
     path: '/garage-freinage-saint-lubin-de-la-haye',
     title: 'Garage freinage à Saint-Lubin-de-la-Haye (28410) | EDM28',
     description: 'EDM28, garage spécialisé en freinage et liaison au sol à Saint-Lubin-de-la-Haye, avec devis avant travaux et suivi client transparent.',
-    h1: 'Garage spécialisé freinage à Saint-Lubin-de-la-Haye',
+    h1: 'EDM28 — garage spécialisé freinage à Saint-Lubin-de-la-Haye',
     lede: 'EDM28 intervient sur rendez-vous en freinage et liaison au sol. Les coordonnées affichées sur cette page sont synchronisées avec le back-office.',
     serviceType: 'Garage automobile spécialisé freinage à Saint-Lubin-de-la-Haye',
     breadcrumbs: [['/', 'Accueil'], ['/garage-freinage-saint-lubin-de-la-haye', 'Garage à Saint-Lubin-de-la-Haye']],
@@ -274,19 +281,23 @@ const PAGES = {
   },
   'a-propos': {
     path: '/a-propos',
-    title: 'À propos d’EDM28 | Freinage et liaison au sol',
-    description: 'EDM28 est un garage automobile spécialisé en freinage et liaison au sol, avec devis avant intervention et parcours client transparent.',
-    h1: 'EDM28 — Garage automobile spécialisé freinage et liaison au sol',
-    lede: 'EDM28 est une micro-entreprise orientée vers la mécanique de liaison au sol, avec une spécialisation principale en freinage et un parcours client construit autour de la transparence.',
+    title: 'EDM28 (EDM) : garage automobile à Saint-Lubin-de-la-Haye',
+    description: 'Identité officielle d’EDM28, aussi appelé EDM : garage automobile à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et liaison au sol.',
+    h1: 'EDM28 (EDM) — garage automobile à Saint-Lubin-de-la-Haye',
+    lede: 'EDM28 est le nom public du garage automobile situé à Saint-Lubin-de-la-Haye. EDM est le nom court visible dans son identité graphique. Le site officiel est edm28.fr. L’activité est centrée sur le freinage et des prestations ciblées de liaison au sol.',
     serviceType: 'Garage automobile spécialisé freinage et liaison au sol',
     breadcrumbs: [['/', 'Accueil'], ['/a-propos', 'À propos']],
     sections: [
+      ['Identité officielle', 'EDM28, EDM 28 et le nom court EDM renvoient ici au même garage automobile. Le site officiel est edm28.fr et la fiche Google Business reliée au site correspond au même établissement.'],
       ['Nos spécialités', 'Le freinage constitue le cœur du positionnement. Les interventions de liaison au sol complètent ce périmètre avec des prestations ciblées du train roulant.'],
       ['Vos documents toujours disponibles', 'Le parcours associe demande, devis, validation, intervention, facture et historique afin de réduire les zones floues entre ce qui est demandé, accepté et réalisé.'],
       ['Où nous trouver', 'Le garage se trouve au 17 bis route du Videlet, à Saint-Lubin-de-la-Haye (28410). Les interventions se font sur rendez-vous.']
     ],
     links: [['/', 'Prestations'], ['/transparence', 'Conseils & FAQ'], ['/fonctionnement', 'Fonctionnement'], ['/contact', 'Contact']],
-    faq: [['Quelle est la spécialité principale d’EDM28 ?', 'Le freinage. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant.']]
+    faq: [
+      ['EDM et EDM28 désignent-ils le même établissement ?', 'Oui. EDM28 est le nom public du garage et EDM est son nom court utilisé dans son identité graphique. Le site officiel est edm28.fr.'],
+      ['Quelle est la spécialité principale d’EDM28 ?', 'Le freinage. EDM28 intervient aussi sur des prestations ciblées de liaison au sol et de train roulant.']
+    ]
   },
   contact: {
     path: '/contact',
@@ -297,7 +308,7 @@ const PAGES = {
     breadcrumbs: [['/', 'Accueil'], ['/contact', 'Contact']],
     sections: [
       ['Demande de rendez-vous', 'Le parcours en ligne permet de préparer la demande et de la relier aux prestations disponibles avant l’étude du dossier.'],
-      ['Email public', 'Vous pouvez écrire à contact@edm28.fr. Aucune adresse postale ni aucun numéro de téléphone n’est publié ici tant que ces informations ne sont pas renseignées dans la configuration publique.']
+      ['Coordonnées officielles', 'Vous pouvez écrire à contact@edm28.fr. L’adresse officielle du garage et, lorsqu’il est renseigné, le numéro de téléphone sont affichés depuis la configuration publique EDM28 afin de rester cohérents sur toutes les pages.']
     ],
     links: [['/demande', 'Faire une demande'], ['/', 'Prestations'], ['/fonctionnement', 'Fonctionnement'], ['/transparence', 'Conseils & FAQ']],
     faq: [['Comment contacter EDM28 ?', 'L’email public est contact@edm28.fr. Le site permet également de préparer une demande de rendez-vous.']]
@@ -438,10 +449,21 @@ function structuredData(page, origin, business) {
   const canonical = `${origin}${page.path}`;
   const graph = [
     {
+      '@type': 'WebSite',
+      '@id': `${origin}/#website`,
+      url: `${origin}/`,
+      name: 'EDM28',
+      alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
+      publisher: { '@id': `${origin}/#organization` }
+    },
+    {
       '@type': 'Organization',
       '@id': `${origin}/#organization`,
       name: business.business_name,
+      alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
+      logo: `${origin}/logo-edm.svg`,
+      sameAs: [PUBLIC_GOOGLE_MAPS_URL],
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
       ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
@@ -451,7 +473,10 @@ function structuredData(page, origin, business) {
       '@type': 'AutoRepair',
       '@id': `${origin}/#autorepair`,
       name: business.business_name,
+      alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
+      logo: `${origin}/logo-edm.svg`,
+      sameAs: [PUBLIC_GOOGLE_MAPS_URL],
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
       ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
@@ -559,7 +584,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
           </div>
         </a>
       </div>
-      <section class="scope-card"><h2>${esc(page.sections[2][0])}</h2><p>${esc(page.sections[2][1])}</p></section>`
+      <section class="scope-card"><h2>${esc(page.sections[3][0])}</h2><p>${esc(page.sections[3][1])}</p></section>`
     : page.sections.map(([title, text]) => `<section><h2>${esc(title)}</h2><p>${esc(text)}</p></section>`).join('');
   const links = page.links.map(([path, label]) => `<a class="link-card" href="${esc(path)}"${path === '/mes-interventions' ? ' data-client-only hidden' : ''}>${esc(label)}<span aria-hidden="true">→</span></a>`).join('');
   const faq = page.faq?.length ? `<section aria-labelledby="faq-title"><h2 id="faq-title">Questions fréquentes</h2><div class="faq">${page.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></section>` : '';

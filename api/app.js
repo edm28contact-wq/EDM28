@@ -159,10 +159,6 @@ function buildSecondaryEntityStructuredData(origin, business) {
     postalCode: business.postal_code || undefined,
     addressCountry: business.country || 'FR'
   } : undefined;
-  const openingHours = [
-    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'https://schema.org/Sunday', opens: '09:00', closes: '13:00' },
-    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'https://schema.org/Sunday', opens: '14:00', closes: '18:00' }
-  ];
   const knowsAbout = ['freinage automobile', 'plaquettes de frein', 'disques de frein', 'liquide de frein', 'liaison au sol', 'train roulant', 'triangles de suspension', 'direction'];
   const common = {
     name: business.business_name || 'EDM28',
@@ -181,7 +177,7 @@ function buildSecondaryEntityStructuredData(origin, business) {
         '@type': 'Organization',
         '@id': `${origin}/#organization`,
         ...common,
-        alternateName: ['EDM 28', 'edm28.fr'],
+        alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
         logo: `${origin}/logo-edm.svg`,
         ...(business.email ? { contactPoint: { '@type': 'ContactPoint', contactType: 'service client', email: business.email, ...(business.phone ? { telephone: business.phone } : {}), availableLanguage: ['fr'] } } : {}),
         description: addressText
@@ -192,9 +188,8 @@ function buildSecondaryEntityStructuredData(origin, business) {
         '@type': 'AutoRepair',
         '@id': `${origin}/#autorepair`,
         ...common,
-        alternateName: ['EDM 28', 'edm28.fr'],
+        alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
         image: `${origin}/logo-edm.svg`,
-        openingHoursSpecification: openingHours,
         areaServed: { '@type': 'Place', name: business.city ? `${business.city} et alentours` : 'Eure-et-Loir et alentours' },
         parentOrganization: { '@id': `${origin}/#organization` },
         description: addressText
@@ -278,8 +273,10 @@ async function handleLlms(req, res) {
   const body = [
     `# ${oneLine(business.business_name) || 'EDM28'}`,
     '',
-    'Garage automobile specialise principalement dans le freinage et intervenant aussi sur des prestations ciblees de liaison au sol et de train roulant.',
+    'EDM28, aussi appele EDM ou EDM 28, est le garage automobile officiel de Saint-Lubin-de-la-Haye (28410) reference par le site edm28.fr.',
+    'Le garage est specialise principalement dans le freinage et intervient aussi sur des prestations ciblees de liaison au sol et de train roulant.',
     '',
+    'Noms de marque: EDM28, EDM 28, EDM.',
     `Site officiel: ${website}`,
     email ? `Contact public: ${email}` : '',
     phone ? `Telephone public: ${phone}` : '',
@@ -369,21 +366,6 @@ export default async function handler(req, res) {
       addressCountry: 'FR'
     };
 
-    const openingHours = [
-      {
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: 'https://schema.org/Sunday',
-        opens: '09:00',
-        closes: '13:00'
-      },
-      {
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: 'https://schema.org/Sunday',
-        opens: '14:00',
-        closes: '18:00'
-      }
-    ];
-
     const serviceCatalog = {
       '@type': 'OfferCatalog',
       name: 'Prestations EDM28',
@@ -406,7 +388,7 @@ export default async function handler(req, res) {
           '@id': `${origin}/#website`,
           url: `${origin}/`,
           name: 'EDM28',
-          alternateName: ['EDM 28', 'edm28.fr'],
+          alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
           inLanguage: 'fr-FR',
           publisher: { '@id': `${origin}/#organization` }
         },
@@ -414,7 +396,7 @@ export default async function handler(req, res) {
           '@type': 'Organization',
           '@id': `${origin}/#organization`,
           name: 'EDM28',
-          alternateName: ['EDM 28', 'edm28.fr'],
+          alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
           url: `${origin}/`,
           sameAs: [PUBLIC_GOOGLE_MAPS_URL],
           logo: `${origin}/logo-edm.svg`,
@@ -433,13 +415,12 @@ export default async function handler(req, res) {
           '@type': 'AutoRepair',
           '@id': `${origin}/#autorepair`,
           name: 'EDM28',
-          alternateName: ['EDM 28', 'edm28.fr'],
+          alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
           url: `${origin}/`,
           sameAs: [PUBLIC_GOOGLE_MAPS_URL],
           image: `${origin}/logo-edm.svg`,
           email: PUBLIC_EMAIL,
           address: localAddress,
-          openingHoursSpecification: openingHours,
           areaServed: { '@type': 'Place', name: 'Saint-Lubin-de-la-Haye et alentours' },
           knowsAbout: ['freinage automobile', 'plaquettes de frein', 'disques de frein', 'liquide de frein', 'liaison au sol', 'train roulant', 'triangles de suspension', 'direction'],
           hasOfferCatalog: serviceCatalog,
