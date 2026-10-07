@@ -53,7 +53,7 @@ function normalizeTotals(body) {
     basketExtra: Number(totals.basketExtra || body.basketExtra || 0),
     comboSaving: Number(totals.comboSaving || body.comboSaving || 0),
     j7Saving: Number(totals.j7Saving || body.j7Saving || 0),
-    immobilisation: Number(totals.immobilisation || body.immobilisation || 0),
+    immobilisation: 0,
     laborAfter: Number(totals.laborAfter || body.totalMainOeuvre || 0),
     partsMin: Number(totals.partsMin || body.totalPiecesMin || 0),
     partsMax: Number(totals.partsMax || body.totalPiecesMax || 0),

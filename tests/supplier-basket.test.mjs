@@ -40,7 +40,9 @@ test('email includes both persisted basket and fixed references and never automa
   assert.ok(body.includes(parts.recommended_parts));
   assert.ok(body.includes(policy.terms));
   assert.ok(body.includes(policy.partsAdvice));
-  assert.doesNotMatch(body, /60\s*%|d[e\u00e9]bours|provision|mandat/i);
+  assert.match(body, /15\s*€/);
+  assert.match(body, /préconisation EDM28/);
+  assert.doesNotMatch(body, /60\s*%|d[e\u00e9]bours|provision|mandat|immobilisation\s*40/i);
 });
 test('archived modules are no longer loaded and current public copy matches the model', async () => {
   const [admin, client, publicClient, seo, html] = await Promise.all(['api/admin.js','client-simple-flow.js','public-client.js','public-seo.js','admin.html'].map(read));

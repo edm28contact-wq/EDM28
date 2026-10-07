@@ -34,8 +34,20 @@ create table public.quote_items(
  purchase_total numeric not null default 0 check(purchase_total>=0)
 );
 create table public.disbursements(id uuid primary key default gen_random_uuid(), quote_id uuid, status text default 'draft', amount numeric);
-create table public.invoices(id uuid primary key default gen_random_uuid(), quote_id uuid, user_id uuid, status text default 'draft', total numeric);
-create table public.invoice_items(id uuid primary key default gen_random_uuid(), invoice_id uuid references public.invoices, item_type text, quantity numeric default 1, unit_price numeric, description text);
+create table public.invoices(
+ id uuid primary key default gen_random_uuid(), user_id uuid, vehicle_id uuid, quote_id uuid,
+ repair_order_id uuid, external_invoice_id text unique, invoice_number text unique,
+ status text default 'draft', title text, description text, subtotal numeric default 0,
+ discount numeric default 0, total numeric default 0, disbursement_total numeric default 0,
+ due_at timestamptz, visible_to_client boolean default false, created_at timestamptz default now(),
+ updated_at timestamptz default now()
+);
+create table public.invoice_items(
+ id uuid primary key default gen_random_uuid(), invoice_id uuid references public.invoices,
+ item_type text, quantity numeric default 1, unit_price numeric default 0, description text,
+ line_total numeric, display_order integer default 0, vat_rate numeric default 0,
+ purchase_total numeric default 0, margin_amount numeric default 0
+);
 create function public.next_document_number(p_type text) returns text language sql as $$ select 'TEST-' || gen_random_uuid()::text $$;
 grant usage on schema public,private,auth to authenticated;
 grant usage on schema public,auth to anon;

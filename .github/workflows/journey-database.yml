@@ -37,4 +37,5 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/journey-fixture.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260929210843_client_journey_reservations.sql
           psql -v ON_ERROR_STOP=1 -1 -f supabase/migrations/20260929222543_journey_schema_reconciliation.sql
+          psql -v ON_ERROR_STOP=1 -1 -f supabase/migrations/20261007220000_reservation_parts_mismatch_policy.sql
           psql -v ON_ERROR_STOP=1 -f tests/journey-db.sql

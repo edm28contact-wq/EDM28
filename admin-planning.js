@@ -85,6 +85,39 @@
     grid.querySelectorAll('[data-planning-open]').forEach((button) => button.onclick = () => openEditor(button.dataset.planningOpen));
   }
 
+  async function resolvePartsIssue(row, responsibility) {
+    const clientFault = responsibility === 'client_nonconforming_parts';
+    const note = window.prompt(
+      clientFault
+        ? 'Indiquez les références apportées et pourquoi elles ne correspondent pas aux références préconisées ou validées.'
+        : 'Décrivez l’erreur de préconisation EDM28 et la correction à prendre en charge.'
+    );
+    if (note === null) return;
+    if (!note.trim()) throw new Error('Un constat est obligatoire pour clôturer le rendez-vous.');
+    const confirmation = window.confirm(
+      clientFault
+        ? 'Confirmer : aucune intervention n’a commencé. Le rendez-vous sera annulé et une facture brouillon de 15 € sera créée.'
+        : 'Confirmer : l’erreur vient de la préconisation EDM28. Le rendez-vous sera annulé sans facturation au client.'
+    );
+    if (!confirmation) return;
+    const result = await A().db.rpc('admin_resolve_parts_issue', {
+      p_appointment_id: row.id,
+      p_responsibility: responsibility,
+      p_note: note.trim()
+    });
+    if (result.error) throw result.error;
+    A().status(
+      'planningStatus',
+      clientFault
+        ? 'Rendez-vous clôturé avant intervention. Facture brouillon de 15 € créée pour les frais de réservation.'
+        : 'Rendez-vous clôturé sans facturation client. Erreur de préconisation à la charge d’EDM28.'
+    );
+    await load();
+    document.getElementById('planningEditor')?.classList.add('hidden');
+    await A().overview();
+    window.EDMAdminInvoiceActions?.load?.();
+  }
+
   function openEditor(id) {
     const row = rows.find((item) => item.id === id);
     const box = document.getElementById('planningEditor');
@@ -101,7 +134,10 @@
         <label>Fin bloquée<input data-p-blocked readonly value=""></label>
       </div>
       <label>Notes<textarea data-p-notes rows="4">${esc(row.notes || '')}</textarea></label>
-      <div class="toolbar"><button class="btn primary" data-p-save>Enregistrer</button><button class="btn danger" data-p-cancel>Annuler l’intervention</button><button class="btn ghost" data-p-client>Ouvrir le dossier client</button></div>`;
+      <div class="toolbar"><button class="btn primary" data-p-save>Enregistrer</button><button class="btn danger" data-p-cancel>Annuler l’intervention</button><button class="btn ghost" data-p-client>Ouvrir le dossier client</button></div>
+      ${row.status === 'confirmed' && ['ready','signed'].includes(row.repair_orders?.[0]?.status)
+        ? '<div class="card" style="margin-top:14px"><strong>Contrôle des pièces avant intervention</strong><p class="muted">À utiliser uniquement avant tout démontage.</p><div class="toolbar"><button class="btn danger" data-p-client-parts>Pièces client incompatibles — 15 €</button><button class="btn ghost" data-p-edm-parts>Erreur de préconisation EDM28 — 0 € client</button></div></div>'
+        : ''}`;
     box.querySelector('[data-p-status]').value = row.status;
     const refreshBlocked = () => {
       const start = new Date(box.querySelector('[data-p-start]').value);
@@ -136,6 +172,18 @@
       await load();
       box.classList.add('hidden');
     };
+    box.querySelector('[data-p-client-parts]')?.addEventListener('click', (event) => {
+      event.currentTarget.disabled = true;
+      resolvePartsIssue(row, 'client_nonconforming_parts')
+        .catch((error) => A().status('planningStatus', error.message || 'Clôture impossible.', true))
+        .finally(() => { if (event.currentTarget) event.currentTarget.disabled = false; });
+    });
+    box.querySelector('[data-p-edm-parts]')?.addEventListener('click', (event) => {
+      event.currentTarget.disabled = true;
+      resolvePartsIssue(row, 'edm_recommendation_error')
+        .catch((error) => A().status('planningStatus', error.message || 'Clôture impossible.', true))
+        .finally(() => { if (event.currentTarget) event.currentTarget.disabled = false; });
+    });
     box.querySelector('[data-p-client]').onclick = () => {
       A().page('clients');
       setTimeout(() => window.EDMAdminClients?.show(row.user_id), 150);

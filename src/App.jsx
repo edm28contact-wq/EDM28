@@ -190,7 +190,7 @@ function App() {
       ? Math.round(laborAfterCombo * 0.1 * 100) / 100
       : 0;
 
-    const immobilisation = refuseControl ? 40 : 0;
+    const immobilisation = 0;
 
     const laborAfterDiscounts = Math.max(
       0,
@@ -626,9 +626,9 @@ function App() {
                   onChange={(e) => setRefuseControl(e.target.checked)}
                 />
                 <span>
-                  <strong>Refus contrôle J-7</strong>
+                  <strong>Pièces apportées par le client</strong>
                   <br />
-                  Forfait immobilisation 40 € si mauvaises pièces.
+                  Les pièces sont contrôlées avant intervention. En cas de pièces non conformes aux références préconisées ou validées, seuls 15 € de frais de réservation sont facturés si aucun travail n’a commencé.
                 </span>
               </label>
             </div>
