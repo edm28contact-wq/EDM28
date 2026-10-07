@@ -159,10 +159,6 @@ function buildSecondaryEntityStructuredData(origin, business) {
     postalCode: business.postal_code || undefined,
     addressCountry: business.country || 'FR'
   } : undefined;
-  const openingHours = [
-    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'https://schema.org/Sunday', opens: '09:00', closes: '13:00' },
-    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'https://schema.org/Sunday', opens: '14:00', closes: '18:00' }
-  ];
   const knowsAbout = ['freinage automobile', 'plaquettes de frein', 'disques de frein', 'liquide de frein', 'liaison au sol', 'train roulant', 'triangles de suspension', 'direction'];
   const common = {
     name: business.business_name || 'EDM28',
@@ -194,7 +190,6 @@ function buildSecondaryEntityStructuredData(origin, business) {
         ...common,
         alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
         image: `${origin}/logo-edm.svg`,
-        openingHoursSpecification: openingHours,
         areaServed: { '@type': 'Place', name: business.city ? `${business.city} et alentours` : 'Eure-et-Loir et alentours' },
         parentOrganization: { '@id': `${origin}/#organization` },
         description: addressText
