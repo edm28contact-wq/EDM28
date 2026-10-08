@@ -165,7 +165,7 @@ test('les pages SEO rendent canonical, H1, Open Graph et structured data', async
   assert.match(source, /application\/ld\+json/);
   for (const type of ['WebSite', 'Organization', 'AutoRepair', 'Service', 'BreadcrumbList']) assert.match(source, new RegExp(`'@type': '${type}'`));
   assert.match(source, /alternateName: \['EDM', 'EDM 28', 'edm28\.fr'\]/);
-  assert.match(source, /sameAs: \[PUBLIC_GOOGLE_MAPS_URL\]/);
+  assert.match(source, /sameAs: \[PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL\]/);
   assert.match(source, /'@type': 'FAQPage'/);
   assert.match(source, /Question/);
   assert.match(source, /Questions fréquentes/);
@@ -179,7 +179,7 @@ test('les pages SEO secondaires reçoivent l’identité entreprise synchronisé
   assert.match(source, /async function handleSeoDocument/);
   assert.match(source, /id="edm-entity-identity"/);
   assert.match(source, /alternateName: \['EDM', 'EDM 28', 'edm28\.fr'\]/);
-  assert.match(source, /sameAs: \[PUBLIC_GOOGLE_MAPS_URL\]/);
+  assert.match(source, /sameAs: \[PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL\]/);
   assert.match(source, /streetAddress: \[business\.address_line1, business\.address_line2\]/);
   assert.match(source, /addressLocality: business\.city/);
   assert.match(source, /postalCode: business\.postal_code/);
@@ -211,6 +211,8 @@ test('robots bloque les zones privées et autorise explicitement la page garage 
   assert.match(source, /'Allow: \/garage-freinage-saint-lubin-de-la-haye'/);
   assert.match(source, /`Sitemap: \$\{origin\}\/sitemap\.xml`/);
   assert.match(source, /'Allow: \/'/);
+  assert.match(source, /'User-agent: Google-Extended'/);
+  assert.match(source, /PUBLIC_GITHUB_URL/);
 });
 
 test('canonical et sitemap utilisent une origine de production stable', async () => {
@@ -280,6 +282,8 @@ test('symptom contact and llms public identity are synchronized by the app route
   assert.match(app, /replaceAll\('mailto:contact@edm28\.fr'/);
   assert.match(app, /business\.email/);
   assert.match(app, /businessAddress\(business\)/);
+  assert.match(app, /Depot public officiel/);
+  assert.match(app, /A propos \/ identite/);
 });
 
 
