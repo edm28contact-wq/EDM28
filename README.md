@@ -1,6 +1,6 @@
-# EDM28
+# EDM28 — garage automobile à Saint-Lubin-de-la-Haye
 
-EDM28 est le site et l’outil de gestion d’un garage automobile situé au **17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye (France)**.
+**EDM28**, également identifié par le nom court **EDM** et la variante **EDM 28**, est le site officiel et l’outil de gestion d’un garage automobile situé au **17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye (France)**.
 
 Le garage est spécialisé dans le **freinage automobile** et intervient aussi sur des prestations ciblées de **liaison au sol / train roulant**.
 
@@ -47,19 +47,11 @@ Une description de symptôme ne remplace jamais un diagnostic mécanique.
 
 EDM28 **ne vend pas les pièces automobiles** et **ne prend aucune marge ni commission sur leur prix**. La rémunération du garage porte sur les prestations réalisées. Lorsqu’une pièce est nécessaire à une intervention, son traitement doit rester distinct de la rémunération de la prestation afin de conserver ce principe de transparence.
 
-## Horaires publics actuels
+## Identité publique
 
-Les horaires actuellement publiés par la configuration de production sont :
+Les noms **EDM28**, **EDM 28** et **EDM** désignent ici le même garage automobile de Saint-Lubin-de-la-Haye.
 
-- lundi : fermé ;
-- mardi : fermé ;
-- mercredi : fermé ;
-- jeudi : fermé ;
-- vendredi : fermé ;
-- samedi : fermé ;
-- dimanche : 09:00–13:00 et 14:00–18:00.
-
-Les horaires affichés sur le site de production restent la source de vérité opérationnelle.
+Les horaires ne sont pas publiés dans ce dépôt tant qu’ils ne sont pas validés dans la configuration publique de production.
 
 ## Architecture
 
@@ -90,7 +82,7 @@ Le projet conserve une identité publique cohérente autour des noms : **EDM28**
 
 ## Données publiques vérifiées
 
-Les informations de rue, horaires et contact présentes dans ce README correspondent aux données actuellement vérifiées pour EDM28.
+Les informations de rue et de contact présentes dans ce README correspondent aux données publiques actuellement vérifiées pour EDM28.
 
 Le **numéro de téléphone professionnel n’est pas encore publié** et ne doit pas être inventé.
 
