@@ -606,7 +606,8 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
       ${business.phone ? `<div><dt>Téléphone</dt><dd><a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></dd></div>` : ''}
     </dl><p>Accueil sur rendez-vous.</p>
   </section>`;
-  const faqAi = page.path === '/transparence'
+  const geminiFaqConfigured = Boolean(String(process.env.GEMINI_API_KEY || '').trim());
+  const faqAi = page.path === '/transparence' && geminiFaqConfigured
     ? `<section class="faq-ai-card" aria-labelledby="faq-ai-title">
         <div class="section-kicker">Assistant Gemini</div>
         <h2 id="faq-ai-title">Posez votre question à la FAQ EDM28</h2>
@@ -681,7 +682,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}</div></footer>
 ${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
-<script src="/public-site.js?v=2" defer></script>${page.path === '/transparence' ? '<script src="/public-faq-ai.js?v=1" defer><\/script>' : ''}</body>
+<script src="/public-site.js?v=2" defer></script>${page.path === '/transparence' && geminiFaqConfigured ? '<script src="/public-faq-ai.js?v=1" defer><\/script>' : ''}</body>
 </html>`;
 }
 
