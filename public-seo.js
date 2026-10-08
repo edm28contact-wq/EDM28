@@ -258,12 +258,7 @@ const PAGES = {
     lede: 'Un espace simple pour comprendre pourquoi une intervention peut être nécessaire, quand faire contrôler le véhicule et comment EDM28 informe ses clients avant, pendant et après les travaux.',
     serviceType: 'Conseils pédagogiques et information client EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/transparence', 'Conseils & FAQ']],
-    sections: [
-      ['Pourquoi faire contrôler ses freins ?', 'Les freins s’usent progressivement et certains signes — bruit, vibration, voyant, sensation différente à la pédale ou remarque au contrôle technique — doivent conduire à un contrôle. Le but n’est pas de remplacer des pièces automatiquement, mais de vérifier l’état réel du véhicule.'],
-      ['Quand intervenir sur le freinage ?', 'Il n’existe pas un kilométrage unique valable pour tous les véhicules. L’usage, le type de trajet, l’état des disques et plaquettes, l’historique d’entretien et les préconisations du véhicule comptent. EDM28 contrôle avant de proposer une intervention.'],
-      ['Pourquoi surveiller la liaison au sol ?', 'Triangles, rotules, biellettes et autres articulations guident et maintiennent le train roulant. Jeu, claquement, comportement imprécis ou usure anormale justifient un contrôle pour localiser la cause avant remplacement.'],
-      ['La transparence EDM28 envers ses clients', 'Le client connaît le périmètre prévu avant travaux. Le devis sert de référence. Un besoin supplémentaire doit être expliqué et validé avant d’être ajouté. Les étapes, documents et factures restent rattachés au dossier de l’intervention.']
-    ],
+    sections: [],
     shorts: [
       ['Pourquoi les plaquettes de frein s’usent ?', '30 à 60 secondes pour comprendre le rôle des plaquettes et les principaux signes à surveiller.'],
       ['Quand faut-il contrôler ses disques ?', 'Un format court sur les symptômes possibles et pourquoi un contrôle reste nécessaire avant remplacement.'],
