@@ -24,6 +24,7 @@ const PUBLIC_STREET_ADDRESS = DEFAULT_PUBLIC_BUSINESS.address_line1;
 const PUBLIC_LOCALITY = DEFAULT_PUBLIC_BUSINESS.city;
 const PUBLIC_POSTAL_CODE = DEFAULT_PUBLIC_BUSINESS.postal_code;
 const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
+const PUBLIC_GITHUB_URL = 'https://github.com/edm28contact-wq/EDM28';
 
 const PUBLIC_PATHS = [
   '/',
@@ -163,7 +164,7 @@ function buildSecondaryEntityStructuredData(origin, business) {
   const common = {
     name: business.business_name || 'EDM28',
     url: business.website || `${origin}/`,
-    sameAs: [PUBLIC_GOOGLE_MAPS_URL],
+    sameAs: [PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL],
     ...(business.email ? { email: business.email } : {}),
     ...(business.phone ? { telephone: business.phone } : {}),
     ...(address ? { address } : {}),
@@ -252,7 +253,18 @@ function handleRobots(req, res) {
   const origin = getOrigin(req);
   const body = isPreviewDeployment()
     ? ['User-agent: *', 'Disallow: /', `Sitemap: ${origin}/sitemap.xml`, ''].join('\n')
-    : ['User-agent: *', 'Allow: /', 'Allow: /garage-freinage-saint-lubin-de-la-haye', ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`), `Sitemap: ${origin}/sitemap.xml`, ''].join('\n');
+    : [
+        'User-agent: Google-Extended',
+        'Allow: /',
+        ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`),
+        '',
+        'User-agent: *',
+        'Allow: /',
+        'Allow: /garage-freinage-saint-lubin-de-la-haye',
+        ...PRIVATE_PATHS.map((path) => `Disallow: ${path}`),
+        `Sitemap: ${origin}/sitemap.xml`,
+        ''
+      ].join('\n');
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
   if (isPreviewDeployment()) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
@@ -282,6 +294,7 @@ async function handleLlms(req, res) {
     phone ? `Telephone public: ${phone}` : '',
     address ? `Adresse: ${address}` : '',
     `Google Business Profile: ${PUBLIC_GOOGLE_MAPS_URL}`,
+    `Depot public officiel: ${PUBLIC_GITHUB_URL}`,
     '',
     '## Methode',
     '- Controle du besoin reel avant intervention.',
@@ -295,6 +308,7 @@ async function handleLlms(req, res) {
     '- Liaison au sol: https://edm28.fr/liaison-au-sol',
     '- Tarifs: https://edm28.fr/tarifs',
     '- Fonctionnement: https://edm28.fr/fonctionnement',
+    '- A propos / identite: https://edm28.fr/a-propos',
     '- Contact: https://edm28.fr/contact',
     ''
   ].filter((line) => line !== '').join('\n').replace(/\n{3,}/g, '\n\n');
@@ -398,7 +412,7 @@ export default async function handler(req, res) {
           name: 'EDM28',
           alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
           url: `${origin}/`,
-          sameAs: [PUBLIC_GOOGLE_MAPS_URL],
+          sameAs: [PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL],
           logo: `${origin}/logo-edm.svg`,
           email: PUBLIC_EMAIL,
           address: localAddress,
@@ -417,7 +431,7 @@ export default async function handler(req, res) {
           name: 'EDM28',
           alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
           url: `${origin}/`,
-          sameAs: [PUBLIC_GOOGLE_MAPS_URL],
+          sameAs: [PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL],
           image: `${origin}/logo-edm.svg`,
           email: PUBLIC_EMAIL,
           address: localAddress,
