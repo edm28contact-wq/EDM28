@@ -57,7 +57,7 @@ test('Gemini FAQ calls Google server-side without exposing the API key', async (
     assert.match(res.payload.answer, /pièces/i);
     assert.equal(res.payload.model, 'gemini-test-model');
     assert.equal(calls.length, 1);
-    assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/interactions');
+    assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1/interactions');
     assert.equal(calls[0].options.headers['x-goog-api-key'], 'preview-gemini-secret');
     assert.doesNotMatch(calls[0].options.body, /preview-gemini-secret/);
 
