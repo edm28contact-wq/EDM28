@@ -5,6 +5,7 @@ Utiliser ce document pour créer ou revendiquer la fiche EDM28 dans Bing Places 
 ## Identité
 
 - Nom : EDM28
+- Variantes de reconnaissance : EDM, EDM 28, edm28.fr
 - Adresse : 17 bis route du Videlet
 - Code postal : 28410
 - Ville : Saint-Lubin-de-la-Haye
@@ -15,13 +16,7 @@ Utiliser ce document pour créer ou revendiquer la fiche EDM28 dans Bing Places 
 
 ## Horaires
 
-- Lundi : fermé
-- Mardi : fermé
-- Mercredi : fermé
-- Jeudi : fermé
-- Vendredi : fermé
-- Samedi : fermé
-- Dimanche : 09:00–13:00 et 14:00–18:00
+À renseigner uniquement avec les horaires réellement validés dans la configuration publique de production.
 
 ## Activité
 
