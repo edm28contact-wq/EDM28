@@ -42,7 +42,7 @@ test('la page d’accueil expose le profil public synchronisé et le maillage lo
   assert.match(source, /async function loadPublicBusiness/);
   assert.match(source, /public_business_profile/);
   assert.ok(source.includes("const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225'"));
-  assert.ok(source.includes('sameAs: [PUBLIC_GOOGLE_MAPS_URL]'));
+  assert.ok(source.includes('sameAs: [PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL]'));
   assert.match(source, /business\.address_line1/);
   assert.match(source, /business\.city/);
 });
@@ -65,4 +65,6 @@ test('llms.txt is generated from the synchronized public business profile', asyn
   assert.match(app, /Telephone public:/);
   assert.match(app, /Adresse:/);
   assert.match(app, /Cache-Control', 'no-store'/);
+  assert.match(app, /User-agent: Google-Extended/);
+  assert.match(app, /Depot public officiel/);
 });
