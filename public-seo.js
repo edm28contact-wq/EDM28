@@ -1,6 +1,7 @@
 import { resolveSupabasePublicConfig } from './supabase-config.js';
 
 const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
+const PUBLIC_GITHUB_URL = 'https://github.com/edm28contact-wq/EDM28';
 
 const DEFAULT_PUBLIC_BUSINESS = Object.freeze({
   business_name: 'EDM28',
@@ -463,7 +464,7 @@ function structuredData(page, origin, business) {
       alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
       logo: `${origin}/logo-edm.svg`,
-      sameAs: [PUBLIC_GOOGLE_MAPS_URL],
+      sameAs: [PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL],
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
       ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),
@@ -476,7 +477,7 @@ function structuredData(page, origin, business) {
       alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
       logo: `${origin}/logo-edm.svg`,
-      sameAs: [PUBLIC_GOOGLE_MAPS_URL],
+      sameAs: [PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL],
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
       ...(business.address_line1 ? { address: { '@type': 'PostalAddress', streetAddress: [business.address_line1, business.address_line2].filter(Boolean).join(', '), postalCode: business.postal_code || undefined, addressLocality: business.city || undefined, addressCountry: business.country || 'FR' } } : {}),

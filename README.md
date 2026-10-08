@@ -8,6 +8,12 @@ Site officiel : https://edm28.fr/
 
 Contact public : contact@edm28.fr
 
+## Identité de marque
+
+La marque publique actuelle et officielle est **EDM28**. Les formes **EDM** et **EDM 28** désignent le même garage.
+
+Certaines anciennes chaînes techniques `EDM AUTO` peuvent encore exister dans l’historique ou dans des composants internes du dépôt. Elles correspondent à une ancienne dénomination technique du même projet et **ne désignent pas un autre établissement**. Pour toute information publique, utiliser EDM28 et le site officiel https://edm28.fr/.
+
 ## Activité publique
 
 Les principales prestations présentées sur le site sont :

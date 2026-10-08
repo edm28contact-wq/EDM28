@@ -15,18 +15,12 @@ Utiliser ce document pour créer ou revendiquer l’emplacement EDM28 dans Apple
 
 ## Horaires
 
-- Lundi : fermé
-- Mardi : fermé
-- Mercredi : fermé
-- Jeudi : fermé
-- Vendredi : fermé
-- Samedi : fermé
-- Dimanche : 09:00–13:00 et 14:00–18:00
+À renseigner uniquement avec les horaires réellement validés dans la configuration publique de production.
 
 ## Marque
 
 - Marque : EDM28
-- Variantes de reconnaissance : EDM 28, edm28.fr
+- Variantes de reconnaissance : EDM, EDM 28, edm28.fr
 
 ## Activité
 

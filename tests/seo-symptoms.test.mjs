@@ -57,6 +57,9 @@ test('les pages symptômes rendent canonical, Open Graph, breadcrumbs et donnée
   assert.match(source, /<meta property="og:title"/);
   assert.match(source, /'@type': 'WebPage'/);
   assert.match(source, /'@type': 'AutoRepair'/);
+  assert.match(source, /alternateName: \['EDM', 'EDM 28', 'edm28\.fr'\]/);
+  assert.match(source, /sameAs: \[PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL\]/);
+  assert.match(source, /Saint-Lubin-de-la-Haye \(28410\)/);
   assert.match(source, /'@type': 'BreadcrumbList'/);
   assert.match(source, /'@type': 'FAQPage'/);
 });

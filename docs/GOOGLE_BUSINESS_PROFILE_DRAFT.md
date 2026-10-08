@@ -16,15 +16,7 @@ Ce document sert de brouillon pour créer ou revendiquer la fiche Google Busines
 
 ## Horaires habituels
 
-- Lundi : fermé
-- Mardi : fermé
-- Mercredi : fermé
-- Jeudi : fermé
-- Vendredi : fermé
-- Samedi : fermé
-- Dimanche : 09:00–13:00 et 14:00–18:00
-
-Ces horaires proviennent de la table `business_hours` utilisée par le site de production au 9 septembre 2026. Toute modification future doit d’abord être faite dans la source de vérité puis répercutée sur Google.
+À renseigner uniquement à partir des horaires réellement validés dans la configuration publique de production. Ne pas recopier d’anciens horaires depuis ce dépôt.
 
 ## Catégorie d’activité
 
@@ -41,7 +33,7 @@ Ne pas inventer de catégorie personnalisée.
 
 ## Description courte de référence
 
-EDM28 est un garage automobile situé au 17 bis route du Videlet à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et prestations ciblées de liaison au sol, avec devis avant intervention et suivi client transparent.
+EDM28, aussi identifié comme EDM ou EDM 28, est un garage automobile situé au 17 bis route du Videlet à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et prestations ciblées de liaison au sol, avec devis avant intervention et suivi client transparent.
 
 ## Description longue de référence
 

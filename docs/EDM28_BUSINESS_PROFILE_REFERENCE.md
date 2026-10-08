@@ -5,7 +5,7 @@ Cette fiche sert de source de vérité pour Google Business Profile, Bing Places
 ## Identité
 
 - Nom public : EDM28
-- Variantes acceptées pour la reconnaissance de marque : EDM 28, edm28.fr
+- Variantes acceptées pour la reconnaissance de marque : EDM, EDM 28, edm28.fr
 - Activité : garage automobile
 - Adresse exacte : 17 bis route du Videlet
 - Localité : Saint-Lubin-de-la-Haye
@@ -14,7 +14,7 @@ Cette fiche sert de source de vérité pour Google Business Profile, Bing Places
 - Site officiel : https://edm28.fr/
 - Email public : contact@edm28.fr
 - Téléphone professionnel : À COMPLÉTER — non communiqué à ce jour
-- Horaires habituels : dimanche 09:00–13:00 et 14:00–18:00 ; fermé du lundi au samedi
+- Horaires habituels : à publier uniquement depuis la configuration publique validée ; aucune valeur figée dans ce document
 - Fuseau horaire : Europe/Paris
 - Google Business Profile : https://maps.google.com/?cid=5973618623656745225
 - Lien officiel de demande d’avis Google : https://g.page/r/CQnZtxZ9juZSEBM/review
@@ -66,11 +66,11 @@ Pages de référence :
 1. Toujours utiliser `EDM28` comme nom principal.
 2. Toujours utiliser `https://edm28.fr/` comme site officiel.
 3. Toujours utiliser `17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye` comme adresse publique tant qu’aucun changement n’est confirmé.
-4. Toujours utiliser les horaires publiés dans `business_hours` comme source de vérité ; au 9 septembre 2026 : dimanche 09:00–13:00 / 14:00–18:00, fermé du lundi au samedi.
+4. Toujours utiliser les horaires réellement validés dans la configuration publique comme source de vérité ; ne jamais conserver ici une copie statique qui pourrait devenir obsolète.
 5. Ne jamais publier de téléphone tant qu’un numéro professionnel n’a pas été confirmé.
 6. Ne pas annoncer de services non documentés sur le site.
 7. Ne pas utiliser de faux avis, de fausses photos, de faux labels ou de fausses certifications.
-8. Utiliser `https://maps.google.com/?cid=5973618623656745225` comme URL publique stable de la fiche Google EDM28 dans `sameAs`.
+8. Utiliser `https://maps.google.com/?cid=5973618623656745225` comme URL publique stable de la fiche Google EDM28 dans `sameAs` et conserver aussi le dépôt public officiel `https://github.com/edm28contact-wq/EDM28` comme preuve d’identité externe.
 9. Utiliser `https://g.page/r/CQnZtxZ9juZSEBM/review` uniquement pour les demandes d’avis clients réels.
 10. Dès qu’une fiche Bing ou Apple officielle est créée et vérifiée, ajouter son URL ici puis au balisage `sameAs` du site.
 
