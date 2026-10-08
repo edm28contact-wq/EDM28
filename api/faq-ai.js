@@ -1,4 +1,4 @@
-const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1/interactions';
+const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 const DEFAULT_MODEL = 'gemini-3.8-flash';
 const WINDOW_MS = 5 * 60 * 1000;
 const MAX_REQUESTS = 12;
