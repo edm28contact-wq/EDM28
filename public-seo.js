@@ -606,9 +606,25 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
       ${business.phone ? `<div><dt>Téléphone</dt><dd><a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></dd></div>` : ''}
     </dl><p>Accueil sur rendez-vous.</p>
   </section>`;
+  const faqAi = page.path === '/transparence'
+    ? `<section class="faq-ai-card" aria-labelledby="faq-ai-title">
+        <div class="section-kicker">Assistant Gemini</div>
+        <h2 id="faq-ai-title">Posez votre question à la FAQ EDM28</h2>
+        <p>Réponses basées sur le fonctionnement public d’EDM28. Cet assistant ne remplace ni un contrôle du véhicule, ni un devis, ni un diagnostic mécanique.</p>
+        <form id="edmFaqAiForm" class="faq-ai-form">
+          <label for="edmFaqAiQuestion">Votre question</label>
+          <div class="faq-ai-row">
+            <input id="edmFaqAiQuestion" name="question" type="text" maxlength="500" autocomplete="off" placeholder="Ex. : les pièces sont-elles comprises dans le prix ?" required>
+            <button id="edmFaqAiSubmit" class="cta" type="submit">Demander</button>
+          </div>
+          <p id="edmFaqAiStatus" class="faq-ai-status" role="status" aria-live="polite"></p>
+        </form>
+        <div id="edmFaqAiAnswer" class="faq-ai-answer" hidden></div>
+      </section>`
+    : '';
   const bodyContent = page.path === '/contact' ? contact : (page.path === '/demande' || page.path === '/mes-interventions')
     ? `${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>`
-    : `${sections}${tariffs}${shorts}${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
+    : `${sections}${tariffs}${shorts}${clientSurface}${faqAi}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
   const jsonLd = structuredData(page, origin, business);
 
   return `<!doctype html>
@@ -665,7 +681,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}</div></footer>
 ${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
-<script src="/public-site.js?v=2" defer></script></body>
+<script src="/public-site.js?v=2" defer></script>${page.path === '/transparence' ? '<script src="/public-faq-ai.js?v=1" defer><\/script>' : ''}</body>
 </html>`;
 }
 
