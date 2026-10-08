@@ -1,4 +1,6 @@
 const PUBLIC_EMAIL = 'contact@edm28.fr';
+const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
+const PUBLIC_GITHUB_URL = 'https://github.com/edm28contact-wq/EDM28';
 
 const CORE_PATHS = [
   '/',
@@ -185,9 +187,11 @@ function renderStructuredData(page, origin) {
       '@type': 'AutoRepair',
       '@id': `${origin}/#autorepair`,
       name: 'EDM28',
+      alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: `${origin}/`,
+      sameAs: [PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL],
       email: PUBLIC_EMAIL,
-      description: 'Garage automobile spécialisé freinage et liaison au sol.'
+      description: 'Garage automobile à Saint-Lubin-de-la-Haye (28410), spécialisé freinage et liaison au sol.'
     },
     {
       '@type': 'BreadcrumbList',
