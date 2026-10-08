@@ -1114,3 +1114,19 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 .journey-slots{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.journey-slots button{padding:10px 16px;border:1px solid #c7bbb0;background:white;border-radius:8px;font:inherit;cursor:pointer}
 .journey-slots button:hover{background:#fff2e8;border-color:#d87933}.journey-proof{padding:14px 0}.journey-proof input{display:block;margin:10px 0}
 @media(min-width:700px){#requestVehiclePicker{grid-template-columns:1fr 1fr}.contact-details>div{display:grid;grid-template-columns:130px 1fr;gap:24px}}
+
+
+/* Gemini FAQ assistant */
+.faq-ai-card{border:1px solid #d9d4ce;background:linear-gradient(135deg,#fffaf5,#fff);box-shadow:0 14px 36px rgba(16,24,39,.07)}
+.faq-ai-card>p{max-width:760px}
+.faq-ai-form{margin-top:20px}
+.faq-ai-form label{display:block;margin-bottom:8px;font-weight:800;color:#222a36}
+.faq-ai-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:stretch}
+.faq-ai-row input{width:100%;min-height:50px;border:1px solid #cfc7bf;border-radius:12px;padding:0 14px;font:inherit;background:#fff;color:#171717}
+.faq-ai-row input:focus{outline:3px solid rgba(201,119,62,.18);border-color:#b96b36}
+.faq-ai-row .cta{border:0;cursor:pointer;min-width:120px}
+.faq-ai-row .cta:disabled{opacity:.58;cursor:not-allowed;transform:none}
+.faq-ai-status{min-height:24px;margin:10px 0 0;color:#65707d;font-size:.9rem}
+.faq-ai-status.faq-ai-error{color:#9b2c20}
+.faq-ai-answer{margin-top:14px;padding:18px;border-radius:14px;background:#f4f7f9;border-left:4px solid var(--accent);white-space:pre-wrap;line-height:1.65;color:#26313e}
+@media(max-width:680px){.faq-ai-row{grid-template-columns:1fr}.faq-ai-row .cta{width:100%}}

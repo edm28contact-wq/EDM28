@@ -9,11 +9,12 @@
     "test:admin": "node --test tests/admin-flow.test.mjs tests/admin-transactional.test.mjs tests/admin-pwa.test.mjs tests/admin-pdf-models.test.mjs",
     "test:seo": "node --test tests/seo-public.test.mjs tests/seo-symptoms.test.mjs tests/seo-local.test.mjs",
     "test:recovery": "node --test tests/password-recovery.test.mjs tests/password-recovery-integration.test.mjs tests/password-recovery-errors.test.mjs",
-    "test": "npm run check:syntax && npm run test:client && npm run test:admin && npm run test:seo && npm run test:recovery && npm run test:supplier-basket && npm run test:journey && npm run test:security",
+    "test": "npm run check:syntax && npm run test:client && npm run test:admin && npm run test:seo && npm run test:recovery && npm run test:supplier-basket && npm run test:journey && npm run test:security && npm run test:gemini-faq",
     "dev": "vercel dev",
     "test:journey": "node --test tests/journey.test.mjs tests/journey-asset.test.mjs",
     "test:supplier-basket": "node --test tests/supplier-basket.test.mjs tests/supplier-basket-email.test.mjs tests/supplier-basket-admin.test.mjs",
-    "test:security": "node --test tests/security-hardening.test.mjs"
+    "test:security": "node --test tests/security-hardening.test.mjs",
+    "test:gemini-faq": "node --test tests/gemini-faq.test.mjs"
   },
   "engines": {
     "node": "24.x"
