@@ -1,5 +1,6 @@
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 const DEFAULT_MODEL = 'gemini-3.8-flash';
+const FALLBACK_MODEL = 'gemini-3.5-flash';
 const WINDOW_MS = 5 * 60 * 1000;
 const MAX_REQUESTS = 12;
 const rateBuckets = new Map();
@@ -205,7 +206,7 @@ async function askGemini(key, model, question) {
             type: 'object',
             additionalProperties: false,
             properties: {
-              answer: { type: 'string', minLength: 1, maxLength: 4000 },
+              answer: { type: 'string' },
               grounded: { type: 'boolean' },
               needs_vehicle_check: { type: 'boolean' },
               category: { type: 'string', enum: ['business_rule','general_info','needs_inspection','unknown'] },
@@ -220,7 +221,6 @@ async function askGemini(key, model, question) {
         },
         generation_config: {
           thinking_level: 'low',
-          temperature: 0.1,
           max_output_tokens: 900
         }
       })
@@ -285,12 +285,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const model = modelName();
-    const result = await askGemini(key, model, question);
+    const requestedModel = modelName();
+    let model = requestedModel;
+    let result;
+    try {
+      result = await askGemini(key, model, question);
+    } catch (firstError) {
+      const retryable = Number(firstError?.providerHttpStatus || 0) === 400
+        || ['INVALID_ARGUMENT','NOT_FOUND'].includes(String(firstError?.providerStatus || ''));
+      if (!retryable || model === FALLBACK_MODEL) throw firstError;
+      model = FALLBACK_MODEL;
+      result = await askGemini(key, model, question);
+    }
     return sendJson(res, 200, {
       success: true,
       answer: result.answer,
       model,
+      requestedModel,
       verified: result.verified,
       source: result.verified ? 'gemini_grounded' : 'server_fallback'
     });
