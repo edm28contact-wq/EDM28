@@ -57,7 +57,7 @@ test('Gemini FAQ calls Google server-side without exposing the API key', async (
     assert.match(res.payload.answer, /pièces/i);
     assert.equal(res.payload.model, 'gemini-test-model');
     assert.equal(calls.length, 1);
-    assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1/interactions');
+    assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/interactions');
     assert.equal(calls[0].options.headers['x-goog-api-key'], 'preview-gemini-secret');
     assert.doesNotMatch(calls[0].options.body, /preview-gemini-secret/);
 
@@ -263,4 +263,34 @@ test('Conseils & FAQ no longer contains the four generic intro questions', async
   assert.doesNotMatch(transparency, /Quand intervenir sur le freinage \?/);
   assert.doesNotMatch(transparency, /Pourquoi surveiller la liaison au sol \?/);
   assert.doesNotMatch(transparency, /La transparence EDM28 envers ses clients/);
+});
+
+
+test('Gemini FAQ returns a safe diagnostic code for upstream API errors', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+
+  const originalFetch = global.fetch;
+  global.fetch = async () => response(400, {
+    error: { status: 'INVALID_ARGUMENT', message: 'bad request' }
+  });
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?diag=${Date.now()}`);
+    const req = {
+      method: 'POST',
+      headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.30' },
+      body: { question: 'Les pièces sont-elles comprises ?' }
+    };
+    const res = createRes();
+    await handler(req, res);
+
+    assert.equal(res.statusCode, 502);
+    assert.equal(res.payload.success, false);
+    assert.equal(res.payload.diagnostic, 'GEMINI-400-INVALID_ARGUMENT');
+    assert.doesNotMatch(JSON.stringify(res.payload), /preview-gemini-secret/);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+  }
 });
