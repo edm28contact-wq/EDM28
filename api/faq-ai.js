@@ -1,4 +1,4 @@
-const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1/interactions';
+const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 const DEFAULT_MODEL = 'gemini-3.8-flash';
 const WINDOW_MS = 5 * 60 * 1000;
 const MAX_REQUESTS = 12;
@@ -227,8 +227,12 @@ async function askGemini(key, model, question) {
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok) {
-      console.error('Gemini FAQ failed', response.status, payload?.error?.status || payload?.error?.code || 'unknown');
-      throw new Error('Réponse Gemini indisponible.');
+      const providerStatus = clean(payload?.error?.status || payload?.error?.code || 'unknown', 80);
+      const err = new Error('Réponse Gemini indisponible.');
+      err.providerStatus = providerStatus;
+      err.providerHttpStatus = Number(response.status || 0);
+      console.error('Gemini FAQ failed', err.providerHttpStatus, providerStatus);
+      throw err;
     }
     const output = extractOutputText(payload);
     if (!output) throw new Error('Réponse Gemini vide.');
@@ -292,6 +296,15 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('EDM28 FAQ assistant error', error?.message || 'unknown');
-    return sendJson(res, 502, { success: false, error: 'L’assistant est momentanément indisponible.' });
+    const providerHttpStatus = Number(error?.providerHttpStatus || 0);
+    const providerStatus = clean(error?.providerStatus || '', 80);
+    const diagnostic = providerHttpStatus
+      ? `GEMINI-${providerHttpStatus}${providerStatus ? `-${providerStatus}` : ''}`
+      : (error?.name === 'AbortError' ? 'GEMINI-TIMEOUT' : 'GEMINI-UPSTREAM');
+    return sendJson(res, 502, {
+      success: false,
+      error: 'L’assistant est momentanément indisponible.',
+      diagnostic
+    });
   }
 }
