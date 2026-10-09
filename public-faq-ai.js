@@ -35,7 +35,9 @@
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.answer) {
-        throw new Error(data?.error || 'Réponse indisponible.');
+        const code = String(data?.diagnostic || '').trim();
+        const message = data?.error || 'Réponse indisponible.';
+        throw new Error(code ? `${message} (${code})` : message);
       }
       answer.textContent = data.answer;
       answer.hidden = false;
