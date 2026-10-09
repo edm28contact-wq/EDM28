@@ -71,7 +71,7 @@ test('Gemini FAQ calls Google server-side without exposing the API key', async (
     assert.equal(body.response_format.type, 'text');
     assert.equal(body.response_format.mime_type, 'application/json');
     assert.equal(body.response_format.schema.properties.grounded.type, 'boolean');
-    assert.equal(body.generation_config.thinking_level, 'minimal');
+    assert.equal(body.generation_config.thinking_level, 'low');
     assert.equal(body.generation_config.temperature, 0.1);
     assert.equal(res.payload.verified, true);
     assert.equal(res.payload.source, 'gemini_grounded');

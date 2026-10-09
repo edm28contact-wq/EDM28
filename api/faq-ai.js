@@ -219,7 +219,7 @@ async function askGemini(key, model, question) {
           }
         },
         generation_config: {
-          thinking_level: 'minimal',
+          thinking_level: 'low',
           temperature: 0.1,
           max_output_tokens: 900
         }
