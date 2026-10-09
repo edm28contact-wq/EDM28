@@ -71,8 +71,10 @@ test('Gemini FAQ calls Google server-side without exposing the API key', async (
     assert.equal(body.response_format.type, 'text');
     assert.equal(body.response_format.mime_type, 'application/json');
     assert.equal(body.response_format.schema.properties.grounded.type, 'boolean');
+    assert.equal('minLength' in body.response_format.schema.properties.answer, false);
+    assert.equal('maxLength' in body.response_format.schema.properties.answer, false);
+    assert.equal('temperature' in body.generation_config, false);
     assert.equal(body.generation_config.thinking_level, 'low');
-    assert.equal(body.generation_config.temperature, 0.1);
     assert.equal(res.payload.verified, true);
     assert.equal(res.payload.source, 'gemini_grounded');
   } finally {
@@ -292,5 +294,52 @@ test('Gemini FAQ returns a safe diagnostic code for upstream API errors', async 
   } finally {
     global.fetch = originalFetch;
     delete process.env.PREVIEW_GEMINI_API_KEY;
+  }
+});
+
+
+test('Gemini FAQ retries with gemini-3.5-flash after a 400 from the configured model', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+  process.env.PREVIEW_GEMINI_FAQ_MODEL = 'gemini-3.8-flash';
+
+  const models = [];
+  const originalFetch = global.fetch;
+  global.fetch = async (_url, options = {}) => {
+    const body = JSON.parse(options.body);
+    models.push(body.model);
+    if (models.length === 1) {
+      return response(400, { error: { status: 'INVALID_ARGUMENT' } });
+    }
+    return response(200, {
+      status: 'completed',
+      output_text: JSON.stringify({
+        answer: 'Les pièces sont achetées directement par le client.',
+        grounded: true,
+        needs_vehicle_check: false,
+        category: 'business_rule',
+        fact_ids: ['parts_purchase']
+      })
+    });
+  };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?fallback-model=${Date.now()}`);
+    const req = {
+      method: 'POST',
+      headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.31' },
+      body: { question: 'Les pièces sont-elles comprises ?' }
+    };
+    const res = createRes();
+    await handler(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(models, ['gemini-3.8-flash','gemini-3.5-flash']);
+    assert.equal(res.payload.model, 'gemini-3.5-flash');
+    assert.equal(res.payload.requestedModel, 'gemini-3.8-flash');
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+    delete process.env.PREVIEW_GEMINI_FAQ_MODEL;
   }
 });
