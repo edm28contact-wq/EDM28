@@ -160,9 +160,8 @@ function rankedKnowledge(question, limit = 8) {
 
 function knownAnswer(question) {
   const ranked = rankedKnowledge(question, 2);
-  if (!ranked.length || ranked[0].score < 65) return null;
+  if (!ranked.length || ranked[0].score < 100) return null;
   const top = ranked[0];
-  if (ranked[1] && top.score - ranked[1].score < 8 && top.score < 100) return null;
   return {
     answer: top.entry.answer,
     factIds: [top.entry.id],
