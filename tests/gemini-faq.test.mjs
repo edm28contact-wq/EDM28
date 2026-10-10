@@ -46,7 +46,7 @@ test('Gemini FAQ calls Google server-side without exposing the API key', async (
     const req = {
       method: 'POST',
       headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.10' },
-      body: { question: 'Les pièces sont-elles comprises ?' }
+      body: { question: 'Est-ce que je dois payer les composants au garage ou au vendeur ?' }
     };
     const res = createRes();
 
@@ -64,10 +64,10 @@ test('Gemini FAQ calls Google server-side without exposing the API key', async (
     const body = JSON.parse(calls[0].options.body);
     assert.equal(body.model, 'gemini-test-model');
     assert.equal(body.store, false);
-    assert.equal(body.input, 'Les pièces sont-elles comprises ?');
+    assert.equal(body.input, 'Est-ce que je dois payer les composants au garage ou au vendeur ?');
     assert.match(body.system_instruction, /assistant FAQ public officiel d’EDM28/i);
-    assert.match(body.system_instruction, /15 €/);
-    assert.match(body.system_instruction, /erreur de préconisation EDM28/i);
+    assert.match(body.system_instruction, /CONNAISSANCES EDM28 PERTINENTES/i);
+    assert.match(body.system_instruction, /client achète et paie directement les pièces/i);
     assert.equal(body.response_format.type, 'text');
     assert.equal(body.response_format.mime_type, 'application/json');
     assert.equal(body.response_format.schema.properties.grounded.type, 'boolean');
@@ -171,7 +171,7 @@ test('Gemini FAQ replaces an unsupported answer with a safe server fallback', as
     const req = {
       method: 'POST',
       headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.21' },
-      body: { question: 'Vous êtes ouvert quand et c’est combien ?' }
+      body: { question: 'Pouvez-vous confirmer une disponibilité précise et un prix exact qui ne figurent pas dans mon dossier ?' }
     };
     const res = createRes();
     await handler(req, res);
@@ -282,7 +282,7 @@ test('Gemini FAQ returns a safe diagnostic code for upstream API errors', async 
     const req = {
       method: 'POST',
       headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.30' },
-      body: { question: 'Les pièces sont-elles comprises ?' }
+      body: { question: 'Est-ce que je dois payer les composants au garage ou au vendeur ?' }
     };
     const res = createRes();
     await handler(req, res);
@@ -328,7 +328,7 @@ test('Gemini FAQ retries with gemini-3.5-flash after a 400 from the configured m
     const req = {
       method: 'POST',
       headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.31' },
-      body: { question: 'Les pièces sont-elles comprises ?' }
+      body: { question: 'Est-ce que je dois payer les composants au garage ou au vendeur ?' }
     };
     const res = createRes();
     await handler(req, res);
