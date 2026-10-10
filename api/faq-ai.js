@@ -241,13 +241,21 @@ function knowledgeContext(question) {
 }
 
 function highRiskQuestion(question) {
-  const q = question.toLowerCase();
-  const procedure = /\b(comment|étapes?|procedure|procédure|tuto|démonter|demonter|remplacer|changer|purger|serrer|couple|réparer|reparer)\b/.test(q)
-    && /\b(frein|plaquette|disque|étrier|etrier|liquide|triangle|rotule|biellette|direction|suspension)\b/.test(q);
-  if (procedure) return 'procedure';
-  const diagnosis = /\b(c['’]?est quoi|quelle pièce|quelle piece|diagnosti|panne|cause exacte|vient de quoi)\b/.test(q)
-    && /\b(bruit|claquement|vibration|pédale|pedale|frein|train avant|direction|suspension)\b/.test(q);
-  if (diagnosis) return 'diagnosis';
+  const q = normalizeQuestion(question);
+  const technicalPart = /\b(freins?|plaquettes?|disques?|etriers?|liquide de frein|triangles?|rotules?|biellettes?|direction|suspension)\b/.test(q);
+  if (!technicalPart) return null;
+
+  const businessIntent = /\b(vous|edm28|garage|prestation|service|devis|tarif|prix|rendez vous|rdv)\b/.test(q);
+  const doItYourself = /\b(moi meme|soi meme|tuto|tutoriel|guide|etape par etape|pas a pas)\b/.test(q);
+  const repairAction = /\b(demonter|remonter|purger|serrer|desserrer|reparer|changer|remplacer|installer)\b/.test(q);
+  const proceduralRequest = /\b(comment|comment faire|explique|expliquer|instructions?|procedure|etapes?)\b/.test(q);
+
+  if (doItYourself || (!businessIntent && proceduralRequest && repairAction)) return 'procedure';
+
+  const symptom = /\b(bruit|claquement|vibration|pedale|frein|train avant|direction|suspension)\b/.test(q);
+  const exactDiagnosis = /\b(diagnostiquer|diagnostic|panne|cause exacte|quelle piece|vient de quoi|c est quoi)\b/.test(q);
+  if (!businessIntent && symptom && exactDiagnosis) return 'diagnosis';
+
   return null;
 }
 
