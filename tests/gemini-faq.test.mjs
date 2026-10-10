@@ -334,12 +334,110 @@ test('Gemini FAQ retries with gemini-3.5-flash after a 400 from the configured m
     await handler(req, res);
 
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(models, ['gemini-3.8-flash','gemini-3.5-flash']);
-    assert.equal(res.payload.model, 'gemini-3.5-flash');
+    assert.deepEqual(models, ['gemini-3.8-flash','gemini-3.6-flash']);
+    assert.equal(res.payload.model, 'gemini-3.6-flash');
     assert.equal(res.payload.requestedModel, 'gemini-3.8-flash');
   } finally {
     global.fetch = originalFetch;
     delete process.env.PREVIEW_GEMINI_API_KEY;
     delete process.env.PREVIEW_GEMINI_FAQ_MODEL;
+  }
+});
+
+
+test('Gemini FAQ retries a transient 503 on the same model before failing over', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+  process.env.PREVIEW_GEMINI_FAQ_MODEL = 'gemini-3.8-flash';
+  process.env.GEMINI_FAQ_RETRY_BASE_MS = '0';
+
+  const models = [];
+  const originalFetch = global.fetch;
+  let calls = 0;
+  global.fetch = async (_url, options = {}) => {
+    const body = JSON.parse(options.body);
+    models.push(body.model);
+    calls += 1;
+    if (calls === 1) {
+      return response(503, { error: { status: 'service_unavailable' } });
+    }
+    return response(200, {
+      status: 'completed',
+      output_text: JSON.stringify({
+        answer: 'Les pièces sont contrôlées avant tout démontage.',
+        grounded: true,
+        needs_vehicle_check: false,
+        category: 'business_rule',
+        fact_ids: ['parts_check']
+      })
+    });
+  };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?retry-503=${Date.now()}`);
+    const req = {
+      method: 'POST',
+      headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.32' },
+      body: { question: 'Vous contrôlez les pièces avant de commencer ?' }
+    };
+    const res = createRes();
+    await handler(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(calls, 2);
+    assert.deepEqual(models, ['gemini-3.8-flash','gemini-3.8-flash']);
+    assert.equal(res.payload.model, 'gemini-3.8-flash');
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+    delete process.env.PREVIEW_GEMINI_FAQ_MODEL;
+    delete process.env.GEMINI_FAQ_RETRY_BASE_MS;
+  }
+});
+
+test('Gemini FAQ falls back to another current model after repeated 503s', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+  process.env.PREVIEW_GEMINI_FAQ_MODEL = 'gemini-3.8-flash';
+  process.env.GEMINI_FAQ_RETRY_BASE_MS = '0';
+
+  const models = [];
+  const originalFetch = global.fetch;
+  global.fetch = async (_url, options = {}) => {
+    const body = JSON.parse(options.body);
+    models.push(body.model);
+    if (body.model === 'gemini-3.8-flash') {
+      return response(503, { error: { status: 'service_unavailable' } });
+    }
+    return response(200, {
+      status: 'completed',
+      output_text: JSON.stringify({
+        answer: 'EDM28 fonctionne sur rendez-vous.',
+        grounded: true,
+        needs_vehicle_check: false,
+        category: 'general_info',
+        fact_ids: ['appointment']
+      })
+    });
+  };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?fallback-503=${Date.now()}`);
+    const req = {
+      method: 'POST',
+      headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.33' },
+      body: { question: 'Vous travaillez sur rendez-vous ?' }
+    };
+    const res = createRes();
+    await handler(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(models, ['gemini-3.8-flash','gemini-3.8-flash','gemini-3.6-flash']);
+    assert.equal(res.payload.model, 'gemini-3.6-flash');
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+    delete process.env.PREVIEW_GEMINI_FAQ_MODEL;
+    delete process.env.GEMINI_FAQ_RETRY_BASE_MS;
   }
 });
