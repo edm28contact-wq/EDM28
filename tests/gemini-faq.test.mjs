@@ -441,3 +441,102 @@ test('Gemini FAQ falls back to another current model after repeated 503s', async
     delete process.env.GEMINI_FAQ_RETRY_BASE_MS;
   }
 });
+
+
+test('Gemini FAQ uses only the final model_output step when an interaction has multiple outputs', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+  process.env.PREVIEW_GEMINI_FAQ_MODEL = 'gemini-test-model';
+
+  const originalFetch = global.fetch;
+  global.fetch = async () => response(200, {
+    status: 'completed',
+    steps: [
+      {
+        type: 'model_output',
+        content: [{ type: 'text', text: '{"answer":"brouillon"' }]
+      },
+      {
+        type: 'model_output',
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            answer: 'EDM28 vérifie les pièces avant tout démontage.',
+            grounded: true,
+            needs_vehicle_check: false,
+            category: 'business_rule',
+            fact_ids: ['parts_check']
+          })
+        }]
+      }
+    ]
+  });
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?multi-output=${Date.now()}`);
+    const req = {
+      method: 'POST',
+      headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.40' },
+      body: { question: 'Vous contrôlez les pièces avant de démonter ?' }
+    };
+    const res = createRes();
+    await handler(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.payload.success, true);
+    assert.match(res.payload.answer, /avant tout démontage/i);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+    delete process.env.PREVIEW_GEMINI_FAQ_MODEL;
+  }
+});
+
+test('Gemini FAQ retries when the first successful HTTP response contains malformed JSON output', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+  process.env.PREVIEW_GEMINI_FAQ_MODEL = 'gemini-test-model';
+  process.env.GEMINI_FAQ_RETRY_BASE_MS = '0';
+
+  const originalFetch = global.fetch;
+  let calls = 0;
+  global.fetch = async () => {
+    calls += 1;
+    if (calls === 1) {
+      return response(200, {
+        status: 'completed',
+        output_text: '{not-valid-json'
+      });
+    }
+    return response(200, {
+      status: 'completed',
+      output_text: JSON.stringify({
+        answer: 'EDM28 fonctionne sur rendez-vous.',
+        grounded: true,
+        needs_vehicle_check: false,
+        category: 'general_info',
+        fact_ids: ['appointment']
+      })
+    });
+  };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?malformed-retry=${Date.now()}`);
+    const req = {
+      method: 'POST',
+      headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.41' },
+      body: { question: 'Vous travaillez sur rendez-vous ?' }
+    };
+    const res = createRes();
+    await handler(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(calls, 2);
+    assert.match(res.payload.answer, /rendez-vous/i);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+    delete process.env.PREVIEW_GEMINI_FAQ_MODEL;
+    delete process.env.GEMINI_FAQ_RETRY_BASE_MS;
+  }
+});

@@ -77,14 +77,21 @@ function extractOutputText(payload) {
   if (typeof payload?.output_text === 'string' && payload.output_text.trim()) {
     return payload.output_text.trim();
   }
-  const chunks = [];
-  for (const step of payload?.steps || []) {
-    if (step?.type !== 'model_output') continue;
+
+  const modelOutputs = (payload?.steps || []).filter((step) => step?.type === 'model_output');
+  for (let index = modelOutputs.length - 1; index >= 0; index -= 1) {
+    const step = modelOutputs[index];
+    const chunks = [];
     for (const item of step.content || []) {
-      if (item?.type === 'text' && typeof item.text === 'string') chunks.push(item.text);
+      if (item?.type === 'text' && typeof item.text === 'string' && item.text.trim()) {
+        chunks.push(item.text);
+      }
     }
+    const text = chunks.join('\n').trim();
+    if (text) return text;
   }
-  return chunks.join('\n').trim();
+
+  return '';
 }
 
 const FACT_IDS = Object.freeze([
@@ -237,12 +244,18 @@ async function askGeminiOnce(key, model, question) {
       throw err;
     }
     const output = extractOutputText(payload);
-    if (!output) throw new Error('Réponse Gemini vide.');
+    if (!output) {
+      const err = new Error('Réponse Gemini vide.');
+      err.retryableOutput = true;
+      throw err;
+    }
     let parsed;
     try {
       parsed = JSON.parse(output);
     } catch {
-      throw new Error('Réponse Gemini hors format.');
+      const err = new Error('Réponse Gemini hors format.');
+      err.retryableOutput = true;
+      throw err;
     }
     const checked = validateStructuredAnswer(parsed);
     if (!checked.ok) return { answer: safeFallback(), verified: false, reason: checked.reason };
@@ -287,7 +300,7 @@ async function askGemini(key, model, question) {
       return await askGeminiOnce(key, model, question);
     } catch (error) {
       lastError = error;
-      const shouldRetry = isTransientGeminiError(error)
+      const shouldRetry = (isTransientGeminiError(error) || error?.retryableOutput === true)
         && attempt < MAX_TRANSIENT_ATTEMPTS_PER_MODEL - 1;
       if (!shouldRetry) throw error;
       const base = retryBaseMs() * (2 ** attempt);
@@ -345,6 +358,7 @@ export default async function handler(req, res) {
         lastError = error;
         const providerStatus = String(error?.providerStatus || '').trim().toUpperCase();
         const switchModel = isTransientGeminiError(error)
+          || error?.retryableOutput === true
           || Number(error?.providerHttpStatus || 0) === 400
           || ['INVALID_ARGUMENT','NOT_FOUND'].includes(providerStatus);
         if (!switchModel) throw error;
