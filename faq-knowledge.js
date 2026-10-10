@@ -1,0 +1,1121 @@
+export const FAQ_KNOWLEDGE = [
+  {
+    "id": "identity",
+    "category": "Identité & contact",
+    "question": "Qu’est-ce qu’EDM28 ?",
+    "aliases": [
+      "Qui est EDM28 ?",
+      "EDM28 c’est quoi ?",
+      "C’est quoi le garage EDM28 ?",
+      "Que fait EDM28 ?"
+    ],
+    "keywords": [
+      "edm28",
+      "garage",
+      "identite",
+      "activite"
+    ],
+    "answer": "EDM28 est un garage automobile à Saint-Lubin-de-la-Haye (28410), spécialisé principalement en freinage et en prestations ciblées de liaison au sol / train roulant."
+  },
+  {
+    "id": "brand_aliases",
+    "category": "Identité & contact",
+    "question": "EDM, EDM 28 et EDM28 désignent-ils le même garage ?",
+    "aliases": [
+      "EDM et EDM28 c’est pareil ?",
+      "EDM 28 c’est EDM28 ?",
+      "Le garage EDM c’est EDM28 ?"
+    ],
+    "keywords": [
+      "edm",
+      "edm28",
+      "nom",
+      "marque"
+    ],
+    "answer": "Oui. EDM28 est le nom public du garage ; EDM et EDM 28 sont des variantes de reconnaissance du même établissement."
+  },
+  {
+    "id": "location",
+    "category": "Identité & contact",
+    "question": "Où se trouve EDM28 ?",
+    "aliases": [
+      "Dans quelle ville est EDM28 ?",
+      "EDM28 est où ?",
+      "Vous êtes situé où ?",
+      "Où est le garage ?"
+    ],
+    "keywords": [
+      "ou",
+      "ville",
+      "localisation",
+      "saint lubin",
+      "28410"
+    ],
+    "answer": "EDM28 est situé à Saint-Lubin-de-la-Haye, dans le 28410, en Eure-et-Loir."
+  },
+  {
+    "id": "address",
+    "category": "Identité & contact",
+    "question": "Quelle est l’adresse d’EDM28 ?",
+    "aliases": [
+      "C’est quoi l’adresse du garage ?",
+      "Donnez-moi l’adresse EDM28",
+      "Où venir exactement ?"
+    ],
+    "keywords": [
+      "adresse",
+      "route",
+      "videlet",
+      "venir"
+    ],
+    "answer": "L’adresse publique vérifiée d’EDM28 est 17 bis route du Videlet, 28410 Saint-Lubin-de-la-Haye, France."
+  },
+  {
+    "id": "contact",
+    "category": "Identité & contact",
+    "question": "Comment contacter EDM28 ?",
+    "aliases": [
+      "Comment joindre EDM28 ?",
+      "Quel est votre mail ?",
+      "Quelle est votre adresse e-mail ?",
+      "Je peux vous écrire où ?",
+      "Je peux vous joindre comment ?",
+      "Comment vous contacter ?"
+    ],
+    "keywords": [
+      "contact",
+      "contacter",
+      "joindre",
+      "mail",
+      "email",
+      "ecrire",
+      "message"
+    ],
+    "answer": "Vous pouvez contacter EDM28 par e-mail à contact@edm28.fr ou via https://edm28.fr/contact. Pour une demande d’intervention, utilisez https://edm28.fr/demande."
+  },
+  {
+    "id": "phone",
+    "category": "Identité & contact",
+    "question": "Quel est le numéro de téléphone d’EDM28 ?",
+    "aliases": [
+      "Vous avez un numéro de téléphone ?",
+      "Je peux vous appeler ?",
+      "Quel est votre téléphone ?"
+    ],
+    "keywords": [
+      "telephone",
+      "tel",
+      "appeler",
+      "numero"
+    ],
+    "answer": "Aucun numéro de téléphone professionnel n’est actuellement publié comme information publique vérifiée. Utilisez contact@edm28.fr ou la page https://edm28.fr/contact."
+  },
+  {
+    "id": "opening_hours",
+    "category": "Identité & contact",
+    "question": "Quels sont les horaires d’EDM28 ?",
+    "aliases": [
+      "Vous êtes ouvert quand ?",
+      "Quels sont vos horaires ?",
+      "EDM28 ouvre à quelle heure ?",
+      "Vous êtes ouvert aujourd’hui ?"
+    ],
+    "keywords": [
+      "horaire",
+      "ouvert",
+      "ferme",
+      "heure",
+      "ouverture"
+    ],
+    "answer": "Les horaires ne doivent pas être inventés. Ils sont à consulter uniquement lorsqu’ils sont publiés et validés dans la configuration publique d’EDM28 ; sinon contactez EDM28."
+  },
+  {
+    "id": "official_site",
+    "category": "Identité & contact",
+    "question": "Quel est le site officiel d’EDM28 ?",
+    "aliases": [
+      "C’est quoi votre site ?",
+      "Quelle est l’adresse du site EDM28 ?",
+      "edm28.fr est le site officiel ?"
+    ],
+    "keywords": [
+      "site",
+      "internet",
+      "edm28.fr",
+      "officiel"
+    ],
+    "answer": "Le site officiel d’EDM28 est https://edm28.fr/."
+  },
+  {
+    "id": "public_links",
+    "category": "Demande & rendez-vous",
+    "question": "Comment faire une demande d’intervention ?",
+    "aliases": [
+      "Comment demander un devis ?",
+      "Je veux faire une demande",
+      "Où envoyer ma demande ?",
+      "Comment commencer un dossier ?"
+    ],
+    "keywords": [
+      "demande",
+      "devis",
+      "intervention",
+      "dossier",
+      "commencer"
+    ],
+    "answer": "Commencez sur https://edm28.fr/demande en décrivant le véhicule et le besoin. EDM28 étudie ensuite la demande avant de proposer le périmètre adapté."
+  },
+  {
+    "id": "appointment",
+    "category": "Demande & rendez-vous",
+    "question": "EDM28 travaille-t-il sur rendez-vous ?",
+    "aliases": [
+      "Il faut prendre rendez-vous ?",
+      "Je dois réserver avant de venir ?",
+      "Vous prenez sans rendez-vous ?"
+    ],
+    "keywords": [
+      "rendez vous",
+      "rdv",
+      "reservation",
+      "venir",
+      "sans rendez vous"
+    ],
+    "answer": "Oui. EDM28 fonctionne sur rendez-vous et commence par étudier la demande du client."
+  },
+  {
+    "id": "walk_in",
+    "category": "Demande & rendez-vous",
+    "question": "Puis-je venir directement sans rendez-vous ?",
+    "aliases": [
+      "Je peux passer sans prévenir ?",
+      "Je peux venir directement au garage ?",
+      "Vous prenez les clients sans RDV ?"
+    ],
+    "keywords": [
+      "sans rdv",
+      "sans rendez vous",
+      "venir directement",
+      "passer"
+    ],
+    "answer": "EDM28 fonctionne sur rendez-vous. Il est préférable de commencer par la demande en ligne ou de contacter EDM28 avant de vous déplacer."
+  },
+  {
+    "id": "workflow",
+    "category": "Demande & rendez-vous",
+    "question": "Comment se déroule une intervention chez EDM28 ?",
+    "aliases": [
+      "Comment ça marche chez EDM28 ?",
+      "Quelles sont les étapes ?",
+      "Comment fonctionne le garage ?",
+      "Comment se passe une réparation ?"
+    ],
+    "keywords": [
+      "fonctionnement",
+      "etapes",
+      "parcours",
+      "intervention",
+      "comment ca marche"
+    ],
+    "answer": "Le parcours commence par l’étude de la demande, puis un devis et, si nécessaire, des références ou un panier de pièces. Le client valide le devis, achète les pièces prévues, les apporte au rendez-vous, puis EDM28 les contrôle avant tout démontage et réalise uniquement les travaux validés."
+  },
+  {
+    "id": "vehicle_request_info",
+    "category": "Demande & rendez-vous",
+    "question": "Que faut-il indiquer dans ma demande ?",
+    "aliases": [
+      "Quelles informations donner pour un devis ?",
+      "Que dois-je préciser sur mon véhicule ?",
+      "Que faut-il envoyer à EDM28 ?"
+    ],
+    "keywords": [
+      "information",
+      "vehicule",
+      "demande",
+      "besoin",
+      "devis"
+    ],
+    "answer": "Décrivez au minimum le véhicule concerné et le besoin ou symptôme observé. EDM28 vérifie ensuite ce qui doit être contrôlé avant de proposer une prestation."
+  },
+  {
+    "id": "quote_response",
+    "category": "Demande & rendez-vous",
+    "question": "Comment accepter ou refuser mon devis ?",
+    "aliases": [
+      "Où valider mon devis ?",
+      "Comment répondre au devis ?",
+      "Je valide le devis où ?"
+    ],
+    "keywords": [
+      "accepter",
+      "refuser",
+      "valider",
+      "devis",
+      "repondre"
+    ],
+    "answer": "Le devis publié peut être consulté puis accepté ou refusé depuis l’espace client Mes interventions : https://edm28.fr/mes-interventions."
+  },
+  {
+    "id": "client_area",
+    "category": "Demande & rendez-vous",
+    "question": "À quoi sert l’espace Mes interventions ?",
+    "aliases": [
+      "Que trouve-t-on dans Mes interventions ?",
+      "Où suivre mon dossier ?",
+      "Comment suivre ma réparation ?"
+    ],
+    "keywords": [
+      "mes interventions",
+      "espace client",
+      "suivi",
+      "dossier",
+      "documents"
+    ],
+    "answer": "Mes interventions regroupe le suivi du dossier client et les documents disponibles liés au véhicule et à l’intervention, notamment les devis, contrôles et factures lorsqu’ils existent."
+  },
+  {
+    "id": "change_request",
+    "category": "Demande & rendez-vous",
+    "question": "Comment modifier une demande ou signaler un changement ?",
+    "aliases": [
+      "Je me suis trompé dans ma demande",
+      "Je veux ajouter une information",
+      "Comment corriger mon dossier ?"
+    ],
+    "keywords": [
+      "modifier",
+      "changer",
+      "corriger",
+      "ajouter",
+      "demande"
+    ],
+    "answer": "Si votre demande change, contactez EDM28 ou utilisez les fonctions disponibles dans votre espace client. Le périmètre doit être corrigé avant l’intervention plutôt que supposé."
+  },
+  {
+    "id": "pricing_model",
+    "category": "Devis & tarifs",
+    "question": "Comment sont calculés les tarifs EDM28 ?",
+    "aliases": [
+      "Vous facturez comment ?",
+      "C’est un tarif horaire ?",
+      "Comment fonctionne votre prix ?",
+      "Comment est calculée la main-d’œuvre ?"
+    ],
+    "keywords": [
+      "tarif",
+      "prix",
+      "facturation",
+      "horaire",
+      "main oeuvre",
+      "forfait"
+    ],
+    "answer": "EDM28 facture des tarifs par prestation / forfait, et non un simple taux horaire. Le devis fixe le périmètre prévu avant les travaux."
+  },
+  {
+    "id": "consumables",
+    "category": "Devis & tarifs",
+    "question": "Les consommables d’atelier sont-ils compris ?",
+    "aliases": [
+      "Les consommables sont inclus ?",
+      "La graisse et les consommables sont compris ?",
+      "Il y a des consommables en plus ?"
+    ],
+    "keywords": [
+      "consommables",
+      "atelier",
+      "graisse",
+      "inclus",
+      "compris"
+    ],
+    "answer": "Oui, les consommables d’atelier prévus pour la prestation sont compris dans le tarif EDM28. Les pièces de remplacement sont séparées."
+  },
+  {
+    "id": "parts_excluded",
+    "category": "Devis & tarifs",
+    "question": "Les pièces de remplacement sont-elles comprises dans le tarif ?",
+    "aliases": [
+      "Les pièces sont comprises ?",
+      "Le prix inclut les pièces ?",
+      "Votre devis comprend les pièces ?"
+    ],
+    "keywords": [
+      "pieces",
+      "comprises",
+      "inclus",
+      "prix",
+      "devis"
+    ],
+    "answer": "Non. Le tarif EDM28 couvre la prestation et les consommables d’atelier prévus. Les pièces de remplacement sont achetées directement par le client auprès du fournisseur."
+  },
+  {
+    "id": "tariffs_page",
+    "category": "Devis & tarifs",
+    "question": "Où voir les tarifs EDM28 ?",
+    "aliases": [
+      "Où sont vos prix ?",
+      "Je peux voir les tarifs en ligne ?",
+      "Quelle page pour les prix ?"
+    ],
+    "keywords": [
+      "tarifs",
+      "prix",
+      "page",
+      "en ligne"
+    ],
+    "answer": "Les tarifs publics sont consultables sur https://edm28.fr/tarifs. Le devis du véhicule reste la référence pour le périmètre réel de l’intervention."
+  },
+  {
+    "id": "quote_scope",
+    "category": "Devis & tarifs",
+    "question": "EDM28 peut-il ajouter des travaux sans mon accord ?",
+    "aliases": [
+      "Vous faites des travaux en plus sans prévenir ?",
+      "Le devis peut changer sans validation ?",
+      "Vous ajoutez des réparations automatiquement ?"
+    ],
+    "keywords": [
+      "travaux supplementaires",
+      "accord",
+      "validation",
+      "devis",
+      "ajouter"
+    ],
+    "answer": "Non. Le devis fixe le périmètre prévu. Tout besoin supplémentaire doit être expliqué au client et validé avant d’être ajouté à l’intervention."
+  },
+  {
+    "id": "quote_validity",
+    "category": "Devis & tarifs",
+    "question": "Combien de temps mon devis est-il valable ?",
+    "aliases": [
+      "Quelle est la validité du devis ?",
+      "Jusqu’à quand mon devis est valable ?",
+      "Le devis expire quand ?"
+    ],
+    "keywords": [
+      "validite",
+      "devis",
+      "expire",
+      "date"
+    ],
+    "answer": "La date de validité est indiquée sur chaque devis. L’assistant ne doit pas inventer une durée générique si elle n’est pas indiquée dans le dossier."
+  },
+  {
+    "id": "hourly_rate",
+    "category": "Devis & tarifs",
+    "question": "Quel est le taux horaire d’EDM28 ?",
+    "aliases": [
+      "Combien coûte l’heure de main-d’œuvre ?",
+      "Vous avez un prix à l’heure ?",
+      "C’est combien de l’heure ?"
+    ],
+    "keywords": [
+      "taux horaire",
+      "heure",
+      "main oeuvre",
+      "prix horaire"
+    ],
+    "answer": "Le modèle public EDM28 est un tarif par prestation / forfait. L’assistant ne doit pas inventer un taux horaire qui n’est pas publié."
+  },
+  {
+    "id": "parts_purchase",
+    "category": "Pièces & panier fournisseur",
+    "question": "Qui achète les pièces de remplacement ?",
+    "aliases": [
+      "C’est EDM28 qui commande les pièces ?",
+      "Qui paie les pièces ?",
+      "Je dois acheter les pièces moi-même ?"
+    ],
+    "keywords": [
+      "acheter",
+      "pieces",
+      "commande",
+      "payer",
+      "client"
+    ],
+    "answer": "Le client achète et paie directement les pièces auprès du fournisseur. EDM28 ne les revend pas et n’avance pas leur prix."
+  },
+  {
+    "id": "parts_no_resale",
+    "category": "Pièces & panier fournisseur",
+    "question": "EDM28 vend-il les pièces automobiles ?",
+    "aliases": [
+      "Vous revendez les pièces ?",
+      "EDM28 fournit les pièces ?",
+      "Vous faites de la revente de pièces ?"
+    ],
+    "keywords": [
+      "vend",
+      "revend",
+      "fournit",
+      "pieces",
+      "revente"
+    ],
+    "answer": "Non. EDM28 ne vend pas les pièces de remplacement ; sa rémunération porte sur les prestations réalisées."
+  },
+  {
+    "id": "parts_no_margin",
+    "category": "Pièces & panier fournisseur",
+    "question": "EDM28 prend-il une marge sur les pièces ?",
+    "aliases": [
+      "Vous prenez une commission sur les pièces ?",
+      "Vous gagnez quelque chose sur le panier fournisseur ?",
+      "Il y a une marge EDM28 sur les pièces ?"
+    ],
+    "keywords": [
+      "marge",
+      "commission",
+      "pieces",
+      "panier",
+      "prix"
+    ],
+    "answer": "Non. EDM28 ne prend ni marge ni commission sur le prix des pièces achetées directement par le client."
+  },
+  {
+    "id": "supplier_basket",
+    "category": "Pièces & panier fournisseur",
+    "question": "EDM28 prépare-t-il un panier de pièces ?",
+    "aliases": [
+      "Vous m’envoyez les références ?",
+      "Qui prépare le panier fournisseur ?",
+      "Comment savoir quelles pièces acheter ?"
+    ],
+    "keywords": [
+      "panier",
+      "references",
+      "fournisseur",
+      "preconisees",
+      "pieces"
+    ],
+    "answer": "Oui, lorsqu’une prestation nécessite des pièces, EDM28 prépare les références préconisées et le lien du panier fournisseur, transmis avec le devis."
+  },
+  {
+    "id": "buy_elsewhere",
+    "category": "Pièces & panier fournisseur",
+    "question": "Puis-je acheter les mêmes pièces chez un autre vendeur ?",
+    "aliases": [
+      "Je peux acheter les références ailleurs ?",
+      "Je suis obligé d’acheter chez votre fournisseur ?",
+      "Je peux changer de vendeur ?"
+    ],
+    "keywords": [
+      "autre vendeur",
+      "ailleurs",
+      "fournisseur",
+      "acheter",
+      "references"
+    ],
+    "answer": "Oui. Vous pouvez acheter les mêmes références chez le vendeur de votre choix. Le prix, la disponibilité et la livraison dépendent alors de ce vendeur."
+  },
+  {
+    "id": "alternative_reference",
+    "category": "Pièces & panier fournisseur",
+    "question": "Puis-je prendre une autre référence de pièce ?",
+    "aliases": [
+      "Je peux choisir une référence équivalente ?",
+      "Une autre marque est possible ?",
+      "Je peux remplacer la référence indiquée ?"
+    ],
+    "keywords": [
+      "autre reference",
+      "equivalente",
+      "marque",
+      "validation",
+      "piece"
+    ],
+    "answer": "Une référence différente ou équivalente doit être validée par EDM28 avant le rendez-vous afin de limiter le risque d’incompatibilité."
+  },
+  {
+    "id": "bring_parts",
+    "category": "Pièces & panier fournisseur",
+    "question": "Dois-je apporter les pièces au rendez-vous ?",
+    "aliases": [
+      "Je viens avec les pièces ?",
+      "Qui apporte les pièces ?",
+      "Les pièces doivent être au garage le jour du rendez-vous ?"
+    ],
+    "keywords": [
+      "apporter",
+      "pieces",
+      "rendez vous",
+      "venir avec"
+    ],
+    "answer": "Oui, pour les prestations qui nécessitent des pièces de remplacement, le client les achète puis les apporte le jour du rendez-vous."
+  },
+  {
+    "id": "parts_check",
+    "category": "Pièces & panier fournisseur",
+    "question": "EDM28 contrôle-t-il les pièces avant de démonter ?",
+    "aliases": [
+      "Vous vérifiez les pièces avant l’intervention ?",
+      "Les références sont contrôlées avant démontage ?",
+      "Vous démontez avant de vérifier les pièces ?"
+    ],
+    "keywords": [
+      "controle",
+      "verifie",
+      "pieces",
+      "avant",
+      "demontage"
+    ],
+    "answer": "Oui. Les pièces apportées sont contrôlées avant tout démontage afin de vérifier qu’elles correspondent à l’intervention prévue."
+  },
+  {
+    "id": "client_wrong_parts_15",
+    "category": "Pièces & panier fournisseur",
+    "question": "Que se passe-t-il si j’apporte de mauvaises pièces ?",
+    "aliases": [
+      "Mes pièces ne sont pas compatibles, que se passe-t-il ?",
+      "J’ai acheté la mauvaise référence",
+      "Les pièces que j’apporte sont incorrectes"
+    ],
+    "keywords": [
+      "mauvaises pieces",
+      "incompatibles",
+      "mauvaise reference",
+      "15",
+      "reservation"
+    ],
+    "answer": "Si les pièces apportées par le client sont différentes ou non conformes aux références préconisées ou validées et empêchent l’intervention, EDM28 ne commence pas la prestation mécanique et seuls 15 € de frais de réservation sont facturés."
+  },
+  {
+    "id": "edm_recommendation_error",
+    "category": "Pièces & panier fournisseur",
+    "question": "Que se passe-t-il si EDM28 s’est trompé dans la référence des pièces ?",
+    "aliases": [
+      "Et si la mauvaise pièce vient de votre préconisation ?",
+      "Si EDM28 donne une mauvaise référence ?",
+      "Qui paie si EDM28 se trompe ?"
+    ],
+    "keywords": [
+      "erreur",
+      "edm28",
+      "preconisation",
+      "mauvaise reference",
+      "prise en charge"
+    ],
+    "answer": "Si l’incompatibilité provient d’une erreur de préconisation EDM28, aucun frais lié à cette erreur n’est facturé au client et EDM28 prend en charge les frais nécessaires à la correction de son erreur."
+  },
+  {
+    "id": "parts_none_needed",
+    "category": "Pièces & panier fournisseur",
+    "question": "Toutes les prestations nécessitent-elles des pièces à acheter ?",
+    "aliases": [
+      "Il faut toujours acheter des pièces ?",
+      "Une prestation peut se faire sans pièce de remplacement ?",
+      "Le panier est toujours obligatoire ?"
+    ],
+    "keywords": [
+      "sans pieces",
+      "panier",
+      "toujours",
+      "necessite"
+    ],
+    "answer": "Non. Certaines prestations peuvent ne pas nécessiter de pièces de remplacement. Dans ce cas, le devis n’impose pas de panier de pièces à acheter."
+  },
+  {
+    "id": "supplier_prices",
+    "category": "Pièces & panier fournisseur",
+    "question": "Les prix des pièces du panier sont-ils garantis ?",
+    "aliases": [
+      "Le prix fournisseur est-il fixe ?",
+      "Les prix des pièces peuvent changer ?",
+      "Le prix du panier est garanti ?"
+    ],
+    "keywords": [
+      "prix fournisseur",
+      "prix pieces",
+      "garanti",
+      "indicatif",
+      "livraison"
+    ],
+    "answer": "Les prix fournisseur éventuellement indiqués sont des prix indicatifs observés à une date donnée. Le prix et la livraison dépendent du vendeur et peuvent évoluer."
+  },
+  {
+    "id": "legacy_wrong_parts_fees",
+    "category": "Pièces & panier fournisseur",
+    "question": "Y a-t-il encore un forfait de 40 € ou une facturation de 60 % en cas de mauvaises pièces ?",
+    "aliases": [
+      "Vous facturez 40 € si les pièces sont mauvaises ?",
+      "Il y a encore la règle des 60 % ?",
+      "C’est quoi l’ancienne règle mauvaises pièces ?"
+    ],
+    "keywords": [
+      "40",
+      "60",
+      "mauvaises pieces",
+      "ancien",
+      "forfait"
+    ],
+    "answer": "Non. Ces anciennes règles ne sont plus la règle actuelle. Pour une incompatibilité imputable aux pièces apportées par le client avant intervention, la règle validée est de 15 € de frais de réservation uniquement."
+  },
+  {
+    "id": "braking_scope",
+    "category": "Freinage",
+    "question": "Quelle est la spécialité principale d’EDM28 ?",
+    "aliases": [
+      "Vous êtes spécialisé dans quoi ?",
+      "Votre spécialité c’est quoi ?",
+      "EDM28 est spécialiste de quoi ?"
+    ],
+    "keywords": [
+      "specialite",
+      "freinage",
+      "garage",
+      "services"
+    ],
+    "answer": "La spécialité principale d’EDM28 est le freinage automobile, avec aussi des prestations ciblées de liaison au sol / train roulant."
+  },
+  {
+    "id": "brake_pads",
+    "category": "Freinage",
+    "question": "EDM28 remplace-t-il les plaquettes de frein ?",
+    "aliases": [
+      "Vous faites les plaquettes ?",
+      "Je peux faire changer mes plaquettes chez EDM28 ?",
+      "Vous intervenez sur les plaquettes ?"
+    ],
+    "keywords": [
+      "plaquettes",
+      "frein",
+      "remplacement"
+    ],
+    "answer": "Oui. Le remplacement de plaquettes fait partie des prestations de freinage publiées, lorsque le contrôle confirme le besoin et que le devis est validé."
+  },
+  {
+    "id": "brake_discs",
+    "category": "Freinage",
+    "question": "EDM28 remplace-t-il les disques de frein ?",
+    "aliases": [
+      "Vous faites les disques ?",
+      "Je peux changer mes disques chez EDM28 ?",
+      "Vous remplacez disques et plaquettes ?"
+    ],
+    "keywords": [
+      "disques",
+      "frein",
+      "remplacement",
+      "plaquettes"
+    ],
+    "answer": "Oui. Les disques de frein font partie des prestations publiées. Le contrôle et le devis déterminent ce qui doit réellement être remplacé."
+  },
+  {
+    "id": "brake_fluid",
+    "category": "Freinage",
+    "question": "EDM28 fait-il la purge ou le remplacement du liquide de frein ?",
+    "aliases": [
+      "Vous changez le liquide de frein ?",
+      "Vous faites une purge de frein ?",
+      "Vous purgez le circuit de freinage ?"
+    ],
+    "keywords": [
+      "liquide frein",
+      "purge",
+      "circuit",
+      "freinage"
+    ],
+    "answer": "Oui. EDM28 propose une prestation de remplacement du liquide de frein avec purge à la machine lorsque le besoin est prévu ou confirmé."
+  },
+  {
+    "id": "brake_cleaning",
+    "category": "Freinage",
+    "question": "Que comprend la préparation lors d’un démontage de freinage ?",
+    "aliases": [
+      "Vous nettoyez la corrosion quand vous faites les freins ?",
+      "Vous graissez au remontage ?",
+      "Que faites-vous en plus lors du remontage des freins ?"
+    ],
+    "keywords": [
+      "nettoyage",
+      "corrosion",
+      "graisse",
+      "remontage",
+      "freinage"
+    ],
+    "answer": "Pour les démontages de freinage concernés, EDM28 nettoie les points de corrosion accessibles et utilise une graisse adaptée uniquement sur les portées prévues, jamais sur les surfaces de friction."
+  },
+  {
+    "id": "brake_noise",
+    "category": "Freinage",
+    "question": "Un bruit de frein veut-il dire que les plaquettes sont mortes ?",
+    "aliases": [
+      "Mes freins grincent, ce sont les plaquettes ?",
+      "J’entends un bruit au freinage, quoi changer ?",
+      "Un grincement signifie quoi ?"
+    ],
+    "keywords": [
+      "bruit",
+      "grincement",
+      "plaquettes",
+      "frein"
+    ],
+    "answer": "Pas forcément. Un bruit peut avoir plusieurs causes. Il faut contrôler le véhicule avant de conclure qu’une pièce précise doit être remplacée."
+  },
+  {
+    "id": "brake_pedal",
+    "category": "Freinage",
+    "question": "Une pédale de frein inhabituelle signifie-t-elle qu’il faut faire une purge ?",
+    "aliases": [
+      "Ma pédale est molle, faut-il purger ?",
+      "La pédale change, c’est le liquide de frein ?",
+      "Une purge règle une pédale bizarre ?"
+    ],
+    "keywords": [
+      "pedale",
+      "molle",
+      "purge",
+      "liquide",
+      "frein"
+    ],
+    "answer": "Pas automatiquement. Une sensation inhabituelle à la pédale peut avoir plusieurs causes. La purge n’est pertinente que si le contrôle confirme qu’elle répond au besoin."
+  },
+  {
+    "id": "brake_vibration",
+    "category": "Freinage",
+    "question": "Une vibration au freinage permet-elle de savoir quelle pièce changer ?",
+    "aliases": [
+      "Ça vibre quand je freine, ce sont les disques ?",
+      "Vibration au freinage = disques voilés ?",
+      "Que changer si ça vibre au freinage ?"
+    ],
+    "keywords": [
+      "vibration",
+      "freinage",
+      "disques",
+      "diagnostic"
+    ],
+    "answer": "Non. Une vibration peut orienter le contrôle mais ne suffit pas à confirmer la pièce en cause. EDM28 doit vérifier le véhicule avant de proposer un remplacement."
+  },
+  {
+    "id": "running_gear_scope",
+    "category": "Liaison au sol & direction",
+    "question": "Quelles prestations de liaison au sol fait EDM28 ?",
+    "aliases": [
+      "Vous faites quoi sur le train roulant ?",
+      "Vous intervenez sur la liaison au sol ?",
+      "Quels éléments de train avant faites-vous ?"
+    ],
+    "keywords": [
+      "liaison au sol",
+      "train roulant",
+      "train avant",
+      "prestations"
+    ],
+    "answer": "EDM28 intervient sur des prestations ciblées du train roulant, notamment les triangles de suspension, les biellettes ou rotules de direction et les biellettes de barre stabilisatrice, selon le défaut constaté."
+  },
+  {
+    "id": "triangles",
+    "category": "Liaison au sol & direction",
+    "question": "EDM28 remplace-t-il les triangles de suspension ?",
+    "aliases": [
+      "Vous faites les triangles ?",
+      "Je peux changer mes triangles chez EDM28 ?",
+      "Vous remplacez les bras de suspension ?"
+    ],
+    "keywords": [
+      "triangles",
+      "suspension",
+      "bras",
+      "remplacement"
+    ],
+    "answer": "Oui. Le remplacement de triangles de suspension fait partie des prestations publiées lorsque le contrôle confirme que le défaut concerne cet élément."
+  },
+  {
+    "id": "direction_links",
+    "category": "Liaison au sol & direction",
+    "question": "EDM28 remplace-t-il les biellettes ou rotules de direction ?",
+    "aliases": [
+      "Vous faites les rotules de direction ?",
+      "Vous changez les biellettes de direction ?",
+      "Vous intervenez sur la direction ?"
+    ],
+    "keywords": [
+      "direction",
+      "rotule",
+      "biellette",
+      "remplacement"
+    ],
+    "answer": "Oui. EDM28 publie des prestations ciblées sur les biellettes ou rotules de direction lorsque le jeu ou le défaut est confirmé."
+  },
+  {
+    "id": "stabilizer_links",
+    "category": "Liaison au sol & direction",
+    "question": "EDM28 remplace-t-il les biellettes de barre stabilisatrice ?",
+    "aliases": [
+      "Vous faites les biellettes de barre stab ?",
+      "Vous changez les biellettes stabilisatrices ?",
+      "Biellette de stabilisateur chez EDM28 ?"
+    ],
+    "keywords": [
+      "biellette",
+      "barre stabilisatrice",
+      "stabilisateur"
+    ],
+    "answer": "Oui. Le remplacement de biellettes de barre stabilisatrice fait partie des prestations ciblées publiées par EDM28."
+  },
+  {
+    "id": "clunk_noise",
+    "category": "Liaison au sol & direction",
+    "question": "Un claquement du train avant indique-t-il forcément un triangle usé ?",
+    "aliases": [
+      "Ça claque devant, c’est un triangle ?",
+      "Claquement train avant = rotule ?",
+      "Quel élément cause un claquement ?"
+    ],
+    "keywords": [
+      "claquement",
+      "train avant",
+      "triangle",
+      "rotule",
+      "biellette"
+    ],
+    "answer": "Non. Plusieurs articulations du train roulant peuvent produire des bruits proches. Le jeu ou le défaut doit être localisé avant de remplacer une pièce."
+  },
+  {
+    "id": "pulling_side",
+    "category": "Liaison au sol & direction",
+    "question": "Une voiture qui tire d’un côté vient-elle forcément de la direction ?",
+    "aliases": [
+      "Ma voiture tire à droite, c’est la direction ?",
+      "Le véhicule tire d’un côté, quoi changer ?",
+      "Ça tire à gauche, c’est une rotule ?"
+    ],
+    "keywords": [
+      "tire",
+      "droite",
+      "gauche",
+      "direction",
+      "geometrie"
+    ],
+    "answer": "Non. Le freinage, les pneumatiques, la géométrie ou d’autres éléments peuvent intervenir. Il faut contrôler le véhicule pour identifier la cause réelle."
+  },
+  {
+    "id": "unpublished_service",
+    "category": "Liaison au sol & direction",
+    "question": "EDM28 fait-il une prestation qui n’est pas affichée sur le site ?",
+    "aliases": [
+      "Vous faites aussi les amortisseurs ?",
+      "Vous faites la géométrie ?",
+      "Vous faites toutes les réparations de suspension ?"
+    ],
+    "keywords": [
+      "amortisseurs",
+      "geometrie",
+      "service non affiche",
+      "autre reparation"
+    ],
+    "answer": "L’assistant ne doit pas confirmer une prestation qui n’est pas publiée. Pour un besoin non listé, faites une demande sur https://edm28.fr/demande afin qu’EDM28 confirme si l’intervention entre dans son périmètre."
+  },
+  {
+    "id": "quote_cart_email",
+    "category": "Transparence & documents",
+    "question": "Le devis et le panier de pièces sont-ils envoyés ensemble ?",
+    "aliases": [
+      "Je reçois le panier avec le devis ?",
+      "Le lien des pièces est dans le même mail ?",
+      "Comment recevais-je le devis et les références ?"
+    ],
+    "keywords": [
+      "devis",
+      "panier",
+      "email",
+      "mail",
+      "ensemble"
+    ],
+    "answer": "Oui. Lorsque des pièces sont nécessaires, le devis est envoyé avec le lien du panier fournisseur et les références préconisées."
+  },
+  {
+    "id": "recommended_refs",
+    "category": "Transparence & documents",
+    "question": "Les références des pièces sont-elles indiquées dans le devis ?",
+    "aliases": [
+      "Où sont les références de pièces ?",
+      "Les références sont dans le PDF ?",
+      "Je garde une trace des références recommandées ?"
+    ],
+    "keywords": [
+      "references",
+      "devis",
+      "pdf",
+      "pieces",
+      "trace"
+    ],
+    "answer": "Oui. Les références préconisées sont conservées avec le devis / panier associé afin qu’elles restent traçables et consultables."
+  },
+  {
+    "id": "documents",
+    "category": "Transparence & documents",
+    "question": "Quels documents puis-je retrouver dans mon dossier ?",
+    "aliases": [
+      "Où sont mes devis et factures ?",
+      "Quels documents garde EDM28 ?",
+      "Je peux retrouver mes documents après l’intervention ?"
+    ],
+    "keywords": [
+      "documents",
+      "devis",
+      "factures",
+      "controle",
+      "dossier"
+    ],
+    "answer": "Selon l’avancement du dossier, l’espace Mes interventions peut regrouper les devis, ordres de réparation, contrôles, factures et autres documents disponibles liés à l’intervention."
+  },
+  {
+    "id": "intervention_photos",
+    "category": "Transparence & documents",
+    "question": "Les photos d’intervention sont-elles conservées ?",
+    "aliases": [
+      "Je peux voir les photos du contrôle ?",
+      "Vous gardez les photos de l’intervention ?",
+      "Les photos sont dans mon dossier ?"
+    ],
+    "keywords": [
+      "photos",
+      "intervention",
+      "controle",
+      "dossier"
+    ],
+    "answer": "Des photos peuvent être rattachées aux contrôles ou au dossier d’intervention lorsqu’elles sont disponibles. Elles restent associées au dossier client plutôt que dispersées."
+  },
+  {
+    "id": "history",
+    "category": "Transparence & documents",
+    "question": "L’historique de mon intervention est-il conservé ?",
+    "aliases": [
+      "Je peux retrouver une ancienne intervention ?",
+      "Mon historique reste disponible ?",
+      "Vous gardez les anciens documents ?"
+    ],
+    "keywords": [
+      "historique",
+      "ancienne intervention",
+      "conserve",
+      "documents"
+    ],
+    "answer": "Oui. Le parcours client est conçu pour conserver l’historique et les documents disponibles du dossier, notamment dans Mes interventions."
+  },
+  {
+    "id": "invoice",
+    "category": "Transparence & documents",
+    "question": "Où retrouver ma facture ?",
+    "aliases": [
+      "Je peux télécharger ma facture ?",
+      "Ma facture est où ?",
+      "La facture reste disponible ?"
+    ],
+    "keywords": [
+      "facture",
+      "telecharger",
+      "mes interventions",
+      "document"
+    ],
+    "answer": "Lorsqu’une facture a été émise et publiée dans le dossier, elle est rattachée à l’intervention et peut être retrouvée dans l’espace Mes interventions."
+  },
+  {
+    "id": "transparency",
+    "category": "Transparence & documents",
+    "question": "Qu’est-ce que la transparence EDM28 ?",
+    "aliases": [
+      "Pourquoi EDM28 parle de transparence ?",
+      "Comment vous évitez les mauvaises surprises ?",
+      "Comment je sais ce qui sera fait ?"
+    ],
+    "keywords": [
+      "transparence",
+      "mauvaises surprises",
+      "devis",
+      "validation"
+    ],
+    "answer": "La transparence EDM28 repose sur un périmètre défini par devis, des pièces achetées directement par le client, des références traçables et l’absence de travaux supplémentaires sans explication et validation."
+  },
+  {
+    "id": "symptom_not_diagnosis",
+    "category": "Limites de l’assistant",
+    "question": "L’assistant peut-il diagnostiquer ma panne à distance ?",
+    "aliases": [
+      "Gemini peut-il trouver ma panne ?",
+      "Vous pouvez diagnostiquer avec mes symptômes ?",
+      "L’assistant sait quelle pièce est cassée ?"
+    ],
+    "keywords": [
+      "diagnostic",
+      "panne",
+      "symptome",
+      "assistant",
+      "gemini"
+    ],
+    "answer": "Non. L’assistant peut expliquer le fonctionnement EDM28 et les signes à surveiller, mais un symptôme seul ne permet pas de confirmer la pièce en cause. Un contrôle réel du véhicule est nécessaire."
+  },
+  {
+    "id": "repair_procedure",
+    "category": "Limites de l’assistant",
+    "question": "L’assistant peut-il me donner une procédure de réparation étape par étape ?",
+    "aliases": [
+      "Comment changer mes plaquettes moi-même ?",
+      "Donne-moi un tuto pour démonter les freins",
+      "Explique-moi comment remplacer une rotule"
+    ],
+    "keywords": [
+      "procedure",
+      "tuto",
+      "changer",
+      "demonter",
+      "reparer",
+      "etapes"
+    ],
+    "answer": "Non. L’assistant FAQ EDM28 n’a pas vocation à fournir des procédures mécaniques détaillées ou dangereuses. Il peut expliquer le service et orienter vers un contrôle."
+  },
+  {
+    "id": "torque_specs",
+    "category": "Limites de l’assistant",
+    "question": "L’assistant peut-il donner un couple de serrage précis ?",
+    "aliases": [
+      "Quel couple de serrage pour mes freins ?",
+      "Donne-moi la valeur de serrage",
+      "Combien de Nm pour cette pièce ?"
+    ],
+    "keywords": [
+      "couple",
+      "serrage",
+      "nm",
+      "valeur"
+    ],
+    "answer": "Non, pas sans documentation technique spécifique et vérifiée pour le véhicule. L’assistant ne doit pas inventer de couple de serrage."
+  },
+  {
+    "id": "compatibility_certainty",
+    "category": "Limites de l’assistant",
+    "question": "L’assistant peut-il garantir qu’une pièce est compatible avec mon véhicule ?",
+    "aliases": [
+      "Gemini peut confirmer ma référence de pièce ?",
+      "Cette pièce est-elle compatible ?",
+      "L’IA peut valider ma référence ?"
+    ],
+    "keywords": [
+      "compatible",
+      "reference",
+      "piece",
+      "garantir",
+      "valider"
+    ],
+    "answer": "Non. L’assistant ne doit pas garantir une compatibilité de pièce à partir d’une simple question. Les références doivent être préparées ou validées par EDM28 pour le véhicule concerné."
+  },
+  {
+    "id": "unknown_info",
+    "category": "Limites de l’assistant",
+    "question": "Que doit répondre l’assistant s’il ne connaît pas l’information ?",
+    "aliases": [
+      "Et si Gemini ne sait pas ?",
+      "Que fait l’assistant si l’info n’est pas dans la FAQ ?",
+      "L’IA peut inventer une réponse ?"
+    ],
+    "keywords": [
+      "ne sait pas",
+      "inconnu",
+      "inventer",
+      "information"
+    ],
+    "answer": "Il doit dire qu’il ne dispose pas d’une information fiable plutôt que d’inventer, puis orienter vers https://edm28.fr/demande ou contact@edm28.fr."
+  }
+];
+
+export const FAQ_IDS = Object.freeze(FAQ_KNOWLEDGE.map((entry) => entry.id));
