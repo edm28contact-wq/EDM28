@@ -142,34 +142,6 @@ function knownAnswer(question) {
     };
   }
 
-  if (/\b(tarif|tarifs|prix|combien|cout|coute|couter)\b/.test(q)) {
-    return {
-      answer: 'Les tarifs EDM28 sont des tarifs par prestation. Les pièces de remplacement ne sont pas comprises. Les tarifs publiés sont disponibles sur https://edm28.fr/tarifs.',
-      factIds: ['pricing_model','public_links']
-    };
-  }
-
-  if (/\b(rendez vous|rdv|reservation|reserver|prendre rendez vous)\b/.test(q)) {
-    return {
-      answer: 'EDM28 fonctionne sur rendez-vous. Vous pouvez commencer votre demande sur https://edm28.fr/demande ; EDM28 étudie ensuite la demande avant de confirmer le périmètre et le rendez-vous.',
-      factIds: ['appointment','public_links']
-    };
-  }
-
-  if (/\b(piece|pieces|panier|fournisseur|acheter|achat)\b/.test(q)) {
-    return {
-      answer: 'EDM28 prépare les références ou le panier adapté avec le devis. Le client achète les pièces directement auprès du fournisseur et les apporte au rendez-vous. Les pièces sont contrôlées avant tout démontage.',
-      factIds: ['parts_purchase','parts_check']
-    };
-  }
-
-  if (/\b(comment ca marche|fonctionnement|comment fonctionne|comment se passe)\b/.test(q)) {
-    return {
-      answer: 'Le parcours EDM28 commence par l’étude de votre demande, puis un devis avec les références de pièces recommandées. Vous achetez les pièces directement auprès du fournisseur, EDM28 les contrôle avant démontage, puis réalise uniquement les travaux validés.',
-      factIds: ['appointment','parts_purchase','parts_check','quote_scope']
-    };
-  }
-
   return null;
 }
 
