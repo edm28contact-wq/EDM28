@@ -159,13 +159,16 @@ function rankedKnowledge(question, limit = 8) {
 }
 
 function knownAnswer(question) {
-  const ranked = rankedKnowledge(question, 2);
-  if (!ranked.length || ranked[0].score < 100) return null;
-  const top = ranked[0];
+  const normalized = normalizeQuestion(question);
+  const entry = FAQ_KNOWLEDGE.find((item) =>
+    [item.question, ...(item.aliases || [])]
+      .some((text) => normalizeQuestion(text) === normalized)
+  );
+  if (!entry) return null;
   return {
-    answer: top.entry.answer,
-    factIds: [top.entry.id],
-    knowledgeId: top.entry.id
+    answer: entry.answer,
+    factIds: [entry.id],
+    knowledgeId: entry.id
   };
 }
 
