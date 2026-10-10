@@ -172,13 +172,14 @@ function knownAnswer(question) {
 
 function knowledgeContext(question) {
   const ranked = rankedKnowledge(question, 10);
-  const selected = ranked.length ? ranked : FAQ_KNOWLEDGE.filter((entry) =>
-    ['identity','contact','public_links','workflow','unknown_info'].includes(entry.id)
-  );
-  return selected.map(({ entry } = {}) => {
-    const item = entry || arguments[0];
-    return `- [${item.id}] Q: ${item.question}\n  R: ${item.answer}`;
-  }).join('\n');
+  const selected = ranked.length
+    ? ranked.map((item) => item.entry)
+    : FAQ_KNOWLEDGE.filter((entry) =>
+        ['identity','contact','public_links','workflow','unknown_info'].includes(entry.id)
+      );
+  return selected
+    .map((item) => `- [${item.id}] Q: ${item.question}\n  R: ${item.answer}`)
+    .join('\n');
 }
 
 function highRiskQuestion(question) {
