@@ -79,6 +79,7 @@ export const FAQ_KNOWLEDGE = [
       "Quel est votre mail ?",
       "Quelle est votre adresse e-mail ?",
       "Je peux vous écrire où ?",
+      "Je peux vous joindre comment ?",
       "Comment vous contacter ?"
     ],
     "keywords": [
