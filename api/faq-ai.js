@@ -1,6 +1,8 @@
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 const DEFAULT_MODEL = 'gemini-3.8-flash';
-const FALLBACK_MODEL = 'gemini-3.5-flash';
+const FALLBACK_MODELS = Object.freeze(['gemini-3.6-flash', 'gemini-3.5-flash-lite']);
+const TRANSIENT_HTTP_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
+const MAX_TRANSIENT_ATTEMPTS_PER_MODEL = 2;
 const WINDOW_MS = 5 * 60 * 1000;
 const MAX_REQUESTS = 12;
 const rateBuckets = new Map();
@@ -183,7 +185,7 @@ function systemInstruction() {
   ].join('\n');
 }
 
-async function askGemini(key, model, question) {
+async function askGeminiOnce(key, model, question) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
@@ -253,6 +255,49 @@ async function askGemini(key, model, question) {
   }
 }
 
+
+function isTransientGeminiError(error) {
+  const status = Number(error?.providerHttpStatus || 0);
+  if (TRANSIENT_HTTP_STATUSES.has(status)) return true;
+  const providerStatus = String(error?.providerStatus || '').trim().toLowerCase();
+  return [
+    'service_unavailable',
+    'unavailable',
+    'resource_exhausted',
+    'too_many_requests',
+    'rate_limit_exceeded',
+    'api_error',
+    'deadline_exceeded'
+  ].includes(providerStatus);
+}
+
+function retryBaseMs() {
+  const configured = Number(process.env.GEMINI_FAQ_RETRY_BASE_MS || 350);
+  return Number.isFinite(configured) ? Math.max(0, Math.min(configured, 2000)) : 350;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function askGemini(key, model, question) {
+  let lastError;
+  for (let attempt = 0; attempt < MAX_TRANSIENT_ATTEMPTS_PER_MODEL; attempt += 1) {
+    try {
+      return await askGeminiOnce(key, model, question);
+    } catch (error) {
+      lastError = error;
+      const shouldRetry = isTransientGeminiError(error)
+        && attempt < MAX_TRANSIENT_ATTEMPTS_PER_MODEL - 1;
+      if (!shouldRetry) throw error;
+      const base = retryBaseMs() * (2 ** attempt);
+      const jitter = Math.floor(Math.random() * Math.max(25, Math.floor(base / 3) || 25));
+      await sleep(base + jitter);
+    }
+  }
+  throw lastError;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -286,17 +331,28 @@ export default async function handler(req, res) {
 
   try {
     const requestedModel = modelName();
+    const models = [requestedModel, ...FALLBACK_MODELS.filter((item) => item !== requestedModel)];
     let model = requestedModel;
     let result;
-    try {
-      result = await askGemini(key, model, question);
-    } catch (firstError) {
-      const retryable = Number(firstError?.providerHttpStatus || 0) === 400
-        || ['INVALID_ARGUMENT','NOT_FOUND'].includes(String(firstError?.providerStatus || ''));
-      if (!retryable || model === FALLBACK_MODEL) throw firstError;
-      model = FALLBACK_MODEL;
-      result = await askGemini(key, model, question);
+    let lastError;
+
+    for (const candidate of models) {
+      model = candidate;
+      try {
+        result = await askGemini(key, model, question);
+        break;
+      } catch (error) {
+        lastError = error;
+        const providerStatus = String(error?.providerStatus || '').trim().toUpperCase();
+        const switchModel = isTransientGeminiError(error)
+          || Number(error?.providerHttpStatus || 0) === 400
+          || ['INVALID_ARGUMENT','NOT_FOUND'].includes(providerStatus);
+        if (!switchModel) throw error;
+      }
     }
+
+    if (!result) throw lastError || new Error('Aucun modèle Gemini disponible.');
+
     return sendJson(res, 200, {
       success: true,
       answer: result.answer,
