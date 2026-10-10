@@ -121,6 +121,58 @@ function safeFallback(reason = 'unknown') {
   return 'Je n’ai pas assez d’informations fiables dans la FAQ EDM28 pour répondre sans risquer d’inventer. Vous pouvez faire une demande sur https://edm28.fr/demande ou écrire à contact@edm28.fr.';
 }
 
+function normalizeQuestion(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’']/g, ' ')
+    .toLowerCase()
+    .replace(/[^a-z0-9@.\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function knownAnswer(question) {
+  const q = normalizeQuestion(question);
+
+  if (/\b(contact|contacter|joindre|email|mail|ecrire|message)\b/.test(q)) {
+    return {
+      answer: 'Vous pouvez contacter EDM28 par e-mail à contact@edm28.fr ou passer par la page https://edm28.fr/contact. Pour une demande d’intervention, utilisez https://edm28.fr/demande.',
+      factIds: ['contact','public_links']
+    };
+  }
+
+  if (/\b(tarif|tarifs|prix|combien|cout|coute|couter)\b/.test(q)) {
+    return {
+      answer: 'Les tarifs EDM28 sont des tarifs par prestation. Les pièces de remplacement ne sont pas comprises. Les tarifs publiés sont disponibles sur https://edm28.fr/tarifs.',
+      factIds: ['pricing_model','public_links']
+    };
+  }
+
+  if (/\b(rendez vous|rdv|reservation|reserver|prendre rendez vous)\b/.test(q)) {
+    return {
+      answer: 'EDM28 fonctionne sur rendez-vous. Vous pouvez commencer votre demande sur https://edm28.fr/demande ; EDM28 étudie ensuite la demande avant de confirmer le périmètre et le rendez-vous.',
+      factIds: ['appointment','public_links']
+    };
+  }
+
+  if (/\b(piece|pieces|panier|fournisseur|acheter|achat)\b/.test(q)) {
+    return {
+      answer: 'EDM28 prépare les références ou le panier adapté avec le devis. Le client achète les pièces directement auprès du fournisseur et les apporte au rendez-vous. Les pièces sont contrôlées avant tout démontage.',
+      factIds: ['parts_purchase','parts_check']
+    };
+  }
+
+  if (/\b(comment ca marche|fonctionnement|comment fonctionne|comment se passe)\b/.test(q)) {
+    return {
+      answer: 'Le parcours EDM28 commence par l’étude de votre demande, puis un devis avec les références de pièces recommandées. Vous achetez les pièces directement auprès du fournisseur, EDM28 les contrôle avant démontage, puis réalise uniquement les travaux validés.',
+      factIds: ['appointment','parts_purchase','parts_check','quote_scope']
+    };
+  }
+
+  return null;
+}
+
 function highRiskQuestion(question) {
   const q = question.toLowerCase();
   const procedure = /\b(comment|étapes?|procedure|procédure|tuto|démonter|demonter|remplacer|changer|purger|serrer|couple|réparer|reparer)\b/.test(q)
@@ -321,6 +373,18 @@ export default async function handler(req, res) {
 
   const question = parseQuestion(req);
   if (question.length < 3) return sendJson(res, 400, { success: false, error: 'Écrivez une question plus précise.' });
+
+  const local = knownAnswer(question);
+  if (local) {
+    return sendJson(res, 200, {
+      success: true,
+      answer: local.answer,
+      model: null,
+      verified: true,
+      source: 'verified_local',
+      factIds: local.factIds
+    });
+  }
 
   const key = apiKey();
   if (!key) {
