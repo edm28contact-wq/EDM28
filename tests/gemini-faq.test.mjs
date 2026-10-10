@@ -636,6 +636,82 @@ test('FAQ exact canonical questions are answered locally without Gemini', async 
   }
 });
 
+test('FAQ tolerates close spelling variants locally without calling Gemini', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+
+  const originalFetch = global.fetch;
+  let called = false;
+  global.fetch = async () => { called = true; throw new Error('Gemini should not be called for close known variants'); };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?kb-fuzzy=${Date.now()}`);
+    const cases = [
+      ['comment contactée edm28', 'contact'],
+      ['ou ce trouve edm28', 'location'],
+      ['vous faite les plaquette ?', 'brake_pads']
+    ];
+
+    for (let index = 0; index < cases.length; index += 1) {
+      const [question, id] = cases[index];
+      const req = {
+        method: 'POST',
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': `203.0.115.${10 + index}` },
+        body: { question }
+      };
+      const res = createRes();
+      await handler(req, res);
+      assert.equal(res.statusCode, 200, question);
+      assert.equal(res.payload.source, 'verified_local', question);
+      assert.equal(res.payload.knowledgeId, id, question);
+    }
+
+    assert.equal(called, false);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+  }
+});
+
+test('FAQ does not force a local answer when close matches are ambiguous', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+  process.env.PREVIEW_GEMINI_FAQ_MODEL = 'gemini-test-model';
+
+  const originalFetch = global.fetch;
+  let called = false;
+  global.fetch = async () => {
+    called = true;
+    return response(200, {
+      status: 'completed',
+      output_text: JSON.stringify({
+        answer: 'Je n’ai pas assez d’informations pour confirmer.',
+        grounded: false,
+        needs_vehicle_check: false,
+        category: 'unknown',
+        fact_ids: []
+      })
+    });
+  };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?kb-ambiguous=${Date.now()}`);
+    const req = {
+      method: 'POST',
+      headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.115.50' },
+      body: { question: 'vous faites les pieces ?' }
+    };
+    const res = createRes();
+    await handler(req, res);
+    assert.equal(called, true);
+    assert.notEqual(res.payload.source, 'verified_local');
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+    delete process.env.PREVIEW_GEMINI_FAQ_MODEL;
+  }
+});
+
 test('FAQ aliases are learned from the canonical knowledge base', async () => {
   process.env.VERCEL_ENV = 'preview';
   process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';

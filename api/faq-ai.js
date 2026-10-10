@@ -128,6 +128,59 @@ function entryTexts(entry) {
   return [entry.question, ...(entry.aliases || []), ...(entry.keywords || [])];
 }
 
+function levenshteinDistance(left, right) {
+  if (left === right) return 0;
+  if (!left) return right.length;
+  if (!right) return left.length;
+
+  let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let row = 1; row <= left.length; row += 1) {
+    const current = [row];
+    for (let column = 1; column <= right.length; column += 1) {
+      const substitution = previous[column - 1] + (left[row - 1] === right[column - 1] ? 0 : 1);
+      current[column] = Math.min(
+        current[column - 1] + 1,
+        previous[column] + 1,
+        substitution
+      );
+    }
+    previous = current;
+  }
+  return previous[right.length];
+}
+
+function nearEquivalentQuestion(left, right) {
+  const shorter = Math.min(left.length, right.length);
+  const longer = Math.max(left.length, right.length);
+  if (shorter < 10) return false;
+
+  const allowedDistance = Math.max(1, Math.min(4, Math.floor(longer * 0.12)));
+  if (Math.abs(left.length - right.length) > allowedDistance) return false;
+  return levenshteinDistance(left, right) <= allowedDistance;
+}
+
+function directMatchScore(question, entry) {
+  const normalized = normalizeQuestion(question);
+  let score = 0;
+
+  for (const text of [entry.question, ...(entry.aliases || [])]) {
+    const candidate = normalizeQuestion(text);
+    if (!candidate) continue;
+    if (normalized === candidate) return 100;
+
+    const shorter = Math.min(normalized.length, candidate.length);
+    if (shorter >= 10 && (normalized.includes(candidate) || candidate.includes(normalized))) {
+      score = Math.max(score, 90);
+      continue;
+    }
+    if (nearEquivalentQuestion(normalized, candidate)) {
+      score = Math.max(score, 80);
+    }
+  }
+
+  return score;
+}
+
 function scoreEntry(question, entry) {
   const normalized = normalizeQuestion(question);
   let score = 0;
@@ -159,12 +212,15 @@ function rankedKnowledge(question, limit = 8) {
 }
 
 function knownAnswer(question) {
-  const normalized = normalizeQuestion(question);
-  const entry = FAQ_KNOWLEDGE.find((item) =>
-    [item.question, ...(item.aliases || [])]
-      .some((text) => normalizeQuestion(text) === normalized)
-  );
-  if (!entry) return null;
+  const candidates = FAQ_KNOWLEDGE
+    .map((entry) => ({ entry, score: directMatchScore(question, entry) }))
+    .filter((item) => item.score >= 80)
+    .sort((a, b) => b.score - a.score);
+
+  if (!candidates.length) return null;
+  if (candidates.length > 1 && candidates[0].score === candidates[1].score) return null;
+
+  const entry = candidates[0].entry;
   return {
     answer: entry.answer,
     factIds: [entry.id],
