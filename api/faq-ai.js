@@ -121,6 +121,30 @@ function safeFallback(reason = 'unknown') {
   return 'Je n’ai pas assez d’informations fiables dans la FAQ EDM28 pour répondre sans risquer d’inventer. Vous pouvez faire une demande sur https://edm28.fr/demande ou écrire à contact@edm28.fr.';
 }
 
+function normalizeQuestion(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’']/g, ' ')
+    .toLowerCase()
+    .replace(/[^a-z0-9@.\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function knownAnswer(question) {
+  const q = normalizeQuestion(question);
+
+  if (/\b(contact|contacter|joindre|email|mail|ecrire|message)\b/.test(q)) {
+    return {
+      answer: 'Vous pouvez contacter EDM28 par e-mail à contact@edm28.fr ou passer par la page https://edm28.fr/contact. Pour une demande d’intervention, utilisez https://edm28.fr/demande.',
+      factIds: ['contact','public_links']
+    };
+  }
+
+  return null;
+}
+
 function highRiskQuestion(question) {
   const q = question.toLowerCase();
   const procedure = /\b(comment|étapes?|procedure|procédure|tuto|démonter|demonter|remplacer|changer|purger|serrer|couple|réparer|reparer)\b/.test(q)
@@ -321,6 +345,18 @@ export default async function handler(req, res) {
 
   const question = parseQuestion(req);
   if (question.length < 3) return sendJson(res, 400, { success: false, error: 'Écrivez une question plus précise.' });
+
+  const local = knownAnswer(question);
+  if (local) {
+    return sendJson(res, 200, {
+      success: true,
+      answer: local.answer,
+      model: null,
+      verified: true,
+      source: 'verified_local',
+      factIds: local.factIds
+    });
+  }
 
   const key = apiKey();
   if (!key) {
