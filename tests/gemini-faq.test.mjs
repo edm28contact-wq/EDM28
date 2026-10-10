@@ -1,3 +1,50 @@
+test('Gemini FAQ distinguishes service questions from repair procedures', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+  process.env.PREVIEW_GEMINI_FAQ_MODEL = 'gemini-test-model';
+
+  const originalFetch = global.fetch;
+  let calls = 0;
+  global.fetch = async () => {
+    calls += 1;
+    return response(200, {
+      output_text: JSON.stringify({
+        answer: 'EDM28 propose des prestations de freinage après contrôle et devis.',
+        grounded: true,
+        needs_vehicle_check: false,
+        category: 'business_rule',
+        fact_ids: ['braking_scope']
+      })
+    });
+  };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?risk-intent=${Date.now()}`);
+    const cases = [
+      ['Comment se déroule le remplacement des freins chez EDM28 ?', 'gemini_grounded'],
+      ['Comment changer les plaquettes chez votre garage ?', 'gemini_grounded'],
+      ['Comment changer mes plaquettes moi-même ?', 'verified_local'],
+      ['Comment démonter les plaquettes de frein étape par étape ?', 'server_guard']
+    ];
+    for (let index = 0; index < cases.length; index += 1) {
+      const [question, expectedSource] = cases[index];
+      const res = createRes();
+      await handler({
+        method: 'POST',
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': `203.0.118.${index + 1}` },
+        body: { question }
+      }, res);
+      assert.equal(res.statusCode, 200, question);
+      assert.equal(res.payload.source, expectedSource, question);
+    }
+    assert.equal(calls, 2);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+    delete process.env.PREVIEW_GEMINI_FAQ_MODEL;
+  }
+});
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
