@@ -540,3 +540,76 @@ test('Gemini FAQ retries when the first successful HTTP response contains malfor
     delete process.env.GEMINI_FAQ_RETRY_BASE_MS;
   }
 });
+
+
+test('Gemini FAQ answers contact questions locally without calling Gemini', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+
+  const originalFetch = global.fetch;
+  let called = false;
+  global.fetch = async () => { called = true; throw new Error('Gemini should not be called'); };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?contact-local=${Date.now()}`);
+    for (const question of [
+      'Comment contacter EDM28 ?',
+      'Je peux vous joindre comment ?',
+      'Quel est votre mail ?'
+    ]) {
+      const req = {
+        method: 'POST',
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.113.50' },
+        body: { question }
+      };
+      const res = createRes();
+      await handler(req, res);
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.payload.success, true);
+      assert.equal(res.payload.source, 'verified_local');
+      assert.equal(res.payload.model, null);
+      assert.match(res.payload.answer, /contact@edm28\.fr/);
+      assert.match(res.payload.answer, /edm28\.fr\/contact/);
+    }
+    assert.equal(called, false);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+  }
+});
+
+test('Gemini FAQ answers common business questions locally', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+
+  const originalFetch = global.fetch;
+  global.fetch = async () => { throw new Error('Gemini should not be called'); };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?business-local=${Date.now()}`);
+    const cases = [
+      ['Quels sont vos tarifs ?', /edm28\.fr\/tarifs/],
+      ['Comment prendre rendez-vous ?', /edm28\.fr\/demande/],
+      ['Qui achète les pièces ?', /client achète les pièces directement/i],
+      ['Comment fonctionne EDM28 ?', /étude de votre demande/i]
+    ];
+
+    for (let index = 0; index < cases.length; index += 1) {
+      const [question, pattern] = cases[index];
+      const req = {
+        method: 'POST',
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': `203.0.113.${60 + index}` },
+        body: { question }
+      };
+      const res = createRes();
+      await handler(req, res);
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.payload.source, 'verified_local');
+      assert.match(res.payload.answer, pattern);
+    }
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+  }
+});
