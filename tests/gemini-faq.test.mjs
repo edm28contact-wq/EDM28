@@ -580,3 +580,94 @@ test('Gemini FAQ answers contact questions locally without calling Gemini', asyn
 });
 
 
+
+
+test('EDM28 FAQ knowledge base is complete, unique and reusable', async () => {
+  const { FAQ_KNOWLEDGE, FAQ_IDS } = await import('../faq-knowledge.js');
+  assert.ok(FAQ_KNOWLEDGE.length >= 60);
+  assert.equal(new Set(FAQ_IDS).size, FAQ_IDS.length);
+  for (const entry of FAQ_KNOWLEDGE) {
+    assert.ok(entry.id);
+    assert.ok(entry.category);
+    assert.ok(entry.question.endsWith('?'));
+    assert.ok(entry.answer.length >= 20);
+    assert.ok(Array.isArray(entry.aliases) && entry.aliases.length >= 2);
+    assert.ok(Array.isArray(entry.keywords) && entry.keywords.length >= 2);
+  }
+});
+
+test('FAQ exact canonical questions are answered locally without Gemini', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+
+  const { FAQ_KNOWLEDGE } = await import('../faq-knowledge.js');
+  const sampleIds = [
+    'identity','address','contact','appointment','pricing_model',
+    'parts_purchase','client_wrong_parts_15','edm_recommendation_error',
+    'brake_pads','brake_fluid','running_gear_scope','documents',
+    'symptom_not_diagnosis','unknown_info'
+  ];
+  const entries = FAQ_KNOWLEDGE.filter((entry) => sampleIds.includes(entry.id));
+
+  const originalFetch = global.fetch;
+  let called = false;
+  global.fetch = async () => { called = true; throw new Error('Gemini should not be called'); };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?kb-local=${Date.now()}`);
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index];
+      const req = {
+        method: 'POST',
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': `203.0.113.${100 + index}` },
+        body: { question: entry.question }
+      };
+      const res = createRes();
+      await handler(req, res);
+      assert.equal(res.statusCode, 200, entry.id);
+      assert.equal(res.payload.source, 'verified_local', entry.id);
+      assert.equal(res.payload.knowledgeId, entry.id, entry.id);
+      assert.equal(res.payload.answer, entry.answer, entry.id);
+    }
+    assert.equal(called, false);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+  }
+});
+
+test('FAQ aliases are learned from the canonical knowledge base', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  process.env.PREVIEW_GEMINI_API_KEY = 'preview-gemini-secret';
+
+  const originalFetch = global.fetch;
+  global.fetch = async () => { throw new Error('Gemini should not be called for exact aliases'); };
+
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?kb-alias=${Date.now()}`);
+    const cases = [
+      ['Je peux vous appeler ?', 'phone'],
+      ['Vous êtes ouvert quand ?', 'opening_hours'],
+      ['Vous prenez sans rendez-vous ?', 'appointment'],
+      ['Il y a encore la règle des 60 % ?', 'legacy_wrong_parts_fees'],
+      ['Vous faites les rotules de direction ?', 'direction_links'],
+      ['Gemini peut-il trouver ma panne ?', 'symptom_not_diagnosis']
+    ];
+    for (let index = 0; index < cases.length; index += 1) {
+      const [question, id] = cases[index];
+      const req = {
+        method: 'POST',
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': `203.0.114.${10 + index}` },
+        body: { question }
+      };
+      const res = createRes();
+      await handler(req, res);
+      assert.equal(res.statusCode, 200, question);
+      assert.equal(res.payload.source, 'verified_local', question);
+      assert.equal(res.payload.knowledgeId, id, question);
+    }
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.PREVIEW_GEMINI_API_KEY;
+  }
+});
