@@ -1130,3 +1130,22 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 .faq-ai-status.faq-ai-error{color:#9b2c20}
 .faq-ai-answer{margin-top:14px;padding:18px;border-radius:14px;background:#f4f7f9;border-left:4px solid var(--accent);white-space:pre-wrap;line-height:1.65;color:#26313e}
 @media(max-width:680px){.faq-ai-row{grid-template-columns:1fr}.faq-ai-row .cta{width:100%}}
+
+/* Conversation FAQ EDM28 */
+.faq-ai-messages{height:clamp(300px,48vh,470px);overflow-y:auto;overscroll-behavior:contain;border:1px solid #e1dbd4;border-radius:18px;background:#f8f8f7;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:20px}
+.faq-chat-message{padding:13px 17px;border-radius:17px;max-width:min(86%,620px);overflow-wrap:anywhere;box-shadow:0 2px 7px rgba(18,24,38,.04)}
+.faq-chat-message p{margin:4px 0 0;white-space:pre-wrap;line-height:1.55}
+.faq-chat-label{display:block;font-size:.76rem;font-weight:800;letter-spacing:.02em}
+.faq-chat-assistant{align-self:flex-start;background:#fff;border:1px solid #e3ddd7;border-bottom-left-radius:5px;color:#202938}
+.faq-chat-assistant .faq-chat-label{color:#99572d}
+.faq-chat-user{align-self:flex-end;background:#17283e;color:#fff;border-bottom-right-radius:5px}
+.faq-chat-user .faq-chat-label{color:#f6c9a6}
+.faq-ai-choices{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.faq-ai-choices[hidden]{display:none}
+.faq-ai-choice{background:white;border:1px solid #c47f4e;border-radius:999px;color:#683c1e;padding:11px 16px;min-height:44px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s}
+.faq-ai-choice:hover,.faq-ai-choice:focus-visible{background:#fff2e8;border-color:#99572d}
+.faq-ai-choice:focus-visible,.faq-ai-reset:focus-visible{outline:3px solid #e5a675;outline-offset:2px}
+.faq-ai-choice:disabled{opacity:.5;cursor:not-allowed}
+.faq-ai-reset{display:block;margin:8px 0 0 auto;padding:9px 4px;color:#576273;background:transparent;border:0;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.faq-ai-form{margin-top:16px}
+@media(max-width:680px){.faq-ai-messages{height:380px;padding:12px}.faq-chat-message{max-width:92%;padding:12px}.faq-ai-choice{flex-grow:1;text-align:center}.faq-ai-row{grid-template-columns:minmax(0,1fr) auto}.faq-ai-row .cta{min-width:92px;width:auto}}

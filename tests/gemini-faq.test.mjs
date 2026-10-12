@@ -1,3 +1,34 @@
+test('public FAQ renders an accessible chat and contextual buttons', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const seo = await readFile(new URL('../public-seo.js', import.meta.url), 'utf8');
+  const client = await readFile(new URL('../public-faq-ai.js', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../public-site.css', import.meta.url), 'utf8');
+  for (const id of ['edmFaqAiMessages', 'edmFaqAiChoices', 'edmFaqAiReset', 'edmFaqAiForm']) {
+    assert.match(seo, new RegExp(id));
+  }
+  assert.match(seo, /role="log"/);
+  assert.match(client, /side: \[\['Avant \(AV\)'/);
+  assert.match(client, /\['Arrière \(AR\)'/);
+  assert.match(client, /\['Les deux \(AV \+ AR\)'/);
+  assert.match(client, /vehicle: \[\['Citadine'/);
+  assert.match(client, /previousQuestion: context/);
+  assert.match(client, /controller\?\.abort\(\)/);
+  assert.match(client, /body\.textContent = String\(text\)/);
+  assert.doesNotMatch(client, /innerHTML/);
+  assert.match(css, /\.faq-chat-user/);
+  assert.match(css, /\.faq-ai-choice/);
+});
+
+test('FAQ price questions return typed quick-reply choices', async () => {
+  const { answerPricingQuestion } = await import('../faq-pricing.js');
+  assert.equal(answerPricingQuestion('prix plaquettes').followUp, 'side');
+  assert.equal(answerPricingQuestion('prix plaquettes avant').followUp, 'vehicle');
+  assert.equal(answerPricingQuestion('prix freinage').followUp, 'service_brakes');
+  assert.equal(answerPricingQuestion('prix biellettes').followUp, 'service_links');
+  assert.equal(answerPricingQuestion('citadine', 'prix plaquettes avant').followUp, null);
+  assert.match(answerPricingQuestion('citadine', 'prix plaquettes avant').answer, /89 à 109 €/);
+});
+
 test('FAQ prices all published services, asks for missing vehicle type and supports follow-ups', async () => {
   process.env.VERCEL_ENV = 'preview';
   delete process.env.PREVIEW_GEMINI_API_KEY;
@@ -196,7 +227,7 @@ test('public FAQ page loads the Gemini client only on Conseils & FAQ', async () 
   assert.match(source, /public-faq-ai\.js/);
   assert.match(source, /page\.path === '\/transparence'/);
   assert.match(client, /fetch\('\/api\/faq-ai'/);
-  assert.match(client, /textContent = data\.answer/);
+  assert.match(client, /addMessage\(data\.answer, false\)/);
   assert.doesNotMatch(client, /GEMINI_API_KEY|x-goog-api-key|generativelanguage\.googleapis\.com/);
 });
 

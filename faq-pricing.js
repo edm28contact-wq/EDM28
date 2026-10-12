@@ -130,10 +130,10 @@ export function answerPricingQuestion(question, previousQuestion = '') {
     return response('Le catalogue EDM28 publie des forfaits disques + plaquettes, mais pas un tarif distinct garanti pour les disques seuls. Souhaitez-vous le tarif du remplacement disques et plaquettes ? Sinon, demandez un devis sur https://edm28.fr/demande.', null);
   }
   if (serviceFamily === 'ambiguous_brakes') {
-    return response('Pour établir un tarif de freinage, parlez-vous des plaquettes seules ou des disques et plaquettes ? Précisez aussi avant, arrière ou les deux.', null, 'service');
+    return response('Pour établir un tarif de freinage, parlez-vous des plaquettes seules ou des disques et plaquettes ? Précisez aussi avant, arrière ou les deux.', null, 'service_brakes');
   }
   if (serviceFamily === 'ambiguous_link') {
-    return response('Parlez-vous des biellettes/rotules de direction ou des biellettes de barre stabilisatrice ?', null, 'service');
+    return response('Parlez-vous des biellettes/rotules de direction ou des biellettes de barre stabilisatrice ?', null, 'service_links');
   }
 
   let side = serviceFamily === 'pads' || serviceFamily === 'disc_pads' ? brakeSide(q) : 'none';
