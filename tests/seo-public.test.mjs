@@ -100,6 +100,14 @@ test('EDM28 annonce le nettoyage anticorrosion, le contrôle dès 100 euros et f
   assert.match(blankOrder, /window\.EDMPdfLite = \{ build, buildDocument, buildAdvantagesOrder \}/);
 });
 
+test('inscription répétée et renvoi ne promettent pas un email livré', async () => {
+  const client = await read('public-client.js');
+  assert.match(client, /Demande d’inscription enregistrée/);
+  assert.match(client, /Demande de renvoi enregistrée/);
+  assert.match(client, /Mot de passe oublié/);
+  assert.doesNotMatch(client, /Un email de confirmation vient d’être envoyé/);
+});
+
 test('la création de compte impose la confirmation email', async () => {
   const client = await read('public-client.js');
   assert.match(client, /emailRedirectTo: confirmationRedirect\(\)/);

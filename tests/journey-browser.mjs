@@ -55,12 +55,12 @@ try{
   await page.screenshot({path:`${out}/guest-request-${width}.png`,fullPage:true});
   await page.locator('#requestSignupAuthEmail').fill('client@example.test');await page.locator('#requestSignupAuthPassword').fill('fixture-password');
   await page.locator('[data-auth-signup="requestSignup"]').click();
-  await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Compte cr\u00e9\u00e9'));
+  await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Demande d\u2019inscription enregistr\u00e9e'));
   assert.equal(await page.locator('#requestSubmit').isDisabled(),true);assert.equal(await page.locator('#requestAccountStep').isVisible(),true);
   assert.deepEqual(await page.evaluate(()=>__journey.calls),['auth:signup']);
   assert.equal(await page.evaluate(()=>__journey.signup.options.emailRedirectTo),origin+'/');
   await page.evaluate(()=>__journey.emit());
-  await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Compte cr\u00e9\u00e9'));
+  await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Demande d\u2019inscription enregistr\u00e9e'));
   assert.equal(await page.locator('#requestSignupAuthEmail').inputValue(),'client@example.test');
   await page.locator('.hero [data-request-cta]').click();await page.locator('#requestAuthEmail').waitFor({state:'visible'});
   await page.locator('#requestAuthEmail').fill('client@example.test');await page.locator('#requestAuthPassword').fill('fixture-password');

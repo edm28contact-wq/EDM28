@@ -147,7 +147,7 @@
     });
     if (error) throw error;
     rememberPendingConfirmation(email);
-    message(`${context}AuthStatus`, 'Email de confirmation renvoyé. Vérifiez votre boîte de réception et vos courriers indésirables.', 'okbox');
+    message(`${context}AuthStatus`, 'Demande de renvoi enregistrée. Si votre compte attend une confirmation, un email vous sera adressé. Vérifiez aussi les indésirables ; si votre compte est déjà actif, connectez-vous.', 'okbox');
   }
 
   async function sendReset(context) {
@@ -195,7 +195,7 @@
         } else {
           rememberPendingConfirmation(email);
           document.querySelector(`[data-auth-resend="${context}"]`)?.removeAttribute('hidden');
-          message(`${context}AuthStatus`, 'Compte créé. Un email de confirmation vient d’être envoyé. Cliquez sur le lien reçu pour valider votre adresse avant de vous connecter. Pensez à vérifier les courriers indésirables.', 'okbox');
+          message(`${context}AuthStatus`, 'Demande d’inscription enregistrée. Si cette adresse attend une confirmation, vérifiez votre boîte mail et les indésirables. Si vous avez déjà un compte, utilisez « Me connecter » ou « Mot de passe oublié ». Sinon, vous pouvez demander un renvoi de confirmation.', 'okbox');
         }
       } catch (error) {
         message(`${context}AuthStatus`, error.message || 'Création du compte impossible.', 'errorbox');
