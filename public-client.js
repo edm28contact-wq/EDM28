@@ -300,6 +300,7 @@
 
       <section class="client-panel" id="requestSubmitStep" hidden>
         <h2>Vérifier et envoyer ma demande</h2>
+        <div class="signed-box"><div><strong>Connecté</strong><p id="requestSignedEmail"></p></div><button class="secondary-action" type="button" id="requestSignOut">Me déconnecter</button></div>
         <p>Vos coordonnées (facultatif)</p>
         <div class="form-grid three">
           <label>Prénom<input id="requestFirstName" autocomplete="given-name"></label>
@@ -477,6 +478,7 @@
         return;
       }
       signupArea.replaceChildren();
+      byId('requestSignedEmail').textContent = session.user.email || '';
       const [profileResult,vehicleResult] = await Promise.all([
         client.from('profiles').select('first_name,last_name,phone').eq('id',uid).maybeSingle(),
         client.from('vehicles').select('id,plate,brand,model,year,energy,mileage').eq('user_id',uid).order('plate')
@@ -623,6 +625,7 @@
       }
     });
 
+    byId('requestSignOut')?.addEventListener('click', async () => { await signOut(); await renderAccount(); });
     byId('requestSubmit')?.addEventListener('click',submit);
     await renderAccount();
     client.auth.onAuthStateChange(()=>window.setTimeout(renderAccount,0));
