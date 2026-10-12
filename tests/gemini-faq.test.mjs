@@ -1,3 +1,34 @@
+test('FAQ returns published front brake pad service price and clearly labeled estimates', async () => {
+  process.env.VERCEL_ENV = 'preview';
+  delete process.env.PREVIEW_GEMINI_API_KEY;
+  const originalFetch = global.fetch;
+  let called = false;
+  global.fetch = async () => { called = true; throw new Error('Gemini should not be called'); };
+  try {
+    const { default: handler } = await import(`../api/faq-ai.js?front-pads-price=${Date.now()}`);
+    for (const question of [
+      'quel tarif pour chager me plaquette av',
+      'Combien coûte le changement des plaquettes avant ?'
+    ]) {
+      const res = createRes();
+      await handler({
+        method: 'POST',
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.119.20' },
+        body: { question }
+      }, res);
+      assert.equal(res.statusCode, 200, question);
+      assert.equal(res.payload.source, 'verified_local', question);
+      assert.match(res.payload.answer, /69 €/);
+      assert.match(res.payload.answer, /99 à 119 €/);
+      assert.match(res.payload.answer, /indicatif/i);
+      assert.match(res.payload.answer, /hors pièces/i);
+    }
+    assert.equal(called, false);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
