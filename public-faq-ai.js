@@ -41,7 +41,7 @@
         const message = data?.error || 'Réponse indisponible.';
         throw new Error(code ? `${message} (${code})` : message);
       }
-      pendingPricingQuestion = data.followUp ? (pendingPricingQuestion || value) : '';
+      pendingPricingQuestion = data.followUp ? [pendingPricingQuestion, value].filter(Boolean).join(' ').slice(0, 500) : '';
       answer.textContent = data.answer;
       answer.hidden = false;
       setStatus('');
