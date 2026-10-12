@@ -1,6 +1,6 @@
 {
   "title": "Base de connaissances FAQ EDM28",
-  "version": "2026-10-10",
+  "version": "2026-10-12",
   "source": "Règles et contenus publics validés du projet EDM28",
   "entries": [
     {
@@ -1119,6 +1119,237 @@
         "information"
       ],
       "answer": "Il doit dire qu’il ne dispose pas d’une information fiable plutôt que d’inventer, puis orienter vers https://edm28.fr/demande ou contact@edm28.fr."
+    },
+    {
+      "id": "pricing_fr_plaq_av",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour plaquettes de frein avant ?",
+      "aliases": [
+        "Prix plaq av ?",
+        "Tarif plaq av ?",
+        "Combien coûte plaquettes de frein avant ?",
+        "Quel budget pour plaquettes de frein avant ?",
+        "Devis plaq av ?",
+        "Combien pour plaq av ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "plaq av",
+        "plaquettes de frein avant"
+      ],
+      "answer": "Forfait EDM28 pour plaquettes de frein avant : 69 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 20 à 40 €, compacte/berline 30 à 60 €, SUV/grand véhicule 55 à 85 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_fr_plaq_ar",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour plaquettes de frein arrière ?",
+      "aliases": [
+        "Prix plaq ar ?",
+        "Tarif plaq ar ?",
+        "Combien coûte plaquettes de frein arrière ?",
+        "Quel budget pour plaquettes de frein arrière ?",
+        "Devis plaq ar ?",
+        "Combien pour plaq ar ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "plaq ar",
+        "plaquettes de frein arrière"
+      ],
+      "answer": "Forfait EDM28 pour plaquettes de frein arrière : 69 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 20 à 40 €, compacte/berline 30 à 60 €, SUV/grand véhicule 55 à 85 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_fr_plaq_av_ar",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour plaquettes de frein avant et arrière ?",
+      "aliases": [
+        "Prix plaq av ar ?",
+        "Tarif plaq av ar ?",
+        "Combien coûte plaquettes de frein avant et arrière ?",
+        "Quel budget pour plaquettes de frein avant et arrière ?",
+        "Devis plaq av ar ?",
+        "Combien pour plaq av ar ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "plaq av ar",
+        "plaquettes de frein avant et arrière"
+      ],
+      "answer": "Forfait EDM28 pour plaquettes de frein avant et arrière : 130 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 40 à 80 €, compacte/berline 60 à 120 €, SUV/grand véhicule 110 à 170 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_fr_disc_plaq_av",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour disques et plaquettes de frein avant ?",
+      "aliases": [
+        "Prix disq plaq av ?",
+        "Tarif disq plaq av ?",
+        "Combien coûte disques et plaquettes de frein avant ?",
+        "Quel budget pour disques et plaquettes de frein avant ?",
+        "Devis disq plaq av ?",
+        "Combien pour disq plaq av ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "disq plaq av",
+        "disques et plaquettes de frein avant"
+      ],
+      "answer": "Forfait EDM28 pour disques et plaquettes de frein avant : 99 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 95 à 135 €, compacte/berline 120 à 170 €, SUV/grand véhicule 170 à 240 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_fr_disc_plaq_ar",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour disques et plaquettes de frein arrière ?",
+      "aliases": [
+        "Prix disq plaq ar ?",
+        "Tarif disq plaq ar ?",
+        "Combien coûte disques et plaquettes de frein arrière ?",
+        "Quel budget pour disques et plaquettes de frein arrière ?",
+        "Devis disq plaq ar ?",
+        "Combien pour disq plaq ar ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "disq plaq ar",
+        "disques et plaquettes de frein arrière"
+      ],
+      "answer": "Forfait EDM28 pour disques et plaquettes de frein arrière : 99 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 90 à 130 €, compacte/berline 115 à 160 €, SUV/grand véhicule 160 à 230 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_fr_disc_plaq_av_ar",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour disques et plaquettes de frein avant et arrière ?",
+      "aliases": [
+        "Prix disq plaq av ar ?",
+        "Tarif disq plaq av ar ?",
+        "Combien coûte disques et plaquettes de frein avant et arrière ?",
+        "Quel budget pour disques et plaquettes de frein avant et arrière ?",
+        "Devis disq plaq av ar ?",
+        "Combien pour disq plaq av ar ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "disq plaq av ar",
+        "disques et plaquettes de frein avant et arrière"
+      ],
+      "answer": "Forfait EDM28 pour disques et plaquettes de frein avant et arrière : 189 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 190 à 260 €, compacte/berline 240 à 330 €, SUV/grand véhicule 340 à 470 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_fr_purge",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour purge et remplacement du liquide de frein à la machine ?",
+      "aliases": [
+        "Prix purge frein ?",
+        "Tarif purge frein ?",
+        "Combien coûte purge et remplacement du liquide de frein à la machine ?",
+        "Quel budget pour purge et remplacement du liquide de frein à la machine ?",
+        "Devis purge frein ?",
+        "Combien pour purge frein ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "purge frein",
+        "purge et remplacement du liquide de frein à la machine"
+      ],
+      "answer": "Forfait EDM28 pour purge et remplacement du liquide de frein à la machine : 55 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 10 à 20 €, compacte/berline 15 à 25 €, SUV/grand véhicule 20 à 35 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_sus_triangles",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour triangles de suspension (paire) ?",
+      "aliases": [
+        "Prix triangles train av ?",
+        "Tarif triangles train av ?",
+        "Combien coûte triangles de suspension (paire) ?",
+        "Quel budget pour triangles de suspension (paire) ?",
+        "Devis triangles train av ?",
+        "Combien pour triangles train av ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "triangles train av",
+        "triangles de suspension (paire)"
+      ],
+      "answer": "Forfait EDM28 pour triangles de suspension (paire) : 120 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 80 à 130 €, compacte/berline 120 à 190 €, SUV/grand véhicule 180 à 280 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_dir_biellettes_rotules",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour biellettes ou rotules de direction (paire) ?",
+      "aliases": [
+        "Prix rotules direction ?",
+        "Tarif rotules direction ?",
+        "Combien coûte biellettes ou rotules de direction (paire) ?",
+        "Quel budget pour biellettes ou rotules de direction (paire) ?",
+        "Devis rotules direction ?",
+        "Combien pour rotules direction ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "rotules direction",
+        "biellettes ou rotules de direction (paire)"
+      ],
+      "answer": "Forfait EDM28 pour biellettes ou rotules de direction (paire) : 70 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 35 à 70 €, compacte/berline 55 à 95 €, SUV/grand véhicule 85 à 140 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
+    },
+    {
+      "id": "pricing_stab_biellettes",
+      "category": "Devis & tarifs",
+      "question": "Quel est le tarif EDM28 pour biellettes de barre stabilisatrice (paire) ?",
+      "aliases": [
+        "Prix biellettes barre stab ?",
+        "Tarif biellettes barre stab ?",
+        "Combien coûte biellettes de barre stabilisatrice (paire) ?",
+        "Quel budget pour biellettes de barre stabilisatrice (paire) ?",
+        "Devis biellettes barre stab ?",
+        "Combien pour biellettes barre stab ?"
+      ],
+      "keywords": [
+        "tarif",
+        "prix",
+        "devis",
+        "combien",
+        "forfait",
+        "biellettes barre stab",
+        "biellettes de barre stabilisatrice (paire)"
+      ],
+      "answer": "Forfait EDM28 pour biellettes de barre stabilisatrice (paire) : 50 €, hors pièces. Pour l’estimation interne de l’assistant uniquement : citadine 25 à 45 €, compacte/berline 35 à 60 €, SUV/grand véhicule 55 à 90 €. Demander d’abord le type de véhicule pour le total. Les tarifs de pièces ne sont ni publiés ni garantis. Les références et prix effectifs sont à confirmer dans le devis et le panier fournisseur."
     }
-  ]
+  ],
+  "pricingPolicy": "Estimations de pièces réservées aux réponses de l'assistant, hors catalogue public et sans garantie ; forfaits de prestation extraits des 10 prestations publiées."
 }
