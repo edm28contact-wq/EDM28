@@ -258,7 +258,6 @@
     if (!host) return;
 
     host.innerHTML = `
-      <section class="client-panel" id="connexion" hidden><div id="requestAccountArea"></div></section>
       <section class="client-panel">
         <div class="section-kicker">1 · Véhicule</div>
         <h2>Votre véhicule</h2>
@@ -299,7 +298,7 @@
 
       <section class="client-panel" id="requestAccountStep"><div id="requestSignupArea"></div></section>
 
-      <section class="client-panel">
+      <section class="client-panel" id="requestSubmitStep" hidden>
         <h2>Vérifier et envoyer ma demande</h2>
         <p>Vos coordonnées (facultatif)</p>
         <div class="form-grid three">
@@ -312,7 +311,6 @@
         <div class="action-row">
           <button id="requestSubmit" class="primary-action" type="button" disabled>Envoyer ma demande</button>
         </div>
-        <p id="requestAccountHint">Créez votre compte ci-dessus ou utilisez « Me connecter » pour envoyer votre demande.</p>
         <div id="requestSubmitStatus" class="inline-status"></div>
       </section>`;
 
@@ -402,11 +400,37 @@
     let savedVehicles = [];
     let currentRequestUser = null;
     let accountGeneration = 0;
+    function renderRequestAuth(mode = 'signup') {
+      const host = byId('requestSignupArea');
+      const priorEmail = host.querySelector('input[type="email"]')?.value || '';
+      host.innerHTML = authBlock('requestSignup', mode);
+      const email = byId('requestSignupAuthEmail');
+      if (email) email.value = priorEmail;
+      bindAuth('requestSignup', async () => {
+        await renderAccount();
+        const params = new URLSearchParams(location.search);
+        if (params.get('retour') === 'interventions') {
+          const target = new URL('/mes-interventions', location.origin);
+          const quote = params.get('devis');
+          if (/^[0-9a-f-]{36}$/i.test(quote || '')) target.searchParams.set('devis', quote);
+          location.replace(target.href);
+        }
+      });
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'text-action';
+      toggle.textContent = mode === 'signup' ? 'J’ai déjà un compte : me connecter' : 'Créer mon compte';
+      toggle.addEventListener('click', () => renderRequestAuth(mode === 'signup' ? 'signin' : 'signup'));
+      const original = host.querySelector('a[href="#connexion"]');
+      if (original) original.replaceWith(toggle);
+      else host.querySelector('.action-row')?.appendChild(toggle);
+      host.dataset.authMode = mode;
+    }
     function openLogin() {
       if (currentRequestUser) return;
-      byId('connexion').hidden = false;
-      byId('connexion').scrollIntoView({behavior:'smooth'});
-      byId('requestAuthEmail')?.focus({preventScroll:true});
+      if (byId('requestSignupArea')?.dataset.authMode !== 'signin') renderRequestAuth('signin');
+      byId('requestAccountStep').scrollIntoView({behavior:'smooth'});
+      byId('requestSignupAuthEmail')?.focus({preventScroll:true});
     }
     document.addEventListener('click', event => {
       if (event.target.closest('a[href="#connexion"]')) {
@@ -434,7 +458,6 @@
     });
     async function renderAccount() {
       const generation = ++accountGeneration;
-      const area = byId('requestAccountArea');
       const session = await getSession();
       if (generation !== accountGeneration) return;
       const uid = session?.user?.id || null;
@@ -446,33 +469,14 @@
       byId('requestSubmit').disabled = !uid || byId('requestSubmit').dataset.sent === 'true';
       byId('requestVehiclePicker').hidden = !uid;
       byId('requestAccountStep').hidden = Boolean(uid);
-      byId('requestAccountHint').hidden = Boolean(uid);
+      byId('requestSubmitStep').hidden = !uid;
       const signupArea = byId('requestSignupArea');
       if (!uid) {
-        if (!signupArea.hasChildNodes()) {
-          signupArea.innerHTML = authBlock('requestSignup', 'signup');
-          bindAuth('requestSignup', renderAccount);
-        }
-        if (area.querySelector('[data-auth-signin="request"]')) return;
-        byId('connexion').hidden = location.hash !== '#connexion';
-        area.innerHTML = authBlock('request');
-        bindAuth('request', async()=>{
-          await renderAccount();
-          const params = new URLSearchParams(location.search);
-          if (params.get('retour') === 'interventions') {
-            const target = new URL('/mes-interventions',location.origin);
-            const quote = params.get('devis');
-            if (/^[0-9a-f-]{36}$/i.test(quote || '')) target.searchParams.set('devis',quote);
-            location.replace(target.href);
-          }
-        });
-        if (location.hash === '#connexion') openLogin();
+        if (!signupArea.hasChildNodes()) renderRequestAuth(location.hash === '#connexion' ? 'signin' : 'signup');
+        else if (location.hash === '#connexion' && signupArea.dataset.authMode !== 'signin') openLogin();
         return;
       }
       signupArea.replaceChildren();
-      byId('connexion').hidden = false;
-      area.innerHTML = `<div class="signed-box"><div><strong>Connect\u00e9</strong><p>${esc(session.user.email || '')}</p></div><button class="secondary-action" type="button" id="requestSignOut">Me d\u00e9connecter</button></div>`;
-      byId('requestSignOut').addEventListener('click', async()=>{await signOut();await renderAccount();});
       const [profileResult,vehicleResult] = await Promise.all([
         client.from('profiles').select('first_name,last_name,phone').eq('id',uid).maybeSingle(),
         client.from('vehicles').select('id,plate,brand,model,year,energy,mileage').eq('user_id',uid).order('plate')
