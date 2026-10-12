@@ -19,7 +19,10 @@ test('FAQ returns published front brake pad service price and clearly labeled es
       assert.equal(res.statusCode, 200, question);
       assert.equal(res.payload.source, 'verified_local', question);
       assert.match(res.payload.answer, /69 €/);
-      assert.match(res.payload.answer, /99 à 119 €/);
+      assert.match(res.payload.answer, /89 à 109 €/);
+      assert.match(res.payload.answer, /20 à 40 €/);
+      assert.match(res.payload.answer, /99 à 129 €/);
+      assert.match(res.payload.answer, /124 à 154 €/);
       assert.match(res.payload.answer, /indicatif/i);
       assert.match(res.payload.answer, /hors pièces/i);
     }
