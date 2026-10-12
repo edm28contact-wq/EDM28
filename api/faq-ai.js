@@ -211,6 +211,20 @@ function rankedKnowledge(question, limit = 8) {
     .slice(0, limit);
 }
 
+function frontPadsPriceAnswer(question) {
+  const q = normalizeQuestion(question);
+  const priceIntent = /\b(prix|tarif|coute|cout|combien|devis|budget)\b/.test(q);
+  const frontPads = /\b(plaquette|plaquettes|plaq|plaquetes)\b/.test(q)
+    && /\b(av|avant|devant)\b/.test(q);
+  if (!priceIntent || !frontPads) return null;
+
+  return {
+    answer: 'Pour le remplacement des plaquettes de frein avant, le tarif de prestation EDM28 affiché sur le site est de 69 €, hors pièces. À titre purement indicatif, les plaquettes peuvent représenter environ 20 à 40 € pour une citadine, 30 à 60 € pour une compacte ou berline, et 55 à 85 € pour un SUV ou grand véhicule. Le budget total indicatif serait donc respectivement de 89 à 109 €, 99 à 129 € ou 124 à 154 €, prestation comprise. Ces montants de pièces sont uniquement des estimations communiquées par l’assistant : EDM28 ne publie pas de tarif de pièces sur le site et ils ne constituent pas un devis. Le gabarit seul ne détermine pas le prix : les références compatibles, la gamme et le fournisseur peuvent modifier le montant. Le client achète directement les pièces ; EDM28 transmet les références préconisées ou un panier avec le devis après étude de la demande sur https://edm28.fr/demande.',
+    factIds: ['pricing_model', 'parts_purchase', 'supplier_basket', 'tariffs_page'],
+    knowledgeId: 'front_pads_price'
+  };
+}
+
 function knownAnswer(question) {
   const candidates = FAQ_KNOWLEDGE
     .map((entry) => ({ entry, score: directMatchScore(question, entry) }))
@@ -427,7 +441,7 @@ export default async function handler(req, res) {
   const question = parseQuestion(req);
   if (question.length < 3) return sendJson(res, 400, { success: false, error: 'Écrivez une question plus précise.' });
 
-  const local = knownAnswer(question);
+  const local = frontPadsPriceAnswer(question) || knownAnswer(question);
   if (local) {
     return sendJson(res, 200, {
       success: true,
