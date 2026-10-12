@@ -607,6 +607,10 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
         <div class="section-kicker">Assistant Gemini</div>
         <h2 id="faq-ai-title">Posez votre question à la FAQ EDM28</h2>
         <p>Réponses basées sur le fonctionnement public d’EDM28. Cet assistant ne remplace ni un contrôle du véhicule, ni un devis, ni un diagnostic mécanique.</p>
+        <div id="edmFaqAiMessages" class="faq-ai-messages" role="log" aria-label="Conversation avec l’assistant EDM28" aria-live="polite" aria-relevant="additions text">
+          <div class="faq-chat-message faq-chat-assistant"><span class="faq-chat-label">Assistant EDM28</span><p>Bonjour, quelle est votre question ? Je peux aussi vous renseigner sur les prestations et leurs tarifs indicatifs.</p></div>
+        </div>
+        <div id="edmFaqAiChoices" class="faq-ai-choices" role="group" aria-label="Réponses proposées" hidden></div>
         <form id="edmFaqAiForm" class="faq-ai-form">
           <label for="edmFaqAiQuestion">Votre question</label>
           <div class="faq-ai-row">
@@ -615,7 +619,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
           </div>
           <p id="edmFaqAiStatus" class="faq-ai-status" role="status" aria-live="polite"></p>
         </form>
-        <div id="edmFaqAiAnswer" class="faq-ai-answer" hidden></div>
+        <button id="edmFaqAiReset" class="faq-ai-reset" type="button">Nouvelle conversation</button>
       </section>`
     : '';
   const bodyContent = page.path === '/contact' ? contact : (page.path === '/demande' || page.path === '/mes-interventions')
@@ -641,7 +645,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <meta property="og:image" content="${esc(origin)}/logo-edm.svg">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<link rel="stylesheet" href="/public-site.css?v=8">
+<link rel="stylesheet" href="/public-site.css?v=9">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script>
 </head>
 <body>
@@ -677,7 +681,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 </main>
 <footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}</div></footer>
 ${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
-<script src="/public-site.js?v=2" defer></script>${page.path === '/transparence' && geminiFaqConfigured ? '<script src="/public-faq-ai.js?v=1" defer><\/script>' : ''}</body>
+<script src="/public-site.js?v=2" defer></script>${page.path === '/transparence' && geminiFaqConfigured ? '<script src="/public-faq-ai.js?v=2" defer><\/script>' : ''}</body>
 </html>`;
 }
 
