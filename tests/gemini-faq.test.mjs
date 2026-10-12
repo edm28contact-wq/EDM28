@@ -7,11 +7,12 @@ test('FAQ prices all published services, asks for missing vehicle type and suppo
   try {
     const { default: handler } = await import(`../api/faq-ai.js?pricing-all=${Date.now()}`);
     const { FAQ_PRICE_SERVICES } = await import('../faq-pricing.js');
+    let requestIndex = 0;
     const ask = async (question, previousQuestion = '') => {
       const res = createRes();
       await handler({
         method: 'POST',
-        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.119.20' },
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': `203.0.119.${20 + requestIndex++}` },
         body: { question, previousQuestion }
       }, res);
       assert.equal(res.statusCode, 200, question);
