@@ -78,6 +78,7 @@ function brakeSide(q) {
 function serviceIntent(q) {
   const hasPads = PADS.test(q);
   const hasDiscs = DISCS.test(q);
+  if (hasDiscs && !hasPads) return 'discs_only';
   if (hasDiscs) return 'disc_pads';
   if (hasPads) return 'pads';
 
@@ -125,6 +126,9 @@ export function answerPricingQuestion(question, previousQuestion = '') {
 
   const serviceFamily = serviceIntent(q);
   if (!serviceFamily) return null;
+  if (serviceFamily === 'discs_only') {
+    return response('Le catalogue EDM28 publie des forfaits disques + plaquettes, mais pas un tarif distinct garanti pour les disques seuls. Souhaitez-vous le tarif du remplacement disques et plaquettes ? Sinon, demandez un devis sur https://edm28.fr/demande.', null);
+  }
   if (serviceFamily === 'ambiguous_brakes') {
     return response('Pour établir un tarif de freinage, parlez-vous des plaquettes seules ou des disques et plaquettes ? Précisez aussi avant, arrière ou les deux.', null, 'service');
   }
