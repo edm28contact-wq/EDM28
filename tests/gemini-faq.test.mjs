@@ -1,33 +1,49 @@
-test('FAQ returns published front brake pad service price and clearly labeled estimates', async () => {
+test('FAQ prices all published services, asks for missing vehicle type and supports follow-ups', async () => {
   process.env.VERCEL_ENV = 'preview';
   delete process.env.PREVIEW_GEMINI_API_KEY;
   const originalFetch = global.fetch;
   let called = false;
-  global.fetch = async () => { called = true; throw new Error('Gemini should not be called'); };
+  global.fetch = async () => { called = true; throw new Error('Local pricing should not require Gemini'); };
   try {
-    const { default: handler } = await import(`../api/faq-ai.js?front-pads-price=${Date.now()}`);
-    for (const question of [
-      'quel tarif pour chager me plaquette av',
-      'Combien coûte le changement des plaquettes avant ?'
-    ]) {
+    const { default: handler } = await import(`../api/faq-ai.js?pricing-all=${Date.now()}`);
+    const { FAQ_PRICE_SERVICES } = await import('../faq-pricing.js');
+    let requestIndex = 0;
+    const ask = async (question, previousQuestion = '') => {
       const res = createRes();
       await handler({
         method: 'POST',
-        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': '203.0.119.20' },
-        body: { question }
+        headers: { host: 'edm28.fr', origin: 'https://edm28.fr', 'x-forwarded-for': `203.0.119.${20 + requestIndex++}` },
+        body: { question, previousQuestion }
       }, res);
       assert.equal(res.statusCode, 200, question);
       assert.equal(res.payload.source, 'verified_local', question);
-      assert.match(res.payload.answer, /69 €/);
-      assert.match(res.payload.answer, /89 à 109 €/);
-      assert.match(res.payload.answer, /20 à 40 €/);
-      assert.match(res.payload.answer, /99 à 129 €/);
-      assert.match(res.payload.answer, /124 à 154 €/);
-      assert.match(res.payload.answer, /estimations communiquées par l’assistant/i);
-      assert.match(res.payload.answer, /ne publie pas de tarif de pièces/i);
-      assert.match(res.payload.answer, /indicatif/i);
-      assert.match(res.payload.answer, /hors pièces/i);
+      return res.payload;
+    };
+
+    for (const service of FAQ_PRICE_SERVICES) {
+      const result = await ask('Prix ' + service.shorthand + ' citadine ?');
+      assert.match(result.answer, new RegExp(service.labor + ' €'), service.id);
+      assert.equal(result.followUp, null);
+      assert.match(result.answer, /indicatif/i);
     }
+    const first = await ask('quel tarif pour chager me plaquette av');
+    assert.equal(first.followUp, 'vehicle');
+    assert.match(first.answer, /69 €/);
+    const city = await ask('citadine', 'quel tarif pour chager me plaquette av');
+    assert.match(city.answer, /20 à 40 €/);
+    assert.match(city.answer, /89 à 109 €/);
+    const both = await ask('combien disq plaq av ar pour suv');
+    assert.match(both.answer, /189 €/);
+    const rear = await ask('prix plaq ar compacte');
+    assert.match(rear.answer, /69 €/);
+    assert.match(rear.answer, /30 à 60 €/);
+    const missingSide = await ask('tarif plaquettes');
+    assert.equal(missingSide.followUp, 'side');
+    const followed = await ask('arriere', 'tarif plaquettes');
+    assert.equal(followed.followUp, 'vehicle');
+    const noInvented = await ask('prix disques seuls avant');
+    assert.match(noInvented.answer, /pas un tarif distinct/i);
+    assert.doesNotMatch(noInvented.answer, /99 €/);
     assert.equal(called, false);
   } finally {
     global.fetch = originalFetch;

@@ -1,4 +1,5 @@
-import { FAQ_KNOWLEDGE, FAQ_IDS } from '../faq-knowledge.js';
+import { FAQ_KNOWLEDGE } from '../faq-knowledge.js';
+import { FAQ_PRICING_KNOWLEDGE, answerPricingQuestion } from '../faq-pricing.js';
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 const DEFAULT_MODEL = 'gemini-3.8-flash';
 const FALLBACK_MODELS = Object.freeze(['gemini-3.6-flash', 'gemini-3.5-flash-lite']);
@@ -95,7 +96,8 @@ function extractOutputText(payload) {
   return '';
 }
 
-const FACT_IDS = Object.freeze(FAQ_IDS);
+const KNOWLEDGE = Object.freeze([...FAQ_KNOWLEDGE, ...FAQ_PRICING_KNOWLEDGE]);
+const FACT_IDS = Object.freeze(KNOWLEDGE.map((entry) => entry.id));
 
 function safeFallback(reason = 'unknown') {
   if (reason === 'procedure') {
@@ -204,29 +206,15 @@ function scoreEntry(question, entry) {
 }
 
 function rankedKnowledge(question, limit = 8) {
-  return FAQ_KNOWLEDGE
+  return KNOWLEDGE
     .map((entry) => ({ entry, score: scoreEntry(question, entry) }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }
 
-function frontPadsPriceAnswer(question) {
-  const q = normalizeQuestion(question);
-  const priceIntent = /\b(prix|tarif|coute|cout|combien|devis|budget)\b/.test(q);
-  const frontPads = /\b(plaquette|plaquettes|plaq|plaquetes)\b/.test(q)
-    && /\b(av|avant|devant)\b/.test(q);
-  if (!priceIntent || !frontPads) return null;
-
-  return {
-    answer: 'Pour le remplacement des plaquettes de frein avant, le tarif de prestation EDM28 affiché sur le site est de 69 €, hors pièces. À titre purement indicatif, les plaquettes peuvent représenter environ 20 à 40 € pour une citadine, 30 à 60 € pour une compacte ou berline, et 55 à 85 € pour un SUV ou grand véhicule. Le budget total indicatif serait donc respectivement de 89 à 109 €, 99 à 129 € ou 124 à 154 €, prestation comprise. Ces montants de pièces sont uniquement des estimations communiquées par l’assistant : EDM28 ne publie pas de tarif de pièces sur le site et ils ne constituent pas un devis. Le gabarit seul ne détermine pas le prix : les références compatibles, la gamme et le fournisseur peuvent modifier le montant. Le client achète directement les pièces ; EDM28 transmet les références préconisées ou un panier avec le devis après étude de la demande sur https://edm28.fr/demande.',
-    factIds: ['pricing_model', 'parts_purchase', 'supplier_basket', 'tariffs_page'],
-    knowledgeId: 'front_pads_price'
-  };
-}
-
 function knownAnswer(question) {
-  const candidates = FAQ_KNOWLEDGE
+  const candidates = KNOWLEDGE
     .map((entry) => ({ entry, score: directMatchScore(question, entry) }))
     .filter((item) => item.score >= 80)
     .sort((a, b) => b.score - a.score);
@@ -246,7 +234,7 @@ function knowledgeContext(question) {
   const ranked = rankedKnowledge(question, 10);
   const selected = ranked.length
     ? ranked.map((item) => item.entry)
-    : FAQ_KNOWLEDGE.filter((entry) =>
+    : KNOWLEDGE.filter((entry) =>
         ['identity','contact','public_links','workflow','unknown_info'].includes(entry.id)
       );
   return selected
@@ -441,7 +429,9 @@ export default async function handler(req, res) {
   const question = parseQuestion(req);
   if (question.length < 3) return sendJson(res, 400, { success: false, error: 'Écrivez une question plus précise.' });
 
-  const local = frontPadsPriceAnswer(question) || knownAnswer(question);
+  const body = typeof req.body === 'object' && req.body !== null ? req.body : {};
+  const previousQuestion = clean(body.previousQuestion, 500);
+  const local = answerPricingQuestion(question, previousQuestion) || knownAnswer(question);
   if (local) {
     return sendJson(res, 200, {
       success: true,
@@ -450,7 +440,8 @@ export default async function handler(req, res) {
       verified: true,
       source: 'verified_local',
       factIds: local.factIds,
-      knowledgeId: local.knowledgeId
+      knowledgeId: local.knowledgeId,
+      followUp: local.followUp || null
     });
   }
 

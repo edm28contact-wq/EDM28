@@ -6,6 +6,8 @@
   const answer = document.getElementById('edmFaqAiAnswer');
   if (!form || !question || !button || !status || !answer) return;
 
+  let pendingPricingQuestion = '';
+
   const setStatus = (message, error = false) => {
     status.textContent = message || '';
     status.classList.toggle('faq-ai-error', Boolean(error));
@@ -31,7 +33,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ question: value })
+        body: JSON.stringify({ question: value, previousQuestion: pendingPricingQuestion })
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.answer) {
@@ -39,10 +41,12 @@
         const message = data?.error || 'Réponse indisponible.';
         throw new Error(code ? `${message} (${code})` : message);
       }
+      pendingPricingQuestion = data.followUp ? [pendingPricingQuestion, value].filter(Boolean).join(' ').slice(0, 500) : '';
       answer.textContent = data.answer;
       answer.hidden = false;
       setStatus('');
     } catch (error) {
+      pendingPricingQuestion = '';
       setStatus(error?.message || 'L’assistant est momentanément indisponible.', true);
     } finally {
       button.disabled = false;
