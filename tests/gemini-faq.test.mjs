@@ -227,7 +227,7 @@ test('public FAQ page loads the Gemini client only on Conseils & FAQ', async () 
   assert.match(source, /public-faq-ai\.js/);
   assert.match(source, /page\.path === '\/transparence'/);
   assert.match(client, /fetch\('\/api\/faq-ai'/);
-  assert.match(client, /textContent = data\.answer/);
+  assert.match(client, /addMessage\(data\.answer, false\)/);
   assert.doesNotMatch(client, /GEMINI_API_KEY|x-goog-api-key|generativelanguage\.googleapis\.com/);
 });
 
