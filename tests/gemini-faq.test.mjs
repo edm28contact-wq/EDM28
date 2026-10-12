@@ -23,6 +23,8 @@ test('FAQ returns published front brake pad service price and clearly labeled es
       assert.match(res.payload.answer, /20 à 40 €/);
       assert.match(res.payload.answer, /99 à 129 €/);
       assert.match(res.payload.answer, /124 à 154 €/);
+      assert.match(res.payload.answer, /estimations communiquées par l’assistant/i);
+      assert.match(res.payload.answer, /ne publie pas de tarif de pièces/i);
       assert.match(res.payload.answer, /indicatif/i);
       assert.match(res.payload.answer, /hors pièces/i);
     }
