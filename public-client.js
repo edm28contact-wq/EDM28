@@ -103,11 +103,18 @@
     return data?.session || null;
   }
 
-  async function signUp(email, password) {
+  async function signUp(email, password, profile) {
     const { data, error } = await client.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: confirmationRedirect() }
+      options: {
+        emailRedirectTo: confirmationRedirect(),
+        data: {
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          phone: profile.phone
+        }
+      }
     });
     if (error) throw error;
     return data;
@@ -125,6 +132,11 @@
         <div class="section-kicker">${signup ? '3 · Compte client' : 'Déjà client'}</div>
         <h2>${signup ? 'Créer mon compte' : 'Me connecter'}</h2>
         <p>${signup ? 'Créez votre compte, puis confirmez votre email grâce au lien reçu. Vous pourrez envoyer votre demande et retrouver vos devis, rendez-vous et documents.' : 'Connectez-vous pour retrouver vos véhicules enregistrés. Votre demande en cours est conservée.'}</p>
+        ${signup ? `<div class="form-grid three">
+          <label>Prénom (obligatoire)<input id="${context}AuthFirstName" type="text" autocomplete="given-name" maxlength="80" required></label>
+          <label>Nom (obligatoire)<input id="${context}AuthLastName" type="text" autocomplete="family-name" maxlength="80" required></label>
+          <label>Téléphone (obligatoire)<input id="${context}AuthPhone" type="tel" autocomplete="tel" inputmode="tel" maxlength="25" placeholder="06 12 34 56 78" required></label>
+        </div>` : ''}
         <div class="form-grid two">
           <label>Email<input id="${context}AuthEmail" type="email" autocomplete="email" placeholder="vous@exemple.fr"></label>
           <label>Mot de passe<input id="${context}AuthPassword" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="8" placeholder="8 caractères minimum"></label>
@@ -188,7 +200,21 @@
         const email = byId(`${context}AuthEmail`)?.value.trim().toLowerCase();
         const password = byId(`${context}AuthPassword`)?.value || '';
         if (!email || password.length < 8) throw new Error('Email valide et mot de passe de 8 caractères minimum obligatoires.');
-        const data = await signUp(email,password);
+        const firstName = byId(`${context}AuthFirstName`)?.value.trim() || '';
+        const lastName = byId(`${context}AuthLastName`)?.value.trim() || '';
+        const phone = byId(`${context}AuthPhone`)?.value.trim() || '';
+        if (!firstName || !lastName || !phone) {
+          throw new Error('Prénom, nom et téléphone obligatoires pour créer un compte.');
+        }
+        const digits = phone.replace(/\D/g, '');
+        if (!/^\+?[\d\s().-]+$/.test(phone) || digits.length < 9 || digits.length > 15) {
+          throw new Error('Numéro de téléphone invalide. Exemple : 06 12 34 56 78.');
+        }
+        const data = await signUp(email, password, {
+          first_name: firstName,
+          last_name: lastName,
+          phone
+        });
         if (data?.session) {
           message(`${context}AuthStatus`, 'Le compte ne peut pas encore être utilisé. Contactez EDM28 par email.', 'errorbox');
           await signOut();
