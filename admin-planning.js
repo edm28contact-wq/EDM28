@@ -6,6 +6,8 @@
   const BUFFER_MINUTES = 30;
   let weekStart = startOfWeek(new Date());
   let rows = [];
+  let openWeekdays = new Set();
+  let weekExceptions = [];
 
   function startOfWeek(date) {
     const value = new Date(date);
@@ -70,8 +72,12 @@
     const end = new Date(weekStart); end.setDate(end.getDate() + 6);
     label.textContent = `Du ${weekStart.toLocaleDateString('fr-FR')} au ${end.toLocaleDateString('fr-FR')}`;
 
-    const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d; });
-    grid.innerHTML = `<div style="display:grid;grid-template-columns:repeat(7,minmax(220px,1fr));gap:10px;overflow:auto">${days.map((day) => {
+    const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d; }).filter(day => {
+      const iso = [day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),String(day.getDate()).padStart(2,'0')].join('-');
+      const exception = weekExceptions.find(item => iso >= item.starts_on && iso <= item.ends_on);
+      return exception ? exception.status === 'open' : openWeekdays.has(day.getDay());
+    });
+    grid.innerHTML = days.length ? `<div style="display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;overflow:auto">${days.map((day) => {
       const sameDay = rows.filter((row) => new Date(row.starts_at).toDateString() === day.toDateString());
       return `<section class="card" style="min-width:220px;padding:10px"><h3>${esc(day.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'}))}</h3><div style="display:grid;gap:8px;margin-top:10px">${sameDay.map((row) => {
         const start = new Date(row.starts_at);
@@ -81,7 +87,7 @@
         const vehicle = [row.vehicles?.plate,row.vehicles?.brand,row.vehicles?.model].filter(Boolean).join(' · ') || 'Véhicule';
         return `<button type="button" data-planning-open="${row.id}" style="text-align:left;border:1px solid #d0d5dd;border-left:6px solid ${statusColor(row.status)};border-radius:12px;background:white;padding:10px;color:inherit"><strong>${start.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}–${endAt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</strong><br>${esc(client)}<br><span class="muted">${esc(vehicle)}</span><br><span class="pill" style="margin-top:6px">${esc(statusLabel(row.status))}</span><p class="muted" style="margin:6px 0 0">Bloqué jusqu’à ${blocked.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</p></button>`;
       }).join('') || '<p class="muted">Aucun rendez-vous.</p>'}</div></section>`;
-    }).join('')}</div>`;
+    }).join('')}</div>` : '<p class="muted">Aucun jour d’ouverture cette semaine. Modifiez les horaires ci-dessous.</p>';
     grid.querySelectorAll('[data-planning-open]').forEach((button) => button.onclick = () => openEditor(button.dataset.planningOpen));
   }
 
@@ -193,9 +199,15 @@
   async function load() {
     ensureUi();
     const end = new Date(weekStart); end.setDate(end.getDate() + 7);
-    const result = await A().db.from('appointments').select('id,user_id,vehicle_id,starts_at,ends_at,status,notes,profiles(first_name,last_name,email,phone),vehicles(plate,brand,model),repair_orders(id,order_number,status,pdf_path,quote_id)').gte('starts_at', weekStart.toISOString()).lt('starts_at', end.toISOString()).order('starts_at');
-    if (result.error) throw result.error;
+    const [result, hours, exceptions] = await Promise.all([
+      A().db.from('appointments').select('id,user_id,vehicle_id,starts_at,ends_at,status,notes,profiles(first_name,last_name,email,phone),vehicles(plate,brand,model),repair_orders(id,order_number,status,pdf_path,quote_id)').gte('starts_at', weekStart.toISOString()).lt('starts_at', end.toISOString()).order('starts_at'),
+      A().db.from('business_hours').select('weekday,is_open'),
+      A().db.from('business_schedule_exceptions').select('starts_on,ends_on,status').lte('starts_on', end.toISOString().slice(0,10)).gte('ends_on', weekStart.toISOString().slice(0,10))
+    ]);
+    if (result.error || hours.error || exceptions.error) throw result.error || hours.error || exceptions.error;
     rows = result.data || [];
+    openWeekdays = new Set((hours.data || []).filter(h => h.is_open).map(h => Number(h.weekday)));
+    weekExceptions = exceptions.data || [];
     render();
   }
 
