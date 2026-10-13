@@ -47,9 +47,9 @@ try{
   await page.goto(origin+'/demande',{waitUntil:'networkidle'});
   assert.equal(await page.locator('.hero [data-request-cta]').innerText(),'Me connecter');assert.equal(await page.locator('#requestSubmit').isDisabled(),true);
   await page.locator('#requestSignupAuthEmail').waitFor({state:'visible'});
-  assert.equal(await page.locator('#connexion').isVisible(),false);assert.equal(await page.locator('#requestSubmitStep').isVisible(),false);
+  assert.equal(await page.locator('#connexion').isVisible(),true);assert.equal(await page.locator('#requestSubmitStep').isVisible(),false);
   assert.ok(await page.locator('#requestServices').evaluate(el=>!!(el.compareDocumentPosition(document.getElementById('requestAccountStep'))&Node.DOCUMENT_POSITION_FOLLOWING)));
-  assert.deepEqual(await page.locator('#edmRequestApp .section-kicker:visible').allTextContents(),['1 \u00b7 V\u00e9hicule','2 \u00b7 Prestation','3 \u00b7 Compte client']);
+  assert.deepEqual(await page.locator('#edmRequestApp .section-kicker:visible').allTextContents(),['D\u00e9j\u00e0 client','1 \u00b7 V\u00e9hicule','2 \u00b7 Prestation','3 \u00b7 Compte client']);
   await page.locator('#requestPlate').fill('AB-123-CD');await page.locator('#requestBrand').fill('Renault');
   await page.locator('#requestNotes').fill('Bruit au freinage');await page.locator('.service-choice input').first().check();
   await page.screenshot({path:`${out}/guest-request-${width}.png`,fullPage:true});
