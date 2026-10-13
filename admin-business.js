@@ -7,7 +7,7 @@
     ['payment_terms','Conditions de paiement',true],['late_penalty_text','Pénalités de retard',true],
     ['recovery_fee_text','Indemnité de recouvrement',true],['insurance_name','Assureur',false],
     ['insurance_policy','Police d’assurance',false],['logo_url','URL du logo',true],['calendar_id','Identifiant Google Agenda',true],
-    ['booking_url','Lien public de réservation',true],['timezone','Fuseau horaire',true],['ai_provider','Fournisseur IA',false],['ai_model','Modèle IA',false]
+    ['booking_url','Lien public de réservation',true],['timezone','Fuseau horaire',true],['workshop_signer_name','Nom du responsable sur les OR',false],['ai_provider','Fournisseur IA',false],['ai_model','Modèle IA',false]
   ];
   const requiredFields = fields.filter(([, , required]) => required).map(([key, label]) => ({ key, label }));
   window.EDMBusinessRequirements = {
@@ -25,6 +25,33 @@
       if (error) throw error;
       this.data = data || {};
       app.$('businessForm').innerHTML = fields.map(([key,label,required]) => `<label class="field"><span>${app.esc(label)}${required ? ' *' : ''}</span><input id="business_${key}" data-required="${required}" value="${app.esc(this.data[key] || '')}"></label>`).join('');
+      app.$('businessForm').insertAdjacentHTML('beforeend', `
+        <div class="card" style="grid-column:1/-1;padding:14px">
+          <h3>Signature atelier et cachet EDM28</h3>
+          <p class="muted">Le cachet est automatiquement composé avec les informations légales du garage. Importez votre propre signature manuscrite (PNG ou JPEG, 1 Mo maximum) pour l’intégrer aux prochains OR. Aucun tracé n’est créé à votre place.</p>
+          <label>Importer ma signature<input id="businessSignatureFile" type="file" accept="image/png,image/jpeg"></label>
+          <button id="businessSignatureSave" type="button" class="btn ghost">Enregistrer la signature</button>
+          <span id="businessSignatureStatus" class="muted">${this.data.workshop_signature_path ? 'Signature atelier enregistrée.' : 'Aucune signature enregistrée.'}</span>
+        </div>`);
+      app.$('businessSignatureSave').onclick = async () => {
+        const file = app.$('businessSignatureFile').files?.[0];
+        if (!file) return app.status('businessStatus','Choisissez votre signature PNG ou JPEG.',true);
+        if (!['image/png','image/jpeg'].includes(file.type) || file.size > 1024 * 1024)
+          return app.status('businessStatus','Signature PNG ou JPEG de 1 Mo maximum obligatoire.',true);
+        const path = `company/workshop-signature-${Date.now()}.${file.type === 'image/png' ? 'png' : 'jpg'}`;
+        const uploaded = await app.db.storage.from('repair-documents').upload(path,file,{contentType:file.type,upsert:false});
+        if (uploaded.error) return app.status('businessStatus',uploaded.error.message,true);
+        const saved = await app.db.from('business_configuration')
+          .update({workshop_signature_path:path,updated_at:new Date().toISOString(),updated_by:app.profile.id})
+          .eq('id',true).select('workshop_signature_path').single();
+        if (saved.error) {
+          await app.db.storage.from('repair-documents').remove([path]);
+          return app.status('businessStatus',saved.error.message,true);
+        }
+        this.data.workshop_signature_path = path;
+        app.$('businessSignatureStatus').textContent = 'Signature atelier enregistrée. Elle sera incluse sur les prochains OR générés.';
+        app.status('businessStatus','Signature atelier enregistrée avec succès.');
+      };
       fields.forEach(([key,,required]) => {
         const input = app.$(`business_${key}`);
         const validate = () => app.markRequired(input, required && !input.value.trim());
