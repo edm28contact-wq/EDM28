@@ -482,7 +482,7 @@
     doc.text('Je confirme les travaux et le montant ci-dessus.', 43, y + 40);
     doc.text('Nom / signature :', 43, y + 63);
     doc.text(`Réception prévue : ${appointment.starts_at ? dateTime(appointment.starts_at) : date(row.created_at)}`, 319, y + 40);
-    doc.text('Nom / signature :', 319, y + 63);
+    doc.text('Enguerrand D’Anglade — visa atelier :', 319, y + 63);
 
     if (quote.commercial_model === 'customer_supplied_v1') {
       doc.addPage();
@@ -495,10 +495,10 @@
       const steps = [
         '1. Mise en sécurité du véhicule : positionnement, points de levage prévus par le constructeur et protection de la zone de travail.',
         '2. Dépose des éléments nécessaires à la prestation : roue puis, selon le travail prévu, étrier et chape de frein, disque, amortisseur, rotule, bras, biellette ou roulement. Les pièces déposées sont repérées pour éviter toute inversion.',
-        '3. Nettoyage des portées et surfaces de contact accessibles : moyeu, appuis, logements et filetages concernés. Recherche de corrosion, jeu, fuite, soufflet détérioré ou usure anormale.',
+        '3. Nettoyage des portées et surfaces de contact accessibles : moyeu, appuis, logements et filetages concernés. Pour les interventions à partir de 100 € TTC, recherche complémentaire de corrosion, jeu, fuite, soufflet détérioré ou usure anormale.',
         '4. Préparation au remontage : contrôle des pièces neuves, des fixations et des éléments réutilisés. Les vis ou écrous à usage unique sont remplacés lorsque le constructeur le prévoit.',
         '5. Lubrification uniquement aux points prévus : coulisseaux, appuis ou articulations concernés avec un produit adapté. Aucune graisse sur les disques, plaquettes ou autres surfaces de friction.',
-        '6. Remontage dans l’ordre technique prévu. Les couples et angles de serrage sont ceux du constructeur pour le véhicule concerné ; aucune valeur générique n’est appliquée.',
+        '6. Remontage dans l’ordre technique prévu. Aucun serrage à la clé à choc ; tous les serrages concernés sont effectués à la clé dynamométrique, au couple constructeur.',
         '7. Remise en service et vérification fonctionnelle : contrôle visuel, absence d’interférence ou de fuite et, pour le freinage, remise en appui de la pédale avant déplacement du véhicule.',
         '8. Contrôle final EDM28 : photos utiles au dossier puis checklist correspondant au montant de la prestation. Tout travail supplémentaire reste soumis à l’accord préalable du client.',
         'Les pièces de remplacement sont achetées par le client. EDM28 facture la prestation et les consommables d’atelier, sans marge cachée sur les pièces.'
