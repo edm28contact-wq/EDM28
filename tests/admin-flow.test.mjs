@@ -257,5 +257,5 @@ test('workshop planning respects configured opening weekdays and exceptional day
   const source = await read('admin-planning.js');
   assert.match(source, /business_hours/);
   assert.match(source, /business_schedule_exceptions/);
-  assert.match(source, /openWeekdays\.has\(day\.getDay\(\)\)/);
+  assert.match(source, /openWeekdays\.has\(\(day\.getDay\(\) \+ 6\) % 7\)/);
 });
