@@ -26,7 +26,7 @@ async function run(t, options = {}) {
       assert.equal(url.searchParams.get('id'), `eq.${quoteId}`);
       return response(options.missingQuote ? [] : [quote]);
     }
-    if (table === 'outbound_notifications') { logs.push(JSON.parse(init.body)); return response(init.method === 'POST' ? [{ id: 'log-id' }] : []); }
+    if (table === 'outbound_notifications') { logs.push(JSON.parse(init.body)); if (options.trackingFailure && init.method === 'PATCH' && JSON.parse(init.body).status === 'sent') return response({ message: 'Tracking unavailable' }, 503); return response(init.method === 'POST' ? [{ id: 'log-id' }] : []); }
     throw new Error(`Unexpected network destination: ${url.origin}${url.pathname}`);
   });
   const res = { statusCode: 0, setHeader() {}, status(code) { this.statusCode = code; return this; }, end(body) { this.body = JSON.parse(body); } };
@@ -62,4 +62,13 @@ test('no-parts prestation sends its PDF without inventing a supplier order', asy
 test('provider errors are logged as failed and never confirmed as delivered', async t => {
   const { res, logs } = await run(t, { providerFailure: true });
   assert.equal(res.body.success, false); assert.equal(logs.at(-1).status, 'failed');
+});
+
+test('Resend accepted email remains successful even if tracking update fails', async t => {
+  const {res,sent,logs}=await run(t,{trackingFailure:true});
+  assert.equal(res.statusCode,200);
+  assert.equal(res.body.success,true);
+  assert.equal(sent.length,1);
+  assert.match(res.body.trackingWarning,/Vérifiez son statut/);
+  assert.equal(logs.some(x=>x.status==='failed'),false);
 });
