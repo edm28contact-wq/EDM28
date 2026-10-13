@@ -4,6 +4,7 @@
     if(!host)return;
     let generation=0, busy=false, timer=null, scrolled=false;
     const day=value=>new Date(value).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    const archiveTitle = g => g.order?.order_number ? `Intervention ${g.order.order_number}` : 'Intervention';
     const dateInput=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
     const refusalUrl=q=>'mailto:contact@edm28.fr?subject='+encodeURIComponent('Motif du refus - devis '+(q.quote_number || 'EDM28'))+'&body='+encodeURIComponent('Bonjour,\n\nJe souhaite un nouveau devis. Voici le motif de mon refus :\n\n');
     const status=(root,text,error=false)=>{
@@ -44,7 +45,7 @@
       if(p.key==='confirmed')actions=`<p>Votre rendez-vous est confirm\u00e9${r.starts_at?' le '+esc(dateTime(r.starts_at)):''}. Apportez les pi\u00e8ces indiqu\u00e9es dans le devis.</p><p>L\u2019ordre de r\u00e9paration d\u00e9crit les travaux pr\u00e9vus. Vous le retrouvez ci-dessous.</p>`;
       if(p.key==='finished')actions='<p>Votre intervention est terminée. Elle reste dans les dossiers en cours jusqu’à l’encaissement intégral de sa facture.</p>';
       if(p.key==='paid')actions='<p>Intervention intégralement réglée. Le dossier et ses documents sont conservés dans votre historique par véhicule.</p>';
-      return `<article class="journey-card is-${p.tone}" data-case="${esc(g.id)}" data-quote-id="${esc(q.id||'')}"><p class="journey-status">${esc(archived?'Historique':p.label)}</p><h3>${esc(g.title)}</h3>${g.date?`<p>${esc(day(g.date))}</p>`:''}${q.id?`<p>Prestations EDM28 : <strong>${money(q.total)}</strong> \u2014 consommables compris, hors pi\u00e8ces.</p>`:''}${files(g)}${actions}${basket(q)}${r.proof_path?`<p><button class="text-action" type="button" data-file="${esc(r.proof_path)}" data-bucket="purchase-proofs">Mon justificatif d\u2019achat</button></p>`:''}<div data-journey-message role="status" aria-live="polite"></div></article>`;
+      return `<article class="journey-card is-${p.tone}" data-case="${esc(g.id)}" data-quote-id="${esc(q.id||'')}"><p class="journey-status">${esc(archived?'Historique':p.label)}</p><h3>${esc(archived ? archiveTitle(g) : g.title)}</h3>${g.date?`<p>${esc(day(g.date))}</p>`:''}${q.id?`<p>Prestations EDM28 : <strong>${money(q.total)}</strong> \u2014 consommables compris, hors pi\u00e8ces.</p>`:''}${files(g)}${actions}${basket(q)}${r.proof_path?`<p><button class="text-action" type="button" data-file="${esc(r.proof_path)}" data-bucket="purchase-proofs">Mon justificatif d\u2019achat</button></p>`:''}<div data-journey-message role="status" aria-live="polite"></div></article>`;
     }
     async function showPlanning(button){
       const article=button.closest('[data-case]'),area=article.querySelector('[data-planning-area]');
@@ -123,7 +124,7 @@
       if(groups.some(g=>g.progress.archived&&!vehicles.some(v=>v.id===g.vehicleId)))archiveVehicles.push({id:null,plate:'V\u00e9hicule non renseign\u00e9'});
       const archives=archiveVehicles.map(v=>{
         const list=groups.filter(g=>g.progress.archived&&(v.id?g.vehicleId===v.id:!vehicles.some(vehicle=>vehicle.id===g.vehicleId)));
-        return `<details class="vehicle-archive"><summary>${esc([v.plate,v.brand,v.model].filter(Boolean).join(' \u00b7 '))} \u2014 ${list.length} intervention${list.length>1?'s':''}</summary><div class="archive-content">${list.map(g=>`<details class="intervention-archive"><summary>${esc(g.title)}${g.date?' \u2014 '+esc(day(g.date)):''}</summary>${card(g,true)}</details>`).join('')||'<p>Aucune intervention termin\u00e9e pour ce v\u00e9hicule.</p>'}</div></details>`;
+        return `<details class="vehicle-archive"><summary>${esc([v.plate,v.brand,v.model].filter(Boolean).join(' \u00b7 '))} \u2014 ${list.length} intervention${list.length>1?'s':''}</summary><div class="archive-content">${list.map(g=>`<details class="intervention-archive"><summary>${esc(archiveTitle(g))}${g.date?' \u2014 '+esc(day(g.date)):''}</summary>${card(g,true)}</details>`).join('')||'<p>Aucune intervention termin\u00e9e pour ce v\u00e9hicule.</p>'}</div></details>`;
       }).join('');
       host.innerHTML=`<section class="client-panel account-strip"><div><strong>${esc(session.user.email||'')}</strong><p>Votre espace client</p></div><div class="action-row"><a href="/demande" class="primary-action as-link">Nouvelle demande</a><button class="secondary-action" type="button" data-signout>Me d\u00e9connecter</button></div></section><section><h2>En cours</h2>${active.map(g=>{const v=vehicles.find(v=>v.id===g.vehicleId);return `<div>${v?`<p><strong>${esc([v.plate,v.brand,v.model].filter(Boolean).join(' \u00b7 '))}</strong></p>`:''}${card(g)}</div>`;}).join('')||'<p>Aucune intervention en cours.</p>'}</section><section><h2>Historique par v\u00e9hicule</h2><p>Ouvrez un v\u00e9hicule, puis une intervention pour retrouver ses documents.</p>${archives||'<p>Aucun v\u00e9hicule enregistr\u00e9.</p>'}</section>`;
       host.querySelector('[data-signout]').addEventListener('click',async()=>{await signOut();await render();});
