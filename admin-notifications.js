@@ -18,10 +18,11 @@
     return result;
   }
 
-  function actionCard(type, row, templateKey, title, details, attachmentPath, values = {}) {
+  function actionCard(type, row, templateKey, title, details, attachmentPath, values = {}, lastAttempt = null) {
     const profile = row.profiles || {};
     const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.email || 'Client';
-    return `<article class="card" style="margin:10px 0"><div class="top"><div><span class="pill">${esc(type)}</span><h3>${esc(title)}</h3><p class="muted">${esc(name)} · ${esc(profile.email || 'Email manquant')}</p></div><button class="btn primary" data-send-notification data-user="${row.user_id}" data-template="${templateKey}" data-related-type="${type}" data-related-id="${row.id}" data-attachment="${esc(attachmentPath || '')}" data-values="${encodeURIComponent(JSON.stringify(values))}" ${!profile.email ? 'disabled' : ''}>Envoyer</button></div><p>${esc(details)}</p>${attachmentPath ? '<p class="status ok">PDF joint à l’email.</p>' : '<p class="muted">Aucune pièce jointe nécessaire.</p>'}</article>`;
+    const mailState = lastAttempt?.status === 'failed' ? `<p class="status error">Dernier envoi échoué : ${esc(lastAttempt.error_message || 'raison inconnue')}. Vous pouvez réessayer.</p>` : lastAttempt?.status === 'sent' ? `<p class="status ok">Dernier envoi accepté par le fournisseur d’email le ${date(lastAttempt.sent_at || lastAttempt.created_at)}.</p>` : lastAttempt?.status === 'pending' ? '<p class="status">Envoi en cours ou suivi incomplet. Vérifiez avant de renvoyer.</p>' : '';
+    return `<article class="card" style="margin:10px 0"><div class="top"><div><span class="pill">${esc(type)}</span><h3>${esc(title)}</h3><p class="muted">${esc(name)} · ${esc(profile.email || 'Email manquant')}</p></div><button class="btn primary" data-send-notification data-user="${row.user_id}" data-template="${templateKey}" data-related-type="${type}" data-related-id="${row.id}" data-attachment="${esc(attachmentPath || '')}" data-values="${encodeURIComponent(JSON.stringify(values))}" ${!profile.email || lastAttempt?.status === 'pending' ? 'disabled' : ''}>${lastAttempt?.status === 'failed' ? 'Réessayer l’envoi' : 'Envoyer'}</button></div><p>${esc(details)}</p>${mailState}${attachmentPath ? '<p class="status ok">PDF joint à l’email.</p>' : '<p class="muted">Aucune pièce jointe nécessaire.</p>'}</article>`;
   }
 
   function reviewCard(invoice, alreadySent) {
@@ -49,14 +50,20 @@
     ]);
     const failure = [quotes,appointments,orders,invoices,history,settings,business,reviewTemplate].find((r) => r.error)?.error;
     if (failure) throw failure;
+    const lastByDocument = new Map();
+    for (const item of history.data || []) {
+      const key = [item.template_key, item.related_type, item.related_id].join(':');
+      if (item.related_id && !lastByDocument.has(key)) lastByDocument.set(key, item);
+    }
+    const latest = (template, type, id) => lastByDocument.get([template, type, id].join(':')) || null;
     const cards = [];
-    (quotes.data || []).forEach((q) => cards.push(actionCard('quote', q, 'quote_sent', q.quote_number || 'Devis', `Montant : ${A().money(q.total)} · valable jusqu’au ${q.valid_until || '—'}`, q.pdf_path, { quote_number:q.quote_number, total:A().money(q.total), valid_until:q.valid_until || '' })));
-    (appointments.data || []).forEach((r) => cards.push(actionCard('appointment', r, 'appointment_confirmed', `Rendez-vous du ${date(r.starts_at)}`, [r.vehicles?.brand,r.vehicles?.model,r.vehicles?.plate].filter(Boolean).join(' · '), null, { appointment_date:date(r.starts_at), vehicle:[r.vehicles?.brand,r.vehicles?.model,r.vehicles?.plate].filter(Boolean).join(' ') })));
-    (orders.data || []).forEach((r) => cards.push(actionCard('repair_order', r, 'vehicle_ready', r.order_number || 'Véhicule prêt', [r.vehicles?.brand,r.vehicles?.model,r.vehicles?.plate].filter(Boolean).join(' · '), null, { order_number:r.order_number || '', vehicle:[r.vehicles?.brand,r.vehicles?.model,r.vehicles?.plate].filter(Boolean).join(' ') })));
+    (quotes.data || []).forEach((q) => cards.push(actionCard('quote', q, 'quote_sent', q.quote_number || 'Devis', `Montant : ${A().money(q.total)} · valable jusqu’au ${q.valid_until || '—'}`, q.pdf_path, { quote_number:q.quote_number, total:A().money(q.total), valid_until:q.valid_until || '' }, latest('quote_sent', 'quote', q.id))));
+    (appointments.data || []).forEach((r) => cards.push(actionCard('appointment', r, 'appointment_confirmed', `Rendez-vous du ${date(r.starts_at)}`, [r.vehicles?.brand,r.vehicles?.model,r.vehicles?.plate].filter(Boolean).join(' · '), null, { appointment_date:date(r.starts_at), vehicle:[r.vehicles?.brand,r.vehicles?.model,r.vehicles?.plate].filter(Boolean).join(' ') }, latest('appointment_confirmed', 'appointment', r.id))));
+    (orders.data || []).forEach((r) => cards.push(actionCard('repair_order', r, 'vehicle_ready', r.order_number || 'Véhicule prêt', [r.vehicles?.brand,r.vehicles?.model,r.vehicles?.plate].filter(Boolean).join(' · '), null, { order_number:r.order_number || '', vehicle:[r.vehicles?.brand,r.vehicles?.model,r.vehicles?.plate].filter(Boolean).join(' ') }, latest('vehicle_ready', 'repair_order', r.id))));
     (invoices.data || []).forEach((i) => {
       const balance = Math.max(0, Number(i.total || 0) - Number(i.amount_paid || 0));
       const overdue = i.due_at && new Date(i.due_at) < new Date() && balance > 0;
-      cards.push(actionCard('invoice', i, overdue ? 'payment_reminder' : 'invoice_sent', i.invoice_number || 'Facture', `${A().money(i.total)} · reste ${A().money(balance)} · échéance ${i.due_at ? new Date(i.due_at).toLocaleDateString('fr-FR') : '—'}`, i.pdf_path, { invoice_number:i.invoice_number || '', total:A().money(i.total), balance:A().money(balance), due_date:i.due_at ? new Date(i.due_at).toLocaleDateString('fr-FR') : '' }));
+      cards.push(actionCard('invoice', i, overdue ? 'payment_reminder' : 'invoice_sent', i.invoice_number || 'Facture', `${A().money(i.total)} · reste ${A().money(balance)} · échéance ${i.due_at ? new Date(i.due_at).toLocaleDateString('fr-FR') : '—'}`, i.pdf_path, { invoice_number:i.invoice_number || '', total:A().money(i.total), balance:A().money(balance), due_date:i.due_at ? new Date(i.due_at).toLocaleDateString('fr-FR') : '' }, latest(overdue ? 'payment_reminder' : 'invoice_sent', 'invoice', i.id)));
     });
 
     const historyRows = history.data || [];
@@ -74,8 +81,8 @@
       const old = button.textContent;
       button.textContent = 'Envoi…';
       try {
-        await send({ userId:button.dataset.user, templateKey:button.dataset.template, relatedType:button.dataset.relatedType, relatedId:button.dataset.relatedId, attachmentPath:button.dataset.attachment || null, attachmentName:button.dataset.relatedType === 'quote' ? 'devis-edm28.pdf' : button.dataset.relatedType === 'invoice' && button.dataset.template !== 'review_request' ? 'facture-edm28.pdf' : null, values:JSON.parse(decodeURIComponent(button.dataset.values || '%7B%7D')) });
-        A().status('notificationStatus', button.dataset.template === 'review_request' ? 'Demande d’avis envoyée et enregistrée.' : 'Email envoyé et enregistré dans l’historique.');
+        const outcome = await send({ userId:button.dataset.user, templateKey:button.dataset.template, relatedType:button.dataset.relatedType, relatedId:button.dataset.relatedId, attachmentPath:button.dataset.attachment || null, attachmentName:button.dataset.relatedType === 'quote' ? 'devis-edm28.pdf' : button.dataset.relatedType === 'invoice' && button.dataset.template !== 'review_request' ? 'facture-edm28.pdf' : null, values:JSON.parse(decodeURIComponent(button.dataset.values || '%7B%7D')) });
+        A().status('notificationStatus', outcome.trackingWarning || (button.dataset.template === 'review_request' ? 'Demande d’avis acceptée par le fournisseur.' : 'Email accepté par le fournisseur, livraison finale non garantie.'), Boolean(outcome.trackingWarning));
         await load();
       } catch (error) { A().status('notificationStatus', error.message || 'Envoi impossible.', true); }
       finally { button.disabled = false; button.textContent = old; }
