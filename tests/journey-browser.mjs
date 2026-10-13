@@ -41,7 +41,7 @@ try{
   await page.goto(origin+'/mes-interventions?devis=22222222-2222-4222-8222-222222222222',{waitUntil:'networkidle'});
   await page.waitForURL('**/demande?**');assert.equal(await page.locator('[data-client-only]:visible').count(),0);
   await page.locator('#requestSignupAuthEmail').waitFor({state:'visible'});
-  await page.locator('#requestSignupAuthEmail').fill('client@example.test');await page.locator('#requestSignupAuthPassword').fill('fixture-password');await page.locator('[data-auth-signin]').click();
+  await page.locator('.hero [data-request-cta]').click();await page.locator('#requestAuthEmail').fill('client@example.test');await page.locator('#requestAuthPassword').fill('fixture-password');await page.locator('[data-auth-signin]').click();
   await page.waitForURL('**/mes-interventions?devis=22222222-2222-4222-8222-222222222222');
   await page.evaluate(()=>localStorage.removeItem('journey-test-login'));
   await page.goto(origin+'/demande',{waitUntil:'networkidle'});
