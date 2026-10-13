@@ -21,9 +21,34 @@ test('a submitted proof does not expire because the administrator is late',()=>{
 test('pre-generated OR does not count as appointment approval',()=>{
  const state=model.progress({reservation:{id:'r',status:'review_pending'},order:{id:'o',status:'ready'}},now);assert.equal(state.key,'review');
 });
-test('finished intervention is green for 24 h then becomes history without deleting documents',()=>{
- const input={order:{id:'o',status:'completed',completed_at:'2026-10-09T10:00:00Z'}};
- assert.equal(model.progress(input,now-1).archived,false);assert.equal(model.progress(input,now).archived,true);assert.equal(model.progress(input,now).tone,'green');
+test('completed intervention stays active until the invoice is fully paid',()=>{
+ const completed={id:'o',status:'completed',completed_at:'2026-10-09T10:00:00Z'};
+ assert.equal(model.progress({order:completed},now+72*model.HOUR).archived,false);
+ assert.equal(model.progress({order:completed,invoices:[{status:'issued',total:90,amount_paid:0}]},now).archived,false);
+ assert.equal(model.progress({order:completed,invoices:[{status:'partially_paid',total:90,amount_paid:30}]},now+72*model.HOUR).archived,false);
+});
+test('fully paid invoice archives immediately, without waiting 24 hours',()=>{
+ const data={order:{id:'o',status:'invoiced',completed_at:'2026-10-10T09:59:00Z'},invoices:[{status:'paid',total:99,amount_paid:99}]};
+ const progress=model.progress(data,now);
+ assert.equal(progress.key,'paid');assert.equal(progress.archived,true);assert.equal(progress.label,'Intervention encaissée');
+});
+test('draft, partial, zero or inconsistent payment never archives a completed order',()=>{
+ for(const invoice of [
+   {status:'draft',total:100,amount_paid:100},
+   {status:'paid',total:100,amount_paid:99},
+   {status:'paid',total:0,amount_paid:0},
+   {status:'paid',total:100,amount_paid:null}
+ ]) assert.equal(model.progress({order:{status:'completed'},invoices:[invoice]},now).archived,false);
+});
+test('all linked invoices must be paid before archive',()=>{
+ const order={id:'o',status:'completed'};
+ const paid={status:'paid',total:100,amount_paid:100};
+ const unpaid={status:'issued',total:50,amount_paid:0};
+ assert.equal(model.progress({order,invoices:[paid,unpaid]},now).archived,false);
+ assert.equal(model.progress({order,invoices:[paid,paid]},now).archived,true);
+});
+test('an invoice cannot close an unfinished repair',()=>{
+ assert.equal(model.progress({order:{status:'in_progress'},invoices:[{status:'paid',total:100,amount_paid:100}]},now).key,'working');
 });
 test('invoice draft does not decide whether an intervention is complete',()=>{
  assert.equal(model.progress({order:{status:'in_progress'}},now).key,'working');
@@ -103,4 +128,10 @@ test('journey emails use persisted back-office contact information',()=>{
 test('production Vercel defaults to the verified EDM28 sending domain',async()=>{
  const config=JSON.parse(await read('vercel.json'));
  assert.equal(config.env.RESEND_FROM_EMAIL,'EDM28 <contact@edm28.fr>');
+});
+
+test('customer journey fetches actual payment status and does not reference 24-hour archival',async()=>{
+ const source=await read('client-journey.js');
+ assert.match(source,/invoice_number,status,total,amount_paid,paid_at,pdf_path/);
+ assert.doesNotMatch(source,/quittera la liste en cours au bout de 24 h/);
 });
