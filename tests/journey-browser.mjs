@@ -55,10 +55,17 @@ try{
   await page.screenshot({path:`${out}/guest-request-${width}.png`,fullPage:true});
   await page.locator('#requestSignupAuthEmail').fill('client@example.test');await page.locator('#requestSignupAuthPassword').fill('fixture-password');
   await page.locator('[data-auth-signup="requestSignup"]').click();
+   await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Prénom, nom et téléphone obligatoires'));
+   assert.equal((await page.evaluate(()=>__journey.calls)).includes('auth:signup'),false);
+   await page.locator('#requestSignupAuthFirstName').fill('Camille');
+   await page.locator('#requestSignupAuthLastName').fill('Martin');
+   await page.locator('#requestSignupAuthPhone').fill('0612345678');
+  await page.locator('[data-auth-signup="requestSignup"]').click();
   await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Demande d\u2019inscription enregistr\u00e9e'));
   assert.equal(await page.locator('#requestSubmit').isDisabled(),true);assert.equal(await page.locator('#requestAccountStep').isVisible(),true);
   assert.deepEqual(await page.evaluate(()=>__journey.calls),['auth:signup']);
   assert.equal(await page.evaluate(()=>__journey.signup.options.emailRedirectTo),origin+'/');
+   assert.deepEqual(await page.evaluate(()=>__journey.signup.options.data),{first_name:'Camille',last_name:'Martin',phone:'0612345678'});
   await page.evaluate(()=>__journey.emit());
   await page.waitForFunction(()=>document.getElementById('requestSignupAuthStatus').textContent.includes('Demande d\u2019inscription enregistr\u00e9e'));
   assert.equal(await page.locator('#requestSignupAuthEmail').inputValue(),'client@example.test');
