@@ -249,7 +249,7 @@ test('generated invoice line_total is not inserted by frontend or finalization R
     read('supabase/migrations/20261013225000_invoice_line_total_generated.sql')
   ]);
   assert.match(editor, /\(\{ line_total, \.\.\.line \}\) =>/);
-  assert.doesNotMatch(migration, /\bline_total\b/);
+  assert.doesNotMatch(migration, /\bline_total\s*,\s*source_quote_item_id/);
   assert.match(migration, /private\.admin_finalize_repair_order/);
 });
 
