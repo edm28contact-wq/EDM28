@@ -31,7 +31,8 @@
         .select('id');
       if (visible.error || !visible.data?.length) throw visible.error || new Error('Publication de l’OR impossible.');
 
-      A().status('interventionStatus', `Intervention terminée. L’OR ${current.data.order_number || ''} est publié au client avec son PDF.`);
+      await window.EDMAdminOperations?.notifyPublishedOrder?.({ ...current.data, pdf_path: pdfPath, visible_to_client: true });
+      A().status('interventionStatus', `Intervention terminée. L’OR ${current.data.order_number || ''} est publié et envoyé au client pour signature.`);
     } catch (error) {
       A()?.status('interventionStatus', `Intervention enregistrée, mais publication de l’OR impossible : ${error.message || error}`, true);
     } finally {
