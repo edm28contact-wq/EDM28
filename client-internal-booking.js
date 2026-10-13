@@ -162,15 +162,28 @@
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(row);
     });
-    slotHost.innerHTML = [...groups.entries()].map(([day, slots]) => `<section class="card" style="margin:10px 0"><h3 style="text-transform:capitalize">${esc(day)}</h3><div class="btn-row">${slots.map((slot) => `<button type="button" class="btn btn-secondary" data-prepare-slot="${esc(slot.starts_at)}">${new Date(slot.starts_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</button>`).join('')}</div></section>`).join('');
-    slotHost.querySelectorAll('[data-prepare-slot]').forEach((button) => button.onclick = () => {
-      selectedSlot = button.dataset.prepareSlot;
-      slotHost.querySelectorAll('[data-prepare-slot]').forEach((node) => node.classList.toggle('btn-blue', node === button));
-      const start = new Date(selectedSlot);
-      document.getElementById('prepareSelection').innerHTML = `<strong>${esc(dateTime(start))}</strong>`;
-      document.getElementById('prepareSelection').className = 'notice';
-      document.getElementById('prepareConfirmSlot').disabled = false;
-    });
+    const days = [...groups.entries()];
+    const batchSize = 3;
+    let shown = Math.min(batchSize, days.length);
+    const renderDays = () => {
+      slotHost.innerHTML = days.slice(0, shown).map(([day, slots]) => {
+        const morning = slots.filter(slot => Number(new Date(slot.starts_at).toLocaleTimeString('fr-FR', { hour:'2-digit', hour12:false }).slice(0,2)) < 13);
+        const afternoon = slots.filter(slot => !morning.includes(slot));
+        const renderTimes = (title, entries) => entries.length ? `<div style="margin:12px 0"><p class="small"><strong>${title}</strong></p><div class="btn-row" style="display:flex;flex-wrap:wrap;gap:8px">${entries.map(slot => `<button type="button" class="btn btn-secondary" data-prepare-slot="${esc(slot.starts_at)}" aria-pressed="${selectedSlot === slot.starts_at}">${new Date(slot.starts_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</button>`).join('')}</div></div>` : '';
+        return `<section class="card" style="margin:10px 0"><h3 style="text-transform:capitalize">${esc(day)} <span class="small">(${slots.length} créneaux)</span></h3>${renderTimes('Matin', morning)}${renderTimes('Après-midi', afternoon)}</section>`;
+      }).join('') + (shown < days.length ? '<button class="btn btn-ghost" id="prepareMoreDays" type="button">Voir les jours suivants</button>' : '');
+      slotHost.querySelectorAll('[data-prepare-slot]').forEach(button => button.onclick = () => {
+        selectedSlot = button.dataset.prepareSlot;
+        slotHost.querySelectorAll('[data-prepare-slot]').forEach(node => {
+          node.classList.toggle('btn-blue', node === button);
+          node.setAttribute('aria-pressed', String(node === button));
+        });
+        document.getElementById('prepareSelection').textContent = 'Créneau choisi : ' + dateTime(selectedSlot);
+        document.getElementById('prepareConfirmSlot').disabled = false;
+      });
+      slotHost.querySelector('#prepareMoreDays')?.addEventListener('click', () => { shown = Math.min(days.length, shown + batchSize); renderDays(); });
+    };
+    renderDays();
     document.getElementById('prepareConfirmSlot').onclick = async () => {
       if (!selectedSlot) return;
       const button = document.getElementById('prepareConfirmSlot');
