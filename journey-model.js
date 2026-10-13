@@ -1,20 +1,36 @@
 (function(root){
   const HOUR = 3600000;
   const time = value => { const n = Date.parse(value || ''); return Number.isFinite(n) ? n : null; };
-  function progress({request={},quote={},reservation={},order={},intervention={}},now=Date.now()) {
+  // A finished repair order remains active until every associated invoice is paid.
+  // The database marks invoices as "paid" only after full payment; never archive
+  // an unpaid or partially paid intervention just because 24 hours have elapsed.
+  function invoicePaid(invoice) {
+    if (invoice?.status !== 'paid') return false;
+    const total = Number(invoice.total);
+    const amountPaid = Number(invoice.amount_paid);
+    return Number.isFinite(total) && total > 0
+      && Number.isFinite(amountPaid) && amountPaid + 0.005 >= total;
+  }
+  function progress({request={},quote={},reservation={},order={},intervention={},invoices=[]},now=Date.now()) {
     const finished = ['completed','invoiced'].includes(order.status) || intervention.status === 'completed';
     const finishedAt = time(order.completed_at) ?? time(intervention.completed_at) ?? (finished ? time(order.updated_at) : null);
-    if (finished) return {key:'finished',label:'Intervention termin\u00e9e',tone:'green',archived:finishedAt === null || now >= finishedAt+24*HOUR,finishedAt};
+    if (finished) {
+      const settled = invoices.length > 0 && invoices.every(invoicePaid);
+      if (settled) {
+        return {key:'paid',label:'Intervention encaissée',tone:'green',archived:true,finishedAt};
+      }
+      return {key:'finished',label:invoices.length ? 'Intervention terminée — règlement en attente' : 'Intervention terminée — facture à venir',tone:'orange',archived:false,finishedAt};
+    }
     if (intervention.status === 'in_progress' || order.status === 'in_progress') return {key:'working',label:'Intervention en cours',tone:'orange',archived:false};
-    if (reservation.status === 'confirmed' || (order.id && !reservation.id)) return {key:'confirmed',label:'Rendez-vous valid\u00e9 \u2014 intervention en attente',tone:'orange',archived:false};
-    if (reservation.status === 'review_pending') return {key:'review',label:'Intervention en pr\u00e9paration',tone:'orange',archived:false,overdue:now >= (time(reservation.review_deadline) ?? Infinity)};
-    if (reservation.status === 'held' && (time(reservation.expires_at) ?? 0)>now) return {key:'held',label:'Intervention en pr\u00e9paration',tone:'orange',archived:false};
-    if (quote.status === 'refused') return {key:'refused',label:'Devis refus\u00e9',tone:'neutral',archived:false};
+    if (reservation.status === 'confirmed' || (order.id && !reservation.id)) return {key:'confirmed',label:'Rendez-vous validé — intervention en attente',tone:'orange',archived:false};
+    if (reservation.status === 'review_pending') return {key:'review',label:'Intervention en préparation',tone:'orange',archived:false,overdue:now >= (time(reservation.review_deadline) ?? Infinity)};
+    if (reservation.status === 'held' && (time(reservation.expires_at) ?? 0)>now) return {key:'held',label:'Intervention en préparation',tone:'orange',archived:false};
+    if (quote.status === 'refused') return {key:'refused',label:'Devis refusé',tone:'neutral',archived:false};
     if (['cancelled','closed'].includes(request.status) || ['cancelled'].includes(quote.status)) return {key:'closed',label:'Demande close',tone:'neutral',archived:true};
-    if (quote.status === 'accepted') return {key:'choose',label:reservation.status === 'held' || reservation.status === 'expired' ? 'Pr\u00e9-r\u00e9servation expir\u00e9e' : 'Devis accept\u00e9 \u2014 choisissez un rendez-vous',tone:'orange',archived:false};
+    if (quote.status === 'accepted') return {key:'choose',label:reservation.status === 'held' || reservation.status === 'expired' ? 'Pré-réservation expirée' : 'Devis accepté — choisissez un rendez-vous',tone:'orange',archived:false};
     if (quote.status === 'sent') return {key:'quote',label:'Votre devis est disponible',tone:'neutral',archived:false};
-    if (quote.status === 'expired') return {key:'expired',label:'Devis expir\u00e9',tone:'neutral',archived:false};
-    return {key:'request',label:'Demande en cours d\u2019\u00e9tude',tone:'neutral',archived:false};
+    if (quote.status === 'expired') return {key:'expired',label:'Devis expiré',tone:'neutral',archived:false};
+    return {key:'request',label:'Demande en cours d’étude',tone:'neutral',archived:false};
   }
   function group(data) {
     const groups=new Map(),quoteGroup=new Map(),orderGroup=new Map(),appointmentGroup=new Map();
@@ -40,6 +56,6 @@
       return g;
     }).sort((a,b)=>(time(b.date)||0)-(time(a.date)||0));
   }
-  const api={HOUR,time,progress,group};
+  const api={HOUR,time,invoicePaid,progress,group};
   if(typeof module==='object'&&module.exports)module.exports=api;else root.EDMJourneyModel=api;
 })(globalThis);
