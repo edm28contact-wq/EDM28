@@ -42,7 +42,8 @@
       if(p.key==='held')actions=`<p>Cr\u00e9neau choisi : <strong>${esc(dateTime(r.starts_at))}</strong>.</p><p>Joignez votre justificatif avant le <strong>${esc(dateTime(r.expires_at))}</strong>. Sans justificatif, le cr\u00e9neau sera lib\u00e9r\u00e9. Le rendez-vous n\u2019est pas encore confirm\u00e9.</p><div class="journey-proof"><label>Joindre mon justificatif d\u2019achat<input type="file" data-proof-file accept="application/pdf,image/jpeg,image/png"></label><small>PDF, JPG ou PNG, 10 Mo maximum. Masquez les informations de paiement inutiles.</small><button class="primary-action" type="button" data-proof-submit="${esc(r.id)}">Envoyer pour validation sous 24 h</button></div>`;
       if(p.key==='review')actions=`<p>${r.proof_path ? 'Justificatif re\u00e7u.' : 'Aucun achat de pi\u00e8ce requis pour cette prestation.'} ${p.overdue?'La v\u00e9rification prend plus de temps que pr\u00e9vu. Votre cr\u00e9neau reste conserv\u00e9 ; contactez-nous en cas de besoin.':`EDM28 doit le v\u00e9rifier avant le ${esc(dateTime(r.review_deadline))}.`}</p><p>Vous recevrez un email apr\u00e8s validation. Date demand\u00e9e : ${esc(dateTime(r.starts_at))}.</p>`;
       if(p.key==='confirmed')actions=`<p>Votre rendez-vous est confirm\u00e9${r.starts_at?' le '+esc(dateTime(r.starts_at)):''}. Apportez les pi\u00e8ces indiqu\u00e9es dans le devis.</p><p>L\u2019ordre de r\u00e9paration d\u00e9crit les travaux pr\u00e9vus. Vous le retrouvez ci-dessous.</p>`;
-      if(p.key==='finished')actions='<p>Merci de votre confiance. Vos documents restent disponibles dans l\u2019historique de ce v\u00e9hicule.</p>'+(archived?'':'<p>Cette intervention quittera la liste en cours au bout de 24 h.</p>');
+      if(p.key==='finished')actions='<p>Votre intervention est terminée. Elle reste dans les dossiers en cours jusqu’à l’encaissement intégral de sa facture.</p>';
+      if(p.key==='paid')actions='<p>Intervention intégralement réglée. Le dossier et ses documents sont conservés dans votre historique par véhicule.</p>';
       return `<article class="journey-card is-${p.tone}" data-case="${esc(g.id)}" data-quote-id="${esc(q.id||'')}"><p class="journey-status">${esc(archived?'Historique':p.label)}</p><h3>${esc(g.title)}</h3>${g.date?`<p>${esc(day(g.date))}</p>`:''}${q.id?`<p>Prestations EDM28 : <strong>${money(q.total)}</strong> \u2014 consommables compris, hors pi\u00e8ces.</p>`:''}${files(g)}${actions}${basket(q)}${r.proof_path?`<p><button class="text-action" type="button" data-file="${esc(r.proof_path)}" data-bucket="purchase-proofs">Mon justificatif d\u2019achat</button></p>`:''}<div data-journey-message role="status" aria-live="polite"></div></article>`;
     }
     async function showPlanning(button){
@@ -104,7 +105,7 @@
         ['appointments','id,vehicle_id,service_request_id,starts_at,ends_at,status,created_at'],
         ['repair_orders','id,vehicle_id,service_request_id,quote_id,appointment_id,order_number,status,pdf_path,created_at,updated_at,completed_at'],
         ['inspection_reports','id,vehicle_id,repair_order_id,report_number,observations,pdf_path,photo_paths,completed_at,created_at'],
-        ['invoices','id,vehicle_id,quote_id,repair_order_id,invoice_number,status,total,pdf_path,issued_at,created_at'],
+        ['invoices','id,vehicle_id,quote_id,repair_order_id,invoice_number,status,total,amount_paid,paid_at,pdf_path,issued_at,created_at'],
         ['interventions','id,repair_order_id,status,completed_at,client_summary,created_at'],
         ['booking_reservations','id,quote_id,user_id,vehicle_id,status,starts_at,ends_at,expires_at,proof_path,proof_received_at,review_deadline,review_note,created_at']
       ];
