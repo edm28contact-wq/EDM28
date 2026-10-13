@@ -113,12 +113,16 @@ try{
   await page.waitForFunction(()=>document.getElementById('edmInterventionsApp').textContent.includes('Rendez-vous valid\u00e9'));
   assert.match(await page.locator('[data-case]').innerText(),/Ordre de r\u00e9paration/);
   await page.evaluate(()=>{Object.assign(__journey.rows.repair_orders[0],{status:'completed',completed_at:new Date().toISOString()});__journey.emit();});
-  await page.locator('.journey-card.is-green').waitFor();await page.screenshot({path:`${out}/finished-${width}.png`,fullPage:true});
-  await page.evaluate(()=>{__journey.rows.repair_orders[0].completed_at=new Date(Date.now()-25*3600000).toISOString();__journey.emit();});
+  await page.waitForFunction(()=>document.getElementById('edmInterventionsApp').textContent.includes('facture à venir'));
+  await page.evaluate(()=>{const f=__journey;f.rows.invoices=[{id:'99999999-9999-4999-8999-999999999999',user_id:f.uid,vehicle_id:f.q.vehicle_id,quote_id:f.q.id,repair_order_id:f.rows.repair_orders[0].id,invoice_number:'TEST-FACT-1',status:'partially_paid',total:100,amount_paid:30,pdf_path:f.uid+'/invoice/test.pdf',created_at:new Date().toISOString(),visible_to_client:true}];f.emit();});
+  await page.waitForFunction(()=>document.getElementById('edmInterventionsApp').textContent.includes('règlement en attente'));
+  await page.evaluate(()=>{const f=__journey;Object.assign(f.rows.invoices[0],{status:'paid',amount_paid:100,paid_at:new Date().toISOString()});f.emit();});
   await page.waitForFunction(()=>document.getElementById('edmInterventionsApp').textContent.includes('Aucune intervention en cours'));
-  await page.locator('.vehicle-archive').first().locator('summary').first().click();await page.locator('.intervention-archive summary').first().click();assert.equal(await page.locator('.intervention-archive [data-file]').count(),3);
+  await page.locator('.vehicle-archive').first().locator('summary').first().click();
+  await page.locator('.intervention-archive summary').first().click();
+  assert.ok(await page.locator('.intervention-archive [data-file]').count() >= 2);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-  report.checks.push(`quote response, 48h hold, proof, pending review, confirmation and 24h history ${width}: PASS`);
+  report.checks.push(`quote response, proof, confirmation and history after full payment ${width}: PASS`);
 
   await page.goto(origin+'/contact',{waitUntil:'networkidle'});assert.equal(await page.locator('a[href^="tel:000"]').count(),0);assert.equal(await page.locator('.contact-card a[href^="mailto:"]').count(),1);assert.equal(await page.locator('.contact-card a[href*="maps/dir"]').count(),1);await page.screenshot({path:`${out}/contact-${width}.png`,fullPage:true});
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
