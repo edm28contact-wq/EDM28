@@ -258,6 +258,7 @@
     if (!host) return;
 
     host.innerHTML = `
+      <section class="client-panel" id="connexion" hidden><div id="requestAccountArea"></div></section>
       <section class="client-panel">
         <div class="section-kicker">1 · Véhicule</div>
         <h2>Votre véhicule</h2>
@@ -401,37 +402,13 @@
     let savedVehicles = [];
     let currentRequestUser = null;
     let accountGeneration = 0;
-    function renderRequestAuth(mode = 'signup') {
-      const host = byId('requestSignupArea');
-      const priorEmail = host.querySelector('input[type="email"]')?.value || '';
-      host.innerHTML = authBlock('requestSignup', mode);
-      const email = byId('requestSignupAuthEmail');
-      if (email) email.value = priorEmail;
-      bindAuth('requestSignup', async () => {
-        await renderAccount();
-        const params = new URLSearchParams(location.search);
-        if (params.get('retour') === 'interventions') {
-          const target = new URL('/mes-interventions', location.origin);
-          const quote = params.get('devis');
-          if (/^[0-9a-f-]{36}$/i.test(quote || '')) target.searchParams.set('devis', quote);
-          location.replace(target.href);
-        }
-      });
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'text-action';
-      toggle.textContent = mode === 'signup' ? 'J’ai déjà un compte : me connecter' : 'Créer mon compte';
-      toggle.addEventListener('click', () => renderRequestAuth(mode === 'signup' ? 'signin' : 'signup'));
-      const original = host.querySelector('a[href="#connexion"]');
-      if (original) original.replaceWith(toggle);
-      else host.querySelector('.action-row')?.appendChild(toggle);
-      host.dataset.authMode = mode;
-    }
     function openLogin() {
       if (currentRequestUser) return;
-      if (byId('requestSignupArea')?.dataset.authMode !== 'signin') renderRequestAuth('signin');
-      byId('requestAccountStep').scrollIntoView({behavior:'smooth'});
-      byId('requestSignupAuthEmail')?.focus({preventScroll:true});
+      const panel = byId('connexion');
+      if (!panel) return;
+      panel.hidden = false;
+      panel.scrollIntoView({behavior:'smooth'});
+      byId('requestAuthEmail')?.focus({preventScroll:true});
     }
     document.addEventListener('click', event => {
       if (event.target.closest('a[href="#connexion"]')) {
@@ -469,14 +446,32 @@
       currentRequestUser = uid;
       byId('requestSubmit').disabled = !uid || byId('requestSubmit').dataset.sent === 'true';
       byId('requestVehiclePicker').hidden = !uid;
+      byId('connexion').hidden = Boolean(uid);
       byId('requestAccountStep').hidden = Boolean(uid);
       byId('requestSubmitStep').hidden = !uid;
+      const loginArea = byId('requestAccountArea');
       const signupArea = byId('requestSignupArea');
       if (!uid) {
-        if (!signupArea.hasChildNodes()) renderRequestAuth(location.hash === '#connexion' ? 'signin' : 'signup');
-        else if (location.hash === '#connexion' && signupArea.dataset.authMode !== 'signin') openLogin();
+        if (!loginArea.hasChildNodes()) {
+          loginArea.innerHTML = authBlock('request', 'signin');
+          bindAuth('request', async () => {
+            await renderAccount();
+            const params = new URLSearchParams(location.search);
+            if (params.get('retour') === 'interventions') {
+              const target = new URL('/mes-interventions', location.origin);
+              const quote = params.get('devis');
+              if (/^[0-9a-f-]{36}$/i.test(quote || '')) target.searchParams.set('devis',quote);
+              location.replace(target.href);
+            }
+          });
+        }
+        if (!signupArea.hasChildNodes()) {
+          signupArea.innerHTML = authBlock('requestSignup', 'signup');
+          bindAuth('requestSignup', renderAccount);
+        }
         return;
       }
+      loginArea.replaceChildren();
       signupArea.replaceChildren();
       byId('requestSignedEmail').textContent = session.user.email || '';
       const [profileResult,vehicleResult] = await Promise.all([
