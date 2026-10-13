@@ -135,3 +135,11 @@ test('customer journey fetches actual payment status and does not reference 24-h
  assert.match(source,/invoice_number,status,total,amount_paid,paid_at,pdf_path/);
  assert.doesNotMatch(source,/quittera la liste en cours au bout de 24 h/);
 });
+
+test('customer archive displays intervention label rather than quote title',async()=>{
+ const source=await read('client-journey.js');
+ assert.match(source,/const archiveTitle = g =>/);
+ assert.match(source,/Intervention \$\{g\.order\.order_number\}/);
+ assert.match(source,/esc\(archiveTitle\(g\)\)/);
+ assert.match(source,/archived \? archiveTitle\(g\) : g\.title/);
+});
