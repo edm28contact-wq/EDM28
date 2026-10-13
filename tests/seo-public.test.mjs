@@ -157,10 +157,10 @@ test('identité EDM28, favicon PNG et navigation visible sont cohérents', async
   const [seo, manifest, app] = await Promise.all([read('public-seo.js'), read('manifest.json'), read('api/app.js')]);
   const site = JSON.parse(manifest);
   assert.equal(site.short_name, 'EDM28');
-  assert.match(seo, /favicon-96\\.png/);
+  assert.match(seo, /favicon-96\.png/);
   assert.match(seo, /rel="icon"/);
   assert.match(seo, /rel="manifest"/);
-  assert.match(seo, /title: 'EDM28 \\| Garage automobile/);
+  assert.match(seo, /title: 'EDM28 \| Garage automobile/);
   for (const path of ['/freinage','/liaison-au-sol','/tarifs']) {
     assert.match(seo.split('const NAV_ITEMS = [')[1].split('];')[0], new RegExp(path));
   }
