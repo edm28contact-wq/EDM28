@@ -258,7 +258,7 @@
     if (!host) return;
 
     host.innerHTML = `
-      <section class="client-panel" id="connexion" hidden><div id="requestAccountArea"></div></section>
+      <section class="client-panel" id="connexion"><div id="requestAccountArea"></div></section>
       <section class="client-panel">
         <div class="section-kicker">1 · Véhicule</div>
         <h2>Votre véhicule</h2>
