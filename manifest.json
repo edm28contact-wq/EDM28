@@ -1,6 +1,6 @@
 {
-  "name": "EDM - Spécialiste du freinage",
-  "short_name": "EDM",
+  "name": "EDM28 – Garage automobile spécialiste freinage",
+  "short_name": "EDM28",
   "description": "Préparez votre demande d'entretien automobile et de freinage, consultez une estimation indicative et suivez vos documents.",
   "lang": "fr-FR",
   "start_url": "/",
@@ -9,8 +9,18 @@
   "orientation": "any",
   "background_color": "#080d10",
   "theme_color": "#b56d43",
-  "categories": ["business", "automotive", "utilities"],
+  "categories": [
+    "business",
+    "automotive",
+    "utilities"
+  ],
   "icons": [
+    {
+      "src": "/favicon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/logo-edm.svg",
       "sizes": "any",
