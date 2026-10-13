@@ -33,22 +33,40 @@
   async function notifyPublishedOrder(order) {
     const subject = `Ordre de réparation ${order.order_number || 'EDM28'} disponible`;
     const existing = await A().db.from('client_messages')
-      .select('id')
-      .eq('user_id', order.user_id)
-      .eq('service_request_id', order.service_request_id)
-      .eq('subject', subject)
-      .limit(1);
+      .select('id').eq('user_id', order.user_id)
+      .eq('service_request_id', order.service_request_id).eq('subject', subject).limit(1);
     if (existing.error) throw existing.error;
-    if (existing.data?.length) return;
-
-    const sent = await A().db.rpc('admin_send_message', {
-      p_user_id: order.user_id,
-      p_body: `Votre ordre de réparation ${order.order_number || 'EDM28'} est disponible dans votre espace client. Vous pouvez le consulter dans le suivi de votre demande et dans votre historique de documents.`,
-      p_service_request_id: order.service_request_id,
-      p_subject: subject,
-      p_ai_draft_id: null
+    if (!existing.data?.length) {
+      const sent = await A().db.rpc('admin_send_message', {
+        p_user_id: order.user_id,
+        p_body: `Votre ordre de réparation ${order.order_number || 'EDM28'} est disponible dans votre espace client. Consultez son PDF et signez-le dans « Mes interventions » avant l’intervention.`,
+        p_service_request_id: order.service_request_id,
+        p_subject: subject,
+        p_ai_draft_id: null
+      });
+      if (sent.error) throw sent.error;
+    }
+    const history = await A().db.from('outbound_notifications')
+      .select('status').eq('template_key','repair_order_published')
+      .eq('related_type','repair_order').eq('related_id',order.id)
+      .in('status',['pending','sent']).limit(1);
+    if (history.error) throw history.error;
+    if (history.data?.length) return;
+    const auth = await A().db.auth.getSession();
+    const token = auth.data?.session?.access_token;
+    if (!token) throw auth.error || new Error('Session administrateur expirée.');
+    const response = await fetch('/api/send-notification',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+      body:JSON.stringify({
+        userId:order.user_id,templateKey:'repair_order_published',relatedType:'repair_order',
+        relatedId:order.id,attachmentPath:order.pdf_path,
+        attachmentName:`ordre-de-reparation-${order.order_number || 'edm28'}.pdf`
+      })
     });
-    if (sent.error) throw sent.error;
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) throw new Error(result.error || 'Envoi de l’OR non confirmé.');
+    if (result.trackingWarning) throw new Error(result.trackingWarning);
   }
 
   async function publishPreparedOrder(orderId) {
@@ -152,6 +170,6 @@
   }
 
   function bind(){document.querySelector('[data-page="operations"]')?.addEventListener('click',()=>load().catch(e=>A().status('operationStatus',e.message||'Atelier indisponible.',true)));document.getElementById('operationRefresh')?.addEventListener('click',()=>load().catch(e=>A().status('operationStatus',e.message||'Actualisation impossible.',true)));}
-  window.EDMAdminOperations={load};
+  window.EDMAdminOperations={load, notifyPublishedOrder};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
