@@ -85,8 +85,8 @@ test('contact links stay intentional; guest signup follows vehicle and prestatio
  assert.match(seo,/data-client-only hidden/);assert.ok(client.indexOf('id="requestPlate"')<client.indexOf('id="requestServices"'));
  assert.ok(client.indexOf('id="requestServices"')<client.indexOf('id="requestAccountStep"'));
  assert.match(client,/byId\('requestAccountStep'\)\.hidden = Boolean\(uid\)/);
-  assert.match(client,/authBlock\('requestSignup', mode\)/);
-  assert.equal((client.match(/id="requestAccountArea"/g)||[]).length,0);assert.match(client,/id="requestSubmitStep" hidden/);assert.match(client,/id="requestPlate" required/);assert.match(client,/is-selected/);
+  assert.match(client,/authBlock\('requestSignup', 'signup'\)/);
+  assert.equal((client.match(/id="requestAccountArea"/g)||[]).length,1);assert.match(client,/id="requestSubmitStep" hidden/);assert.match(client,/id="requestPlate" required/);assert.match(client,/is-selected/);
  assert.match(journey,/location\.replace\(target.href\)/);assert.match(journey,/createSignedUrl\(path,120\)/);
 });
 
