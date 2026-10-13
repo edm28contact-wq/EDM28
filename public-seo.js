@@ -17,8 +17,11 @@ const DEFAULT_PUBLIC_BUSINESS = Object.freeze({
 
 const NAV_ITEMS = [
   ['/', 'Accueil'],
-  ['/mes-interventions', 'Mes interventions'],
+  ['/freinage', 'Freinage'],
+  ['/liaison-au-sol', 'Liaison au sol'],
+  ['/tarifs', 'Tarifs'],
   ['/fonctionnement', 'Fonctionnement'],
+  ['/mes-interventions', 'Mes interventions'],
   ['/transparence', 'Conseils & FAQ'],
   ['/a-propos', 'À propos'],
   ['/contact', 'Contact']
@@ -27,8 +30,8 @@ const NAV_ITEMS = [
 const PAGES = {
   accueil: {
     path: '/',
-    title: 'EDM28 (EDM) | Garage automobile à Saint-Lubin-de-la-Haye',
-    description: 'EDM28, aussi recherché comme EDM, est un garage automobile à Saint-Lubin-de-la-Haye (28410), spécialisé en freinage et liaison au sol.',
+    title: 'EDM28 | Garage automobile spécialisé freinage à Saint-Lubin-de-la-Haye',
+    description: 'EDM28, garage automobile à Saint-Lubin-de-la-Haye (28410). Spécialiste freinage et liaison au sol : tarifs de prestation, devis transparent et demande en ligne.',
     h1: 'EDM28 — garage automobile à Saint-Lubin-de-la-Haye',
     lede: 'EDM28, aussi identifié par le nom court EDM, est le garage automobile situé à Saint-Lubin-de-la-Haye (28410), spécialisé principalement en freinage et en prestations ciblées de liaison au sol. Nos forfaits comprennent la prestation et les consommables d’atelier, hors pièces de remplacement.',
     serviceType: 'Interventions automobiles EDM28',
@@ -459,6 +462,7 @@ function structuredData(page, origin, business) {
       alternateName: ['EDM', 'EDM 28', 'edm28.fr'],
       url: business.website || `${origin}/`,
       logo: `${origin}/logo-edm.svg`,
+      image: `${origin}/logo-edm.svg`,
       sameAs: [PUBLIC_GOOGLE_MAPS_URL, PUBLIC_GITHUB_URL],
       ...(business.email ? { email: business.email } : {}),
       ...(business.phone ? { telephone: business.phone } : {}),
@@ -636,6 +640,10 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <meta name="description" content="${esc(page.description)}">
 <meta name="robots" content="${page.path === '/mes-interventions' ? 'noindex,nofollow,noarchive' : 'index,follow,max-image-preview:large'}">
 <link rel="canonical" href="${esc(canonical)}">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
+<link rel="icon" type="image/svg+xml" href="/logo-edm.svg">
+<link rel="apple-touch-icon" href="/favicon-96.png">
+<link rel="manifest" href="/manifest.json">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="EDM28">
@@ -643,6 +651,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <meta property="og:description" content="${esc(page.description)}">
 <meta property="og:url" content="${esc(canonical)}">
 <meta property="og:image" content="${esc(origin)}/logo-edm.svg">
+<meta property="og:image:alt" content="Logo officiel EDM28, spécialiste du freinage">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
 <link rel="stylesheet" href="/public-site.css?v=9">
