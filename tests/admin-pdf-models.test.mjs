@@ -100,8 +100,9 @@ test('repair order explains technical work without inventing generic manufacture
   assert.match(source, /étrier et chape de frein/);
   assert.match(source, /Nettoyage des portées et surfaces de contact/);
   assert.match(source, /Aucune graisse sur les disques, plaquettes/);
-  assert.match(source, /couples et angles de serrage sont ceux du constructeur/);
-  assert.match(source, /aucune valeur générique n’est appliquée/);
+  assert.match(source, /Aucun serrage à la clé à choc/);
+  assert.match(source, /clé dynamométrique/);
+  assert.match(source, /au couple constructeur/);
   assert.match(source, /remise en appui de la pédale/);
   assert.match(source, /sans marge cachée sur les pièces/);
 });

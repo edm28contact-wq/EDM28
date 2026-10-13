@@ -118,7 +118,8 @@
     if (!updated.data?.length) throw new Error('La facture a déjà changé de statut.');
     const removed = await A().db.from('invoice_items').delete().eq('invoice_id', invoice.id);
     if (removed.error) throw removed.error;
-    const inserted = await A().db.from('invoice_items').insert(lines.map((line) => ({ ...line, invoice_id: invoice.id })));
+    // line_total is GENERATED ALWAYS by PostgreSQL; send only writable columns.
+    const inserted = await A().db.from('invoice_items').insert(lines.map(({ line_total, ...line }) => ({ ...line, invoice_id: invoice.id })));
     if (inserted.error) throw inserted.error;
     if (oldPdf) A().db.storage.from('repair-documents').remove([oldPdf]).catch(() => {});
   }

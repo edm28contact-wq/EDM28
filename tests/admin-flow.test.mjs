@@ -242,3 +242,20 @@ test('active invoice notification and audit relations are indexed', async () => 
     'idx_audit_log_actor_id'
   ]) assert.match(migration, new RegExp(`create index if not exists ${indexName}`));
 });
+
+test('generated invoice line_total is not inserted by frontend or finalization RPC', async () => {
+  const [editor, migration] = await Promise.all([
+    read('admin-invoice-actions.js'),
+    read('supabase/migrations/20261013225000_invoice_line_total_generated.sql')
+  ]);
+  assert.match(editor, /\(\{ line_total, \.\.\.line \}\) =>/);
+  assert.doesNotMatch(migration, /\bline_total\s*,\s*source_quote_item_id/);
+  assert.match(migration, /private\.admin_finalize_repair_order/);
+});
+
+test('workshop planning respects configured opening weekdays and exceptional days', async () => {
+  const source = await read('admin-planning.js');
+  assert.match(source, /business_hours/);
+  assert.match(source, /business_schedule_exceptions/);
+  assert.match(source, /openWeekdays\.has\(\(day\.getDay\(\) \+ 6\) % 7\)/);
+});

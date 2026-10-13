@@ -5,6 +5,17 @@
   const closeButton = document.querySelector('[data-menu-close]');
   if (!toggle || !drawer || !backdrop || !closeButton) return;
 
+  const marketingPaths = new Set(['/freinage','/liaison-au-sol','/tarifs','/fonctionnement']);
+  function updateClientNavigation(session) {
+    document.querySelectorAll('.desktop-nav a, .drawer-nav a').forEach(link => {
+      if (marketingPaths.has(link.getAttribute('href'))) link.hidden = Boolean(session?.user?.id);
+    });
+  }
+  if (window.supabase?.createClient && window.EDM_PUBLIC_SUPABASE?.url && window.EDM_PUBLIC_SUPABASE?.key) {
+    const c = window.supabase.createClient(window.EDM_PUBLIC_SUPABASE.url, window.EDM_PUBLIC_SUPABASE.key);
+    c.auth.getSession().then(({data}) => updateClientNavigation(data?.session)).catch(()=>{});
+    c.auth.onAuthStateChange((_event, session) => updateClientNavigation(session));
+  }
   let lastFocused = null;
 
   const setOpen = (open) => {

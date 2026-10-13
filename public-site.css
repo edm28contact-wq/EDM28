@@ -1149,3 +1149,6 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 .faq-ai-reset{display:block;margin:8px 0 0 auto;padding:9px 4px;color:#576273;background:transparent;border:0;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .faq-ai-form{margin-top:16px}
 @media(max-width:680px){.faq-ai-messages{height:380px;padding:12px}.faq-chat-message{max-width:92%;padding:12px}.faq-ai-choice{flex-grow:1;text-align:center}.faq-ai-row{grid-template-columns:minmax(0,1fr) auto}.faq-ai-row .cta{min-width:92px;width:auto}}
+
+/* Authenticated clients keep only relevant navigation; override link layout declarations. */
+.desktop-nav a[hidden], .drawer-nav a[hidden] { display: none !important; }
