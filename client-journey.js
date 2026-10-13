@@ -104,7 +104,7 @@
         ['appointments','id,vehicle_id,service_request_id,starts_at,ends_at,status,created_at'],
         ['repair_orders','id,vehicle_id,service_request_id,quote_id,appointment_id,order_number,status,pdf_path,created_at,updated_at,completed_at'],
         ['inspection_reports','id,vehicle_id,repair_order_id,report_number,observations,pdf_path,photo_paths,completed_at,created_at'],
-        ['invoices','id,vehicle_id,quote_id,repair_order_id,invoice_number,status,total,pdf_path,issued_at,created_at'],
+        ['invoices','id,vehicle_id,quote_id,repair_order_id,invoice_number,status,total,amount_paid,paid_at,pdf_path,issued_at,created_at'],
         ['interventions','id,repair_order_id,status,completed_at,client_summary,created_at'],
         ['booking_reservations','id,quote_id,user_id,vehicle_id,status,starts_at,ends_at,expires_at,proof_path,proof_received_at,review_deadline,review_note,created_at']
       ];
