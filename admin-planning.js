@@ -75,9 +75,9 @@
     const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d; }).filter(day => {
       const iso = [day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),String(day.getDate()).padStart(2,'0')].join('-');
       const exception = weekExceptions.find(item => iso >= item.starts_on && iso <= item.ends_on);
-      return exception ? exception.status === 'open' : openWeekdays.has(day.getDay());
+      return exception ? exception.status === 'open' : openWeekdays.has((day.getDay() + 6) % 7);
     });
-    grid.innerHTML = days.length ? `<div style="display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;overflow:auto">${days.map((day) => {
+    grid.innerHTML = days.length ? `<div style="display:grid;grid-template-columns:repeat(${Math.max(1, Math.min(days.length, 4))},minmax(220px,1fr));gap:10px;overflow:auto">${days.map((day) => {
       const sameDay = rows.filter((row) => new Date(row.starts_at).toDateString() === day.toDateString());
       return `<section class="card" style="min-width:220px;padding:10px"><h3>${esc(day.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'}))}</h3><div style="display:grid;gap:8px;margin-top:10px">${sameDay.map((row) => {
         const start = new Date(row.starts_at);
@@ -199,10 +199,11 @@
   async function load() {
     ensureUi();
     const end = new Date(weekStart); end.setDate(end.getDate() + 7);
+    const dayKey = (date) => [date.getFullYear(), String(date.getMonth()+1).padStart(2,'0'), String(date.getDate()).padStart(2,'0')].join('-');
     const [result, hours, exceptions] = await Promise.all([
       A().db.from('appointments').select('id,user_id,vehicle_id,starts_at,ends_at,status,notes,profiles(first_name,last_name,email,phone),vehicles(plate,brand,model),repair_orders(id,order_number,status,pdf_path,quote_id)').gte('starts_at', weekStart.toISOString()).lt('starts_at', end.toISOString()).order('starts_at'),
       A().db.from('business_hours').select('weekday,is_open'),
-      A().db.from('business_schedule_exceptions').select('starts_on,ends_on,status').lte('starts_on', end.toISOString().slice(0,10)).gte('ends_on', weekStart.toISOString().slice(0,10))
+      A().db.from('business_schedule_exceptions').select('starts_on,ends_on,status').lte('starts_on', dayKey(new Date(end.getTime() - 86400000))).gte('ends_on', dayKey(weekStart))
     ]);
     if (result.error || hours.error || exceptions.error) throw result.error || hours.error || exceptions.error;
     rows = result.data || [];
