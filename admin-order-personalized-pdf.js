@@ -112,7 +112,18 @@
   async function business() {
     const result = await A().db.from('business_configuration').select('*').eq('id', true).single();
     if (result.error) throw result.error;
-    return result.data || {};
+    const cfg = result.data || {};
+    if (cfg.workshop_signature_path) {
+      const image = await A().db.storage.from('repair-documents').download(cfg.workshop_signature_path);
+      if (image.error) throw new Error('Signature atelier introuvable : corrigez-la dans Infos entreprise.');
+      cfg.workshop_signature_data_url = await new Promise((resolve,reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Lecture de la signature atelier impossible.'));
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(image.data);
+      });
+    }
+    return cfg;
   }
 
   async function hydrate(seed) {
@@ -482,7 +493,23 @@
     doc.text('Je confirme les travaux et le montant ci-dessus.', 43, y + 40);
     doc.text('Nom / signature :', 43, y + 63);
     doc.text(`Réception prévue : ${appointment.starts_at ? dateTime(appointment.starts_at) : date(row.created_at)}`, 319, y + 40);
-    doc.text('Enguerrand D’Anglade — visa atelier :', 319, y + 63);
+    doc.text(clean(cfg.workshop_signer_name || 'Enguerrand D’Anglade'), 319, y + 59);
+    if (cfg.workshop_signature_data_url) {
+      const format = cfg.workshop_signature_data_url.startsWith('data:image/png;') ? 'PNG' : 'JPEG';
+      doc.addImage(cfg.workshop_signature_data_url, format, 319, y + 62, 105, 26);
+    } else {
+      doc.setFontSize(6.4);
+      doc.text('Signature atelier à renseigner dans Infos entreprise.', 319, y + 77);
+    }
+    doc.setDrawColor(...COPPER);
+    doc.roundedRect(439, y + 48, 115, 39, 4, 4);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.text('EDM28', 496, y + 61, { align:'center' });
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(6);
+    const stampDetails = [clean(cfg.siret) ? 'SIRET ' + clean(cfg.siret) : '', clean(cfg.city) || ''].filter(Boolean);
+    stampDetails.forEach((line, index) => doc.text(line, 496, y + 71 + index*7, {align:'center'}));
 
     if (quote.commercial_model === 'customer_supplied_v1') {
       doc.addPage();
@@ -528,6 +555,7 @@
   async function generatePersonalizedOrder(seed) {
     if (!seed?.id) throw new Error('Ordre de réparation introuvable.');
     const [row, cfg] = await Promise.all([hydrate(seed), business()]);
+    if (row.signed_at) throw new Error('Cet OR a été signé par le client : sa version PDF ne peut plus être modifiée.');
     const blob = buildOrderPdf(row, cfg);
     const path = `${row.user_id}/order/${row.id}-${Date.now()}.pdf`;
     const upload = await A().db.storage.from('repair-documents').upload(path, blob, { contentType: 'application/pdf', upsert: false });
