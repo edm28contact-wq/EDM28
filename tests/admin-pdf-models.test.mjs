@@ -126,7 +126,7 @@ test('customer signs own OR and stores signed PDF for historical viewing',async(
   read('client-journey.js'),read('supabase/migrations/20261013234500_company_assets_and_signed_orders.sql')
  ]);
  assert.match(journey,/data-or-canvas/);
- assert.match(journey,/PDFDocument\.load\(bytes\)/);
+ assert.match(journey,/functions\/v1\/client-sign-or/);
  assert.doesNotMatch(journey,/client_sign_repair_order/);
  assert.match(journey,/signed_at,client_signature_name/);
  assert.match(migration,/protect_signed_repair_order/);
