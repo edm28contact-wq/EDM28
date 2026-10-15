@@ -163,34 +163,17 @@
         if(!order?.pdf_path || order.signed_at)return status(article,'Cet OR n’est plus disponible à la signature.',true);
         busy=true;b.disabled=true;
         try{
-          if(!window.PDFLib)throw new Error('Moteur de signature indisponible. Rechargez cette page.');
-          const source=await client.storage.from('repair-documents').download(order.pdf_path);
-          if(source.error)throw source.error;
-          const bytes=await source.data.arrayBuffer();
-          const hash=async input=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',input))).map(x=>x.toString(16).padStart(2,'0')).join('');
-          const sourceHash=await hash(bytes);
-          const imageBytes=await (await fetch(canvas.toDataURL('image/png'))).arrayBuffer();
-          const imageHash=await hash(imageBytes);
-          const pdf=await window.PDFLib.PDFDocument.load(bytes);
-          const page=pdf.addPage([595,842]),font=await pdf.embedFont(window.PDFLib.StandardFonts.Helvetica);
-          const sign=await pdf.embedPng(imageBytes),sz=sign.scale(Math.min(360/sign.width,125/sign.height));
-          page.drawText('EDM28 - ACCORD DU CLIENT',{x:42,y:766,size:19,font});
-          page.drawText('Ordre de reparation : '+String(order.order_number||order.id).slice(0,90),{x:42,y:732,size:11,font});
-          page.drawText('Travaux et montant acceptes sur les pages precedentes.',{x:42,y:697,size:10,font});
-          page.drawText('Signataire : '+name.slice(0,105),{x:42,y:663,size:11,font});
-          const signedAt=new Date().toISOString();
-          page.drawText('Date UTC : '+signedAt,{x:42,y:641,size:10,font});
-          page.drawImage(sign,{x:42,y:450,width:sz.width,height:sz.height});
-          page.drawText('Signature dessinee et accord explicite depuis le compte EDM28.',{x:42,y:420,size:9,font});
-          page.drawText('Empreinte SHA-256 du document original :',{x:42,y:140,size:9,font});
-          page.drawText(sourceHash,{x:42,y:123,size:8,font});
-          const signedBlob=new Blob([await pdf.save()],{type:'application/pdf'});
-          if(signedBlob.size>10*1024*1024)throw new Error('Document trop volumineux pour la signature.');
-          const path=`${uid}/signed-orders/${order.id}/${crypto.randomUUID()}.pdf`;
-          const uploaded=await client.storage.from('repair-documents').upload(path,signedBlob,{contentType:'application/pdf',upsert:false});
-          if(uploaded.error)throw uploaded.error;
-          const stored=await client.rpc('client_sign_repair_order',{p_order_id:order.id,p_name:name,p_accepted:true,p_signed_pdf_path:path,p_source_sha256:sourceHash,p_signature_sha256:imageHash});
-          if(stored.error)throw stored.error;
+          const session=await getSession();
+          if(!session?.access_token) throw new Error('Reconnectez-vous pour signer.');
+          // Only the signature is submitted. The original PDF and signed
+          // version are retrieved and built exclusively by the trusted server.
+          const response=await fetch('https://ojjbnwpkfvzjfukgqddz.supabase.co/functions/v1/client-sign-or',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+            body:JSON.stringify({orderId:order.id,name,accepted:true,signature:canvas.toDataURL('image/png')})
+          });
+          const result=await response.json().catch(()=>({}));
+          if(!response.ok || !result.success) throw new Error(result.message||'Impossible de signer l’OR.');
           await render();
         }catch(error){status(article,error.message||'Signature impossible.',true);}
         finally{busy=false;b.disabled=false;}
