@@ -114,7 +114,7 @@ CREATE OR REPLACE FUNCTION public.client_sign_repair_order(
  p_source_sha256 text, p_signature_sha256 text
 ) RETURNS timestamptz
 LANGUAGE sql SECURITY DEFINER SET search_path=''
-AS $
+AS $$
  SELECT private.client_sign_repair_order(
    p_order_id,p_name,p_accepted,p_signed_pdf_path,p_source_sha256,p_signature_sha256
  )
