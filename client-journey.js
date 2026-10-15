@@ -167,13 +167,10 @@
           if(!session?.access_token) throw new Error('Reconnectez-vous pour signer.');
           // Only the signature is submitted. The original PDF and signed
           // version are retrieved and built exclusively by the trusted server.
-          const response=await fetch('https://ojjbnwpkfvzjfukgqddz.supabase.co/functions/v1/client-sign-or',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
-            body:JSON.stringify({orderId:order.id,name,accepted:true,signature:canvas.toDataURL('image/png')})
+          const { data:result, error:signError }=await client.functions.invoke('client-sign-or',{
+            body:{orderId:order.id,name,accepted:true,signature:canvas.toDataURL('image/png')}
           });
-          const result=await response.json().catch(()=>({}));
-          if(!response.ok || !result.success) throw new Error(result.message||'Impossible de signer l’OR.');
+          if(signError || !result?.success) throw new Error(result?.message||signError?.message||'Impossible de signer l’OR.');
           await render();
         }catch(error){status(article,error.message||'Signature impossible.',true);}
         finally{busy=false;b.disabled=false;}
