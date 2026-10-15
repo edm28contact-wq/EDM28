@@ -528,7 +528,9 @@
   async function generatePersonalizedOrder(seed) {
     if (!seed?.id) throw new Error('Ordre de réparation introuvable.');
     const [row, cfg] = await Promise.all([hydrate(seed), business()]);
-    const blob = buildOrderPdf(row, cfg);
+    if (row.signed_at) throw new Error('OR signé par le client : régénération interdite.');
+    const baseBlob = buildOrderPdf(row, cfg);
+    const blob = window.EDMCompanyPdfAssets?.apply ? await window.EDMCompanyPdfAssets.apply(baseBlob,'order',cfg) : baseBlob;
     const path = `${row.user_id}/order/${row.id}-${Date.now()}.pdf`;
     const upload = await A().db.storage.from('repair-documents').upload(path, blob, { contentType: 'application/pdf', upsert: false });
     if (upload.error) throw upload.error;

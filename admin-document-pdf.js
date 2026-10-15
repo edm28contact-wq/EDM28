@@ -138,7 +138,8 @@
     if (!window.EDMPdfLite?.buildDocument) throw new Error('Le moteur des modèles PDF EDM28 n’est pas chargé. Rechargez le back-office.');
     if (!typeLabels[type]) throw new Error('Type de document PDF inconnu.');
     const complete = await hydrate(type, row);
-    const blob = window.EDMPdfLite.buildDocument(type, { cfg, row: complete });
+    const baseBlob = window.EDMPdfLite.buildDocument(type, { cfg, row: complete });
+    const blob = window.EDMCompanyPdfAssets?.apply ? await window.EDMCompanyPdfAssets.apply(baseBlob,type,cfg) : baseBlob;
     const path = `${complete.user_id}/${type}/${complete.id}-${Date.now()}.pdf`;
     const upload = await A().db.storage.from('repair-documents').upload(path, blob, { contentType: 'application/pdf', upsert: false });
     if (upload.error) throw upload.error;

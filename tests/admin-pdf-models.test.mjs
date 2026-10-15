@@ -106,3 +106,42 @@ test('repair order explains technical work without inventing generic manufacture
   assert.match(source, /remise en appui de la pédale/);
   assert.match(source, /sans marge cachée sur les pièces/);
 });
+
+test('company stamp and owner signature are uploaded privately and embedded in the right PDF outputs',async()=>{
+ const [admin,assets,documentPdf,order,inspection]=await Promise.all([
+  read('admin-business.js'),read('admin-company-pdf-assets.js'),read('admin-document-pdf.js'),
+  read('admin-order-personalized-pdf.js'),read('admin-inspection-complete-pdf.js')
+ ]);
+ assert.match(admin,/workshop_stamp_path/);
+ assert.match(admin,/workshop_signature_path/);
+ assert.match(admin,/repair-documents/);
+ assert.match(assets,/type!=='quote'/);
+ assert.match(assets,/pdf\.addPage/);
+ assert.match(documentPdf,/EDMCompanyPdfAssets\.apply\(baseBlob,type,cfg\)/);
+ assert.match(order,/EDMCompanyPdfAssets\.apply\(baseBlob,'order',cfg\)/);
+ assert.match(inspection,/EDMCompanyPdfAssets\.apply\(baseBlob,'inspection',data\.cfg\)/);
+});
+test('customer signs own OR and stores signed PDF for historical viewing',async()=>{
+ const [journey,migration]=await Promise.all([
+  read('client-journey.js'),read('supabase/migrations/20261013234500_company_assets_and_signed_orders.sql')
+ ]);
+ assert.match(journey,/data-or-canvas/);
+ assert.match(journey,/client\.functions\.invoke\('client-sign-or'/);
+ assert.doesNotMatch(journey,/client_sign_repair_order/);
+ assert.match(journey,/signed_at,client_signature_name/);
+ assert.match(migration,/protect_signed_repair_order/);
+ assert.match(migration,/client_signature_original_pdf_path/);
+ assert.match(migration,/edm28_signed_orders_no_update/);
+ assert.match(migration,/client_signature_final_sha256/);
+});
+
+test('signed OR is produced only by the trusted server from stored original', async()=>{
+ const [client,edge] = await Promise.all([read('client-journey.js'),read('supabase/functions/client-sign-or/index.ts')]);
+ assert.doesNotMatch(client,/storage\.from\('repair-documents'\)\.upload\(/);
+ assert.match(client,/canvas\.toDataURL\('image\/png'\)/);
+ assert.match(edge,/PDFDocument\.load\(sourceBytes/);
+ assert.match(edge,/auth\/v1\/user/);
+ assert.match(edge,/signed_at=is\.null/);
+ assert.match(edge,/x-upsert/);
+ assert.match(edge,/client_signature_final_sha256/);
+});

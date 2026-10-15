@@ -475,7 +475,9 @@
     await addSummaryAndSignature(doc, data, y);
     await addPhotos(doc, data);
     footer(doc, data);
-    return { blob: doc.output('blob'), data };
+    const baseBlob = doc.output('blob');
+    const blob = window.EDMCompanyPdfAssets?.apply ? await window.EDMCompanyPdfAssets.apply(baseBlob,'inspection',data.cfg) : baseBlob;
+    return { blob, data };
   }
 
   async function generateInspection(seed) {
