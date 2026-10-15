@@ -43,6 +43,9 @@
       if(p.key==='held')actions=`<p>Cr\u00e9neau choisi : <strong>${esc(dateTime(r.starts_at))}</strong>.</p><p>Joignez votre justificatif avant le <strong>${esc(dateTime(r.expires_at))}</strong>. Sans justificatif, le cr\u00e9neau sera lib\u00e9r\u00e9. Le rendez-vous n\u2019est pas encore confirm\u00e9.</p><div class="journey-proof"><label>Joindre mon justificatif d\u2019achat<input type="file" data-proof-file accept="application/pdf,image/jpeg,image/png"></label><small>PDF, JPG ou PNG, 10 Mo maximum. Masquez les informations de paiement inutiles.</small><button class="primary-action" type="button" data-proof-submit="${esc(r.id)}">Envoyer pour validation sous 24 h</button></div>`;
       if(p.key==='review')actions=`<p>${r.proof_path ? 'Justificatif re\u00e7u.' : 'Aucun achat de pi\u00e8ce requis pour cette prestation.'} ${p.overdue?'La v\u00e9rification prend plus de temps que pr\u00e9vu. Votre cr\u00e9neau reste conserv\u00e9 ; contactez-nous en cas de besoin.':`EDM28 doit le v\u00e9rifier avant le ${esc(dateTime(r.review_deadline))}.`}</p><p>Vous recevrez un email apr\u00e8s validation. Date demand\u00e9e : ${esc(dateTime(r.starts_at))}.</p>`;
       if(p.key==='confirmed')actions=`<p>Votre rendez-vous est confirm\u00e9${r.starts_at?' le '+esc(dateTime(r.starts_at)):''}. Apportez les pi\u00e8ces indiqu\u00e9es dans le devis.</p><p>L\u2019ordre de r\u00e9paration d\u00e9crit les travaux pr\u00e9vus. Vous le retrouvez ci-dessous.</p>`;
+      const signable=g.orders.find(o=>o.pdf_path && !o.signed_at && ['ready','in_progress'].includes(o.status));
+      if(!archived && signable) actions += `<div class="card" style="padding:14px;margin:14px 0"><h4>Signer l’ordre de réparation</h4><p>Ouvrez le PDF de l’OR ci-dessus et vérifiez les travaux et le montant avant de signer. Dessinez votre signature ci-dessous.</p><canvas width="500" height="150" data-or-canvas="${esc(signable.id)}" style="display:block;max-width:100%;width:100%;height:150px;touch-action:none;border:1px solid #999;border-radius:9px;background:white"></canvas><button class="secondary-action" type="button" data-clear-or="${esc(signable.id)}">Effacer ma signature</button><label>Prénom et nom<input type="text" data-or-name autocomplete="name" maxlength="160" placeholder="Prénom et nom du compte"></label><label><input type="checkbox" data-or-consent> J’ai lu l’OR, et j’accepte les travaux et le montant indiqués. Je confirme signer ce document.</label><button class="primary-action" type="button" data-sign-or="${esc(signable.id)}">Signer et enregistrer l’OR final</button></div>`;
+      if(g.orders.some(o=>o.signed_at)) actions += '<p class="notice">Ordre de réparation signé. La version signée est disponible dans vos documents et sera conservée dans l’historique.</p>';
       if(p.key==='finished')actions='<p>Votre intervention est terminée. Elle reste dans les dossiers en cours jusqu’à l’encaissement intégral de sa facture.</p>';
       if(p.key==='paid')actions='<p>Intervention intégralement réglée. Le dossier et ses documents sont conservés dans votre historique par véhicule.</p>';
       return `<article class="journey-card is-${p.tone}" data-case="${esc(g.id)}" data-quote-id="${esc(q.id||'')}"><p class="journey-status">${esc(archived?'Historique':p.label)}</p><h3>${esc(archived ? archiveTitle(g) : g.title)}</h3>${g.date?`<p>${esc(day(g.date))}</p>`:''}${q.id?`<p>Prestations EDM28 : <strong>${money(q.total)}</strong> \u2014 consommables compris, hors pi\u00e8ces.</p>`:''}${files(g)}${actions}${basket(q)}${r.proof_path?`<p><button class="text-action" type="button" data-file="${esc(r.proof_path)}" data-bucket="purchase-proofs">Mon justificatif d\u2019achat</button></p>`:''}<div data-journey-message role="status" aria-live="polite"></div></article>`;
@@ -104,7 +107,7 @@
         ['service_requests','id,vehicle_id,status,services,notes,submitted_at,created_at'],
         ['quotes','id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,created_at,valid_until,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts,price_details,price_observed_at)'],
         ['appointments','id,vehicle_id,service_request_id,starts_at,ends_at,status,created_at'],
-        ['repair_orders','id,vehicle_id,service_request_id,quote_id,appointment_id,order_number,status,pdf_path,created_at,updated_at,completed_at'],
+        ['repair_orders','id,vehicle_id,service_request_id,quote_id,appointment_id,order_number,status,pdf_path,signed_at,client_signature_name,created_at,updated_at,completed_at'],
         ['inspection_reports','id,vehicle_id,repair_order_id,report_number,observations,pdf_path,photo_paths,completed_at,created_at'],
         ['invoices','id,vehicle_id,quote_id,repair_order_id,invoice_number,status,total,amount_paid,paid_at,pdf_path,issued_at,created_at'],
         ['interventions','id,repair_order_id,status,completed_at,client_summary,created_at'],
@@ -137,6 +140,61 @@
         finally{busy=false;b.disabled=false;}
       }));
       host.querySelectorAll('[data-planning]').forEach(b=>b.addEventListener('click',()=>void showPlanning(b)));
+      host.querySelectorAll('[data-or-canvas]').forEach(canvas=>{
+        const ctx=canvas.getContext('2d');
+        ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#111827';
+        let drawing=false;
+        const point=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};};
+        canvas.addEventListener('pointerdown',e=>{e.preventDefault();drawing=true;canvas.dataset.drawn='true';canvas.setPointerCapture(e.pointerId);const p=point(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+.1,p.y+.1);ctx.stroke();});
+        canvas.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const p=point(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+        canvas.addEventListener('pointerup',()=>{drawing=false;});
+        canvas.addEventListener('pointercancel',()=>{drawing=false;});
+      });
+      host.querySelectorAll('[data-clear-or]').forEach(b=>b.addEventListener('click',()=>{
+        const canvas=host.querySelector('[data-or-canvas="'+b.dataset.clearOr+'"]');
+        if(canvas){canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);delete canvas.dataset.drawn;}
+      }));
+      host.querySelectorAll('[data-sign-or]').forEach(b=>b.addEventListener('click',async()=>{
+        if(busy)return;
+        const article=b.closest('[data-case]'),canvas=article.querySelector('[data-or-canvas="'+b.dataset.signOr+'"]');
+        const name=article.querySelector('[data-or-name]')?.value.trim();
+        if(!canvas?.dataset.drawn || !name || !article.querySelector('[data-or-consent]')?.checked)return status(article,'Dessinez votre signature, saisissez votre nom et cochez votre accord.',true);
+        const order=orders.find(o=>o.id===b.dataset.signOr);
+        if(!order?.pdf_path || order.signed_at)return status(article,'Cet OR n’est plus disponible à la signature.',true);
+        busy=true;b.disabled=true;
+        try{
+          if(!window.PDFLib)throw new Error('Moteur de signature indisponible. Rechargez cette page.');
+          const source=await client.storage.from('repair-documents').download(order.pdf_path);
+          if(source.error)throw source.error;
+          const bytes=await source.data.arrayBuffer();
+          const hash=async input=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',input))).map(x=>x.toString(16).padStart(2,'0')).join('');
+          const sourceHash=await hash(bytes);
+          const imageBytes=await (await fetch(canvas.toDataURL('image/png'))).arrayBuffer();
+          const imageHash=await hash(imageBytes);
+          const pdf=await window.PDFLib.PDFDocument.load(bytes);
+          const page=pdf.addPage([595,842]),font=await pdf.embedFont(window.PDFLib.StandardFonts.Helvetica);
+          const sign=await pdf.embedPng(imageBytes),sz=sign.scale(Math.min(360/sign.width,125/sign.height));
+          page.drawText('EDM28 - ACCORD DU CLIENT',{x:42,y:766,size:19,font});
+          page.drawText('Ordre de reparation : '+String(order.order_number||order.id).slice(0,90),{x:42,y:732,size:11,font});
+          page.drawText('Travaux et montant acceptes sur les pages precedentes.',{x:42,y:697,size:10,font});
+          page.drawText('Signataire : '+name.slice(0,105),{x:42,y:663,size:11,font});
+          const signedAt=new Date().toISOString();
+          page.drawText('Date UTC : '+signedAt,{x:42,y:641,size:10,font});
+          page.drawImage(sign,{x:42,y:450,width:sz.width,height:sz.height});
+          page.drawText('Signature dessinee et accord explicite depuis le compte EDM28.',{x:42,y:420,size:9,font});
+          page.drawText('Empreinte SHA-256 du document original :',{x:42,y:140,size:9,font});
+          page.drawText(sourceHash,{x:42,y:123,size:8,font});
+          const signedBlob=new Blob([await pdf.save()],{type:'application/pdf'});
+          if(signedBlob.size>10*1024*1024)throw new Error('Document trop volumineux pour la signature.');
+          const path=`${uid}/signed-orders/${order.id}/${crypto.randomUUID()}.pdf`;
+          const uploaded=await client.storage.from('repair-documents').upload(path,signedBlob,{contentType:'application/pdf',upsert:false});
+          if(uploaded.error)throw uploaded.error;
+          const stored=await client.rpc('client_sign_repair_order',{p_order_id:order.id,p_name:name,p_accepted:true,p_signed_pdf_path:path,p_source_sha256:sourceHash,p_signature_sha256:imageHash});
+          if(stored.error)throw stored.error;
+          await render();
+        }catch(error){status(article,error.message||'Signature impossible.',true);}
+        finally{busy=false;b.disabled=false;}
+      }));
       host.querySelectorAll('[data-proof-submit]').forEach(b=>b.addEventListener('click',()=>void sendProof(b)));
       const target=new URLSearchParams(location.search).get('devis');
       if(!scrolled && /^[0-9a-f-]{36}$/i.test(target||'')){host.querySelector(`[data-quote-id="${target}"]`)?.scrollIntoView({block:'start'});scrolled=true;}
