@@ -1,8 +1,9 @@
-import { PDFDocument, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1?target=denonext';
+import { PDFDocument, StandardFonts } from 'npm:pdf-lib@1.17.1';
 
-const origin = 'https://edm28.fr';
+const allowedOrigins = new Set(['https://edm28.fr','https://www.edm28.fr']);
+const requestOrigin = (request: Request) => allowedOrigins.has(request.headers.get('Origin') || '') ? request.headers.get('Origin')! : 'https://edm28.fr';
 const cors = {
-  'Access-Control-Allow-Origin': origin,
+  'Access-Control-Allow-Origin': 'https://edm28.fr',
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Vary': 'Origin',
@@ -28,9 +29,10 @@ async function getJson(response: Response) {
   return data;
 }
 Deno.serve(async (request: Request) => {
+  cors['Access-Control-Allow-Origin'] = requestOrigin(request);
   if (request.method === 'OPTIONS') return new Response(null,{status:204,headers:cors});
   if (request.method !== 'POST') return respond(405,'Méthode non autorisée.');
-  if (request.headers.get('Origin') !== origin) return respond(403,'Origine non autorisée.');
+  if (!allowedOrigins.has(request.headers.get('Origin') || '')) return respond(403,'Origine non autorisée.');
   if (Number(request.headers.get('content-length') || 0) > 500_000) return respond(413,'Signature trop volumineuse.');
   const url = env('SUPABASE_URL'), pub = env('SUPABASE_ANON_KEY'), secret = env('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !pub || !secret) return respond(503,'Service de signature non configuré.');
@@ -62,7 +64,7 @@ Deno.serve(async (request: Request) => {
     const orders = await getJson(await query('repair_orders',`id=eq.${orderId}&user_id=eq.${userId}&select=id,user_id,order_number,pdf_path,signed_at,status,visible_to_client`));
     const order=orders[0];
     if(!order || order.signed_at || !order.visible_to_client || !['ready','in_progress'].includes(order.status) ||
-      !order.pdf_path || !order.pdf_path.startsWith(`${userId}/`))
+      !order.pdf_path || !order.pdf_path.startsWith(`${userId}/order/`))
       return respond(409,'Cet ordre de réparation ne peut pas être signé.');
     const profiles = await getJson(await query('profiles',`id=eq.${userId}&select=first_name,last_name`));
     const expected = [profiles[0]?.first_name, profiles[0]?.last_name].filter(Boolean).join(' ').trim().replace(/\s+/g,' ');
