@@ -476,7 +476,7 @@
     await addPhotos(doc, data);
     footer(doc, data);
     const baseBlob = doc.output('blob');
-    const blob = await window.EDMCompanyPdfAssets.apply(baseBlob,'inspection',data.cfg);
+    const blob = window.EDMCompanyPdfAssets?.apply ? await window.EDMCompanyPdfAssets.apply(baseBlob,'inspection',data.cfg) : baseBlob;
     return { blob, data };
   }
 
