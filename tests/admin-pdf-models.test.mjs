@@ -106,3 +106,31 @@ test('repair order explains technical work without inventing generic manufacture
   assert.match(source, /remise en appui de la pédale/);
   assert.match(source, /sans marge cachée sur les pièces/);
 });
+
+test('company stamp and owner signature are uploaded privately and embedded in the right PDF outputs',async()=>{
+ const [admin,assets,documentPdf,order,inspection]=await Promise.all([
+  read('admin-business.js'),read('admin-company-pdf-assets.js'),read('admin-document-pdf.js'),
+  read('admin-order-personalized-pdf.js'),read('admin-inspection-complete-pdf.js')
+ ]);
+ assert.match(admin,/workshop_stamp_path/);
+ assert.match(admin,/workshop_signature_path/);
+ assert.match(admin,/repair-documents/);
+ assert.match(assets,/type!=='quote'/);
+ assert.match(assets,/pdf\.addPage/);
+ assert.match(documentPdf,/EDMCompanyPdfAssets\.apply\(baseBlob,type,cfg\)/);
+ assert.match(order,/EDMCompanyPdfAssets\.apply\(baseBlob,'order',cfg\)/);
+ assert.match(inspection,/EDMCompanyPdfAssets\.apply\(baseBlob,'inspection',data\.cfg\)/);
+});
+test('customer signs own OR and stores signed PDF for historical viewing',async()=>{
+ const [journey,migration]=await Promise.all([
+  read('client-journey.js'),read('supabase/migrations/20261013234500_company_assets_and_signed_orders.sql')
+ ]);
+ assert.match(journey,/data-or-canvas/);
+ assert.match(journey,/PDFDocument\.load\(bytes\)/);
+ assert.match(journey,/client_sign_repair_order/);
+ assert.match(journey,/signed_at,client_signature_name/);
+ assert.match(migration,/protect_signed_repair_order/);
+ assert.match(migration,/client_signature_original_pdf_path/);
+ assert.match(migration,/repair_documents_client_signed_or_insert/);
+ assert.match(migration,/signed_at=v_at/);
+});
