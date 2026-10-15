@@ -127,10 +127,21 @@ test('customer signs own OR and stores signed PDF for historical viewing',async(
  ]);
  assert.match(journey,/data-or-canvas/);
  assert.match(journey,/PDFDocument\.load\(bytes\)/);
- assert.match(journey,/client_sign_repair_order/);
+ assert.doesNotMatch(journey,/client_sign_repair_order/);
  assert.match(journey,/signed_at,client_signature_name/);
  assert.match(migration,/protect_signed_repair_order/);
  assert.match(migration,/client_signature_original_pdf_path/);
- assert.match(migration,/repair_documents_client_signed_or_insert/);
- assert.match(migration,/signed_at=v_at/);
+ assert.match(migration,/edm28_signed_orders_no_update/);
+ assert.match(migration,/client_signature_final_sha256/);
+});
+
+test('signed OR is produced only by the trusted server from stored original', async()=>{
+ const [client,edge] = await Promise.all([read('client-journey.js'),read('supabase/functions/client-sign-or/index.ts')]);
+ assert.doesNotMatch(client,/storage\.from\('repair-documents'\)\.upload\(/);
+ assert.match(client,/canvas\.toDataURL\('image\/png'\)/);
+ assert.match(edge,/PDFDocument\.load\(sourceBytes/);
+ assert.match(edge,/auth\/v1\/user/);
+ assert.match(edge,/signed_at=is\.null/);
+ assert.match(edge,/x-upsert/);
+ assert.match(edge,/client_signature_final_sha256/);
 });
