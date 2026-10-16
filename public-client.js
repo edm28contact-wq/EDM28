@@ -116,7 +116,14 @@
         }
       }
     });
-    if (error) throw error;
+    if (error) {
+      // Supabase may mask database uniqueness errors as an Auth API error.
+      // Do not reveal whether a name, phone or email belongs to another client.
+      if (/database error saving new user|duplicate|already registered|unique constraint|23505/i.test(error.message || '')) {
+        throw new Error('Inscription impossible avec ces coordonnées. Si vous avez déjà un compte, connectez-vous ou utilisez « Mot de passe oublié ». Sinon, contactez EDM28.');
+      }
+      throw error;
+    }
     return data;
   }
 
