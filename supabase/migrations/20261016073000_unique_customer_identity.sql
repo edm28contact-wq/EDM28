@@ -39,7 +39,7 @@ BEGIN
    OR new.email IS DISTINCT FROM old.email;
  IF NOT changed THEN RETURN new; END IF;
  IF (new_first='' OR new_last='' OR new_phone='' OR new_email='')
-   AND TG_OP='INSERT' AND auth.uid() IS NOT NULL THEN
+   AND TG_OP='INSERT' THEN
    RAISE EXCEPTION 'Prénom, nom, téléphone et email requis.' USING ERRCODE='23514';
  END IF;
 
@@ -77,6 +77,22 @@ DROP TRIGGER IF EXISTS edm28_guard_profile_identity ON public.profiles;
 CREATE TRIGGER edm28_guard_profile_identity
 BEFORE INSERT OR UPDATE OF first_name,last_name,phone,email ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION private.edm28_guard_profile_identity();
+
+CREATE OR REPLACE FUNCTION private.edm28_protect_profile_role()
+RETURNS trigger LANGUAGE plpgsql SET search_path=''
+AS $
+BEGIN
+  IF new.role IS DISTINCT FROM old.role OR new.id IS DISTINCT FROM old.id THEN
+    IF auth.uid() IS NOT NULL THEN
+      RAISE EXCEPTION 'Modification du rôle ou de l’identifiant interdite.' USING ERRCODE='42501';
+    END IF;
+  END IF;
+  RETURN new;
+END $;
+DROP TRIGGER IF EXISTS edm28_protect_profile_role ON public.profiles;
+CREATE TRIGGER edm28_protect_profile_role
+BEFORE UPDATE OF role,id ON public.profiles
+FOR EACH ROW EXECUTE FUNCTION private.edm28_protect_profile_role();
 
 COMMENT ON FUNCTION private.edm28_guard_profile_identity() IS
   'Customer identity duplication guard; does not expose or alter existing client records.';
