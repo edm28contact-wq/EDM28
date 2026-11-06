@@ -40,8 +40,9 @@ Deno.serve(async(request)=>{
       ||c.code_hash!==codeHash||q.status!=='sent'||q.visible_to_client!==true
       ||q.pdf_path!==c.source_path||name.toLocaleLowerCase('fr')!==signer.toLocaleLowerCase('fr'))
    return json(409,{success:false,error:'Devis ou demande de signature non valide'});
-  const endDay=q.valid_until?new Date(q.valid_until+'T23:59:59.999+01:00').getTime():Infinity;
-  if(Date.now()>endDay)return json(409,{success:false,error:'Devis expire'});
+  const paris=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+  const parisDay=[paris.year,paris.month,paris.day].join('-');
+  if(q.valid_until && q.valid_until<parisDay)return json(409,{success:false,error:'Devis expire'});
   const path=c.source_path;
   if(!path?.startsWith(q.user_id+'/quote/'))return json(422,{success:false,error:'Chemin du devis invalide'});
   const encoded=path.split('/').map(encodeURIComponent).join('/');
