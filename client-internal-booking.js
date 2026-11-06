@@ -207,9 +207,14 @@
     const q = currentState?.quote;
     if (!q) return;
     const label = response === 'accepted' ? 'accepter' : 'refuser';
-    if (!window.confirm(`Confirmer : ${label} ce devis ?`)) return;
-    const { error } = await supabaseClient.rpc('client_respond_quote', { p_quote_id:q.id, p_response:response });
-    if (error) throw error;
+    if (response === 'accepted') {
+      if (!window.EDMQuoteSignature) throw new Error('Service de signature indisponible.');
+      if (!(await window.EDMQuoteSignature.sign(supabaseClient,q.id))) return;
+    } else {
+      if (!window.confirm(`Confirmer : ${label} ce devis ?`)) return;
+      const { error } = await supabaseClient.rpc('client_respond_quote', { p_quote_id:q.id, p_response:response });
+      if (error) throw error;
+    }
     selectedSlot = '';
     await load();
   }
