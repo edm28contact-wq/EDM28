@@ -22,7 +22,7 @@
       }catch(error){tab?.close();throw error;}
     }
     function files(g){
-      const rows=[...g.quotes.map(q=>['Devis '+(q.quote_number||''),q.pdf_path]),...g.orders.map(o=>['Ordre de r\u00e9paration '+(o.order_number||''),o.pdf_path]),...g.invoices.map(i=>['Facture '+(i.invoice_number||''),i.pdf_path]),...g.inspections.map(i=>['Compte rendu du contr\u00f4le',i.pdf_path])];
+      const rows=[...g.quotes.flatMap(q=>[['Devis original '+(q.quote_number||''),q.pdf_path],...(q.client_signed_pdf_path?[['Devis signé '+(q.quote_number||''),q.client_signed_pdf_path]]:[])]),...g.orders.map(o=>['Ordre de r\u00e9paration '+(o.order_number||''),o.pdf_path]),...g.invoices.map(i=>['Facture '+(i.invoice_number||''),i.pdf_path]),...g.inspections.map(i=>['Compte rendu du contr\u00f4le',i.pdf_path])];
       for(const i of g.inspections) for(const [index,p] of (Array.isArray(i.photo_paths)?i.photo_paths:[]).entries()) {const path=typeof p==='string'?p:p?.path;if(path)rows.push(['Photo '+(index+1),path]);}
       return '<div class="journey-files">'+rows.filter(([,path])=>path).map(([label,path])=>`<button class="text-action" type="button" data-file="${esc(path)}">${esc(label)}</button>`).join('')+'</div>';
     }
@@ -105,7 +105,7 @@
       const requests=[
         ['vehicles','id,plate,brand,model,year,energy,mileage,created_at'],
         ['service_requests','id,vehicle_id,status,services,notes,submitted_at,created_at'],
-        ['quotes','id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,created_at,valid_until,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts,price_details,price_observed_at)'],
+        ['quotes','id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,client_signed_pdf_path,client_signed_at,created_at,valid_until,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts,price_details,price_observed_at)'],
         ['appointments','id,vehicle_id,service_request_id,starts_at,ends_at,status,created_at'],
         ['repair_orders','id,vehicle_id,service_request_id,quote_id,appointment_id,order_number,status,pdf_path,signed_at,client_signature_name,created_at,updated_at,completed_at'],
         ['inspection_reports','id,vehicle_id,repair_order_id,report_number,observations,pdf_path,photo_paths,completed_at,created_at'],
