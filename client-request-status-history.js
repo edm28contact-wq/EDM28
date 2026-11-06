@@ -224,6 +224,10 @@
 
   async function respondToQuote(id, status) {
     if (!['accepted', 'refused'].includes(status)) return;
+    if (status === 'accepted') {
+      if (!window.EDMQuoteSignature) throw new Error('Service de signature indisponible.');
+      return window.EDMQuoteSignature.sign(supabaseClient,id);
+    }
     const result = await supabaseClient.rpc('client_respond_quote', { p_quote_id: id, p_response: status });
     if (result.error) throw result.error;
   }
