@@ -63,7 +63,7 @@
     const [vehicles, requests, quotes, orders, appointments, invoices, inspections] = await Promise.all([
       supabaseClient.from('vehicles').select('id,plate,brand,model,year,energy,engine,mileage,created_at').eq('user_id', currentUser.id).order('created_at'),
       supabaseClient.from('service_requests').select('id,vehicle_id,status,selected_basket,services,notes,totals,j7_accepted,refuse_control,submitted_at,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
-      supabaseClient.from('quotes').select('id,vehicle_id,service_request_id,quote_number,status,title,description,subtotal,discount,total,valid_until,pdf_path,created_at,quote_items(designation,description,quantity,unit_price,total)').eq('user_id', currentUser.id).eq('visible_to_client', true).order('created_at', { ascending: false }),
+      supabaseClient.from('quotes').select('id,vehicle_id,service_request_id,quote_number,status,title,description,subtotal,discount,total,valid_until,pdf_path,client_signed_pdf_path,created_at,quote_items(designation,description,quantity,unit_price,total)').eq('user_id', currentUser.id).eq('visible_to_client', true).order('created_at', { ascending: false }),
       supabaseClient.from('repair_orders').select('id,vehicle_id,service_request_id,quote_id,appointment_id,order_number,status,mileage_in,visible_condition,customer_items,authorized_work,pdf_path,signed_at,created_at').eq('user_id', currentUser.id).eq('visible_to_client', true).order('created_at', { ascending: false }),
       supabaseClient.from('appointments').select('id,vehicle_id,service_request_id,starts_at,ends_at,status,notes,created_at').eq('user_id', currentUser.id).eq('visible_to_client', true).order('starts_at', { ascending: false }),
       supabaseClient.from('invoices').select('id,vehicle_id,quote_id,repair_order_id,invoice_number,status,title,description,subtotal,discount,total,amount_paid,payment_method,issued_at,due_at,paid_at,pdf_path,created_at,invoice_items(description,quantity,unit_price,line_total)').eq('user_id', currentUser.id).eq('visible_to_client', true).order('created_at', { ascending: false }),
@@ -115,7 +115,7 @@
         { label: 'Total', value: money(row.total) },
         { label: 'Valable jusqu’au', value: row.valid_until ? new Date(`${row.valid_until}T00:00:00`).toLocaleDateString('fr-FR') : '' }
       ],
-      documents: [{ label: 'Ouvrir le devis PDF', path: row.pdf_path }]
+      documents: [{ label: 'Devis original (PDF)', path: row.pdf_path },...(row.client_signed_pdf_path ? [{ label: 'Devis signé (PDF)', path: row.client_signed_pdf_path }] : [])]
     }));
 
     (orders.data || []).forEach((row) => add(row.vehicle_id, {
