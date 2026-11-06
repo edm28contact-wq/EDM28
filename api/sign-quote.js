@@ -35,7 +35,8 @@ async function getQuote(user,id){
  if(!quote||quote.status!=='sent'||!quote.visible_to_client||
     !quote.pdf_path?.startsWith(user.id+'/quote/'))
     throw new Error('Devis non disponible pour signature');
- const nowParis=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ const dateParts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+ const nowParis=[dateParts.year,dateParts.month,dateParts.day].join('-');
  if(quote.valid_until && quote.valid_until<nowParis)throw new Error('Devis expire');
  return quote;
 }
