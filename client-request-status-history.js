@@ -386,7 +386,7 @@
           </button>
           <div class="hidden" data-archive-order-details>
             <div class="edm-doc-grid">
-              ${documentCard('Devis original', quote?.quote_number, quote?.visible_to_client ? quote?.pdf_path : null)}${documentCard('Devis signé', quote?.quote_number, quote?.visible_to_client ? quote?.client_signed_pdf_path : null)}
+              ${documentCard('Devis', quote?.quote_number, quote?.visible_to_client ? quote?.pdf_path : null)}${documentCard('Devis signé', quote?.quote_number, quote?.visible_to_client ? quote?.client_signed_pdf_path : null)}
               ${documentCard('Ordre de réparation', order?.order_number, order?.visible_to_client ? order?.pdf_path : null)}
               ${documentCard('Facture', invoice.invoice_number, invoice.pdf_path)}
             </div>
