@@ -146,7 +146,7 @@
       const [vehicles, orders, quotes, invoices, inspections] = await Promise.all([
         supabaseClient.from('vehicles').select('id,plate,brand,model,year,energy,mileage').eq('user_id', user.id).order('created_at', { ascending:false }),
         supabaseClient.from('repair_orders').select('id,vehicle_id,service_request_id,quote_id,order_number,status,signed_at,created_at,pdf_path,authorized_work').eq('user_id', user.id).eq('visible_to_client', true).order('created_at', { ascending:false }),
-        supabaseClient.from('quotes').select('id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,created_at').eq('user_id', user.id).eq('visible_to_client', true),
+        supabaseClient.from('quotes').select('id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,client_signed_pdf_path,created_at').eq('user_id', user.id).eq('visible_to_client', true),
         supabaseClient.from('invoices').select('id,vehicle_id,quote_id,repair_order_id,invoice_number,status,total,pdf_path,issued_at,created_at').eq('user_id', user.id).eq('visible_to_client', true),
         supabaseClient.from('inspection_reports').select('id,vehicle_id,repair_order_id,report_number,status,pdf_path,photo_paths,completed_at,created_at,observations').eq('user_id', user.id).eq('visible_to_client', true)
       ]);
@@ -171,7 +171,8 @@
             const invoice = invoiceByOrder.get(order.id);
             const inspection = inspectionByOrder.get(order.id);
             const docs = [
-              quote?.pdf_path ? { label:'le devis', path:quote.pdf_path, filename:`${quote.quote_number || 'devis'}.pdf` } : null,
+              quote?.pdf_path ? { label:'le devis original', path:quote.pdf_path, filename:`${quote.quote_number || 'devis'}.pdf` } : null,
+              quote?.client_signed_pdf_path ? { label:'le devis signé', path:quote.client_signed_pdf_path, filename:`${quote.quote_number || 'devis'}-signe.pdf` } : null,
               order.pdf_path ? { label:'l’OR', path:order.pdf_path, filename:`${order.order_number || 'OR'}.pdf` } : null,
               inspection?.pdf_path ? { label:'la fiche de contrôle', path:inspection.pdf_path, filename:`${inspection.report_number || 'controle'}.pdf` } : null,
               invoice?.pdf_path ? { label:'la facture', path:invoice.pdf_path, filename:`${invoice.invoice_number || 'facture'}.pdf` } : null
@@ -240,7 +241,7 @@
   async function relatedDocuments(requestId, userId) {
     if (!requestId) return [];
     const [quotes, orders] = await Promise.all([
-      supabaseClient.from('quotes').select('id,quote_number,pdf_path').eq('user_id', userId).eq('service_request_id', requestId).eq('visible_to_client', true),
+      supabaseClient.from('quotes').select('id,quote_number,pdf_path,client_signed_pdf_path').eq('user_id', userId).eq('service_request_id', requestId).eq('visible_to_client', true),
       supabaseClient.from('repair_orders').select('id,order_number,pdf_path').eq('user_id', userId).eq('service_request_id', requestId).eq('visible_to_client', true)
     ]);
     if (quotes.error) throw quotes.error;
@@ -254,7 +255,8 @@
     if (invoices.error) throw invoices.error;
     if (inspections.error) throw inspections.error;
     return [
-      ...(quotes.data || []).filter((x) => x.pdf_path).map((x) => ({ label:x.quote_number || 'Devis', path:x.pdf_path })),
+      ...(quotes.data || []).filter((x) => x.pdf_path).map((x) => ({ label:(x.quote_number || 'Devis')+' original', path:x.pdf_path })),
+      ...(quotes.data || []).filter((x) => x.client_signed_pdf_path).map((x) => ({ label:(x.quote_number || 'Devis')+' signé', path:x.client_signed_pdf_path })),
       ...(orders.data || []).filter((x) => x.pdf_path).map((x) => ({ label:x.order_number || 'Ordre de réparation', path:x.pdf_path })),
       ...(inspections.data || []).filter((x) => x.pdf_path).map((x) => ({ label:x.report_number || 'Fiche de contrôle', path:x.pdf_path })),
       ...(invoices.data || []).filter((x) => x.pdf_path).map((x) => ({ label:x.invoice_number || 'Facture', path:x.pdf_path }))
