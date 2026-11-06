@@ -133,9 +133,9 @@
       host.querySelector('[data-signout]').addEventListener('click',async()=>{await signOut();await render();});
       host.querySelectorAll('[data-file]').forEach(b=>b.addEventListener('click',()=>openFile(b.dataset.file,b.dataset.bucket).catch(e=>status(b.closest('article'),e.message,true))));
       host.querySelectorAll('[data-response]').forEach(b=>b.addEventListener('click',async()=>{
-        if(busy||!confirm(b.dataset.response==='accepted'?'Confirmez-vous avoir lu et accepter ce devis ?':'Confirmez-vous le refus de ce devis ?'))return;
+        if(busy || (b.dataset.response==='refused' && !confirm('Confirmez-vous le refus de ce devis ?')))return;
         busy=true;b.disabled=true;
-        try{await rpc('client_respond_quote',{p_quote_id:b.dataset.quote,p_response:b.dataset.response});await render();}
+        try{if(b.dataset.response==='accepted'){if(!window.EDMQuoteSignature)throw new Error('Service de signature indisponible.');if(await window.EDMQuoteSignature.sign(client,b.dataset.quote))await render();}else{await rpc('client_respond_quote',{p_quote_id:b.dataset.quote,p_response:'refused'});await render();}}
         catch(e){status(b.closest('article'),e.message||'R\u00e9ponse non enregistr\u00e9e.',true);}
         finally{busy=false;b.disabled=false;}
       }));
