@@ -94,7 +94,7 @@
       supabaseClient.from('vehicles')
         .select('id,plate,brand,model,year').eq('user_id', userId),
       supabaseClient.from('quotes')
-        .select('id,vehicle_id,service_request_id,quote_number,status,visible_to_client,pdf_path,valid_until,created_at,updated_at')
+        .select('id,vehicle_id,service_request_id,quote_number,status,visible_to_client,pdf_path,client_signed_pdf_path,client_signed_at,valid_until,created_at,updated_at')
         .eq('user_id', userId).order('created_at', { ascending: false }),
       supabaseClient.from('disbursements')
         .select('id,service_request_id,quote_id,status,client_choice,mandate_signed,authorized_limit,provision_required,provision_received,parts_status,amount,refunded_amount,created_at')
@@ -206,7 +206,7 @@
 
   function quoteActions(quote) {
     if (!quote || quote.status !== 'sent') return quote?.pdf_path
-      ? `<button class="btn btn-ghost" type="button" data-status-doc="${esc(quote.pdf_path)}">Ouvrir le devis</button>`
+      ? `<button class="btn btn-ghost" type="button" data-status-doc="${esc(quote.pdf_path)}">Devis original</button>${quote.client_signed_pdf_path ? `<button class="btn btn-primary" type="button" data-status-doc="${esc(quote.client_signed_pdf_path)}">Devis signé</button>` : ''}`
       : '';
     const expired = quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10);
     return `<div class="btn-row">
@@ -386,7 +386,7 @@
           </button>
           <div class="hidden" data-archive-order-details>
             <div class="edm-doc-grid">
-              ${documentCard('Devis', quote?.quote_number, quote?.visible_to_client ? quote?.pdf_path : null)}
+              ${documentCard('Devis original', quote?.quote_number, quote?.visible_to_client ? quote?.pdf_path : null)}${documentCard('Devis signé', quote?.quote_number, quote?.visible_to_client ? quote?.client_signed_pdf_path : null)}
               ${documentCard('Ordre de réparation', order?.order_number, order?.visible_to_client ? order?.pdf_path : null)}
               ${documentCard('Facture', invoice.invoice_number, invoice.pdf_path)}
             </div>
