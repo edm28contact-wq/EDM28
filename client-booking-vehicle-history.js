@@ -115,7 +115,7 @@
         { label: 'Total', value: money(row.total) },
         { label: 'Valable jusqu’au', value: row.valid_until ? new Date(`${row.valid_until}T00:00:00`).toLocaleDateString('fr-FR') : '' }
       ],
-      documents: [{ label: 'Devis original (PDF)', path: row.pdf_path },...(row.client_signed_pdf_path ? [{ label: 'Devis signé (PDF)', path: row.client_signed_pdf_path }] : [])]
+      documents: [{ label: 'Ouvrir le devis PDF (original)', path: row.pdf_path },...(row.client_signed_pdf_path ? [{ label: 'Devis signé (PDF)', path: row.client_signed_pdf_path }] : [])]
     }));
 
     (orders.data || []).forEach((row) => add(row.vehicle_id, {
