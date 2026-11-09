@@ -379,7 +379,37 @@ async function loadPublicBusiness() {
   }
 }
 
-function pageWithBusiness(page, business) {
+async function loadConsumerLegalSettings() {
+  try {
+    const supabase=resolveSupabasePublicConfig();
+    if(!supabase.url||!supabase.key)return {};
+    const response=await fetch(supabase.url+'/rest/v1/consumer_legal_settings?id=eq.true&select=mediator_name,mediator_postal_address,mediator_website,publication_director,host_name,host_postal_address,host_website,privacy_contact_email&limit=1',{
+      headers:{apikey:supabase.key,Authorization:'Bearer '+supabase.key}
+    });
+    if(!response.ok)return {};
+    const rows=await response.json();
+    return Array.isArray(rows)?rows[0]||{}:{};
+  }catch{return {};}
+}
+
+function pageWithBusiness(page, business, legal={}) {
+  if(page.path==='/mentions-legales'||page.path==='/conditions-generales'||page.path==='/confidentialite'){
+    const copy={...page,sections:page.sections.map(section=>[...section])};
+    const mediator=[legal.mediator_name,legal.mediator_postal_address,legal.mediator_website].filter(Boolean).join(' — ');
+    const host=[legal.host_name,legal.host_postal_address,legal.host_website].filter(Boolean).join(' — ');
+    if(page.path==='/mentions-legales'){
+      if(mediator)copy.sections[3][1]='Médiateur de la consommation conventionné : '+mediator+'. En cas de litige non résolu après une réclamation écrite, le consommateur peut saisir gratuitement cet organisme.';
+      copy.sections[4][1]='Contact : '+(business.email||'contact@edm28.fr')+'. Adresse de l’établissement : '+(business.address||'à vérifier')+'.'+(legal.publication_director?' Directeur de publication : '+legal.publication_director+'.':'')+(host?' Hébergement : '+host+'.':' Hébergeur : coordonnées à compléter.');
+    }
+    if(page.path==='/conditions-generales'&&mediator){
+      copy.sections[11][1]='Pour toute réclamation, écrire à '+(business.email||'contact@edm28.fr')+'. À défaut de résolution amiable, saisir gratuitement le médiateur conventionné : '+mediator+'. Les recours judiciaires légaux restent possibles.';
+    }
+    if(page.path==='/confidentialite'&&legal.privacy_contact_email){
+      copy.sections[3][1]+=' Contact consacré aux données personnelles : '+legal.privacy_contact_email+'.';
+    }
+    return copy;
+  }
+
   if (page.path === '/a-propos' || page.path === '/garage-freinage-saint-lubin-de-la-haye') {
     const copy = { ...page, sections: page.sections.map((section) => [...section]) };
     if (page.path === '/a-propos') {
@@ -708,11 +738,12 @@ export default async function handler(req, res) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     return res.status(404).send('<!doctype html><html lang="fr"><head><meta name="robots" content="noindex,nofollow"><title>Page introuvable | EDM28</title></head><body><main><h1>Page introuvable</h1><p><a href="/">Retour à l’accueil</a></p></main></body></html>');
   }
-  const [services, business] = await Promise.all([
+  const [services, business, consumerLegal] = await Promise.all([
     basePage.path === '/tarifs' ? loadPublishedServices() : Promise.resolve([]),
-    loadPublicBusiness()
+    loadPublicBusiness(),
+    ['/mentions-legales','/conditions-generales','/confidentialite'].includes(basePage.path) ? loadConsumerLegalSettings() : Promise.resolve({})
   ]);
-  const page = pageWithBusiness(basePage, business);
+  const page = pageWithBusiness(basePage, business, consumerLegal);
   const clientConfig = resolveSupabasePublicConfig();
   const html = renderPage(page, getOrigin(req), services, clientConfig, business);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
