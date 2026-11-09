@@ -1,4 +1,5 @@
 import { resolveSupabasePublicConfig } from './supabase-config.js';
+import { legalPages } from './legal-pages.js';
 
 const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
 const PUBLIC_GITHUB_URL = 'https://github.com/edm28contact-wq/EDM28';
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
 ];
 
 const PAGES = {
+  ...legalPages,
   accueil: {
     path: '/',
     title: 'EDM28 | Garage automobile spécialisé freinage à Saint-Lubin-de-la-Haye',
@@ -626,9 +628,10 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
         <button id="edmFaqAiReset" class="faq-ai-reset" type="button">Nouvelle conversation</button>
       </section>`
     : '';
+  const withdrawal = page.showWithdrawalForm ? `<section class="contact-card"><h2>Déclaration de rétractation</h2><p>Ce formulaire est gratuit, sans connexion et sans obligation de justification. Vous pouvez également écrire à contact@edm28.fr.</p><form id="edmWithdrawalForm"><label>Référence du devis ou du contrat<input name="contractReference" required maxlength="100" autocomplete="off"></label><label>Prénom et nom<input name="consumerName" required maxlength="160" autocomplete="name"></label><label>Email utilisé pour le contrat<input name="consumerEmail" type="email" required maxlength="254" autocomplete="email"></label><label>Adresse postale (facultatif)<input name="consumerAddress" maxlength="450" autocomplete="street-address"></label><input name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px" type="text"><div class="btn-row"><button id="edmWithdrawalContinue" type="button" class="cta">Continuer</button></div><div id="edmWithdrawalConfirm" hidden><p id="edmWithdrawalSummary"></p><p>Vérifiez votre déclaration avant envoi. Elle sera horodatée et conservée.</p><button type="submit" id="edmWithdrawalSubmit" class="cta" disabled>Confirmer la rétractation</button></div><p id="edmWithdrawalStatus" role="status" aria-live="polite"></p></form></section>` : '';
   const bodyContent = page.path === '/contact' ? contact : (page.path === '/demande' || page.path === '/mes-interventions')
     ? `${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>`
-    : `${sections}${tariffs}${shorts}${clientSurface}${faqAi}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
+    : `${sections}${tariffs}${shorts}${clientSurface}${faqAi}${withdrawal}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
   const jsonLd = structuredData(page, origin, business);
 
   return `<!doctype html>
@@ -688,10 +691,10 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <div class="hero${page.path === '/' ? ' hero-home' : ''}"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1>${page.path === '/' ? '<div class="hero-kicker"><span></span>Freinage <b>•</b> Liaison au sol</div><div class="hero-logo" aria-hidden="true"><img src="/logo-edm.svg" alt=""></div>' : ''}<p class="lead">${esc(page.lede)}</p><a class="cta" data-request-cta href="${page.path === '/demande' ? '#connexion' : '/demande'}">${page.path === '/demande' ? 'Me connecter' : 'Faire ma demande'}</a>${page.path === '/' ? '<div class="hero-trust" aria-label="Engagements EDM28"><span>Devis avant travaux</span><span>Pas de marge sur les pièces</span><span>Suivi client transparent</span></div>' : ''}</div></div>
 <div class="wrap content">${['/','/demande','/tarifs','/fonctionnement'].includes(page.path) ? '<section class="parts-transparency"><h2>EDM28 ne vend pas de pièces</h2><p>Vous achetez les pièces directement auprès du vendeur de votre choix. Nous préparons votre panier et vous donnons les références : aucune marge sur les pièces, aucun prix caché. Vous réglez à EDM28 uniquement la prestation, consommables compris.</p></section>' : ''}${bodyContent}</div>
 </main>
-<footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}</div></footer>
+<footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}<nav aria-label="Informations légales"><a href="/conditions-generales">Conditions générales</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/retractation">Renoncer au contrat ici</a></nav></div></footer>
 ${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/quote-signature.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
-<script src="/public-site.js?v=2" defer></script>${page.path === '/transparence' && geminiFaqConfigured ? '<script src="/public-faq-ai.js?v=2" defer><\/script>' : ''}</body>
+<script src="/public-site.js?v=2" defer></script>${page.showWithdrawalForm ? '<script src="/legal-withdrawal.js?v=1" defer><\/script>' : ''}${page.path === '/transparence' && geminiFaqConfigured ? '<script src="/public-faq-ai.js?v=2" defer><\/script>' : ''}</body>
 </html>`;
 }
 
