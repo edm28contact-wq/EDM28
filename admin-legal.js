@@ -43,7 +43,7 @@
        '</article>'
       ).join(''):'<p class="muted">Aucune rétractation enregistrée.</p>');
     host.querySelector('[data-save-consumer-legal]')?.addEventListener('click',async(event)=>{
-      if(working)return;working=true;event.currentTarget.disabled=true;
+      if(working)return;const button=event.currentTarget;working=true;button.disabled=true;
       try {
         const fields={};
         host.querySelectorAll('[data-consumer-legal-field]').forEach(input=>{
@@ -61,7 +61,7 @@
         status('Mentions publiques enregistrées. Vérifiez leur affichage avant de valider les CGP.');
         await load();
       }catch(e){status(e.message||'Enregistrement impossible.',true);}
-      finally{working=false;event.currentTarget.disabled=false;}
+      finally{working=false;button.disabled=false;}
     });
     host.querySelectorAll('[data-legal-status]').forEach(button=>button.onclick=async()=>{
       if(working)return;
