@@ -49,7 +49,7 @@
         +'<label>Code à huit chiffres<input type="text" data-qs-code inputmode="numeric" autocomplete="one-time-code" maxlength="8" disabled style="display:block;width:100%;padding:9px"></label>'
         +'<p><a href="/conditions-generales" target="_blank" rel="noopener noreferrer">Lire les conditions générales de prestations EDM28</a> · <a href="/retractation" target="_blank" rel="noopener noreferrer">Droit de rétractation</a></p>'
         +'<label><input type="checkbox" data-qs-consent> J’ai consulté le devis et les conditions contractuelles, j’accepte expressément les prestations et le prix indiqués, et je demande sa signature électronique.</label>'
-        +'<button type="button" data-qs-confirm disabled>Signer définitivement ce devis</button>'
+        +'<button type="button" data-qs-confirm disabled>Signer le devis avec obligation de paiement</button>'
         +'<p role="status" aria-live="polite" data-qs-status></p></section>';
       document.body.append(popup);
       const $ = selector=>popup.querySelector(selector);
