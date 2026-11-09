@@ -47,7 +47,8 @@
         +'<label>Prénom et nom<input type="text" data-qs-name maxlength="140" autocomplete="name" style="display:block;width:100%;padding:9px"></label>'
         +'<button type="button" data-qs-send>Recevoir mon code de signature par email</button>'
         +'<label>Code à huit chiffres<input type="text" data-qs-code inputmode="numeric" autocomplete="one-time-code" maxlength="8" disabled style="display:block;width:100%;padding:9px"></label>'
-        +'<label><input type="checkbox" data-qs-consent> J’ai consulté le devis, j’accepte expressément les prestations et le prix indiqués, et je demande sa signature électronique.</label>'
+        +'<p><a href="/conditions-generales" target="_blank" rel="noopener noreferrer">Lire les conditions générales de prestations EDM28</a> · <a href="/retractation" target="_blank" rel="noopener noreferrer">Droit de rétractation</a></p>'
+        +'<label><input type="checkbox" data-qs-consent> J’ai consulté le devis et les conditions contractuelles, j’accepte expressément les prestations et le prix indiqués, et je demande sa signature électronique.</label>'
         +'<button type="button" data-qs-confirm disabled>Signer définitivement ce devis</button>'
         +'<p role="status" aria-live="polite" data-qs-status></p></section>';
       document.body.append(popup);
