@@ -1,6 +1,6 @@
 (function (root) {
   const terms = 'Tarifs par prestation, consommables d\u2019atelier inclus, hors pi\u00e8ces de remplacement. Le client ach\u00e8te les pi\u00e8ces directement au fournisseur et les apporte au rendez-vous.';
-  const partsAdvice = 'Apportez les r\u00e9f\u00e9rences pr\u00e9conis\u00e9es dans ce devis. Toute autre r\u00e9f\u00e9rence doit \u00eatre valid\u00e9e par EDM28 avant le rendez-vous. Les pi\u00e8ces sont contr\u00f4l\u00e9es avant tout d\u00e9montage. Si des pi\u00e8ces diff\u00e9rentes ou non conformes emp\u00eachent l\u2019intervention, aucune prestation m\u00e9canique n\u2019est commenc\u00e9e et seuls 15 \u20ac de frais de r\u00e9servation sont factur\u00e9s. Si l\u2019incompatibilit\u00e9 provient d\u2019une pr\u00e9conisation EDM28, aucun frais n\u2019est factur\u00e9 au client et EDM28 prend en charge les frais n\u00e9cessaires \u00e0 la correction de son erreur.';
+  const partsAdvice = 'Les pièces sont commandées et payées par le client auprès du vendeur de son choix, qui répond de ses obligations légales de vendeur. EDM28 reste responsable de ses préconisations et de ses interventions. Apportez les références préconisées ou préalablement validées : leur compatibilité sera vérifiée avant tout démontage. Si une pièce différente ou non conforme empêche la prestation, aucun forfait de réparation non exécuté ne sera facturé. Les frais préalablement annoncés et acceptés d\u2019une vérification distincte peuvent être dus dans la limite de 15 €, sous réserve des droits légaux de rétractation ; en cas d\u2019erreur imputable à EDM28, aucun de ces frais ne sera facturé.';
   function safeUrl(value) {
     const raw = String(value || '').trim();
     if (!raw || raw.length > 2000 || /[\u0000-\u0020\u007f\\]/.test(raw)) throw new Error('Lien de panier invalide.');
@@ -60,6 +60,7 @@
       `Votre devis ${quote.quote_number || 'EDM28'} est joint \u00e0 cet email.`,
       `Montant des prestations \u00e0 r\u00e9gler \u00e0 EDM28 : ${total}. Validit\u00e9 : ${quote.valid_until || ''}.`, terms, '',
       ...(parts.requires_parts ? ['Votre panier fournisseur pr\u00e9par\u00e9 par EDM28 :', parts.supplier_url, '', 'Pi\u00e8ces pr\u00e9conis\u00e9es :', parts.recommended_parts, '', ...(parts.price_details ? ['Prix indicatifs TTC' + (parts.price_observed_at ? ' relev\u00e9s le ' + parts.price_observed_at : '') + ' :', parts.price_details, 'Vous pouvez acheter ces m\u00eames r\u00e9f\u00e9rences ailleurs. Le prix et la livraison d\u00e9pendent du vendeur.', ''] : []), partsAdvice] : ['Cette prestation ne pr\u00e9voit pas de pi\u00e8ces de remplacement \u00e0 acheter.']),
+      '', 'Informations contractuelles (version du 9 novembre 2026) : https://edm28.fr/conditions-generales', 'Droit de rétractation à distance et fonctionnalité gratuite : https://edm28.fr/retractation', 'Le contrat de vente des pièces est distinct du contrat de prestation EDM28.',
       '', 'Consultez le PDF, puis acceptez ou refusez le devis dans votre espace client : https://edm28.fr/mes-interventions' + (quote.id ? '?devis=' + encodeURIComponent(quote.id) : ''),
       '', 'Cordialement,', businessName
     ].join('\n');
