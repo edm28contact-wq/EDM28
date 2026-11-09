@@ -208,6 +208,22 @@
       "dest": "/api/app?seo=page&slug=a-propos"
     },
     {
+      "src": "/conditions-generales",
+      "dest": "/api/app?seo=page&slug=conditions-generales"
+    },
+    {
+      "src": "/mentions-legales",
+      "dest": "/api/app?seo=page&slug=mentions-legales"
+    },
+    {
+      "src": "/confidentialite",
+      "dest": "/api/app?seo=page&slug=confidentialite"
+    },
+    {
+      "src": "/retractation",
+      "dest": "/api/app?seo=page&slug=retractation"
+    },
+    {
       "src": "/contact",
       "dest": "/api/app?seo=page&slug=contact"
     },
