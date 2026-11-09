@@ -13,7 +13,7 @@
     "dev": "vercel dev",
     "test:journey": "node --test tests/journey.test.mjs tests/journey-asset.test.mjs",
     "test:supplier-basket": "node --test tests/supplier-basket.test.mjs tests/supplier-basket-email.test.mjs tests/supplier-basket-admin.test.mjs",
-    "test:security": "node --test tests/security-hardening.test.mjs tests/identity-security.test.mjs tests/quote-signature-security.test.mjs",
+    "test:security": "node --test tests/security-hardening.test.mjs tests/identity-security.test.mjs tests/quote-signature-security.test.mjs tests/consumer-legal.test.mjs",
     "test:gemini-faq": "node --test tests/gemini-faq.test.mjs"
   },
   "engines": {
