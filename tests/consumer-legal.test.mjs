@@ -7,7 +7,7 @@ test('consumer legal routes and direct withdrawal control stay visible',async()=
  const [pages,seo,route,ui]=await Promise.all([
   source('legal-pages.js'),source('public-seo.js'),source('vercel.json'),source('legal-withdrawal.js')
  ]);
- for(const word of ['conditions-generales','mentions-legales','confidentialite','retractation','medíateur'.normalize('NFC').replace('í','i')]){
+ for(const word of ['conditions-generales','mentions-legales','confidentialite','retractation','médiateur']){
   assert.ok(pages.toLowerCase().includes(word.toLowerCase()),word);
  }
  assert.match(pages,/60 % du prix de la réparation n’est dû/);
