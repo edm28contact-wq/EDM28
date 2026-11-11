@@ -15,7 +15,7 @@ test('missing identity and mediator details remain editable and are not invented
     assert.ok(publicSite.includes(field),field);
   }
   assert.match(admin,/missing=required\.filter/);
-  assert.match(admin,/fields\.siret.*\\d\{14\}/);
+  assert.ok(admin.includes("fields.siret && !/^[0-9]{14}$/"));
   assert.match(publicSite,/business\.siret\|\|business\.siren\|\|'à compléter'/);
 });
 
