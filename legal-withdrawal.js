@@ -51,12 +51,12 @@
      'Déclaration : Je vous notifie ma rétractation du contrat ci-dessus.',
      'Accusé email : '+(result.receiptSent?'envoi accepté':'non confirmé'),
      'Contact EDM28 : contact@edm28.fr'
-   ].join('\\n');
+   ].join('\n');
    const download=document.createElement('button');
    download.type='button';download.textContent='Télécharger mon accusé de dépôt';
    download.className='cta';
    download.addEventListener('click',()=>{
-     const blob=new Blob(['\\uFEFF',receipt],{type:'text/plain;charset=utf-8'});
+     const blob=new Blob(['\uFEFF',receipt],{type:'text/plain;charset=utf-8'});
      const url=URL.createObjectURL(blob);
      const link=document.createElement('a');
      link.href=url;link.download='retractation-EDM28-'+result.reference+'.txt';
