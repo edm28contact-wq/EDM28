@@ -1152,3 +1152,16 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 
 /* Authenticated clients keep only relevant navigation; override link layout declarations. */
 .desktop-nav a[hidden], .drawer-nav a[hidden] { display: none !important; }
+
+/* About: one accessible entry point for complete consumer/legal disclosures. */
+.about-legal-section{margin:32px 0;padding:24px;border:1px solid #e4e7ec;border-radius:18px;background:#fff}
+.about-legal-section>p{color:#475467;line-height:1.65}
+.about-legal-detail{border:1px solid #e4e7ec;border-radius:12px;margin:12px 0;background:#fbfcfd;overflow:hidden}
+.about-legal-detail>summary{cursor:pointer;list-style-position:inside;padding:16px;font-weight:700;line-height:1.5}
+.about-legal-detail[open]>summary{border-bottom:1px solid #e4e7ec}
+.about-legal-detail>summary:focus-visible{outline:3px solid #155eef;outline-offset:-4px}
+.about-legal-content{padding:12px 18px 22px;max-width:82ch}
+.about-legal-chapter{margin:16px 0}
+.about-legal-chapter h3{font-size:1rem;margin:0 0 5px}
+.about-legal-chapter p{margin:0;line-height:1.65;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:680px){.about-legal-section{padding:14px}.about-legal-content{padding:10px 13px 18px}}
