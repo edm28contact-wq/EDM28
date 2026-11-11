@@ -89,8 +89,10 @@
       legal_sections[1][1]+=' Régime de TVA déclaré : '+(companyLegal.vat_status||'à compléter')+'.';
       const m=mediatorLegal.data||{};
       if(m.mediator_name&&m.mediator_postal_address&&m.mediator_website){
-        legal_sections[11][1]+=' Coordonnées du médiateur conventionné déclarées par EDM28 : '+
-          [m.mediator_name,m.mediator_postal_address,m.mediator_website].join(' — ')+'.';
+        legal_sections[11][1]='Pour une réclamation écrite, contactez EDM28 à '+(companyLegal.email||'contact@edm28.fr')+
+          '. À défaut de résolution amiable, vous pouvez saisir gratuitement le médiateur conventionné : '+
+          [m.mediator_name,m.mediator_postal_address,m.mediator_website].join(' — ')+
+          '. Les voies de recours prévues par la loi restent accessibles.';
       }
       return {
         ...common,
