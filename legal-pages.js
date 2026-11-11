@@ -61,6 +61,22 @@ export const legalPages = {
     ],
     links: [['/conditions-generales', 'Conditions générales'], ['/mentions-legales', 'Mentions légales'], ['/contact', 'Contact']]
   },
+  cookies: {
+    path: '/cookies',
+    title: 'Cookies et stockage local | EDM28',
+    description: 'Informations sur les cookies de session, le stockage local et les services tiers utilisés sur EDM28.',
+    h1: 'Cookies et stockage local',
+    lede: 'EDM28 utilise des données techniques nécessaires au fonctionnement du compte, des rendez-vous et de la sécurité. Cette page précise ce qui peut être stocké sur votre appareil.',
+    breadcrumbs: [['/', 'Accueil'], ['/cookies', 'Cookies']],
+    sections: [
+      ['Stockage strictement nécessaire', 'Le site utilise le stockage du navigateur pour maintenir la session Supabase, mémoriser le choix « rester connecté » et protéger la reprise de certaines demandes ou confirmations. Ces mécanismes servent à l’authentification, à la sécurité ou à une fonction explicitement demandée. Ils ne sont pas employés à eux seuls pour un ciblage publicitaire.'],
+      ['Mesures d’audience et publicité', 'L’audit du code actuel n’a pas identifié de balise Google Analytics, Google Tag Manager, Meta Pixel ou autre traceur publicitaire. Cette déclaration devra être révisée avant toute installation d’un outil de mesure d’audience ou de publicité. Les traceurs non essentiels nécessitant un consentement ne doivent pas être déposés avant un choix libre et une possibilité de refus équivalente.'],
+      ['Services techniques externes', 'Les ressources de programmation peuvent être chargées depuis un réseau de diffusion de fichiers, notamment jsDelivr, ce qui implique des requêtes techniques à un tiers. L’assistant de FAQ peut transmettre le contenu de la question à un fournisseur d’IA lorsque vous l’utilisez. Ne transmettez aucune information médicale, bancaire ou personnelle dans les questions de FAQ.'],
+      ['Vos contrôles', 'Vous pouvez vous déconnecter, décocher la conservation de session sur cet appareil et supprimer les données du site depuis les paramètres de votre navigateur. Effacer une session locale ne supprime pas les documents contractuels ou les factures conservés conformément à la réglementation.'],
+      ['Évolution de cette politique', 'Avant l’activation de nouveaux services d’analyse, publicité ou marketing, EDM28 devra documenter leurs finalités, fournisseurs, durées, transferts éventuels et, le cas échéant, recueillir un consentement préalable et révocable.']
+    ],
+    links: [['/confidentialite','Données personnelles'],['/mentions-legales','Mentions légales'],['/contact','Contact']]
+  },
   retractation: {
     path: '/retractation',
     title: 'Renoncer à un contrat en ligne | EDM28',
