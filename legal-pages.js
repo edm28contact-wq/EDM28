@@ -82,6 +82,22 @@ export const legalPages = {
     ],
     links: [['/confidentialite','Données personnelles'],['/mentions-legales','Mentions légales'],['/contact','Contact']]
   },
+  'pieces-economie-circulaire': {
+    path: '/pieces-economie-circulaire',
+    title: 'Pièces issues de l’économie circulaire | EDM28',
+    description: 'Information sur les pièces de réemploi et leurs exclusions pour les prestations EDM28 de freinage et de liaison au sol.',
+    h1: 'Pièces issues de l’économie circulaire',
+    lede: 'L’information sur les pièces de réemploi relève du Code de la consommation. EDM28 intervient uniquement dans les domaines de prestations qu’il propose, notamment le freinage et la liaison au sol.',
+    breadcrumbs: [['/', 'Accueil'], ['/pieces-economie-circulaire', 'Pièces issues de l’économie circulaire']],
+    sections: [
+      ['Votre choix pour les pièces concernées', 'Pour les catégories légalement concernées, un réparateur doit permettre au consommateur de choisir une pièce issue de l’économie circulaire lorsque les conditions réglementaires sont réunies. Ces catégories comprennent notamment certaines pièces de carrosserie amovibles, de garnissage intérieur, des vitrages non collés, des optiques et certaines pièces mécaniques ou électroniques.'],
+      ['Exclusions de sécurité applicables', 'L’article R.224-25 du Code de la consommation exclut des catégories de pièces mécaniques ou électroniques concernées, pour les automobiles, les pièces des trains roulants, les éléments de direction, les organes de freinage et certains éléments assemblés de liaison au sol soumis à usure. EDM28 ne recommande pas de réemploi sur une pièce de sécurité simplement parce qu’elle est moins chère.'],
+      ['Disponibilité et autres exceptions', 'La fourniture de pièces issues de l’économie circulaire peut également être écartée dans les situations prévues à l’article R.224-24, notamment en cas d’indisponibilité dans un délai compatible avec l’immobilisation du véhicule ou de risque important pour la sécurité routière, la santé publique ou l’environnement.'],
+      ['Achat direct des pièces par le client', 'Dans le parcours EDM28, le client achète directement les pièces auprès du vendeur de son choix. Lorsque le professionnel propose une intervention entrant dans une catégorie réglementée, les obligations d’information et de recueil du choix sur support durable demeurent à examiner indépendamment de ce mode d’approvisionnement. Avant tout achat, EDM28 doit valider la compatibilité des références et les restrictions de sécurité.'],
+      ['Références officielles', 'Code de la consommation : articles L.224-67, R.224-22 à R.224-25 et D.224-25-1 à D.224-25-5. Texte accessible sur https://www.legifrance.gouv.fr. L’information obligatoire au lieu d’accueil de la clientèle reste également à afficher lorsqu’elle s’applique.']
+    ],
+    links: [['/conditions-generales','Conditions générales'],['/fonctionnement','Parcours EDM28'],['/contact','Contact']]
+  },
   retractation: {
     path: '/retractation',
     title: 'Renoncer à un contrat en ligne | EDM28',
