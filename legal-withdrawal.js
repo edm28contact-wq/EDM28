@@ -41,6 +41,29 @@
    const local=Number.isNaN(dt.getTime())?result.submittedAt:dt.toLocaleString('fr-FR',{dateStyle:'long',timeStyle:'short'});
    status.textContent='Déclaration enregistrée le '+local+'. Référence : '+result.reference+
     (result.receiptSent?'. Un accusé de réception vous a été envoyé.':'. L’accusé email n’a pas été délivré. Conservez cette référence et contactez EDM28.');
+   const receipt=[
+     'EDM28 - accusé de dépôt de rétractation',
+     'Référence de la demande : '+result.reference,
+     'Date et heure (UTC) : '+result.submittedAt,
+     'Contrat/devis concerné : '+v.contractReference,
+     'Consommateur : '+v.name,
+     'Email : '+v.email,
+     'Déclaration : Je vous notifie ma rétractation du contrat ci-dessus.',
+     'Accusé email : '+(result.receiptSent?'envoi accepté':'non confirmé'),
+     'Contact EDM28 : contact@edm28.fr'
+   ].join('\\n');
+   const download=document.createElement('button');
+   download.type='button';download.textContent='Télécharger mon accusé de dépôt';
+   download.className='cta';
+   download.addEventListener('click',()=>{
+     const blob=new Blob(['\\uFEFF',receipt],{type:'text/plain;charset=utf-8'});
+     const url=URL.createObjectURL(blob);
+     const link=document.createElement('a');
+     link.href=url;link.download='retractation-EDM28-'+result.reference+'.txt';
+     document.body.appendChild(link);link.click();link.remove();
+     setTimeout(()=>URL.revokeObjectURL(url),1000);
+   });
+   status.after(download);
    form.querySelectorAll('input,button').forEach(el=>{el.disabled=true;});
    preview.hidden=true;
   }catch(e){
