@@ -67,6 +67,8 @@ Deno.serve(async(request)=>{
   draw('Date de validation (UTC) : '+at,616);
   draw('Methode : compte authentifie + code de confirmation email',590,10);
   draw('Consentement : J accepte le devis, ses prestations et son prix.',565,10);
+  draw('Demande expresse de debut anticipe : '+(c.early_start_requested===true?'OUI':'NON'),542,10);
+  draw('Reconnaissance des effets apres execution complete : '+(c.full_performance_acknowledged===true?'OUI':'NON'),522,9);
   draw('Empreinte SHA-256 du PDF original :',498,10,true);
   draw(originalHash.slice(0,54),475,8);
   draw(originalHash.slice(54),461,8);
