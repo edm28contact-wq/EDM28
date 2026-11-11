@@ -379,6 +379,50 @@
     }
   }
 
+  function drawConsumerTermsAnnex(doc, cfg, row) {
+    const sections = Array.isArray(row.legal_sections) ? row.legal_sections : [];
+    if (!sections.length) return;
+    let page, y, pageIndex = 0;
+    const newPage = () => {
+      page=doc.addPage();pageIndex += 1;
+      decorativeCorners(page, RED);
+      drawBrand(page,cfg,42,782,RED);
+      page.text(42,730,'CONDITIONS CONTRACTUELLES ET RÉTRACTATION',{size:12.2,bold:true,color:RED});
+      page.text(42,710,'Version : '+clean(row.legal_version||'à préciser'),{size:8.5});
+      page.text(42,695,'Devis : '+clean(row.quote_number||row.id||'')+' - '+customerName(row),{size:8.5});
+      page.text(42,28,'Annexe contractuelle - page '+pageIndex+' - à conserver avec le devis',{size:7.2,color:GRAY});
+      y=666;
+    };
+    const line=(content,size=8.2,bold=false,spacing=11)=>{
+      const wrapped=wrapText(content,500,size,bold,1000);
+      for (const value of wrapped) {
+        if(y<66)newPage();
+        page.text(42,y,value,{size,bold});y-=spacing;
+      }
+    };
+    newPage();
+    for (const section of sections) {
+      const heading=String(section?.[0]||'').trim();
+      const text=String(section?.[1]||'').trim();
+      if(!heading||!text)continue;
+      if(y<102)newPage();
+      line(heading,9.5,true,13);
+      line(text,8.2,false,11);
+      y-=12;
+    }
+    if(y<220)newPage();
+    y-=10;line('MODÈLE DE FORMULAIRE DE RÉTRACTATION',10.5,true,16);
+    line('À envoyer à EDM28, par email à contact@edm28.fr ou à son adresse indiquée sur le devis. Vous pouvez aussi utiliser https://edm28.fr/retractation',8.2);
+    y-=5;
+    line('Je vous notifie par la présente ma rétractation du contrat portant sur les prestations suivantes :',8.2);
+    y-=5;
+    line('Référence du devis/contrat : __________________________________________',8.2);
+    line('Date de conclusion : _______________________________________________',8.2);
+    line('Nom du consommateur : ______________________________________________',8.2);
+    line('Adresse du consommateur : __________________________________________',8.2);
+    line('Date : ____________________   Signature (si papier) : ____________________',8.2);
+  }
+
   function buildCommerce(type, cfg, row) {
     const doc = new PdfDocument();
     const items = commerceRows(row, type);
@@ -412,6 +456,7 @@
       first = false;
     }
     if (type === 'quote' && row.commercial_model === 'customer_supplied_v1') drawSupplierBasket(doc, cfg, row);
+    if (type === 'quote') drawConsumerTermsAnnex(doc, cfg, row);
     return doc.build();
   }
 
