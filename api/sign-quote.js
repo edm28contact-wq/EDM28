@@ -91,6 +91,9 @@ export default async function handler(req,res){
   if(!UUID.test(quoteId||''))return fail(res,400,'Identifiant de devis invalide');
   const quote=await getQuote(user,quoteId);
   if(action==='start'){
+   const earlyStart=req.body?.earlyStart===true;
+   const lossAcknowledged=req.body?.lossAcknowledged===true;
+   if(earlyStart && !lossAcknowledged) return fail(res,400,'Le démarrage anticipé exige une reconnaissance distincte des conséquences légales.');
    const existing=(await db('quote_signature_challenges',{quote_id:'eq.'+quoteId,select:'id,state,expires_at,sent_at'}))[0];
    if(existing?.state==='pending'&&Date.now()-new Date(existing.sent_at).getTime()<60_000)
       return fail(res,429,'Un code vient deja d etre envoye. Reessayez dans une minute');
@@ -103,7 +106,8 @@ export default async function handler(req,res){
     id:challengeId,quote_id:quote.id,user_id:user.id,signer_email:user.email,
     source_path:quote.pdf_path,source_sha256:sourceHash,code_hash:hmac(challengeId,code,secret),
     attempts:0,expires_at:new Date(Date.now()+600_000).toISOString(),
-    created_at:new Date().toISOString(),sent_at:new Date().toISOString(),state:'pending'
+    created_at:new Date().toISOString(),sent_at:new Date().toISOString(),state:'pending',
+    early_start_requested:earlyStart,full_performance_acknowledged:earlyStart && lossAcknowledged
    });
    try{await sendCode(user.email,code,quote);}
    catch(_){await db('quote_signature_challenges',{id:'eq.'+challengeId},'DELETE');return fail(res,503,'Envoi email indisponible, aucune signature realisee');}
