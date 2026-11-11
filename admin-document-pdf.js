@@ -75,8 +75,23 @@
         basket = result.data;
       }
       const { legalPages, EDM28_LEGAL_VERSION } = await import('/legal-pages.js?v=1');
-      const legal_sections = legalPages['conditions-generales']?.sections;
-      if (!Array.isArray(legal_sections) || legal_sections.length < 10) throw new Error('Annexe contractuelle introuvable : génération du devis suspendue.');
+      const baseSections = legalPages['conditions-generales']?.sections;
+      if (!Array.isArray(baseSections) || baseSections.length < 10) throw new Error('Annexe contractuelle introuvable : génération du devis suspendue.');
+      const [companyLegal, mediatorLegal] = await Promise.all([
+        business(),
+        A().db.from('consumer_legal_settings').select('mediator_name,mediator_postal_address,mediator_website').eq('id',true).single()
+      ]);
+      if(mediatorLegal.error) throw mediatorLegal.error;
+      const legal_sections=baseSections.map(([heading,text])=>[heading,text]);
+      legal_sections[0][1]+=' Exploitant renseigné : '+(companyLegal.legal_name||'à compléter')+
+        '. SIREN : '+(companyLegal.siren||'à compléter')+
+        '. SIRET : '+(companyLegal.siret||'à compléter')+'.';
+      legal_sections[1][1]+=' Régime de TVA déclaré : '+(companyLegal.vat_status||'à compléter')+'.';
+      const m=mediatorLegal.data||{};
+      if(m.mediator_name&&m.mediator_postal_address&&m.mediator_website){
+        legal_sections[11][1]+=' Coordonnées du médiateur conventionné déclarées par EDM28 : '+
+          [m.mediator_name,m.mediator_postal_address,m.mediator_website].join(' — ')+'.';
+      }
       return {
         ...common,
         legal_sections,
