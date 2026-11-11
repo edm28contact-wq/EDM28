@@ -551,7 +551,38 @@ function structuredData(page, origin, business) {
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replaceAll('<', '\\u003c');
 }
 
-function renderPage(page, origin, services = [], clientConfig = null, business = normalizePublicBusiness()) {
+function renderAboutLegalHub(business, consumerLegal) {
+  const categories = [
+    ['mentions-legales', 'Mentions légales et identité de l’entreprise'],
+    ['conditions-generales', 'Conditions générales, devis et responsabilités'],
+    ['confidentialite', 'Protection des données personnelles (RGPD)'],
+    ['cookies', 'Cookies et stockage local'],
+    ['pieces-economie-circulaire', 'Pièces issues de l’économie circulaire'],
+    ['retractation', 'Droit et procédure de rétractation']
+  ];
+  const documents = categories.map(([slug, label]) => {
+    const source = legalPages[slug];
+    const document = pageWithBusiness(source, business, consumerLegal);
+    const chapters = document.sections.map(([heading, content]) =>
+      `<div class="about-legal-chapter"><h3>${esc(heading)}</h3><p>${esc(content)}</p></div>`
+    ).join('');
+    return `<details class="about-legal-detail" id="about-${slug}">
+      <summary>${esc(label)}</summary>
+      <div class="about-legal-content">
+        <p>${esc(document.lede)}</p>
+        ${chapters}
+        <p><a href="${esc(document.path)}">Consulter la page complète${slug === 'retractation' ? ' et exercer mon droit de rétractation' : ''}</a></p>
+      </div>
+    </details>`;
+  }).join('');
+  return `<section class="about-legal-section" id="informations-legales" aria-labelledby="about-legal-heading">
+    <h2 id="about-legal-heading">Informations légales et protection des consommateurs</h2>
+    <p>Consultez ici les mentions légales, les conditions des prestations, les responsabilités d’EDM28 et des vendeurs de pièces, les règles de confidentialité et de rétractation. Les informations administratives non encore renseignées sont signalées dans les documents. Cette présentation ne constitue pas une certification juridique.</p>
+    <div class="faq">${documents}</div>
+  </section>`;
+}
+
+function renderPage(page, origin, services = [], clientConfig = null, business = normalizePublicBusiness(), consumerLegal = {}) {
   const canonical = `${origin}${page.path}`;
   const breadcrumbs = page.breadcrumbs.map(([path, name], index) => {
     const current = index === page.breadcrumbs.length - 1;
@@ -664,9 +695,10 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
       </section>`
     : '';
   const withdrawal = page.showWithdrawalForm ? `<section class="contact-card"><h2>Déclaration de rétractation</h2><p>Ce formulaire est gratuit, sans connexion et sans obligation de justification. Vous pouvez également écrire à contact@edm28.fr.</p><form id="edmWithdrawalForm"><label>Référence du devis ou du contrat<input name="contractReference" required maxlength="100" autocomplete="off"></label><label>Prénom et nom<input name="consumerName" required maxlength="160" autocomplete="name"></label><label>Email utilisé pour le contrat<input name="consumerEmail" type="email" required maxlength="254" autocomplete="email"></label><label>Adresse postale (facultatif)<input name="consumerAddress" maxlength="450" autocomplete="street-address"></label><input name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px" type="text"><div class="btn-row"><button id="edmWithdrawalContinue" type="button" class="cta">Continuer</button></div><div id="edmWithdrawalConfirm" hidden><p id="edmWithdrawalSummary"></p><p>Vérifiez votre déclaration avant envoi. Elle sera horodatée et conservée.</p><button type="submit" id="edmWithdrawalSubmit" class="cta" disabled>Confirmer la rétractation</button></div><p id="edmWithdrawalStatus" role="status" aria-live="polite"></p></form></section>` : '';
+  const aboutLegalHub = page.path === '/a-propos' ? renderAboutLegalHub(business, consumerLegal) : '';
   const bodyContent = page.path === '/contact' ? contact : (page.path === '/demande' || page.path === '/mes-interventions')
     ? `${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>`
-    : `${sections}${tariffs}${shorts}${clientSurface}${faqAi}${withdrawal}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
+    : `${sections}${tariffs}${shorts}${clientSurface}${faqAi}${withdrawal}${aboutLegalHub}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
   const jsonLd = structuredData(page, origin, business);
 
   return `<!doctype html>
@@ -746,11 +778,11 @@ export default async function handler(req, res) {
   const [services, business, consumerLegal] = await Promise.all([
     basePage.path === '/tarifs' ? loadPublishedServices() : Promise.resolve([]),
     loadPublicBusiness(),
-    ['/mentions-legales','/conditions-generales','/confidentialite'].includes(basePage.path) ? loadConsumerLegalSettings() : Promise.resolve({})
+    ['/mentions-legales','/conditions-generales','/confidentialite','/a-propos'].includes(basePage.path) ? loadConsumerLegalSettings() : Promise.resolve({})
   ]);
   const page = pageWithBusiness(basePage, business, consumerLegal);
   const clientConfig = resolveSupabasePublicConfig();
-  const html = renderPage(page, getOrigin(req), services, clientConfig, business);
+  const html = renderPage(page, getOrigin(req), services, clientConfig, business, consumerLegal);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'HEAD') return res.status(200).end();
