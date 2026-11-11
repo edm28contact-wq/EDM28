@@ -74,8 +74,13 @@
         if (result.error) throw result.error;
         basket = result.data;
       }
+      const { legalPages, EDM28_LEGAL_VERSION } = await import('/legal-pages.js?v=1');
+      const legal_sections = legalPages['conditions-generales']?.sections;
+      if (!Array.isArray(legal_sections) || legal_sections.length < 10) throw new Error('Annexe contractuelle introuvable : génération du devis suspendue.');
       return {
         ...common,
+        legal_sections,
+        legal_version: EDM28_LEGAL_VERSION,
         quote_parts_baskets: basket,
         service_requests: request,
         quote_items: items,
