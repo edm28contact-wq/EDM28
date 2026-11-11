@@ -148,6 +148,7 @@
           <label>Email<input id="${context}AuthEmail" type="email" autocomplete="email" placeholder="vous@exemple.fr"></label>
           <label>Mot de passe<input id="${context}AuthPassword" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="8" placeholder="8 caractères minimum"></label>
         </div>
+        ${signup ? '<p class="small">Les champs identifiés comme obligatoires servent à créer votre compte, vous contacter au sujet de votre demande et sécuriser les interventions. Aucun message publicitaire n’est autorisé par cette inscription. <a href="/confidentialite" target="_blank" rel="noopener noreferrer">Données personnelles et vos droits</a> · <a href="/cookies" target="_blank" rel="noopener noreferrer">Cookies et stockage local</a>.</p>' : ''}
         <div class="action-row">
           ${signup ? `<button class="primary-action" type="button" data-auth-signup="${context}">Créer mon compte</button><a class="text-action" href="#connexion">J’ai déjà un compte : me connecter</a>` : `<button class="primary-action" type="button" data-auth-signin="${context}">Se connecter</button><button class="text-action" type="button" data-auth-reset="${context}">Mot de passe oublié</button>`}
           <button class="text-action" type="button" data-auth-resend="${context}" hidden>Renvoyer l’email de confirmation</button>
