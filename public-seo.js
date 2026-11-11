@@ -383,7 +383,7 @@ async function loadConsumerLegalSettings() {
   try {
     const supabase=resolveSupabasePublicConfig();
     if(!supabase.url||!supabase.key)return {};
-    const response=await fetch(supabase.url+'/rest/v1/consumer_legal_settings?id=eq.true&select=mediator_name,mediator_postal_address,mediator_website,publication_director,host_name,host_postal_address,host_website,privacy_contact_email&limit=1',{
+    const response=await fetch(supabase.url+'/rest/v1/consumer_legal_settings?id=eq.true&select=mediator_name,mediator_postal_address,mediator_website,publication_director,host_name,host_postal_address,host_website,host_phone,registered_business_address,privacy_contact_email&limit=1',{
       headers:{apikey:supabase.key,Authorization:'Bearer '+supabase.key}
     });
     if(!response.ok)return {};
@@ -396,20 +396,20 @@ function pageWithBusiness(page, business, legal={}) {
   if(page.path==='/mentions-legales'||page.path==='/conditions-generales'||page.path==='/confidentialite'){
     const copy={...page,sections:page.sections.map(section=>[...section])};
     const mediator=[legal.mediator_name,legal.mediator_postal_address,legal.mediator_website].filter(Boolean).join(' — ');
-    const host=[legal.host_name,legal.host_postal_address,legal.host_website].filter(Boolean).join(' — ');
+    const host=[legal.host_name,legal.host_postal_address,legal.host_phone,legal.host_website].filter(Boolean).join(' — ');
     if(page.path==='/mentions-legales'){
       const businessId = [business.legal_name||'Identité légale à compléter',business.siren?'SIREN : '+business.siren:null,business.siret?'SIRET : '+business.siret:null].filter(Boolean).join(' — ');
       copy.sections[0][1]='Nom commercial EDM28. Exploitant : '+businessId+'.';
       copy.sections[1][1]='Immatriculation : '+(business.siret||business.siren||'à compléter')+'. Régime TVA : '+(business.vat_status||business.vat_number||'à compléter')+'.';
       copy.sections[2][1]='Assurance professionnelle : '+(business.insurance_name||'à compléter')+'. Vérifier dans le dossier interne la police et les garanties souscrites.';
       if(mediator)copy.sections[3][1]='Médiateur de la consommation conventionné : '+mediator+'. En cas de litige non résolu après une réclamation écrite, le consommateur peut saisir gratuitement cet organisme.';
-      copy.sections[4][1]='Contact : '+(business.email||'contact@edm28.fr')+'. Adresse de l’établissement : '+(business.address||'à vérifier')+'.'+(legal.publication_director?' Directeur de publication : '+legal.publication_director+'.':'')+(host?' Hébergement : '+host+'.':' Hébergeur : coordonnées à compléter.');
+      copy.sections[4][1]='Contact : '+(business.email||'contact@edm28.fr')+'. Adresse du siège ou de domiciliation : '+(legal.registered_business_address||'à compléter')+'. Adresse de l’atelier : '+(business.address||'à vérifier')+'.'+(legal.publication_director?' Directeur de publication : '+legal.publication_director+'.':'')+(host?' Hébergement : '+host+'.':' Hébergeur : coordonnées à compléter.');
     }
     if(page.path==='/conditions-generales'&&mediator){
       copy.sections[11][1]='Pour toute réclamation, écrire à '+(business.email||'contact@edm28.fr')+'. À défaut de résolution amiable, saisir gratuitement le médiateur conventionné : '+mediator+'. Les recours judiciaires légaux restent possibles.';
     }
     if(page.path==='/confidentialite'&&legal.privacy_contact_email){
-      copy.sections[3][1]+=' Contact consacré aux données personnelles : '+legal.privacy_contact_email+'.';
+      copy.sections[7][1]+=' Contact consacré aux données personnelles : '+legal.privacy_contact_email+'.';
     }
     return copy;
   }
@@ -725,7 +725,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <div class="hero${page.path === '/' ? ' hero-home' : ''}"><div class="wrap"><nav class="crumbs" aria-label="Fil d’Ariane">${breadcrumbs}</nav><h1>${esc(page.h1)}</h1>${page.path === '/' ? '<div class="hero-kicker"><span></span>Freinage <b>•</b> Liaison au sol</div><div class="hero-logo" aria-hidden="true"><img src="/logo-edm.svg" alt=""></div>' : ''}<p class="lead">${esc(page.lede)}</p><a class="cta" data-request-cta href="${page.path === '/demande' ? '#connexion' : '/demande'}">${page.path === '/demande' ? 'Me connecter' : 'Faire ma demande'}</a>${page.path === '/' ? '<div class="hero-trust" aria-label="Engagements EDM28"><span>Devis avant travaux</span><span>Pas de marge sur les pièces</span><span>Suivi client transparent</span></div>' : ''}</div></div>
 <div class="wrap content">${['/','/demande','/tarifs','/fonctionnement'].includes(page.path) ? '<section class="parts-transparency"><h2>EDM28 ne vend pas de pièces</h2><p>Vous achetez les pièces directement auprès du vendeur de votre choix. Nous préparons votre panier et vous donnons les références : aucune marge sur les pièces, aucun prix caché. Vous réglez à EDM28 uniquement la prestation, consommables compris.</p></section>' : ''}${bodyContent}</div>
 </main>
-<footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}<nav aria-label="Informations légales"><a href="/conditions-generales">Conditions générales</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/retractation">Renoncer au contrat ici</a></nav></div></footer>
+<footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}<nav aria-label="Informations légales"><a href="/conditions-generales">Conditions générales</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/cookies">Cookies</a> · <a href="/retractation">Renoncer au contrat ici</a></nav></div></footer>
 ${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/quote-signature.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
 <script src="/public-site.js?v=2" defer></script>${page.showWithdrawalForm ? '<script src="/legal-withdrawal.js?v=1" defer><\/script>' : ''}${page.path === '/transparence' && geminiFaqConfigured ? '<script src="/public-faq-ai.js?v=2" defer><\/script>' : ''}</body>
