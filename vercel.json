@@ -224,6 +224,10 @@
       "dest": "/api/app?seo=page&slug=cookies"
     },
     {
+      "src": "/pieces-economie-circulaire",
+      "dest": "/api/app?seo=page&slug=pieces-economie-circulaire"
+    },
+    {
       "src": "/retractation",
       "dest": "/api/app?seo=page&slug=retractation"
     },
