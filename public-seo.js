@@ -647,6 +647,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
         <div class="section-kicker">Assistant Gemini</div>
         <h2 id="faq-ai-title">Posez votre question à la FAQ EDM28</h2>
         <p>Réponses basées sur le fonctionnement public d’EDM28. Cet assistant ne remplace ni un contrôle du véhicule, ni un devis, ni un diagnostic mécanique.</p>
+    <p class="small">La question saisie est envoyée au service Gemini de Google pour générer une réponse. Ne communiquez pas de nom, numéro, plaque, adresse ou donnée sensible dans la question. <a href="/confidentialite">En savoir plus sur vos données</a>.</p>
         <div id="edmFaqAiMessages" class="faq-ai-messages" role="log" aria-label="Conversation avec l’assistant EDM28" aria-live="polite" aria-relevant="additions text">
           <div class="faq-chat-message faq-chat-assistant"><span class="faq-chat-label">Assistant EDM28</span><p>Bonjour, quelle est votre question ? Je peux aussi vous renseigner sur les prestations et leurs tarifs indicatifs.</p></div>
         </div>
