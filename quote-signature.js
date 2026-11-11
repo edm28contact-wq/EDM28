@@ -49,6 +49,8 @@
         +'<label>Code à huit chiffres<input type="text" data-qs-code inputmode="numeric" autocomplete="one-time-code" maxlength="8" disabled style="display:block;width:100%;padding:9px"></label>'
         +'<p><a href="/conditions-generales" target="_blank" rel="noopener noreferrer">Lire les conditions générales de prestations EDM28</a> · <a href="/retractation" target="_blank" rel="noopener noreferrer">Droit de rétractation</a></p>'
         +'<label><input type="checkbox" data-qs-consent> J’ai consulté le devis et les conditions contractuelles, j’accepte expressément les prestations et le prix indiqués, et je demande sa signature électronique.</label>'
+        +'<p>Option distincte : <label><input type="checkbox" data-qs-early> Je demande expressément de commencer les travaux avant la fin des 14 jours.</label></p>'
+        +'<p><label><input type="checkbox" data-qs-waiver> Je reconnais que la perte du droit de rétractation peut s’appliquer après exécution intégrale dans les conditions prévues par la loi.</label></p>'
         +'<button type="button" data-qs-confirm disabled>Signer le devis avec obligation de paiement</button>'
         +'<p role="status" aria-live="polite" data-qs-status></p></section>';
       document.body.append(popup);
@@ -60,7 +62,10 @@
         $('[data-qs-close]').onclick=close;
         $('[data-qs-send]').onclick=async()=>{
           const button=$('[data-qs-send]');button.disabled=true;$('[data-qs-status]').textContent='Envoi du code…';
-          try{await action(client,quoteId,'start');started=true;$('[data-qs-code]').disabled=false;$('[data-qs-confirm]').disabled=false;$('[data-qs-status]').textContent='Code envoyé, valable 10 minutes.';}
+          try{const earlyStart=$('[data-qs-early]').checked;const lossAcknowledged=$('[data-qs-waiver]').checked;
+            if(earlyStart&&!lossAcknowledged)throw new Error('Confirmez distinctement les conditions du démarrage anticipé.');
+            await action(client,quoteId,'start',{earlyStart,lossAcknowledged});
+            $('[data-qs-early]').disabled=true;$('[data-qs-waiver]').disabled=true;started=true;$('[data-qs-code]').disabled=false;$('[data-qs-confirm]').disabled=false;$('[data-qs-status]').textContent='Code envoyé, valable 10 minutes.';}
           catch(e){$('[data-qs-status]').textContent=e.message;button.disabled=false;}
         };
         $('[data-qs-confirm]').onclick=async()=>{
