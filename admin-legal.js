@@ -11,7 +11,7 @@
     const [{data:records,error},{data:business,error:businessError},{data:legal,error:legalError}]=await Promise.all([
       db.from('consumer_withdrawal_requests').select('id,submitted_at,contract_reference,consumer_name,consumer_email,statement,receipt_status,receipt_sent_at,review_status,review_note,reviewed_at').order('submitted_at',{ascending:false}).limit(150),
       db.from('business_configuration').select('legal_name,siren,siret,vat_status,vat_number,address_line1,postal_code,city,phone,email,insurance_name,insurance_policy').eq('id',true).single(),
-      db.from('consumer_legal_settings').select('mediator_name,mediator_postal_address,mediator_website,publication_director,host_name,host_postal_address,host_website,privacy_contact_email,professional_qualification_reference,compliance_reviewed_at,privacy_retention_reviewed_at').eq('id',true).single()
+      db.from('consumer_legal_settings').select('mediator_name,mediator_postal_address,mediator_website,publication_director,host_name,host_postal_address,host_phone,host_website,registered_business_address,privacy_contact_email,professional_qualification_reference,compliance_reviewed_at,privacy_retention_reviewed_at').eq('id',true).single()
     ]);
     if(error)throw error;
     if(businessError)throw businessError;
@@ -21,6 +21,7 @@
       ['SIREN',business?.siren],
       ['SIRET',business?.siret],
       ['Régime de TVA',business?.vat_status],
+      ['Adresse de domiciliation légale',legal?.registered_business_address],
       ['Adresse de l’établissement',business?.address_line1],
       ['Code postal',business?.postal_code],
       ['Ville',business?.city],
@@ -32,6 +33,7 @@
       ['Site du médiateur',legal?.mediator_website],
       ['Directeur de publication',legal?.publication_director],
       ['Hébergeur',legal?.host_name],
+      ['Téléphone de l’hébergeur',legal?.host_phone],
       ['Adresse de l’hébergeur',legal?.host_postal_address],
       ['Contact pour les données personnelles',legal?.privacy_contact_email],
       ['Justificatif de qualification professionnelle',legal?.professional_qualification_reference]
@@ -54,7 +56,7 @@
       '</div><button type="button" class="btn primary" data-save-consumer-company>Enregistrer les informations de l’entreprise</button></section>'+
       '<p>Une déclaration reçue ne résilie pas automatiquement un rendez-vous ou une facture. Examiner les droits du consommateur et envoyer une réponse écrite. En cas d’échec de l’accusé par email, traiter la demande en priorité.</p>'+
       '<section class="card" style="margin:12px 0"><h3>Mentions légales publiques</h3><p>Indiquez uniquement les renseignements officiels vérifiés. Le médiateur doit être conventionné et inscrit sur la liste officielle. SIRET, TVA et assurance : compléter dans Informations entreprise.</p><div class="grid2" data-consumer-legal-fields>'+
-      [['mediator_name','Nom du médiateur'],['mediator_postal_address','Adresse du médiateur'],['mediator_website','Site du médiateur (HTTPS)'],['publication_director','Directeur de publication'],['host_name','Hébergeur'],['host_postal_address','Adresse de l’hébergeur'],['host_website','Site de l’hébergeur (HTTPS)'],['privacy_contact_email','Contact RGPD (email)'],['professional_qualification_reference','Justificatif de qualification professionnelle (référence)']].map(([key,label])=>'<label>'+escape(label)+'<input data-consumer-legal-field="'+escape(key)+'" value="'+escape(legal?.[key]||'')+'" maxlength="400"></label>').join('')+
+      [['mediator_name','Nom du médiateur'],['mediator_postal_address','Adresse du médiateur'],['mediator_website','Site du médiateur (HTTPS)'],['publication_director','Directeur de publication'],['host_name','Hébergeur'],['host_postal_address','Adresse de l’hébergeur'],['host_phone','Téléphone de l’hébergeur'],['host_website','Site de l’hébergeur (HTTPS)'],['registered_business_address','Adresse de domiciliation officielle (EI)'],['privacy_contact_email','Contact RGPD (email)'],['professional_qualification_reference','Justificatif de qualification professionnelle (référence)']].map(([key,label])=>'<label>'+escape(label)+'<input data-consumer-legal-field="'+escape(key)+'" value="'+escape(legal?.[key]||'')+'" maxlength="400"></label>').join('')+
       '</div><button type="button" class="btn primary" data-save-consumer-legal>Enregistrer les mentions publiques</button></section>'+
       ((records||[]).length?(records||[]).map(row=>
        '<article class="card" data-withdrawal="'+escape(row.id)+'" style="margin:12px 0">'+
