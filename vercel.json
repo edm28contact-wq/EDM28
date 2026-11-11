@@ -220,6 +220,10 @@
       "dest": "/api/app?seo=page&slug=confidentialite"
     },
     {
+      "src": "/cookies",
+      "dest": "/api/app?seo=page&slug=cookies"
+    },
+    {
       "src": "/retractation",
       "dest": "/api/app?seo=page&slug=retractation"
     },
