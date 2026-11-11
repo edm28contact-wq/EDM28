@@ -363,7 +363,7 @@ async function loadPublicBusiness() {
     const supabase = resolveSupabasePublicConfig();
     if (!supabase.url || !supabase.key) return normalizePublicBusiness();
     const params = new URLSearchParams({
-      select: 'business_name,address_line1,address_line2,postal_code,city,country,phone,email,website,logo_url,timezone,booking_url,updated_at',
+      select: 'business_name,legal_name,siren,siret,vat_status,vat_number,insurance_name,address_line1,address_line2,postal_code,city,country,phone,email,website,logo_url,timezone,booking_url,updated_at',
       id: 'eq.true',
       limit: '1'
     });
@@ -398,6 +398,10 @@ function pageWithBusiness(page, business, legal={}) {
     const mediator=[legal.mediator_name,legal.mediator_postal_address,legal.mediator_website].filter(Boolean).join(' — ');
     const host=[legal.host_name,legal.host_postal_address,legal.host_website].filter(Boolean).join(' — ');
     if(page.path==='/mentions-legales'){
+      const businessId = [business.legal_name||'Identité légale à compléter',business.siren?'SIREN : '+business.siren:null,business.siret?'SIRET : '+business.siret:null].filter(Boolean).join(' — ');
+      copy.sections[0][1]='Nom commercial EDM28. Exploitant : '+businessId+'.';
+      copy.sections[1][1]='Immatriculation : '+(business.siret||business.siren||'à compléter')+'. Régime TVA : '+(business.vat_status||business.vat_number||'à compléter')+'.';
+      copy.sections[2][1]='Assurance professionnelle : '+(business.insurance_name||'à compléter')+'. Vérifier dans le dossier interne la police et les garanties souscrites.';
       if(mediator)copy.sections[3][1]='Médiateur de la consommation conventionné : '+mediator+'. En cas de litige non résolu après une réclamation écrite, le consommateur peut saisir gratuitement cet organisme.';
       copy.sections[4][1]='Contact : '+(business.email||'contact@edm28.fr')+'. Adresse de l’établissement : '+(business.address||'à vérifier')+'.'+(legal.publication_director?' Directeur de publication : '+legal.publication_director+'.':'')+(host?' Hébergement : '+host+'.':' Hébergeur : coordonnées à compléter.');
     }
