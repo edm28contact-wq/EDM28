@@ -1232,3 +1232,29 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 .edm3d-stage{animation:edm3d-hero-in .95s cubic-bezier(.19,1,.22,1) both}
 .edm3d-sidebar{animation:edm3d-enter .78s .12s cubic-bezier(.19,1,.22,1) both}
 @media(prefers-reduced-motion:reduce){.edm3d-heading,.edm3d-stage,.edm3d-sidebar{animation:none}}
+
+
+/* Showroom: independent licensed reference viewer and in-house educational cutaway. */
+.edm3d-stage{overflow:hidden}
+.edm3d-view-switch{position:absolute;z-index:7;top:17px;left:18px;display:flex;flex-wrap:wrap;gap:8px;max-width:calc(100% - 36px)}
+.edm3d-view-switch button{border:1px solid #677c96;background:#19283bbf;color:#eaf2fd;border-radius:9px;padding:11px 15px;font:inherit;font-size:.82rem;font-weight:750;cursor:pointer;backdrop-filter:blur(10px)}
+.edm3d-view-switch button[aria-pressed=true]{background:#f2f5fb;color:#131e2a;border-color:#fff}
+.edm3d-view-switch button:focus-visible,.edm3d-reference-intro button:focus-visible{outline:3px solid #e4b477;outline-offset:2px}
+.edm3d-reference{position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse at 48% 44%,#3b4656 0,#111925 58%,#080d15 100%)}
+.edm3d-reference iframe{width:100%;height:calc(100% - 55px);border:0;display:block;background:#0a1019}
+.edm3d-reference-intro{position:absolute;inset:0 0 55px;z-index:3;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(23px,5vw,55px);background:radial-gradient(ellipse at 80% 38%,#3a4c60,#101b2b 67%,#080e18 100%);gap:13px}
+.edm3d-reference-intro h3{color:#fff;font-size:clamp(1.65rem,3.1vw,2.8rem);line-height:1.1;margin:0;letter-spacing:-.035em}
+.edm3d-reference-intro p{color:#d0ddea;max-width:50ch;line-height:1.55;font-size:.93rem;margin:0}
+.edm3d-reference-kicker{color:#d9e7f6;font-size:.75rem;letter-spacing:.15em;font-weight:800}
+.edm3d-reference-intro button{border:0;border-radius:10px;padding:12px 20px;background:#fff;color:#0e1a2b;font:inherit;font-weight:800;cursor:pointer}
+.edm3d-reference-intro.is-loading button{opacity:.6;pointer-events:none}
+.edm3d-reference-intro.is-loaded{display:none}
+.edm3d-reference-credit{height:55px;display:flex;flex-wrap:wrap;align-content:center;align-items:center;justify-content:center;gap:5px;padding:6px 13px;color:#aebed0;font-size:.72rem;text-align:center;line-height:1.4}
+.edm3d-reference-credit a{color:#dce8f6;text-underline-offset:3px}
+.edm3d-showroom[data-view=reference] .edm3d-canvas,.edm3d-showroom[data-view=reference] .edm3d-scene-top,.edm3d-showroom[data-view=reference] .edm3d-stage-footer{visibility:hidden;pointer-events:none}
+.edm3d-showroom[data-view=mechanics] .edm3d-reference{display:none}
+.edm3d-showroom[data-view=mechanics] .edm3d-scene-top{top:74px}
+.edm3d-showroom[data-view=mechanics] .edm3d-view-switch{z-index:6}
+.edm3d-showroom[data-view=reference] .edm3d-view-switch{z-index:6}
+.edm3d-showroom[data-view=reference] .edm3d-sidebar .edm3d-info{display:none}
+@media(max-width:580px){.edm3d-view-switch{top:11px;left:10px;gap:5px}.edm3d-view-switch button{padding:9px 11px;font-size:.72rem}.edm3d-reference-intro{padding:70px 20px 15px}.edm3d-reference-intro h3{font-size:1.55rem}.edm3d-reference-credit{font-size:.61rem}.edm3d-showroom[data-view=mechanics] .edm3d-scene-top{top:63px}}
