@@ -13,7 +13,8 @@
   }
   function basket(value, complete = false) {
     if (!value || typeof value.requires_parts !== 'boolean') throw new Error('Pr\u00e9cisez si des pi\u00e8ces sont n\u00e9cessaires.');
-    const cards = Object.hasOwn(value,'product_cards') ? root.EDMQuoteProductCards?.normalize(value.product_cards || [], complete) : null;
+    const cardsModule = root.EDMQuoteProductCards || (typeof module==='object' && module.exports ? require('./quote-product-cards.js') : null);
+    const cards = Object.hasOwn(value,'product_cards') ? cardsModule?.normalize(value.product_cards || [], complete) : null;
     if (cards === undefined) throw new Error('Le module des fiches pièces est indisponible.');
     const references = String(value.recommended_parts || '').trim();
     const rawUrl = String(value.supplier_url || '').trim();
