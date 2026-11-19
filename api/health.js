@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { handleJourneyDispatch } from '../lib/journey-mail.js';
 import { handleSendNotification } from '../lib/send-notification.js';
+import plateHandler from '../lib/plate.js';
 
 export default async function handler(req, res) {
   const query = new URL(req.url || '/', 'https://edm28.fr').searchParams;
@@ -16,6 +17,7 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     return req.method === 'HEAD' ? res.status(200).end() : res.status(200).send(source);
   }
+  if (req.query?.vehicle === 'plate' || query.get('vehicle') === 'plate') return plateHandler(req, res);
   if (req.query?.journey === 'dispatch' || query.get('journey') === 'dispatch') return handleJourneyDispatch(req, res);
   if (req.method === 'POST') return handleSendNotification(req, res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');

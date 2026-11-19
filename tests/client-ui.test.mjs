@@ -83,7 +83,7 @@ test('Preview handlers inject only public Supabase config before response', asyn
   const [app, admin, config] = await Promise.all([
     read('api/app.js'),
     read('api/admin.js'),
-    read('api/supabase-config.js')
+    read('lib/supabase-config.js')
   ]);
   assert.match(app + admin, /resolveSupabasePublicConfig/);
   assert.match(config, /SUPABASE_ANON_KEY/);

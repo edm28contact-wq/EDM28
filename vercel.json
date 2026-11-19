@@ -268,6 +268,10 @@
       "dest": "/api/admin"
     },
     {
+      "src": "/api/plate",
+      "dest": "/api/health?vehicle=plate"
+    },
+    {
       "src": "/api/send-notification",
       "dest": "/api/health"
     },

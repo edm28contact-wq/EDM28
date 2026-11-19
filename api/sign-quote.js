@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { resolveSupabaseServiceConfig } from './supabase-config.js';
+import { resolveSupabaseServiceConfig } from '../lib/supabase-config.js';
 
 const cfg=resolveSupabaseServiceConfig();
 const UUID=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;

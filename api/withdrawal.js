@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {resolveSupabaseServiceConfig} from './supabase-config.js';
+import {resolveSupabaseServiceConfig} from '../lib/supabase-config.js';
 
 const cfg=resolveSupabaseServiceConfig();
 const allowed=new Set(['https://edm28.fr','https://www.edm28.fr']);

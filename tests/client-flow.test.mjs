@@ -110,7 +110,7 @@ test('safe submit authenticates and API is idempotent', async () => {
 
 test('Preview and production Supabase credentials are isolated', async () => {
   const [config, app, admin, submit, deletion] = await Promise.all([
-    read('api/supabase-config.js'),
+    read('lib/supabase-config.js'),
     read('api/app.js'),
     read('api/admin.js'),
     read('api/submit-request-v2.js'),
@@ -255,4 +255,26 @@ test('production security headers force HTTPS for one year', async () => {
   assert.equal(hsts?.value, 'max-age=31536000');
   assert.ok(globalHeaders.some((header) => header.key === 'X-Frame-Options' && header.value === 'DENY'));
   assert.ok(globalHeaders.some((header) => header.key === 'X-Content-Type-Options' && header.value === 'nosniff'));
+});
+
+test('Vercel Hobby function budget preserves registration API', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const files = await readdir(new URL('api/', root));
+  const endpoints = files.filter(name => /\.(?:js|mjs|ts)$/.test(name));
+  assert.ok(endpoints.length <= 12, `Hobby function budget exceeded: ${endpoints.length}`);
+  const config = JSON.parse(await read('vercel.json'));
+  assert.ok(config.routes.some(route => route.src === '/api/plate' && route.dest === '/api/health?vehicle=plate'));
+  const { default: plateHandler } = await import('../lib/plate.js');
+  const invoke = query => {
+    const result = {};
+    const response = {
+      setHeader() { return this; },
+      status(code) { result.status = code; return this; },
+      json(body) { result.body = body; return this; }
+    };
+    plateHandler({ query }, response);
+    return result;
+  };
+  assert.equal(invoke({ plate: 'ab-123-cd' }).body.vehicle.plate, 'AB-123-CD');
+  assert.equal(invoke({}).status, 400);
 });

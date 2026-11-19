@@ -1,1 +1,1 @@
-export { resolveSupabasePublicConfig } from './api/supabase-config.js';
+export { resolveSupabasePublicConfig } from './lib/supabase-config.js';

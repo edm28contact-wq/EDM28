@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
-import { resolveSupabasePublicConfig } from './supabase-config.js';
+import { resolveSupabasePublicConfig } from '../lib/supabase-config.js';
 import { injectRecoveryBridge } from '../password-recovery.js';
 
 const ADMIN_PATH = join(process.cwd(), 'admin.html');

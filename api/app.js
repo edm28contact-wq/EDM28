@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { resolveSupabasePublicConfig } from './supabase-config.js';
+import { resolveSupabasePublicConfig } from '../lib/supabase-config.js';
 import { injectRecoveryBridge, serveRecoveryPage } from '../password-recovery.js';
 import publicSeoHandler from '../public-seo.js';
 import symptomSeoHandler from '../public-seo-symptoms.js';

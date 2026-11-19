@@ -1,4 +1,4 @@
-import { resolveSupabaseServiceConfig } from './supabase-config.js';
+import { resolveSupabaseServiceConfig } from '../lib/supabase-config.js';
 
 const supabase = resolveSupabaseServiceConfig();
 const SUPABASE_URL = supabase.url;
