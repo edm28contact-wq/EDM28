@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createWorkshopHD } from './showroom-workshop-hd.js';
 
 /* EDM28 virtual showroom.
    Generic procedural car and cutaway assemblies, educational—not an OEM CAD model. */
@@ -34,16 +35,16 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 host.appendChild(renderer.domElement);
 host.querySelector('.edm3d-loading')?.remove();
-renderer.domElement.setAttribute('aria-label','Voiture 3D interactive, utilisez les boutons de roues et de composants pour naviguer');
+renderer.domElement.setAttribute('aria-label','Ensemble de freinage et suspension 3D détaillé, pièces interactives');
 renderer.domElement.setAttribute('role','img');
 renderer.domElement.style.touchAction='pan-y';
 const scene = new THREE.Scene();
-scene.background=new THREE.Color('#091019');
-scene.fog=new THREE.Fog('#091019',13,23);
+scene.background=new THREE.Color('#e5e8ec');
+scene.fog=null;
 const camera=new THREE.PerspectiveCamera(41,1,.1,80);
-camera.position.set(6.1,3.55,7.6);
+camera.position.set(4.2,2.85,4.6);
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,.7,0);
+controls.target.set(0,1.48,0);
 controls.enableDamping=true;
 controls.dampingFactor=.065;
 controls.minDistance=1.4;
@@ -81,7 +82,31 @@ ring.rotation.x=-Math.PI/2;ring.position.y=.015;scene.add(ring);
 const ground=new THREE.Mesh(
   new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:'#080d13',roughness:.93})
 );
-ground.rotation.x=-Math.PI/2;ground.position.y=-.225;ground.receiveShadow=true;scene.add(ground);
+ground.rotation.x=-Math.PI/2;ground.position.y=-.005;ground.receiveShadow=true;scene.add(ground);
+stage.visible=false;ring.visible=false;
+ground.material.color.set('#cdd3d9');
+scene.add(new THREE.AmbientLight('#ffffff',.75));
+const studioEnvironment=new THREE.Scene();
+studioEnvironment.background=new THREE.Color('#727c8a');
+const softboxMat=new THREE.MeshBasicMaterial({color:'#f8fcff',side:THREE.DoubleSide});
+const warmboxMat=new THREE.MeshBasicMaterial({color:'#ded8cf',side:THREE.DoubleSide});
+function studioSoftbox(size,position,rotation,material){
+  const plane=new THREE.Mesh(new THREE.PlaneGeometry(...size),material);
+  plane.position.set(...position);plane.rotation.set(...rotation);studioEnvironment.add(plane);
+}
+studioSoftbox([8,5],[-5,7,3],[0,Math.PI*.22,0],softboxMat);
+studioSoftbox([5,7],[5,5,-2],[0,-Math.PI*.24,0],softboxMat);
+studioSoftbox([9,3],[0,8,-4],[-Math.PI*.35,0,0],warmboxMat);
+const pmrem=new THREE.PMREMGenerator(renderer);
+const studioMap=pmrem.fromScene(studioEnvironment,.04);
+scene.environment=studioMap.texture;
+pmrem.dispose();
+studioEnvironment.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
+softboxMat.dispose();warmboxMat.dispose();
+const workshopHD=createWorkshopHD(THREE);
+scene.add(workshopHD.root);
+workshopHD.setState({family:'freinage',step:0});
+workshopHD.nodes.get('roue').visible=false;
 
 const paint=new THREE.MeshPhysicalMaterial({
   color:'#e7e9ed', metalness:.46, roughness:.21,clearcoat:1,clearcoatRoughness:.12
@@ -99,7 +124,7 @@ const amber=new THREE.MeshStandardMaterial({color:'#ffba7c',metalness:.27,roughn
 const redLamp=new THREE.MeshStandardMaterial({color:'#d44b4a',emissive:'#c3222a',emissiveIntensity:.39});
 const headLamp=new THREE.MeshStandardMaterial({color:'#eef7ff',emissive:'#eef7ff',emissiveIntensity:.8});
 const boltMaterial=new THREE.MeshStandardMaterial({color:'#cad4dd',metalness:.82,roughness:.23});
-const car=new THREE.Group();scene.add(car);
+const car=new THREE.Group();scene.add(car);car.visible=false;
 const wheelParts = new Map();
 const wheelMechanics = new Map();
 const wheelVisuals = new Map();
@@ -272,17 +297,17 @@ const selectableParts=()=>{
 let currentWheel=null, currentPart=null, currentFamily='freinage', currentStep=0;
 let cameraAnimation=null;
 function focusOnWheel(id){
-  const wheel=data.wheelById(id),center=wheelCenters.get(id);
-  if(!wheel || !center)return;
-  const s=wheel.side;
-  const front=wheel.front;
+  const wheel=data.wheelById(id);
+  if(!wheel)return;
   cameraAnimation={
-    target:new THREE.Vector3(center.x*.92,center.y+.06,center.z),
-    position:new THREE.Vector3(center.x+s*3.05,center.y+1.40,center.z+(front?1.05:-1.05))
+    target:new THREE.Vector3(0,1.46,0),
+    position:new THREE.Vector3(3.45,2.50,3.48)
   };
   controls.autoRotate=false;
 }
 function applyExploded(){
+  workshopHD.nodes.get('roue').visible=Boolean(currentWheel);
+  workshopHD.setState({family:currentFamily,step:currentStep,front:currentWheel ? data.wheelById(currentWheel).front : true});
   data.wheels.forEach(wheel=>{
     const selected=currentWheel===wheel.id;
     const visual=wheelVisuals.get(wheel.id);
@@ -411,7 +436,7 @@ function setPart(id,syncStep=true){
     +'<h4>Quand contrôler ?</h4><p>'+escape(part.check)+'</p>'
     +'<h4>Quand remplacer ?</h4><p>'+escape(part.replace)+'</p>'
     +'<div class="edm3d-offers"><h4>Prestations EDM28</h4>'
-    +(options.length?options.map(opt=>button(opt.label,opt.slug)).join(''):'<p>Référence à vérifier avec EDM28.</p>')+'</div>';
+    +(options.length?options.map(opt=>button(opt.label,opt.slug)).join(''):part.choices.length===0?'<p>Présentation pédagogique : cette prestation n’est pas actuellement proposée par EDM28.</p>':'<p>Référence à vérifier avec EDM28.</p>')+'</div>';
   partButtons?.querySelectorAll('button').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.part===id)));
   const relevantMeshes=selectableParts();
   relevantMeshes.forEach(mesh=>{
@@ -466,8 +491,8 @@ function showWheel(id){
 function restore(){
   currentWheel=null;currentPart=null;currentFamily='freinage';currentStep=0;
   cameraAnimation={
-    target:new THREE.Vector3(0,.7,0),
-    position:new THREE.Vector3(6.1,3.55,7.6)
+    target:new THREE.Vector3(0,1.48,0),
+    position:new THREE.Vector3(4.2,2.85,4.6)
   };
   delete root.dataset.part; delete root.dataset.wheel;
   if(el('edm3dInspection'))el('edm3dInspection').hidden=true;
@@ -477,6 +502,7 @@ function restore(){
     wheelParts.get(wheel.id).visible=false;
   }
   applyExploded();
+  workshopHD.nodes.get('roue').visible=false;
   const selector=el('edm3dWheelChoice');
   if(selector)selector.value='';
   const prompt=el('edm3dWheelPrompt');
@@ -521,6 +547,19 @@ renderer.domElement.addEventListener('pointerup',e=>{
     for(let node=object;node;node=node.parent)if(!node.visible)return false;
     return true;
   };
+  const detailedHit=raycaster.intersectObjects(workshopHD.pickables,false).find(hit=>isShown(hit.object));
+  if(detailedHit){
+    const id=detailedHit.object.userData.partId;
+    if(!currentWheel)showWheel('av-droite');
+    if(id==='__wheel__'){setStep(1);return;}
+    const sequence=data.stepsForWheel(currentWheel,currentFamily);
+    const index=sequence.findIndex(item=>item.id===id);
+    if(index>=0){setStep(index+1);return;}
+    if(id==='etrier'){setStep(2);return;}
+    if(id==='moyeu'){setStep(5);return;}
+    if(data.byId(id))setPart(id);
+    return;
+  }
   const hits=raycaster.intersectObjects(interactables,false).filter(hit=>isShown(hit.object));
   const partHit=hits.find(hit=>hit.object.userData.partId!=='__wheel__' && currentWheel===hit.object.userData.wheelId);
   if(partHit){setPart(partHit.object.userData.partId);return;}
@@ -589,6 +628,7 @@ function draw(){
     camera.position.lerp(cameraAnimation.position,Math.min(.18,step));
     if(camera.position.distanceTo(cameraAnimation.position)<.014 && controls.target.distanceTo(cameraAnimation.target)<.014)cameraAnimation=null;
   }
+  workshopHD.animate(step);
   controls.update();
   renderer.render(scene,camera);
   frameId=requestAnimationFrame(draw);
@@ -597,12 +637,12 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running&&
 const cleanup=()=>{
   observer.disconnect();resizer.disconnect();
   if(frameId!==null)cancelAnimationFrame(frameId);
-  controls.dispose();renderer.dispose();
+  controls.dispose();workshopHD.dispose();studioMap.dispose();renderer.dispose();
   made.forEach(object=>object.geometry?.dispose());
   [...new Set(made.map(object=>object.material))].forEach(material=>material?.dispose?.());
 };
 window.addEventListener('pagehide',cleanup,{once:true});
 restore();
 root.classList.add('edm3d-ready');
-live('Showroom 3D prêt. Faites tourner la voiture ou sélectionnez une roue.');
+live('Atelier 3D détaillé prêt. Sélectionnez une roue pour démonter les pièces.');
 frameId=requestAnimationFrame(draw);

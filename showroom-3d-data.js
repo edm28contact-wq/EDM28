@@ -74,6 +74,18 @@
       color: '#ffd7a2'
     },
     {
+      id: 'amortisseur',
+      label: 'Amortisseur et ressort',
+      category: 'Liaison au sol',
+      description: 'L’amortisseur maîtrise les oscillations et le ressort supporte les mouvements de la suspension.',
+      signs: ['Fuite visible sur l’amortisseur', 'Rebonds excessifs ou comportement instable', 'Ressort cassé ou affaissé au contrôle'],
+      check: 'Faire examiner les fixations, le ressort et les traces de fuite ou de dommage ; le contrôle visuel seul peut être insuffisant.',
+      replace: 'Uniquement après diagnostic et selon les prescriptions du constructeur. Le remplacement peut nécessiter de l’outillage et des procédures spécifiques.',
+      choices: [],
+      front: true, rear: false,
+      color: '#bfcbd8'
+    },
+    {
       id: 'stabilisation',
       label: 'Biellettes de barre stabilisatrice',
       category: 'Liaison au sol',
@@ -110,7 +122,8 @@
       { id:'roue', label:'Roue déposée', description:'La vue sur le train avant est dégagée pour observer les articulations.' },
       { id:'triangles', label:'Triangle de suspension', description:'Le triangle est isolé virtuellement pour montrer ses points de fixation et son rôle dans le guidage.' },
       { id:'rotules', label:'Rotule de direction', description:'La liaison de direction est présentée séparément. Toute intervention exige un contrôle de géométrie selon le constructeur.' },
-      { id:'stabilisation', label:'Biellette stabilisatrice', description:'La biellette est déplacée pour illustrer sa liaison entre suspension et barre stabilisatrice.' }
+      { id:'stabilisation', label:'Biellette stabilisatrice', description:'La biellette est déplacée pour illustrer sa liaison entre suspension et barre stabilisatrice.' },
+      { id:'amortisseur', label:'Combiné ressort-amortisseur', description:'Le combiné est isolé virtuellement pour observer le ressort hélicoïdal, la tige et les fixations. En réalité, un ressort précontraint présente un risque élevé et nécessite des procédures adaptées.' }
     ])
   });
   const stepsForWheel = (wheelId, family='freinage') => {

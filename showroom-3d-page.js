@@ -7,7 +7,7 @@ export function render3DShowroom() {
   <div class="edm3d-stage">
    <div class="edm3d-view-switch" role="group" aria-label="Mode de visualisation">
     <button type="button" id="edm3dViewReference" aria-pressed="true">GT3 RS réaliste</button>
-    <button type="button" id="edm3dViewMechanics" aria-pressed="false">Vue atelier · pièces</button>
+    <button type="button" id="edm3dViewMechanics" aria-pressed="false">Atelier HD · pièces</button>
    </div>
    <div id="edm3dReference" class="edm3d-reference">
     <div id="edm3dReferenceIntro" class="edm3d-reference-intro">
@@ -23,7 +23,7 @@ export function render3DShowroom() {
    <div id="edm3dCanvas" class="edm3d-canvas"><div class="edm3d-loading">Chargement du modèle 3D…</div></div>
    <div class="edm3d-scene-top"><span class="edm3d-live-indicator">● VOITURE 3D</span><span>EDM28 · 360°</span></div>
    <div class="edm3d-stage-footer">
-    <p id="edm3dWheelPrompt">Mode atelier : faites tourner le schéma technique et sélectionnez une roue.</p>
+    <p id="edm3dWheelPrompt">Atelier HD : faites tourner l’assemblage, puis sélectionnez une roue pour explorer les pièces.</p>
     <div class="edm3d-controls">
      <button type="button" id="edm3dRotate" aria-pressed="false">Faire tourner la voiture</button>
      <button type="button" id="edm3dZoomIn" aria-label="Zoom avant">＋</button>
@@ -63,7 +63,7 @@ export function render3DShowroom() {
   </aside>
  </div>
  <p class="edm3d-status" id="edm3dStatus" role="status" aria-live="polite">Préparation de la scène…</p>
- <div class="edm3d-note">La vue réaliste utilise un modèle 3D indépendant sous licence CC BY 4.0, hébergé par Sketchfab. La vue atelier est un schéma pédagogique générique : ses pièces ne correspondent pas nécessairement à celles d’une GT3 RS. Aucun lien commercial avec Porsche ni diagnostic à distance.</div>
+ <div class="edm3d-note">La vue réaliste utilise un modèle 3D indépendant sous licence CC BY 4.0, hébergé par Sketchfab. La vue atelier présente un assemblage mécanique 3D détaillé et démontable, à vocation pédagogique. Sa géométrie ne correspond pas à un modèle constructeur homologué. Aucun lien commercial avec Porsche ni diagnostic à distance.</div>
  <div id="edm3dFallback" class="edm3d-fallback"><strong>Le showroom reste accessible sans 3D</strong><p>Retrouvez les fiches détaillées et les demandes d’intervention :</p><div><a href="/freinage/plaquettes-de-frein">Plaquettes de frein</a> · <a href="/freinage/disques-de-frein">Disques</a> · <a href="/liaison-au-sol">Liaison au sol</a> · <a href="/demande">Faire une demande</a></div></div>
  </section>`;
 }
