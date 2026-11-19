@@ -31,11 +31,11 @@
     const derived = cards.length ? window.EDMQuoteProductCards.summary(cards) : null;
     const supplierUrl = derived?.firstUrl || field(root, 'supplierUrl').value;
     const recommendedParts = derived?.references || field(root, 'recommendedParts').value;
-    const priceDetails = derived?.prices || field(root, 'priceDetails')?.value || '';
+    const priceDetails = derived ? derived.prices : (field(root, 'priceDetails')?.value || '');
     const today=new Date();
-    const priceObservedAt = (derived?.prices && !field(root, 'priceObservedAt')?.value)
-      ? [today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-')
-      : field(root, 'priceObservedAt')?.value || null;
+    const priceObservedAt = derived
+      ? (derived.prices ? (field(root, 'priceObservedAt')?.value || [today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-')) : null)
+      : (field(root, 'priceObservedAt')?.value || null);
     const parts = P().basket({
       requires_parts: field(root, 'requiresParts').checked,
       supplier_url: supplierUrl,
