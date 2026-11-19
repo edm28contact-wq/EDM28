@@ -26,7 +26,6 @@ try {
   root.classList.add('edm3d-unavailable');
   throw new Error('WebGL indisponible');
 }
-root.classList.add('edm3d-ready');
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -34,6 +33,7 @@ renderer.toneMappingExposure=1.36;
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 host.appendChild(renderer.domElement);
+host.querySelector('.edm3d-loading')?.remove();
 renderer.domElement.setAttribute('aria-label','Voiture 3D interactive, utilisez les boutons de roues et de composants pour naviguer');
 renderer.domElement.setAttribute('role','img');
 renderer.domElement.style.touchAction='pan-y';
@@ -276,7 +276,8 @@ function setPart(id){
   relevantMeshes.forEach(mesh=>{
     const material=mesh.material;
     if(!material?.emissive)return;
-    material.emissiveIntensity=mesh.userData.partId===id ? .48 : .08;
+    material.emissive.set(mesh.userData.partId===id ? part.color : '#090d12');
+    material.emissiveIntensity=mesh.userData.partId===id ? .45 : .07;
   });
   live('Composant sélectionné : '+part.label+(wheel?' sur la roue '+wheel.label.toLowerCase():'')+'.');
 }
@@ -414,5 +415,6 @@ const cleanup=()=>{
 };
 window.addEventListener('pagehide',cleanup,{once:true});
 restore();
+root.classList.add('edm3d-ready');
 live('Showroom 3D prêt. Faites tourner la voiture ou sélectionnez une roue.');
 frameId=requestAnimationFrame(draw);
