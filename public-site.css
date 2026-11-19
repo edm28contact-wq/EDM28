@@ -1289,3 +1289,16 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 .edm3d-showroom[data-view=reference] .edm3d-reference iframe{min-height:340px}
 .edm3d-showroom[data-view=reference] .edm3d-stage{min-height:540px}
 @media(max-width:580px){.edm3d-showroom[data-view=reference] .edm3d-stage{min-height:400px}.edm3d-reference iframe{min-height:325px}.edm3d-scene-title{font-size:.62rem;top:8px;left:9px}}
+
+
+/* Guided node identification on the existing GT3 RS scene. */
+.edm3d-pick-panel{border-top:1px solid #41546b;padding:16px 0 20px;margin-top:14px;display:grid;gap:10px}
+.edm3d-pick-panel select{width:100%;background:#eaf1f8;color:#142335;border:0;border-radius:9px;padding:10px;font:inherit}
+.edm3d-pick-panel button{color:#122338;background:#e1eaf5;border:1px solid #e1eaf5;border-radius:8px;padding:11px 12px;font:inherit;font-weight:700;cursor:pointer}
+.edm3d-pick-panel button:disabled{opacity:.5;cursor:not-allowed}
+.edm3d-pick-panel button:focus-visible{outline:3px solid #cda270;outline-offset:2px}
+#edm3dPickHint{font-size:.79rem;line-height:1.55;color:#cbdbef;margin:0}
+#edm3dPickConfirm{padding:12px;border:1px solid #68829f;background:#203247;border-radius:9px;display:grid;gap:8px}
+#edm3dPickConfirm[hidden]{display:none}
+#edm3dPickCandidate{font-size:.79rem;line-height:1.5;margin:0;color:#e2eefb;overflow-wrap:anywhere}
+#edm3dPickCancel{background:transparent;border-color:#71829a;color:#e2eaf4}

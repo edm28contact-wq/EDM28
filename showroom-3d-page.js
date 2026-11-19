@@ -35,8 +35,32 @@ export function render3DShowroom() {
    <label for="edm3dWheelChoice" class="edm3d-select-label">Choisissez une roue</label>
    <select id="edm3dWheelChoice"><option value="">Voiture complète</option><option value="av-gauche">Avant gauche</option><option value="av-droite">Avant droite</option><option value="ar-gauche">Arrière gauche</option><option value="ar-droite">Arrière droite</option></select>
    <div class="edm3d-wheel-shortcuts"><button type="button" data-edm-wheel="av-gauche">Avant G.</button><button type="button" data-edm-wheel="av-droite">Avant D.</button><button type="button" data-edm-wheel="ar-gauche">Arrière G.</button><button type="button" data-edm-wheel="ar-droite">Arrière D.</button></div>
+   <div class="edm3d-pick-panel" id="edm3dPickPanel">
+    <div class="edm3d-sidebar-step">02 — IDENTIFIER UNE PIÈCE SUR LA GT3 RS</div>
+    <label for="edm3dPickPart" class="edm3d-select-label">Pièce à sélectionner</label>
+    <select id="edm3dPickPart">
+     <option value="roue">Roue et jante</option>
+     <option value="etrier">Étrier de frein</option>
+     <option value="plaquettes">Plaquettes de frein</option>
+     <option value="disques">Disque de frein</option>
+     <option value="moyeu">Moyeu</option>
+     <option value="triangles">Triangle de suspension</option>
+     <option value="rotules">Rotule de direction</option>
+     <option value="stabilisation">Biellette stabilisatrice</option>
+     <option value="amortisseur">Amortisseur</option>
+    </select>
+    <button id="edm3dPickStart" type="button">Identifier dans la GT3 RS</button>
+    <button id="edm3dPickRemove" type="button" disabled>Masquer la pièce identifiée</button>
+    <button id="edm3dPickRestore" type="button">Réafficher les pièces</button>
+    <p id="edm3dPickHint" role="status">Choisissez une roue, puis cliquez sur « Identifier ». Touchez ensuite la pièce correspondante dans le modèle 3D.</p>
+    <div id="edm3dPickConfirm" hidden>
+     <p id="edm3dPickCandidate"></p>
+     <button id="edm3dPickAccept" type="button">Confirmer cette pièce</button>
+     <button id="edm3dPickCancel" type="button">Annuler</button>
+    </div>
+   </div>
    <div class="edm3d-inspection" id="edm3dInspection" hidden>
-    <div class="edm3d-sidebar-step">02 — DÉMONTAGE SUR LA VOITURE</div>
+    <div class="edm3d-sidebar-step">03 — DÉMONTAGE SUR LA VOITURE</div>
     <div class="edm3d-family-switch" role="group" aria-label="Famille de composants">
      <button type="button" id="edm3dFamilyFreinage" aria-pressed="true">Freinage</button>
      <button type="button" id="edm3dFamilyLiaison" aria-pressed="false">Liaison au sol</button>
@@ -52,9 +76,9 @@ export function render3DShowroom() {
      <button type="button" id="edm3dRebuild">Remonter toutes les pièces</button>
     </div>
    </div>
-   <div class="edm3d-sidebar-step">03 — COMPOSANTS À EXPLORER</div>
+   <div class="edm3d-sidebar-step">04 — COMPOSANTS À EXPLORER</div>
    <div id="edm3dParts" class="edm3d-parts"><p class="edm3d-empty">Sélectionnez une roue pour voir les pièces.</p></div>
-   <div class="edm3d-info"><div class="edm3d-sidebar-step">04 — À QUOI SERT CETTE PIÈCE ?</div>
+   <div class="edm3d-info"><div class="edm3d-sidebar-step">05 — À QUOI SERT CETTE PIÈCE ?</div>
     <h3 id="edm3dPartTitle">Choisissez une roue</h3>
     <div id="edm3dPartBody"><p>Découvrez le rôle, les signes d'usure et les prestations disponibles.</p></div>
    </div>

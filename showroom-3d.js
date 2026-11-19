@@ -337,7 +337,7 @@ function updateStepPanel(){
   const panel=el('edm3dInspection');
   if(panel)panel.hidden=!currentWheel;
   const loading=el('edm3dModelSupport');
-  if(loading&&currentWheel&&!gt3?.supports(currentWheel,'wheel'))loading.textContent='La roue sélectionnée n’est pas identifiée comme un objet indépendant dans ce modèle. Le démontage est désactivé.';
+  if(loading&&currentWheel&&gt3?.ready&&!gt3.supports(currentWheel,'roue'))loading.textContent='Roue non identifiée automatiquement : utilisez « Identifier dans la GT3 RS » en cliquant la roue réelle.';
   if(!currentWheel)return;
   const steps=data.stepsForWheel(currentWheel,currentFamily);
   const max=steps.length;
@@ -438,11 +438,7 @@ function setPart(id,syncStep=true){
     }
     const steps=data.stepsForWheel(currentWheel,currentFamily);
     const stepIndex=steps.findIndex(item=>item.id===id);
-    if(stepIndex>=0 && root.dataset.view==='mechanics'){
-      currentStep=stepIndex+1;
-      applyExploded();
-      updateStepPanel();
-    }
+    // La sélection informe uniquement : la dépose passe toujours par un bouton explicite.
   }
   const wheel=chosenWheel();
   const services=availableServices();
@@ -486,7 +482,7 @@ function refreshPartMenu(){
 function showWheel(id){
   const wheel=data.wheelById(id);
   if(!wheel)return;
-  if(currentWheel===id){if(gt3?.ready)setStep(1);return;}
+  if(currentWheel===id)return;
   gt3?.restore();
   currentWheel=id;currentPart=null;currentFamily='freinage';currentStep=0;
   root.dataset.wheel=id;
@@ -502,13 +498,13 @@ function showWheel(id){
     live('Chargez d’abord la Porsche GT3 RS. Les pièces sont contrôlées dans son modèle original.');
     return;
   }
-  if(!gt3.supports(id,'wheel')){
-    if(support)support.textContent='Cette roue n’est pas une pièce indépendante identifiable dans le modèle. Aucune disparition fictive.';
+  if(!gt3.supports(id,'roue')){
+    if(support)support.textContent='Roue non reconnue automatiquement. Choisissez « Roue et jante », puis « Identifier dans la GT3 RS » et cliquez sur la roue dans le modèle.';
     live('Démontage indisponible pour '+wheel.label.toLowerCase()+'.');
     return;
   }
-  if(support)support.textContent='Roue reconnue dans la GT3 RS. Utilisez les étapes pour masquer les pièces réelles du modèle.';
-  setStep(1);
+  if(support)support.textContent='Roue reconnue dans la GT3 RS. Cliquez sur « Démonter la pièce suivante » pour retirer la roue.';
+  updateStepPanel();
 }
 
 function restore(){
@@ -602,9 +598,20 @@ const showSupport=message=>{
   if(target)target.textContent=message;
   live(message);
 };
+let pendingCandidate=null;
+let identifiedPart=null;
 const gt3=createGt3Workshop({
   iframe:referenceFrame,
   onWarning:showSupport,
+  onCandidate(candidate){
+    pendingCandidate=candidate;
+    const box=el('edm3dPickConfirm');
+    if(box)box.hidden=false;
+    const text=el('edm3dPickCandidate');
+    if(text)text.textContent='Objet détecté : « '+candidate.name+' ». Confirmez uniquement si toute cette géométrie correspond à la pièce choisie. Sinon, annulez.';
+    const hint=el('edm3dPickHint');
+    if(hint)hint.textContent='Vérifiez que l’objet sélectionné ne regroupe pas la carrosserie ou plusieurs pièces.';
+  },
   onReady({available}){
     if(referenceIntro)referenceIntro.classList.add('is-loaded');
     const msg=available.length
@@ -612,12 +619,15 @@ const gt3=createGt3Workshop({
       : 'GT3 RS prête à tourner. Le fichier ne fournit aucune roue séparée clairement identifiable : le démontage sur ce modèle reste indisponible.';
     if(referenceStatus)referenceStatus.textContent=msg;
     showSupport(msg);
-    if(currentWheel)showWheel(currentWheel);
+    if(currentWheel){
+      if(gt3.supports(currentWheel,'roue'))showSupport('La roue est reconnue. Cliquez sur « Démonter la pièce suivante ».');
+      else showSupport('Choisissez une pièce à identifier et cliquez dessus dans la GT3 RS.');
+    }
   },
   onClick({wheel,part}){
     if(!data.wheelById(wheel))return;
     if(currentWheel!==wheel)showWheel(wheel);
-    if(part==='wheel'){if(gt3.supports(wheel,'wheel'))setStep(1);return;}
+    if(part==='roue'){if(gt3.supports(wheel,'roue'))setStep(1);return;}
     const current=data.byId(part);
     if(current){setPart(current.id,false);return;}
     const labels={etrier:['Étrier de frein','L’étrier serre les plaquettes sur le disque pour ralentir la roue.'],moyeu:['Moyeu de roue','Le moyeu porte la roue et transmet sa rotation.']};
@@ -628,6 +638,57 @@ const gt3=createGt3Workshop({
       if(body)body.textContent=selected[1];
     }
   }
+});
+el('edm3dPickStart')?.addEventListener('click',()=>{
+  if(!currentWheel){showSupport('Choisissez d’abord la roue à explorer à droite.');return;}
+  if(!gt3.ready){showSupport('Chargez d’abord la GT3 RS avec le bouton d’affichage.');return;}
+  const part=el('edm3dPickPart')?.value||'roue';
+  if(!gt3.beginPick(currentWheel,part))return;
+  pendingCandidate=null;
+  const confirmation=el('edm3dPickConfirm');
+  if(confirmation)confirmation.hidden=true;
+  const hint=el('edm3dPickHint');
+  if(hint)hint.textContent='Cliquez maintenant sur la pièce directement dans la GT3 RS (pas sur le panneau à droite).';
+});
+el('edm3dPickAccept')?.addEventListener('click',()=>{
+  if(!pendingCandidate)return;
+  const accepted=gt3.confirmPick();
+  if(!accepted.ok){showSupport(accepted.reason);return;}
+  identifiedPart={wheel:accepted.wheel,part:accepted.part,name:accepted.name};
+  const confirmation=el('edm3dPickConfirm');
+  if(confirmation)confirmation.hidden=true;
+  const button=el('edm3dPickRemove');
+  if(button)button.disabled=false;
+  const hint=el('edm3dPickHint');
+  if(hint)hint.textContent='Pièce associée : '+accepted.name+'. Cliquez sur « Masquer la pièce identifiée » pour vérifier le démontage, ou sur « Réafficher les pièces ».';
+  const partData=data.byId(accepted.part);
+  if(partData)setPart(accepted.part,false);
+  else if(accepted.part==='roue'){
+    const title=el('edm3dPartTitle');
+    if(title)title.textContent='Roue et jante';
+    const body=el('edm3dPartBody');
+    if(body)body.textContent='La roue permet au véhicule de rouler et relie le pneu au moyeu. Son démontage dans cette scène est uniquement virtuel.';
+  }
+  pendingCandidate=null;
+});
+el('edm3dPickCancel')?.addEventListener('click',()=>{
+  gt3.cancelPick();pendingCandidate=null;
+  const confirmation=el('edm3dPickConfirm');
+  if(confirmation)confirmation.hidden=true;
+  const hint=el('edm3dPickHint');
+  if(hint)hint.textContent='Identification annulée. Vous pouvez choisir une autre pièce.';
+});
+el('edm3dPickRemove')?.addEventListener('click',async()=>{
+  if(!identifiedPart||!gt3.ready){showSupport('Aucune pièce identifiée.');return;}
+  const {wheel,part}=identifiedPart;
+  const result=await gt3.setSteps(wheel,[part]);
+  if(result.ok)showSupport('Pièce masquée sur la GT3 RS : '+identifiedPart.name+'. Utilisez « Réafficher les pièces » pour annuler.');
+  else showSupport('Impossible de masquer la pièce. Vérifiez qu’elle est indépendante dans le modèle.');
+});
+el('edm3dPickRestore')?.addEventListener('click',async()=>{
+  await gt3.restore();
+  currentStep=0;updateStepPanel();
+  showSupport('Toutes les pièces masquées ont été réaffichées sur la GT3 RS.');
 });
 el('edm3dLoadReference')?.addEventListener('click',()=>{
   if(referenceIntro)referenceIntro.classList.add('is-loading');

@@ -3,7 +3,7 @@
 const MODEL_UID='5fd62615f72a4012a5ebc15cd4c64461';
 const WHEELS=['av-gauche','av-droite','ar-gauche','ar-droite'];
 const patterns={
-  wheel:/\b(wheel|wheels|roue|roues|tyre|tire|pneu|rim|jante|rims)\b/i,
+  roue:/\b(wheel|wheels|roue|roues|tyre|tire|pneu|rim|jante|rims)\b/i,
   etrier:/\b(caliper|etrier|étrier)\b/i,
   plaquettes:/\b(pad|pads|plaquette|plaquettes)\b/i,
   disques:/\b(brake disc|brake disk|brake rotor|rotor|disque)\b/i,
@@ -40,10 +40,11 @@ export function classifyNodeName(name){
 }
 export function mapModelNodes(raw){
   const entries=Array.isArray(raw)?raw:Object.values(raw||{});
-  const result=new Map(),names=new Map();
+  const result=new Map(),names=new Map(),allNodes=new Map();
   for(const id of WHEELS)result.set(id,new Map());
   for(const node of entries){
     if(!node || !Number.isInteger(node.instanceID) || typeof node.name!=='string')continue;
+    allNodes.set(node.instanceID,{name:node.name,type:node.type});
     const matched=classifyNodeName(node.name);
     if(!matched)continue;
     const byPart=result.get(matched.wheel);
@@ -52,7 +53,7 @@ export function mapModelNodes(raw){
     names.set(node.instanceID,{...matched,name:node.name});
   }
   // Wheels must explicitly identify their exact axle AND side. Unnamed mesh families are unsafe to hide.
-  return {wheels:result,names,available:WHEELS.filter(w=>result.get(w).has('wheel'))};
+  return {wheels:result,names,allNodes,available:WHEELS.filter(w=>result.get(w).has('roue'))};
 }
 function scriptOnce(){
   if(window.Sketchfab)return Promise.resolve();
@@ -72,8 +73,9 @@ function invoke(api,method,id){
     api[method](id,error=>error?reject(new Error(String(error))):resolve());
   });
 }
-export function createGt3Workshop({iframe,onReady,onWarning,onClick}){
+export function createGt3Workshop({iframe,onReady,onWarning,onClick,onCandidate}){
   let api=null,mapping=null,ready=false,initPromise=null,hidden=new Set(),queue=Promise.resolve();
+  let pendingPick=null,candidate=null;
   const supports=(wheel,part)=>Boolean(mapping?.wheels.get(wheel)?.get(part)?.length);
   const nodesFor=(wheel,part)=>mapping?.wheels.get(wheel)?.get(part)||[];
   async function init(){
@@ -95,6 +97,17 @@ export function createGt3Workshop({iframe,onReady,onWarning,onClick}){
                 mapping=mapModelNodes(nodes);ready=true;
                 handle.addEventListener('click',event=>{
                   const id=event?.instanceID??event?.node?.instanceID;
+                  if(pendingPick){
+                    const info=mapping?.allNodes.get(id);
+                    if(!info){onWarning?.('Objet 3D non identifiable. Cliquez directement sur la pièce visible.');return;}
+                    if(/^(root|scene|car|chassis|body|vehicle)(?:[_\s.-]|$)/i.test(info.name)){
+                      onWarning?.('Ce groupe semble contenir la carrosserie : sélection refusée pour éviter de masquer toute la GT3 RS.');return;
+                    }
+                    candidate={...pendingPick,id,name:info.name};
+                    pendingPick=null;
+                    onCandidate?.({...candidate});
+                    return;
+                  }
                   const selected=mapping?.names.get(id);
                   if(selected)onClick?.(selected);
                 },{pick:'slow'});
@@ -109,6 +122,26 @@ export function createGt3Workshop({iframe,onReady,onWarning,onClick}){
     })().catch(error=>{initPromise=null;onWarning?.(error.message);throw error;});
     return initPromise;
   }
+  function beginPick(wheel,part='roue'){
+    if(!ready || !WHEELS.includes(wheel) || (part!=='roue'&&!Object.hasOwn(patterns,part))){
+      onWarning?.('Sélectionnez une roue valide et chargez la GT3 RS avant d’identifier une pièce.');
+      return false;
+    }
+    pendingPick={wheel,part};
+    candidate=null;
+    return true;
+  }
+  function confirmPick(){
+    if(!candidate||!mapping)return {ok:false,reason:'Aucune pièce choisie dans la GT3 RS'};
+    const {wheel,part,id,name}=candidate;
+    if(!mapping.allNodes.has(id))return {ok:false,reason:'Objet 3D inconnu'};
+    const nodeMap=mapping.wheels.get(wheel);
+    nodeMap.set(part,[id]);
+    mapping.names.set(id,{wheel,part,name});
+    candidate=null;pendingPick=null;
+    return {ok:true,wheel,part,name};
+  }
+  function cancelPick(){pendingPick=null;candidate=null;}
   function setSteps(wheel,parts){
     queue=queue.catch(()=>{}).then(async()=>{
       if(!ready||!WHEELS.includes(wheel))return {ok:false,reason:'Le modèle 3D n’est pas prêt'};
@@ -143,5 +176,5 @@ export function createGt3Workshop({iframe,onReady,onWarning,onClick}){
     }).catch(error=>onWarning?.('Restauration impossible : '+error.message));
     return queue;
   }
-  return {init,restore,setSteps,supports,get ready(){return ready;},get modelUid(){return MODEL_UID;}};
+  return {init,restore,setSteps,supports,beginPick,confirmPick,cancelPick,get ready(){return ready;},get modelUid(){return MODEL_UID;}};
 }

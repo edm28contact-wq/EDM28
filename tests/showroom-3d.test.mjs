@@ -39,7 +39,7 @@ test('showroom replaces Gemini UI, keeps fallback, and loads pinned Three.js mod
  assert.match(seo,/type="importmap"/);
  assert.match(seo,/three@0\.181\.2/);
  assert.match(seo,/showroom-3d-data\.js/);
- assert.ok(seo.includes("showroom-3d.js?v=6"));
+ assert.ok(seo.includes("showroom-3d.js?v=7"));
  assert.match(page,/edm3dShowroom/);
  assert.match(page,/edm3dFallback/);
  assert.match(page,/edm3dWheelChoice/);
@@ -110,8 +110,8 @@ test('four-wheel guided disassembly is reversible and respects axle families', a
  assert.match(scene,/currentStep=Math\.max\(0,Math\.min\(/);
  assert.match(css,/\.edm3d-inspection\[hidden\]\{display:none\}/);
  assert.match(seo,/showroom-3d-data\.js\?v=2/);
- assert.match(seo,/showroom-3d\.js\?v=6/);
- assert.match(seo,/public-site\.css\?v=13/);
+ assert.match(seo,/showroom-3d\.js\?v=7/);
+ assert.match(seo,/public-site\.css\?v=14/);
 });
 
 test('workshop HD renders an independent detailed brake and suspension assembly in production', async ()=>{
@@ -142,13 +142,13 @@ test('workshop HD renders an independent detailed brake and suspension assembly 
  assert.match(detail,/const brakeOrder=\['roue','etrier','plaquettes','disques','moyeu'\]/);
  assert.match(detail,/const suspensionOrder=\['roue','triangles','rotules','stabilisation','amortisseur'\]/);
  assert.match(page,/GT3 RS · EXPLORATION INTERACTIVE/);
- assert.match(seo,/showroom-3d\.js\?v=6/);
+ assert.match(seo,/showroom-3d\.js\?v=7/);
  assert.doesNotMatch(detail,/sketchfab\.com/);
 });
 
 test('GT3 workshop names must identify both axle and side before removing any object',()=>{
-  assert.deepEqual(classifyNodeName('Wheel_FL'),{wheel:'av-gauche',part:'wheel'});
-  assert.deepEqual(classifyNodeName('tyre - front right'),{wheel:'av-droite',part:'wheel'});
+  assert.deepEqual(classifyNodeName('Wheel_FL'),{wheel:'av-gauche',part:'roue'});
+  assert.deepEqual(classifyNodeName('tyre - front right'),{wheel:'av-droite',part:'roue'});
   assert.deepEqual(classifyNodeName('Rotor Rear Left'),{wheel:'ar-gauche',part:'disques'});
   assert.deepEqual(classifyNodeName('Caliper RR'),{wheel:'ar-droite',part:'etrier'});
   assert.equal(classifyNodeName('Bodywork'),null);
@@ -161,7 +161,7 @@ test('GT3 workshop names must identify both axle and side before removing any ob
     4:{name:'Chassis',instanceID:45}
   });
   assert.deepEqual(map.available,['av-gauche','av-droite']);
-  assert.deepEqual(map.wheels.get('av-gauche').get('wheel'),[31]);
+  assert.deepEqual(map.wheels.get('av-gauche').get('roue'),[31]);
   assert.deepEqual(map.wheels.get('av-gauche').get('disques'),[44]);
   assert.equal(map.names.has(45),false);
 });
@@ -197,11 +197,11 @@ test('GT3 API does not pretend to remove fused or unnamed wheels',async()=>{
     });
     await control.init();
     assert.deepEqual(ready[0].available,['av-gauche']);
-    assert.equal(control.supports('av-gauche','wheel'),true);
-    assert.equal(control.supports('av-droite','wheel'),false);
-    assert.deepEqual(await control.setSteps('av-droite',['wheel']),{ok:false,missing:['wheel']});
+    assert.equal(control.supports('av-gauche','roue'),true);
+    assert.equal(control.supports('av-droite','roue'),false);
+    assert.deepEqual(await control.setSteps('av-droite',['roue']),{ok:false,missing:['wheel']});
     assert.deepEqual(calls,[]);
-    assert.deepEqual(await control.setSteps('av-gauche',['wheel','disques']),{ok:true});
+    assert.deepEqual(await control.setSteps('av-gauche',['roue','disques']),{ok:true});
     assert.deepEqual(calls,[['hide',5],['hide',7]]);
     await control.restore();
     assert.deepEqual(calls.slice(-2),[['show',5],['show',7]]);
@@ -210,4 +210,60 @@ test('GT3 API does not pretend to remove fused or unnamed wheels',async()=>{
     if(oldWindow===undefined)delete globalThis.window;
     else globalThis.window=oldWindow;
   }
+});
+
+test('manual identification requires confirmation and selects the actual 3D mesh',async()=>{
+ const oldWindow=globalThis.window;
+ const callbacks={},calls=[],candidates=[];
+ try {
+  globalThis.window={Sketchfab:class{
+   init(uid,{success}){
+    const api={
+     addEventListener(name,handler){callbacks[name]=handler;},
+     getNodeMap(done){done(null,[
+      {name:'Car Body',instanceID:101},
+      {name:'Mesh 25',instanceID:202},
+      {name:'Wheel_FL',instanceID:303}
+     ]);},
+     hide(id,done){calls.push(['hide',id]);done(null);},
+     show(id,done){calls.push(['show',id]);done(null);}
+    };
+    success(api);queueMicrotask(()=>callbacks.viewerready());
+   }
+  }};
+  const gt3=createGt3Workshop({iframe:{},onCandidate:c=>candidates.push(c)});
+  await gt3.init();
+  assert.equal(gt3.beginPick('av-gauche','disques'),true);
+  callbacks.click({instanceID:101});
+  assert.equal(candidates.length,0,'Car body should never be offered as a candidate');
+  callbacks.click({instanceID:202});
+  assert.equal(candidates.length,1);
+  assert.equal(gt3.supports('av-gauche','disques'),false,'Unconfirmed mesh must not be removable');
+  assert.deepEqual(gt3.confirmPick(),{ok:true,wheel:'av-gauche',part:'disques',name:'Mesh 25'});
+  assert.equal(gt3.supports('av-gauche','disques'),true);
+  assert.deepEqual(await gt3.setSteps('av-gauche',['disques']),{ok:true});
+  assert.deepEqual(calls,[['hide',202]]);
+  await gt3.restore();
+  assert.deepEqual(calls,[['hide',202],['show',202]]);
+ } finally {
+  if(oldWindow===undefined)delete globalThis.window;
+  else globalThis.window=oldWindow;
+ }
+});
+test('one-scene manual controls and clear messages remain wired',async()=>{
+ const [page,script,adapter,css,seo]=await Promise.all([
+  read('showroom-3d-page.js'),read('showroom-3d.js'),read('showroom-gt3-workshop.js'),read('public-site.css'),read('public-seo.js')
+ ]);
+ for(const id of ['edm3dPickPanel','edm3dPickPart','edm3dPickStart','edm3dPickRemove','edm3dPickRestore','edm3dPickAccept','edm3dPickCancel','edm3dPickHint']){
+  assert.match(page,new RegExp('id="'+id+'"'));
+  assert.ok(script.includes("'"+id+"'"));
+ }
+ assert.match(script,/onCandidate\(candidate\)/);
+ assert.match(script,/gt3\.confirmPick\(\)/);
+ assert.match(script,/gt3\.setSteps\(wheel,\[part\]\)/);
+ assert.match(adapter,/function beginPick\(wheel,part='roue'\)/);
+ assert.match(adapter,/function confirmPick\(\)/);
+ assert.match(adapter,/has\('roue'\)/);
+ assert.match(css,/Guided node identification/);
+ assert.match(seo,/showroom-3d\.js\?v=7/);
 });
