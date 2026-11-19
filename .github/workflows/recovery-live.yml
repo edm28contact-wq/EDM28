@@ -16,7 +16,7 @@ concurrency:
 jobs:
   recovery:
     if: github.event_name == 'push' || github.head_ref == 'fix/password-recovery-admin-clients'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     env:
       RECOVERY_ORIGIN: ${{ github.event_name == 'push' && 'https://edm28.fr' || 'http://127.0.0.1:4180' }}
