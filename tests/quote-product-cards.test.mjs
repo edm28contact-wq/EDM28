@@ -85,3 +85,32 @@ test('quote, merchant recommendations and customer view share the same stored ba
  assert.match(mail,/product_cards/);
  assert.ok(html.indexOf('/quote-product-cards.js')<html.indexOf('/admin-supplier-basket.js'));
 });
+
+
+test('the generic image library offers 12 distinct reusable visual categories',()=>{
+ assert.equal(cards.genericPhotos.length,12);
+ assert.equal(new Set(cards.genericPhotos.map(item=>item.id)).size,12);
+ for(const item of cards.genericPhotos){
+   const url=cards.genericPhotoUrl(item.id);
+   assert.match(url,/^https:\/\/edm28\.fr\/images\/generic-parts\/[a-z-]+\.webp$/);
+   const html=cards.editor([{...sample,photo_url:url}]);
+   assert.ok(html.includes('Choisir une illustration dans la photothèque générique'));
+   assert.ok(html.includes('data-generic-photo="'+item.id+'"'));
+   assert.ok(html.includes('data-part="reference"'));
+   assert.ok(html.includes(sample.reference));
+ }
+ assert.throws(()=>cards.genericPhotoUrl('../image-confidentielle'));
+ assert.throws(()=>cards.genericPhotoUrl('disque-frein.svg'));
+});
+test('generic selection is a visual hint, never a replacement for an exact SKU',async()=>{
+ const source=await read('quote-product-cards.js');
+ const customer=await read('client-journey.js');
+ assert.match(source,/data-generic-photo/);
+ assert.match(source,/input\.value=url/);
+ assert.match(source,/Illustration générique — référence exacte à vérifier/);
+ assert.match(customer,/Illustration générique · non contractuelle/);
+ assert.match(customer,/Référence exacte/);
+ const product=cards.normalize([{...sample,photo_url:cards.genericPhotoUrl('disque-frein')}])[0];
+ assert.equal(product.reference,sample.reference);
+ assert.equal(product.name,sample.name);
+});
