@@ -37,9 +37,26 @@ export function render3DShowroom() {
    <label for="edm3dWheelChoice" class="edm3d-select-label">Choisissez une roue</label>
    <select id="edm3dWheelChoice"><option value="">Voiture complète</option><option value="av-gauche">Avant gauche</option><option value="av-droite">Avant droite</option><option value="ar-gauche">Arrière gauche</option><option value="ar-droite">Arrière droite</option></select>
    <div class="edm3d-wheel-shortcuts"><button type="button" data-edm-wheel="av-gauche">Avant G.</button><button type="button" data-edm-wheel="av-droite">Avant D.</button><button type="button" data-edm-wheel="ar-gauche">Arrière G.</button><button type="button" data-edm-wheel="ar-droite">Arrière D.</button></div>
-   <div class="edm3d-sidebar-step">02 — COMPOSANT</div>
+   <div class="edm3d-inspection" id="edm3dInspection" hidden>
+    <div class="edm3d-sidebar-step">02 — VUE MÉCANIQUE</div>
+    <div class="edm3d-family-switch" role="group" aria-label="Famille de composants">
+     <button type="button" id="edm3dFamilyFreinage" aria-pressed="true">Freinage</button>
+     <button type="button" id="edm3dFamilyLiaison" aria-pressed="false">Liaison au sol</button>
+    </div>
+    <div class="edm3d-step-panel" aria-label="Démontage virtuel">
+     <strong id="edm3dStepLabel">Assemblage complet</strong>
+     <div class="edm3d-progress-track" aria-hidden="true"><span id="edm3dStepProgress"></span></div>
+     <p id="edm3dStepDescription" aria-live="polite">Sélectionnez une roue.</p>
+     <div class="edm3d-step-actions">
+      <button type="button" id="edm3dPrevStep" disabled>Pièce précédente</button>
+      <button type="button" id="edm3dNextStep">Démonter la pièce suivante</button>
+     </div>
+     <button type="button" id="edm3dRebuild">Remonter toutes les pièces</button>
+    </div>
+   </div>
+   <div class="edm3d-sidebar-step">03 — COMPOSANTS À EXPLORER</div>
    <div id="edm3dParts" class="edm3d-parts"><p class="edm3d-empty">Sélectionnez une roue pour voir les pièces.</p></div>
-   <div class="edm3d-info"><div class="edm3d-sidebar-step">03 — À QUOI SERT CETTE PIÈCE ?</div>
+   <div class="edm3d-info"><div class="edm3d-sidebar-step">04 — À QUOI SERT CETTE PIÈCE ?</div>
     <h3 id="edm3dPartTitle">Choisissez une roue</h3>
     <div id="edm3dPartBody"><p>Découvrez le rôle, les signes d'usure et les prestations disponibles.</p></div>
    </div>

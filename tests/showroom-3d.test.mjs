@@ -36,7 +36,7 @@ test('showroom replaces Gemini UI, keeps fallback, and loads pinned Three.js mod
  assert.match(seo,/type="importmap"/);
  assert.match(seo,/three@0\.181\.2/);
  assert.match(seo,/showroom-3d-data\.js/);
- assert.ok(seo.includes("showroom-3d.js?v=3"));
+ assert.ok(seo.includes("showroom-3d.js?v=4"));
  assert.match(page,/edm3dShowroom/);
  assert.match(page,/edm3dFallback/);
  assert.match(page,/edm3dWheelChoice/);
@@ -44,7 +44,7 @@ test('showroom replaces Gemini UI, keeps fallback, and loads pinned Three.js mod
  assert.match(css,/edm3d-ready \.edm3d-fallback/);
  assert.match(scene,/new THREE\.WebGLRenderer/);
  assert.match(scene,/OrbitControls/);
- assert.match(scene,/wheelParts\.get\(item\.id\)\.visible=selected/);
+ assert.match(scene,/component\.visible=selected/);
  assert.match(scene,/root\.classList\.add\('edm3d-ready'\)/);
  assert.match(scene,/redWheel/);
  assert.match(scene,/rear wing/i);
@@ -77,4 +77,36 @@ test('realistic licensed reference remains opt-in and mechanic interactions stay
  assert.match(scene, /setShowroomView\('mechanics'\)/);
  assert.match(scene, /root\.dataset\.view=mechanics\?'mechanics':'reference'/);
  assert.match(css, /\[data-view=mechanics\] \.edm3d-reference\{display:none\}/);
+});
+
+test('four-wheel guided disassembly is reversible and respects axle families', async()=>{
+ const [page,scene,seo,css]=await Promise.all([
+  read('showroom-3d-page.js'),read('showroom-3d.js'),read('public-seo.js'),read('public-site.css')
+ ]);
+ const front=data.stepsForWheel('av-droite','freinage');
+ assert.deepEqual(front.map(step=>step.id),['roue','etrier','plaquettes','disques','moyeu']);
+ assert.deepEqual(data.stepsForWheel('ar-gauche','freinage').map(step=>step.id),front.map(step=>step.id));
+ assert.deepEqual(data.stepsForWheel('av-gauche','liaison').map(step=>step.id),['roue','triangles','rotules','stabilisation']);
+ assert.deepEqual(data.stepsForWheel('ar-droite','liaison'),[]);
+ assert.deepEqual(data.stepsForWheel('absent','freinage'),[]);
+ assert.deepEqual(data.stepsForWheel('av-droite','unknown'),[]);
+ for(const step of [...front,...data.stepsForWheel('av-gauche','liaison')]){
+  assert.ok(step.description.length>60);
+ }
+ for(const id of ['edm3dInspection','edm3dFamilyFreinage','edm3dFamilyLiaison','edm3dStepLabel','edm3dPrevStep','edm3dNextStep','edm3dRebuild']){
+  assert.ok(page.includes('id="'+id+'"'),id+' missing from markup');
+  assert.ok(scene.includes("el('"+id+"')"),id+' not connected');
+ }
+ assert.match(scene,/wheelMechanics\.set\(wheel\.id,elements\)/);
+ assert.match(scene,/function applyExploded\(\)/);
+ assert.match(scene,/function focusOnWheel\(id\)/);
+ assert.match(scene,/function setStep\(value\)/);
+ assert.match(scene,/function setFamily\(family\)/);
+ assert.match(scene,/camera\.position\.lerp\(cameraAnimation\.position/);
+ assert.match(scene,/node\.position\.lerp\(node\.userData\.target,step\)/);
+ assert.match(scene,/currentStep=Math\.max\(0,Math\.min\(/);
+ assert.match(css,/\.edm3d-inspection\[hidden\]\{display:none\}/);
+ assert.match(seo,/showroom-3d-data\.js\?v=2/);
+ assert.match(seo,/showroom-3d\.js\?v=4/);
+ assert.match(seo,/public-site\.css\?v=12/);
 });

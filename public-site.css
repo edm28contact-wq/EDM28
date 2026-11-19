@@ -1258,3 +1258,23 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 .edm3d-showroom[data-view=reference] .edm3d-view-switch{z-index:6}
 .edm3d-showroom[data-view=reference] .edm3d-sidebar .edm3d-info{display:none}
 @media(max-width:580px){.edm3d-view-switch{top:11px;left:10px;gap:5px}.edm3d-view-switch button{padding:9px 11px;font-size:.72rem}.edm3d-reference-intro{padding:70px 20px 15px}.edm3d-reference-intro h3{font-size:1.55rem}.edm3d-reference-credit{font-size:.61rem}.edm3d-showroom[data-view=mechanics] .edm3d-scene-top{top:63px}}
+
+
+/* Interactive, reversible educational brake and steering exploded-view controls. */
+.edm3d-inspection{display:grid;gap:10px;margin:2px 0 24px;border-top:1px solid #38475a;padding-top:16px}
+.edm3d-inspection[hidden]{display:none}
+.edm3d-family-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.edm3d-family-switch button,.edm3d-step-actions button,#edm3dRebuild{font:inherit;font-size:.82rem;font-weight:700;color:#e9f3ff;background:#243348;border:1px solid #61738b;border-radius:9px;padding:10px 9px;cursor:pointer}
+.edm3d-family-switch button[aria-pressed=true]{background:#e4eefb;color:#132238;border-color:#e4eefb}
+.edm3d-family-switch button:disabled,.edm3d-step-actions button:disabled,#edm3dRebuild:disabled{opacity:.43;cursor:not-allowed}
+.edm3d-family-switch button:focus-visible,.edm3d-step-actions button:focus-visible,#edm3dRebuild:focus-visible{outline:3px solid #e4b477;outline-offset:2px}
+.edm3d-step-panel{border-radius:14px;background:linear-gradient(145deg,#1d2b3e,#142032);border:1px solid #394b63;padding:15px;display:grid;gap:11px}
+.edm3d-step-panel>strong{font-size:.91rem;color:#fff}
+.edm3d-step-panel>p{font-size:.82rem;line-height:1.55;color:#cbd9ea;margin:0}
+.edm3d-progress-track{height:6px;background:#36485d;border-radius:6px;overflow:hidden}
+.edm3d-progress-track span{display:block;width:0;height:100%;background:#83bff2;border-radius:6px;transition:width .24s ease}
+.edm3d-step-actions{display:grid;grid-template-columns:1fr 1.3fr;gap:7px}
+.edm3d-step-actions #edm3dNextStep{background:#dbeafa;border-color:#dbeafa;color:#0c1a2c}
+#edm3dRebuild{background:transparent}
+@media(max-width:580px){.edm3d-step-actions{grid-template-columns:1fr}.edm3d-step-panel{padding:12px}}
+@media(prefers-reduced-motion:reduce){.edm3d-progress-track span{transition:none}}

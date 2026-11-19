@@ -98,9 +98,30 @@
     const wheel=wheelById(id);
     return wheel ? parts.filter(part=>wheel.front ? part.front : part.rear) : [];
   };
+  const disassembly = Object.freeze({
+    freinage: Object.freeze([
+      { id:'roue', label:'Roue déposée', description:'La roue s’écarte pour dévoiler le frein. Vous pouvez examiner les composants sans effectuer d’intervention réelle.' },
+      { id:'etrier', label:'Étrier de frein', description:'L’étrier est déplacé virtuellement pour révéler les deux plaquettes. Son flexible reste représenté : ne jamais laisser pendre un étrier réel par son flexible.' },
+      { id:'plaquettes', label:'Plaquettes de frein', description:'Les plaquettes se séparent du disque. Leur état et leur épaisseur doivent être contrôlés sur le véhicule réel.' },
+      { id:'disques', label:'Disque de frein', description:'Le disque se détache dans la simulation. Le vrai démontage dépend du véhicule et des préconisations constructeur.' },
+      { id:'moyeu', label:'Moyeu visible', description:'Le moyeu et les fixations sont isolés pour comprendre l’assemblage. Ce mouvement est une vue éclatée pédagogique, pas une procédure de dépose.' }
+    ]),
+    liaison: Object.freeze([
+      { id:'roue', label:'Roue déposée', description:'La vue sur le train avant est dégagée pour observer les articulations.' },
+      { id:'triangles', label:'Triangle de suspension', description:'Le triangle est isolé virtuellement pour montrer ses points de fixation et son rôle dans le guidage.' },
+      { id:'rotules', label:'Rotule de direction', description:'La liaison de direction est présentée séparément. Toute intervention exige un contrôle de géométrie selon le constructeur.' },
+      { id:'stabilisation', label:'Biellette stabilisatrice', description:'La biellette est déplacée pour illustrer sa liaison entre suspension et barre stabilisatrice.' }
+    ])
+  });
+  const stepsForWheel = (wheelId, family='freinage') => {
+    const wheel=wheelById(wheelId);
+    if(!wheel || !Object.prototype.hasOwnProperty.call(disassembly,family))return [];
+    if(family==='liaison' && !wheel.front)return [];
+    return disassembly[family];
+  };
   const slugs = Object.freeze([...new Set(parts.flatMap(part=>part.choices.map(choice=>choice.slug)))]);
   const requestUrl = slug => slugs.includes(slug) ? '/demande?service='+encodeURIComponent(slug)+'#requestServices' : '/demande';
-  const api = Object.freeze({parts,wheels,byId,wheelById,forWheel,requestUrl});
+  const api = Object.freeze({parts,wheels,byId,wheelById,forWheel,requestUrl,disassembly,stepsForWheel});
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.EDMShowroomData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

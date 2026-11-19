@@ -46,7 +46,7 @@ const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(0,.7,0);
 controls.enableDamping=true;
 controls.dampingFactor=.065;
-controls.minDistance=3.1;
+controls.minDistance=1.4;
 controls.maxDistance=13;
 controls.maxPolarAngle=Math.PI*.48;
 controls.minPolarAngle=.31;
@@ -101,6 +101,7 @@ const headLamp=new THREE.MeshStandardMaterial({color:'#eef7ff',emissive:'#eef7ff
 const boltMaterial=new THREE.MeshStandardMaterial({color:'#cad4dd',metalness:.82,roughness:.23});
 const car=new THREE.Group();scene.add(car);
 const wheelParts = new Map();
+const wheelMechanics = new Map();
 const wheelVisuals = new Map();
 const wheelCenters = new Map();
 const interactables=[];
@@ -199,64 +200,204 @@ function partMaterial(id){
   return new THREE.MeshStandardMaterial({color,metalness:.57,roughness:.36,emissive:'#090d12',emissiveIntensity:.06});
 }
 function wheelAssembly(wheel){
-  const [x,y,z]=coords[wheel.id], side=wheel.side;
+  const [x,y,z]=coords[wheel.id],side=wheel.side;
   const wheelShell=new THREE.Group();
   wheelShell.position.set(x,y,z);
   car.add(wheelShell);
   wheelVisuals.set(wheel.id,wheelShell);
   wheelCenters.set(wheel.id,new THREE.Vector3(x,y,z));
-  const tire=unit(new THREE.TorusGeometry(.47,.135,14,38),tireMaterial,wheelShell,[side*.065,0,0],[0,Math.PI/2,0]);
-  tag(tire,'__wheel__',wheel.id);
-  const hub=cyl(.28,.28,.085,redWheel,wheelShell,[side*.105,0,0],[0,0,Math.PI/2]);
-  tag(hub,'__wheel__',wheel.id);
-  const inner=cyl(.35,.35,.068,dark,wheelShell,[side*.077,0,0],[0,0,Math.PI/2]);
-  tag(inner,'__wheel__',wheel.id);
+  const tire=tag(unit(new THREE.TorusGeometry(.465,.128,16,60),tireMaterial,wheelShell,[side*.065,0,0],[0,Math.PI/2,0]),'__wheel__',wheel.id);
+  const rim=tag(cyl(.345,.345,.075,redWheel,wheelShell,[side*.114,0,0],[0,0,Math.PI/2]),'__wheel__',wheel.id);
+  const inner=tag(cyl(.275,.275,.082,dark,wheelShell,[side*.178,0,0],[0,0,Math.PI/2]),'__wheel__',wheel.id);
   for(let j=0;j<11;j++){
     const a=j/11*Math.PI*2;
-    const spoke=box([.039,.29,.047],redWheel,wheelShell,[side*.16,Math.cos(a)*.14,Math.sin(a)*.14],[a,0,0]);
-    tag(spoke,'__wheel__',wheel.id);
+    tag(box([.04,.30,.042],redWheel,wheelShell,[side*.23,Math.cos(a)*.145,Math.sin(a)*.145],[a,0,0]),'__wheel__',wheel.id);
   }
-  const center=cyl(.079,.079,.16,blackCarbon,wheelShell,[side*.18,0,0],[0,0,Math.PI/2]);
-  tag(center,'__wheel__',wheel.id);
-
+  tag(cyl(.074,.074,.16,blackCarbon,wheelShell,[side*.27,0,0],[0,0,Math.PI/2]),'__wheel__',wheel.id);
   const assembly=new THREE.Group();
   assembly.position.set(x-side*.07,y,z);
   car.add(assembly);
   wheelParts.set(wheel.id,assembly);
-  const disc=tag(cyl(.34,.34,.058,brakeMaterial,assembly,[side*.01,0,0],[0,0,Math.PI/2]),'disques',wheel.id);
-  const ring=unit(new THREE.TorusGeometry(.31,.013,8,30),silver,assembly,[side*.046,0,0],[0,Math.PI/2,0]);
-  tag(ring,'disques',wheel.id);
-  for(let i=0;i<9;i++){
-    const a=i/9*Math.PI*2;
-    const hole=unit(new THREE.SphereGeometry(.012,8,6),dark,assembly,[side*.052,Math.cos(a)*.24,Math.sin(a)*.24]);
-    tag(hole,'disques',wheel.id);
+  const elements={};
+  const group=(name)=>{
+    const node=new THREE.Group();
+    node.userData.home=new THREE.Vector3();
+    node.userData.target=new THREE.Vector3();
+    assembly.add(node);elements[name]=node;
+    return node;
+  };
+  const hub=group('moyeu');
+  tag(cyl(.15,.15,.17,silver,hub,[side*.012,0,0],[0,0,Math.PI/2]),'disques',wheel.id);
+  tag(cyl(.085,.085,.22,metal,hub,[side*.105,0,0],[0,0,Math.PI/2]),'disques',wheel.id);
+  for(let i=0;i<5;i++){
+    const a=i/5*Math.PI*2;
+    tag(cyl(.022,.022,.12,boltMaterial,hub,[side*.16,Math.cos(a)*.112,Math.sin(a)*.112],[0,0,Math.PI/2]),'disques',wheel.id);
   }
-  const caliper=tag(box([.16,.29,.18],amber,assembly,[side*.15,.06,-.22]),'plaquettes',wheel.id);
-  const pad=tag(box([.08,.20,.23],partMaterial('plaquettes'),assembly,[side*.085,.04,-.23]),'plaquettes',wheel.id);
-  const hose=rod([side*.13,.05,-.22],[side*.21,.42,-.3],.025,partMaterial('liquide'),assembly);
-  tag(hose,'liquide',wheel.id);
+  const rotor=group('disques');
+  tag(cyl(.345,.345,.058,brakeMaterial,rotor,[side*.065,0,0],[0,0,Math.PI/2]),'disques',wheel.id);
+  tag(unit(new THREE.TorusGeometry(.31,.015,9,56),silver,rotor,[side*.102,0,0],[0,Math.PI/2,0]),'disques',wheel.id);
+  tag(unit(new THREE.TorusGeometry(.155,.012,8,48),dark,rotor,[side*.103,0,0],[0,Math.PI/2,0]),'disques',wheel.id);
+  for(let i=0;i<20;i++){
+    const a=i/20*Math.PI*2;
+    tag(unit(new THREE.SphereGeometry(.011,8,6),dark,rotor,[side*.103,Math.cos(a)*.25,Math.sin(a)*.25]),'disques',wheel.id);
+  }
+  const caliper=group('etrier');
+  tag(box([.20,.31,.21],amber,caliper,[side*.22,.075,-.245]),'plaquettes',wheel.id);
+  tag(box([.245,.075,.25],blackCarbon,caliper,[side*.23,.24,-.24]),'plaquettes',wheel.id);
+  tag(box([.21,.075,.25],blackCarbon,caliper,[side*.23,-.075,-.24]),'plaquettes',wheel.id);
+  const pads=group('plaquettes');
+  tag(box([.036,.22,.20],partMaterial('plaquettes'),pads,[side*.105,.055,-.225]),'plaquettes',wheel.id);
+  tag(box([.036,.22,.20],partMaterial('plaquettes'),pads,[side*.015,.055,-.225]),'plaquettes',wheel.id);
+  const hose=group('liquide');
+  tag(rod([side*.15,.09,-.22],[side*.22,.44,-.31],.025,partMaterial('liquide'),hose),'liquide',wheel.id);
   if(wheel.front){
-    const triangleMaterial=partMaterial('triangles');
-    tag(rod([0,-.08,-.15],[-side*.4,-.32,-.4],.045,triangleMaterial,assembly),'triangles',wheel.id);
-    tag(rod([0,-.08,.2],[-side*.4,-.32,-.4],.045,triangleMaterial,assembly),'triangles',wheel.id);
-    tag(rod([-side*.10,.04,.0],[-side*.44,.11,.43],.035,partMaterial('rotules'),assembly),'rotules',wheel.id);
-    tag(rod([side*.01,.12,-.25],[-side*.28,.64,-.24],.038,partMaterial('stabilisation'),assembly),'stabilisation',wheel.id);
+    const triangle=group('triangles');
+    tag(rod([0,-.10,-.16],[-side*.43,-.32,-.42],.055,partMaterial('triangles'),triangle),'triangles',wheel.id);
+    tag(rod([0,-.10,.20],[-side*.43,-.32,-.42],.055,partMaterial('triangles'),triangle),'triangles',wheel.id);
+    tag(cyl(.09,.09,.08,metal,triangle,[-side*.43,-.32,-.42],[0,0,Math.PI/2]),'triangles',wheel.id);
+    const steering=group('rotules');
+    tag(rod([-side*.10,.05,0],[-side*.47,.10,.45],.04,partMaterial('rotules'),steering),'rotules',wheel.id);
+    tag(unit(new THREE.SphereGeometry(.072,14,10),partMaterial('rotules'),steering,[-side*.47,.10,.45]),'rotules',wheel.id);
+    const stabilizer=group('stabilisation');
+    tag(rod([side*.01,.12,-.24],[-side*.29,.62,-.25],.04,partMaterial('stabilisation'),stabilizer),'stabilisation',wheel.id);
+    tag(unit(new THREE.SphereGeometry(.064,14,10),partMaterial('stabilisation'),stabilizer,[-side*.29,.62,-.25]),'stabilisation',wheel.id);
   }
+  wheelMechanics.set(wheel.id,elements);
   assembly.visible=false;
 }
 data.wheels.forEach(wheelAssembly);
 const selectableParts=()=>{
   return interactables.filter(o=>o.userData.partId!=='__wheel__' && data.byId(o.userData.partId));
 };
-let currentWheel=null, currentPart=null, desiredWheelMove=0;
+let currentWheel=null, currentPart=null, currentFamily='freinage', currentStep=0;
+let cameraAnimation=null;
+function focusOnWheel(id){
+  const wheel=data.wheelById(id),center=wheelCenters.get(id);
+  if(!wheel || !center)return;
+  const s=wheel.side;
+  const front=wheel.front;
+  cameraAnimation={
+    target:new THREE.Vector3(center.x*.92,center.y+.06,center.z),
+    position:new THREE.Vector3(center.x+s*3.05,center.y+1.40,center.z+(front?1.05:-1.05))
+  };
+  controls.autoRotate=false;
+}
+function applyExploded(){
+  data.wheels.forEach(wheel=>{
+    const selected=currentWheel===wheel.id;
+    const visual=wheelVisuals.get(wheel.id);
+    const component=wheelParts.get(wheel.id);
+    component.visible=selected;
+    const removed=selected&&currentStep>=1;
+    visual.userData.targetX=removed?wheel.side*(1.2+Math.max(0,currentStep-2)*.18):0;
+    const elements=wheelMechanics.get(wheel.id);
+    for(const [name,node] of Object.entries(elements)){
+      const target=node.userData.target;
+      target.set(0,0,0);
+      if(!selected)continue;
+      const order=currentFamily==='freinage'
+        ? ['etrier','plaquettes','disques','moyeu']
+        : ['triangles','rotules','stabilisation'];
+      const index=order.indexOf(name);
+      if(index<0 || currentStep<index+2)continue;
+      const exposure=currentStep-index-2;
+      target.set(wheel.side*(.42+index*.16+exposure*.13),
+        name==='etrier' ? 0.33 : name==='plaquettes' ? 0.10 : name==='triangles' ? -0.15 : 0,
+        name==='plaquettes' ? -0.12 : name==='rotules' ? 0.08 : 0);
+    }
+  });
+}
+function updateStepPanel(){
+  const panel=el('edm3dInspection');
+  if(panel)panel.hidden=!currentWheel;
+  if(!currentWheel)return;
+  const steps=data.stepsForWheel(currentWheel,currentFamily);
+  const max=steps.length;
+  currentStep=Math.min(Math.max(currentStep,0),max);
+  const selected=steps[currentStep-1];
+  const message=el('edm3dStepLabel');
+  if(message)message.textContent=selected
+    ? currentStep+' / '+max+' · '+selected.label
+    : '0 / '+max+' · Assemblage complet';
+  const description=el('edm3dStepDescription');
+  if(description)description.textContent=selected?.description
+    || 'Choisissez « Démonter la pièce suivante » pour visualiser chaque élément.';
+  const progress=el('edm3dStepProgress');
+  if(progress)progress.style.width=(max?currentStep/max*100:0)+'%';
+  const prev=el('edm3dPrevStep'),next=el('edm3dNextStep'),rebuild=el('edm3dRebuild');
+  if(prev)prev.disabled=currentStep<=0;
+  if(next)next.disabled=currentStep>=max;
+  if(rebuild)rebuild.disabled=currentStep===0;
+  const rear=data.wheelById(currentWheel)?.front===false;
+  const liaison=el('edm3dFamilyLiaison');
+  if(liaison)liaison.disabled=rear;
+  el('edm3dFamilyFreinage')?.setAttribute('aria-pressed',String(currentFamily==='freinage'));
+  liaison?.setAttribute('aria-pressed',String(currentFamily==='liaison'));
+  if(selected){
+    const part=data.byId(selected.id);
+    if(part)setPart(part.id,false);
+    else{
+      currentPart=null;delete root.dataset.part;
+      const title=el('edm3dPartTitle'),body=el('edm3dPartBody');
+      if(title)title.textContent=selected.label;
+      if(body)body.innerHTML='<p>'+escape(selected.description)+'</p><p>Simulation pédagogique uniquement : ne constitue pas une procédure de démontage réelle.</p>';
+      partButtons?.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));
+    }
+  }else{
+    currentPart=null;delete root.dataset.part;
+    const title=el('edm3dPartTitle'),body=el('edm3dPartBody');
+    if(title)title.textContent='Assemblage complet';
+    if(body)body.innerHTML='<p>Les éléments sont remontés virtuellement. Avancez dans les étapes pour examiner chaque pièce.</p>';
+    partButtons?.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));
+  }
+}
+function setStep(value){
+  if(!currentWheel)return;
+  const steps=data.stepsForWheel(currentWheel,currentFamily);
+  currentStep=Math.max(0,Math.min(Math.trunc(Number(value)||0),steps.length));
+  applyExploded();
+  updateStepPanel();
+  const wheel=data.wheelById(currentWheel);
+  const step=steps[currentStep-1];
+  const prompt=el('edm3dWheelPrompt');
+  if(prompt)prompt.textContent=step
+    ? 'Roue '+wheel.label.toLowerCase()+' · '+step.label+' · étape '+currentStep+'/'+steps.length
+    : 'Roue '+wheel.label.toLowerCase()+' · assemblage complet.';
+  live(step?'Démontage virtuel : '+step.label+'.':'Assemblage remis en place.');
+}
+function setFamily(family){
+  if(!currentWheel)return;
+  if(family==='liaison' && !data.wheelById(currentWheel)?.front)return;
+  if(!['freinage','liaison'].includes(family))return;
+  currentFamily=family;
+  currentStep=1;
+  refreshPartMenu();
+  setStep(1);
+  focusOnWheel(currentWheel);
+}
 const chosenWheel=()=>data.wheelById(currentWheel);
 const availableServices=()=>Array.isArray(window.EDMShowroomActiveServices)?window.EDMShowroomActiveServices:null;
 const button=(label,slug)=>data.requestUrl(slug)?'<a class="edm3d-offer" href="'+escape(data.requestUrl(slug))+'">'+escape(label)+'<span aria-hidden="true">↗</span></a>':'';
-function setPart(id){
+function setPart(id,syncStep=true){
   const part=data.byId(id);
   if(!part)return;
   currentPart=id;
   root.dataset.part=id;
+  if(syncStep&&currentWheel){
+    const targetFamily=part.category==='Liaison au sol'?'liaison':'freinage';
+    if(targetFamily!==currentFamily){
+      currentFamily=targetFamily;
+      currentStep=1;
+      refreshPartMenu();
+    }
+    const steps=data.stepsForWheel(currentWheel,currentFamily);
+    const stepIndex=steps.findIndex(item=>item.id===id);
+    if(stepIndex>=0){
+      currentStep=stepIndex+1;
+      applyExploded();
+      updateStepPanel();
+    }
+  }
   const wheel=chosenWheel();
   const services=availableServices();
   const options=part.choices.filter(c=>!services||services.includes(c.slug));
@@ -287,7 +428,9 @@ function refreshPartMenu(){
     partButtons.innerHTML='<p class="edm3d-empty">Sélectionnez une roue pour découvrir ses composants.</p>';
     return;
   }
-  const parts=data.forWheel(currentWheel);
+  const parts=data.forWheel(currentWheel).filter(part=>
+    currentFamily==='freinage' ? part.category==='Freinage' : part.category==='Liaison au sol'
+  );
   partButtons.innerHTML=parts.map(part=>
     '<button type="button" data-part="'+escape(part.id)+'" class="edm3d-part-button" aria-pressed="'+String(currentPart===part.id)+'">'
     +'<span class="edm3d-part-dot" style="--dot:'+part.color+'"></span>'+escape(part.label)+'</button>'
@@ -298,39 +441,42 @@ function showWheel(id){
   setShowroomView('mechanics');
   const wheel=data.wheelById(id);
   if(!wheel)return;
-  if(currentWheel===id){restore();return;}
+  if(currentWheel===id){
+    focusOnWheel(id);
+    return;
+  }
   if(currentWheel){
     const previous=wheelVisuals.get(currentWheel);
     previous.userData.targetX=0;
     wheelParts.get(currentWheel).visible=false;
   }
   currentWheel=id;currentPart=null;
+  currentFamily='freinage';currentStep=1;
   root.dataset.wheel=id;
-  data.wheels.forEach(item=>{
-    const selected=item.id===id;
-    const visual=wheelVisuals.get(item.id);
-    if(visual)visual.userData.targetX=selected ? item.side*.9:0;
-    wheelParts.get(item.id).visible=selected;
-  });
-  controls.target.set(0,.65,0);
-  controls.autoRotate=false;
   const choice=el('edm3dWheelChoice');
   if(choice)choice.value=id;
-  const prompt=el('edm3dWheelPrompt');
-  if(prompt)prompt.textContent='Roue '+wheel.label.toLowerCase()+' démontée virtuellement : choisissez un composant.';
-  const reset=el('edm3dReset');
-  if(reset)reset.disabled=false;
+  el('edm3dReset').disabled=false;
   refreshPartMenu();
-  setPart(data.forWheel(id)[0]?.id||'disques');
+  applyExploded();
+  updateStepPanel();
+  focusOnWheel(id);
+  setStep(1);
+
 }
 function restore(){
-  currentWheel=null;currentPart=null;
+  currentWheel=null;currentPart=null;currentFamily='freinage';currentStep=0;
+  cameraAnimation={
+    target:new THREE.Vector3(0,.7,0),
+    position:new THREE.Vector3(6.1,3.55,7.6)
+  };
   delete root.dataset.part; delete root.dataset.wheel;
+  if(el('edm3dInspection'))el('edm3dInspection').hidden=true;
   for(const wheel of data.wheels){
     const mesh=wheelVisuals.get(wheel.id);
     mesh.userData.targetX=0;
     wheelParts.get(wheel.id).visible=false;
   }
+  applyExploded();
   const selector=el('edm3dWheelChoice');
   if(selector)selector.value='';
   const prompt=el('edm3dWheelPrompt');
@@ -347,6 +493,11 @@ function restore(){
 const selectWheel=el('edm3dWheelChoice');
 selectWheel?.addEventListener('change',e=>e.target.value?showWheel(e.target.value):restore());
 el('edm3dReset')?.addEventListener('click',restore);
+el('edm3dFamilyFreinage')?.addEventListener('click',()=>setFamily('freinage'));
+el('edm3dFamilyLiaison')?.addEventListener('click',()=>setFamily('liaison'));
+el('edm3dPrevStep')?.addEventListener('click',()=>setStep(currentStep-1));
+el('edm3dNextStep')?.addEventListener('click',()=>setStep(currentStep+1));
+el('edm3dRebuild')?.addEventListener('click',()=>setStep(0));
 el('edm3dRotate')?.addEventListener('click',e=>{
   controls.autoRotate=!controls.autoRotate && !reduceMotion;
   e.currentTarget.setAttribute('aria-pressed',String(controls.autoRotate));
@@ -366,7 +517,11 @@ renderer.domElement.addEventListener('pointerup',e=>{
   const rect=renderer.domElement.getBoundingClientRect();
   pointer.set(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1);
   raycaster.setFromCamera(pointer,camera);
-  const hits=raycaster.intersectObjects(interactables,false).filter(hit=>hit.object.visible&&hit.object.parent?.visible);
+  const isShown=object=>{
+    for(let node=object;node;node=node.parent)if(!node.visible)return false;
+    return true;
+  };
+  const hits=raycaster.intersectObjects(interactables,false).filter(hit=>isShown(hit.object));
   const partHit=hits.find(hit=>hit.object.userData.partId!=='__wheel__' && currentWheel===hit.object.userData.wheelId);
   if(partHit){setPart(partHit.object.userData.partId);return;}
   const wheelHit=hits.find(hit=>hit.object.userData.partId==='__wheel__');
@@ -426,6 +581,13 @@ function draw(){
     const visual=wheelVisuals.get(wheel.id);
     const end=visual.userData.targetX||0;
     visual.position.x+= (coords[wheel.id][0]+end-visual.position.x)*step;
+    const groups=wheelMechanics.get(wheel.id);
+    for(const node of Object.values(groups))node.position.lerp(node.userData.target,step);
+  }
+  if(cameraAnimation){
+    controls.target.lerp(cameraAnimation.target,Math.min(.18,step));
+    camera.position.lerp(cameraAnimation.position,Math.min(.18,step));
+    if(camera.position.distanceTo(cameraAnimation.position)<.014 && controls.target.distanceTo(cameraAnimation.target)<.014)cameraAnimation=null;
   }
   controls.update();
   renderer.render(scene,camera);
