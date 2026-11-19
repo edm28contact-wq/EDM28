@@ -1,0 +1,25 @@
+name: Inspect public GT3 model scene nodes
+on:
+  push:
+    branches: [probe/showroom-gt3-node-map]
+permissions:
+  contents: read
+jobs:
+  map-model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install isolated browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/gt3-tools" --ignore-scripts --no-audit --no-fund playwright@1.58.2
+          "$RUNNER_TEMP/gt3-tools/node_modules/.bin/playwright" install chromium
+      - name: Inspect 3D scene graph via public Sketchfab Viewer API
+        run: |
+          cp tests/probe-sketchfab-node-map.mjs "$RUNNER_TEMP/gt3-tools/probe.mjs"
+          node "$RUNNER_TEMP/gt3-tools/probe.mjs"
