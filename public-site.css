@@ -1165,3 +1165,9 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 .about-legal-chapter h3{font-size:1rem;margin:0 0 5px}
 .about-legal-chapter p{margin:0;line-height:1.65;white-space:normal;overflow-wrap:anywhere}
 @media(max-width:680px){.about-legal-section{padding:14px}.about-legal-content{padding:10px 13px 18px}}
+
+/* EDM28: illustrated spare-parts recommendations in the customer journey. */
+.edm-product-view-grid{display:grid;grid-template-columns:175px minmax(0,1fr);gap:16px;align-items:start;min-width:0}
+.edm-product-view-grid>*{min-width:0;overflow-wrap:anywhere}
+.edm-product-view-grid a{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
+@media(max-width:520px){.edm-product-view-grid{grid-template-columns:minmax(0,1fr)}.edm-product-view-grid img{max-width:230px}}
