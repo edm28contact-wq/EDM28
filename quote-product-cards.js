@@ -2,7 +2,15 @@
   const h = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const P = () => root.EDMSupplierBasketPolicy;
   const app = () => root.EDMAdmin;
-  const safeUrl = value => P().safeUrl(value);
+  const safeUrl = value => {
+    if (P()?.safeUrl) return P().safeUrl(value);
+    const raw=String(value||'').trim();
+    if (!raw || raw.length>2000 || /[\u0000-\u0020\u007f\\]/.test(raw)) throw new Error('Lien HTTPS invalide.');
+    let url;
+    try {url=new URL(raw);}catch{throw new Error('Lien HTTPS invalide.');}
+    if(url.protocol!=='https:' || url.port || url.username || url.password || !url.hostname.includes('.') || url.hostname.endsWith('.local') || url.hostname==='127.0.0.1') throw new Error('Lien HTTPS invalide.');
+    return url.href;
+  };
   const empty = () => ({ name:'', brand:'', reference:'', quantity:1, photo_url:'', merchants:[{name:'',url:'',price_ttc:null}] });
   const positive = value => Number.isInteger(Number(value)) && Number(value)>=1 && Number(value)<=24;
   function normalize(value, strict=false) {
@@ -20,7 +28,7 @@
         const merchant=String(offer.name||'').trim(), link=String(offer.url||'').trim();
         const price=offer.price_ttc==null||offer.price_ttc===''?null:Number(offer.price_ttc);
         if(!merchant||merchant.length>90||!link) throw new Error('Pièce '+(index+1)+', vendeur '+(j+1)+' : nom et lien obligatoires.');
-        if(price!==null&&(!Number.isFinite(price)||price<0||price>100000||Math.round(price*100)!==price*100))
+        if(price!==null&&(!Number.isFinite(price)||price<0||price>100000||Math.abs(price*100-Math.round(price*100))>0.000001))
           throw new Error('Prix TTC indicatif invalide pour '+merchant+'.');
         return {name:merchant,url:safeUrl(link),price_ttc:price};
       });
