@@ -109,7 +109,7 @@ test('four-wheel guided disassembly is reversible and respects axle families', a
  assert.match(scene,/currentStep=Math\.max\(0,Math\.min\(/);
  assert.match(css,/\.edm3d-inspection\[hidden\]\{display:none\}/);
  assert.match(seo,/showroom-3d-data\.js\?v=2/);
- assert.match(seo,/showroom-3d\.js\?v=4/);
+ assert.match(seo,/showroom-3d\.js\?v=5/);
  assert.match(seo,/public-site\.css\?v=12/);
 });
 
@@ -139,7 +139,7 @@ test('workshop HD renders an independent detailed brake and suspension assembly 
  assert.match(detail,/const wheel=group\('roue'\)/);
  assert.match(detail,/function setState\(/);
  assert.match(detail,/const brakeOrder=\['roue','etrier','plaquettes','disques','moyeu'\]/);
- assert.match(detail,/const suspensionOrder=\['roue','triangles','rotules','stabilisation'\]/);
+ assert.match(detail,/const suspensionOrder=\['roue','triangles','rotules','stabilisation','amortisseur'\]/);
  assert.match(page,/Atelier HD/);
  assert.match(seo,/showroom-3d\.js\?v=5/);
  assert.doesNotMatch(detail,/sketchfab\.com/);
