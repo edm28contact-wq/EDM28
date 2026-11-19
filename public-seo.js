@@ -1,5 +1,6 @@
 import { resolveSupabasePublicConfig } from './supabase-config.js';
 import { legalPages } from './legal-pages.js';
+import { render3DShowroom } from './showroom-3d-page.js';
 
 const PUBLIC_GOOGLE_MAPS_URL = 'https://maps.google.com/?cid=5973618623656745225';
 const PUBLIC_GITHUB_URL = 'https://github.com/edm28contact-wq/EDM28';
@@ -23,7 +24,7 @@ const NAV_ITEMS = [
   ['/tarifs', 'Tarifs'],
   ['/fonctionnement', 'Fonctionnement'],
   ['/mes-interventions', 'Mes interventions'],
-  ['/transparence', 'Conseils & FAQ'],
+  ['/transparence', 'Showroom 3D'],
   ['/a-propos', 'À propos'],
   ['/contact', 'Contact']
 ];
@@ -257,10 +258,10 @@ const PAGES = {
   },
   transparence: {
     path: '/transparence',
-    title: 'Conseils auto et questions fréquentes | EDM28',
-    description: 'Comprendre ses freins, le train roulant et le fonctionnement transparent d’EDM28 : conseils pratiques, réponses courtes et futurs shorts vidéo explicatifs.',
-    h1: 'Conseils & FAQ EDM28',
-    lede: 'Un espace simple pour comprendre pourquoi une intervention peut être nécessaire, quand faire contrôler le véhicule et comment EDM28 informe ses clients avant, pendant et après les travaux.',
+    title: 'Showroom 3D interactif — Freinage et liaison au sol | EDM28',
+    description: 'Showroom automobile 3D interactif EDM28 : explorez une voiture à 360°, démontez virtuellement une roue et découvrez les éléments de freinage et de liaison au sol.',
+    h1: 'Showroom automobile 3D EDM28',
+    lede: 'Une voiture sportive blanche aux jantes rouges, un showroom à 360° et des mécanismes interactifs pour comprendre les prestations proposées par EDM28.',
     serviceType: 'Conseils pédagogiques et information client EDM28',
     breadcrumbs: [['/', 'Accueil'], ['/transparence', 'Conseils & FAQ']],
     sections: [],
@@ -672,7 +673,8 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
       ${business.phone ? `<div><dt>Téléphone</dt><dd><a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></dd></div>` : ''}
     </dl><p>Accueil sur rendez-vous.</p>
   </section>`;
-  const geminiFaqConfigured = Boolean(String(process.env.GEMINI_API_KEY || '').trim());
+  const showroomHtml = page.path === '/transparence' ? render3DShowroom() : '';
+  const geminiFaqConfigured = false;
   const faqAi = page.path === '/transparence' && geminiFaqConfigured
     ? `<section class="faq-ai-card" aria-labelledby="faq-ai-title">
         <div class="section-kicker">Assistant Gemini</div>
@@ -698,7 +700,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
   const aboutLegalHub = page.path === '/a-propos' ? renderAboutLegalHub(business, consumerLegal) : '';
   const bodyContent = page.path === '/contact' ? contact : (page.path === '/demande' || page.path === '/mes-interventions')
     ? `${clientSurface}<div class="links" aria-label="Pages liées">${links}</div>`
-    : `${sections}${tariffs}${shorts}${clientSurface}${faqAi}${withdrawal}${aboutLegalHub}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
+    : `${sections}${tariffs}${showroomHtml}${shorts}${clientSurface}${faqAi}${withdrawal}${aboutLegalHub}<div class="links" aria-label="Pages liées">${links}</div>${faq}`;
   const jsonLd = structuredData(page, origin, business);
 
   return `<!doctype html>
@@ -724,7 +726,8 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <meta property="og:image:alt" content="Logo officiel EDM28, spécialiste du freinage">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<link rel="stylesheet" href="/public-site.css?v=9">
+<link rel="stylesheet" href="/public-site.css?v=10">
+${page.path === '/transparence' ? `<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/"}}</script>` : ''}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script>
 </head>
 <body>
@@ -761,7 +764,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}<nav aria-label="Informations légales"><a href="/conditions-generales">Conditions générales</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/cookies">Cookies</a> · <a href="/pieces-economie-circulaire">Pièces de réemploi</a> · <a href="/retractation">Renoncer au contrat ici</a></nav></div></footer>
 ${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/quote-signature.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
-<script src="/public-site.js?v=2" defer></script>${page.showWithdrawalForm ? '<script src="/legal-withdrawal.js?v=1" defer><\/script>' : ''}${page.path === '/transparence' && geminiFaqConfigured ? '<script src="/public-faq-ai.js?v=2" defer><\/script>' : ''}</body>
+<script src="/public-site.js?v=2" defer></script>${page.showWithdrawalForm ? '<script src="/legal-withdrawal.js?v=1" defer><\/script>' : ''}${page.path === '/transparence' ? '<script src="/showroom-3d-data.js?v=1"><\/script><script type="module" src="/showroom-3d.js?v=2"><\/script>' : ''}</body>
 </html>`;
 }
 
