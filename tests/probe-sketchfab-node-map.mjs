@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1280,height:800}});
 page.on('console',msg=>{if(msg.type()==='error')console.error('PAGE_CONSOLE',msg.text().slice(0,600));});
 page.on('pageerror',e=>console.error('PAGE_ERROR',e.message.slice(0,600)));
@@ -8,6 +8,7 @@ page.on('response',resp=>{if(resp.status()>=400)console.error('HTTP_ERROR',resp.
 page.on('framenavigated',frame=>console.log('FRAME',frame.url().slice(0,260)));
 try{
   await page.goto('https://edm28.fr/transparence',{waitUntil:'domcontentloaded',timeout:30000});
+  console.log('WEBGL_SUPPORT',await page.evaluate(()=>Boolean(document.createElement('canvas').getContext('webgl'))));
   await page.addScriptTag({url:'https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js'});
   const result=await page.evaluate(async()=>{
     const frame=document.getElementById('edm3dReferenceFrame');
