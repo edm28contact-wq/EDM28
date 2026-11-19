@@ -83,7 +83,7 @@ const ground=new THREE.Mesh(
 ground.rotation.x=-Math.PI/2;ground.position.y=-.225;ground.receiveShadow=true;scene.add(ground);
 
 const paint=new THREE.MeshPhysicalMaterial({
-  color:'#a9bacd', metalness:.78, roughness:.23,clearcoat:1,clearcoatRoughness:.18
+  color:'#e7e9ed', metalness:.46, roughness:.21,clearcoat:1,clearcoatRoughness:.12
 });
 const bumper=new THREE.MeshStandardMaterial({color:'#283343',metalness:.47,roughness:.38});
 const glass=new THREE.MeshPhysicalMaterial({color:'#172b43',metalness:.29,roughness:.15,transparent:true,opacity:.92,side:THREE.DoubleSide});
@@ -91,6 +91,8 @@ const silver=new THREE.MeshStandardMaterial({color:'#9baabb',metalness:.83,rough
 const metal=new THREE.MeshStandardMaterial({color:'#6c7d8d',metalness:.8,roughness:.38});
 const dark=new THREE.MeshStandardMaterial({color:'#111923',metalness:.3,roughness:.76});
 const tireMaterial=new THREE.MeshStandardMaterial({color:'#14171b',roughness:.9});
+const redWheel=new THREE.MeshStandardMaterial({color:'#bd1d33',metalness:.67,roughness:.25});
+const blackCarbon=new THREE.MeshStandardMaterial({color:'#11151c',metalness:.45,roughness:.3});
 const brakeMaterial=new THREE.MeshStandardMaterial({color:'#8b959f',metalness:.75,roughness:.32});
 const amber=new THREE.MeshStandardMaterial({color:'#ffba7c',metalness:.27,roughness:.3,emissive:'#ba6d33',emissiveIntensity:.28});
 const redLamp=new THREE.MeshStandardMaterial({color:'#d44b4a',emissive:'#c3222a',emissiveIntensity:.39});
@@ -116,33 +118,72 @@ const rod=(a,b,r,mat,parent)=>{
 };
 const tag=(mesh,id,wheelId)=>{mesh.userData.partId=id;mesh.userData.wheelId=wheelId;interactables.push(mesh);return mesh;};
 function carBody(){
-  const lower=box([1.94,.53,4.38],paint,car,[0,1.11,0]);
-  lower.geometry.translate(0,0,0);
-  box([2.0,.24,4.45],paint,car,[0,.90,0]);
-  box([1.76,.19,1.36],paint,car,[0,1.45,-1.37],[.02,0,0]);
-  box([1.79,.19,1.36],paint,car,[0,1.45,1.36]);
-  box([1.62,.21,2.05],paint,car,[0,1.79,-.08]);
-  box([1.63,.12,2.09],glass,car,[0,1.85,-.07]);
-  box([1.77,.25,.52],glass,car,[0,1.63,1.17],[-.57,0,0]);
-  box([1.77,.25,.56],glass,car,[0,1.63,-1.23],[.54,0,0]);
+  // Low front, wide fenders, sloping coupe roof, rear wing and contrasting racing wheels.
+  // Loosely proportioned from the user's four Porsche GT3 RS photographs; no OEM geometry.
+  const profile=new THREE.Shape();
+  profile.moveTo(-2.27,.79);
+  profile.lineTo(-2.27,1.03);
+  profile.quadraticCurveTo(-2.12,1.24,-1.85,1.28);
+  profile.quadraticCurveTo(-1.38,1.38,-1.14,1.63);
+  profile.quadraticCurveTo(-.80,1.95,-.21,1.99);
+  profile.quadraticCurveTo(.36,2.01,.80,1.73);
+  profile.quadraticCurveTo(1.23,1.38,1.73,1.35);
+  profile.quadraticCurveTo(2.06,1.29,2.27,1.13);
+  profile.lineTo(2.27,.72);
+  profile.quadraticCurveTo(1.90,.63,1.62,.66);
+  profile.lineTo(-1.78,.66);
+  profile.quadraticCurveTo(-2.12,.67,-2.27,.79);
+  const bodyGeometry=new THREE.ExtrudeGeometry(profile,{
+    depth:1.82,steps:1,bevelEnabled:true,bevelThickness:.045,bevelSize:.05,bevelSegments:3,
+    curveSegments:18
+  });
+  const shell=new THREE.Mesh(bodyGeometry,paint);
+  shell.rotation.y=Math.PI/2;
+  shell.position.x=-.91;
+  shell.castShadow=true;car.add(shell);made.push(shell);
+  // Front is +Z and rear is -Z.
+  box([1.93,.09,1.03],paint,car,[0,1.30,1.56]);
+  box([1.69,.04,1.15],blackCarbon,car,[0,1.48,1.54],[-.11,0,0]);
+  box([1.43,.042,1.12],paint,car,[0,1.495,1.54],[-.11,0,0]);
+  box([1.90,.17,.19],blackCarbon,car,[0,.72,2.22]);
+  box([1.78,.14,.18],blackCarbon,car,[0,.73,-2.21]);
+  box([1.15,.12,.06],blackCarbon,car,[0,.87,2.285]);
+  box([1.15,.08,.05],redLamp,car,[0,1.18,-2.255]);
+  const windshield=box([1.50,.026,.73],glass,car,[0,1.69,.69],[-.55,0,0]);
+  windshield.castShadow=false;
+  const rearWindow=box([1.40,.027,.70],glass,car,[0,1.68,-1.03],[.65,0,0]);
+  rearWindow.castShadow=false;
+  box([1.22,.08,1.3],paint,car,[0,1.968,-.12]);
   for(const side of [-1,1]){
-    box([.04,.54,1.72],glass,car,[side*.82,1.57,-.05]);
-    box([.055,.10,1.84],paint,car,[side*.88,1.47,-.07]);
-    box([.22,.11,.18],bumper,car,[side*1.02,1.24,.73]);
-    box([.13,.07,.8],bumper,car,[side*1.02,.99,-.14]);
-    const mirror=box([.25,.13,.35],bumper,car,[side*1.03,1.45,.60]);
-    mirror.rotation.y=side*.18;
-    for(const zz of [-1.6,1.6]){
-      box([.11,.13,.28],zz>0?headLamp:redLamp,car,[side*.80,1.10,zz>0?2.18:-2.18]);
-    }
+    const window=box([.012,.36,1.22],glass,car,[side*.89,1.65,-.10]);
+    window.castShadow=false;
+    box([.08,.06,1.32],paint,car,[side*.89,1.49,-.10]);
+    box([.27,.12,.29],blackCarbon,car,[side*1.065,1.44,.55]);
+    box([.18,.17,.28],paint,car,[side*.90,1.37,1.82]);
+    // Large oval headlights, black air exits and carbon aero inlets.
+    const lamp=unit(new THREE.SphereGeometry(.195,18,14),headLamp,car,[side*.67,1.29,2.03]);
+    lamp.scale.set(.77,.34,1.05);
+    box([.25,.026,.62],blackCarbon,car,[side*.49,1.45,1.39],[-.12,side*.11,0]);
+    const intake=box([.10,.31,.47],blackCarbon,car,[side*.94,.92,1.62]);
+    intake.rotation.y=side*.16;
+    // Fenders with red decals, while keeping the car visually original.
+    box([.055,.065,1.34],blackCarbon,car,[side*.965,.97,-.65]);
+    box([.058,.035,.98],redWheel,car,[side*.992,.985,-.80]);
+    // Carbon side skirt and rear outlet.
+    box([.13,.1,2.60],blackCarbon,car,[side*.90,.71,-.15]);
+    box([.08,.13,.46],blackCarbon,car,[side*.96,1.18,-1.55]);
+    const light=box([.39,.070,.05],redLamp,car,[side*.69,1.18,-2.25]);
+    light.castShadow=false;
   }
-  box([1.82,.32,.21],bumper,car,[0,.79,2.14]);
-  box([1.82,.30,.21],bumper,car,[0,.79,-2.14]);
-  box([1.09,.16,.06],dark,car,[0,.82,2.265]);
-  for(const z of [2.17,-2.17]){
-    box([.45,.08,.06],silver,car,[0,1.11,z]);
+  // High-mounted rear wing with slender uprights and deep carbon plane.
+  rod([-.64,1.29,-1.87],[-.73,2.27,-2.13],.055,blackCarbon,car);
+  rod([.64,1.29,-1.87],[.73,2.27,-2.13],.055,blackCarbon,car);
+  box([2.12,.10,.50],blackCarbon,car,[0,2.33,-2.17],[-.14,0,0]);
+  box([2.16,.11,.13],blackCarbon,car,[0,2.38,-2.37],[-.08,0,0]);
+  for(const side of [-1,1]){
+    box([.12,.17,.53],blackCarbon,car,[side*1.06,2.33,-2.17]);
   }
-  box([1.25,.05,.05],metal,car,[0,1.99,-.25]);
+  box([1.75,.065,.18],blackCarbon,car,[0,1.26,-2.11]);
 }
 carBody();
 
@@ -163,18 +204,18 @@ function wheelAssembly(wheel){
   car.add(wheelShell);
   wheelVisuals.set(wheel.id,wheelShell);
   wheelCenters.set(wheel.id,new THREE.Vector3(x,y,z));
-  const tire=unit(new THREE.TorusGeometry(.45,.15,14,38),tireMaterial,wheelShell,[side*.065,0,0],[0,Math.PI/2,0]);
+  const tire=unit(new THREE.TorusGeometry(.47,.135,14,38),tireMaterial,wheelShell,[side*.065,0,0],[0,Math.PI/2,0]);
   tag(tire,'__wheel__',wheel.id);
-  const hub=cyl(.28,.28,.085,silver,wheelShell,[side*.105,0,0],[0,0,Math.PI/2]);
+  const hub=cyl(.28,.28,.085,redWheel,wheelShell,[side*.105,0,0],[0,0,Math.PI/2]);
   tag(hub,'__wheel__',wheel.id);
   const inner=cyl(.35,.35,.068,dark,wheelShell,[side*.077,0,0],[0,0,Math.PI/2]);
   tag(inner,'__wheel__',wheel.id);
-  for(let j=0;j<7;j++){
-    const a=j/7*Math.PI*2;
-    const spoke=box([.039,.27,.055],silver,wheelShell,[side*.16,Math.cos(a)*.14,Math.sin(a)*.14],[a,0,0]);
+  for(let j=0;j<11;j++){
+    const a=j/11*Math.PI*2;
+    const spoke=box([.039,.29,.047],redWheel,wheelShell,[side*.16,Math.cos(a)*.14,Math.sin(a)*.14],[a,0,0]);
     tag(spoke,'__wheel__',wheel.id);
   }
-  const center=cyl(.079,.079,.16,boltMaterial,wheelShell,[side*.18,0,0],[0,0,Math.PI/2]);
+  const center=cyl(.079,.079,.16,blackCarbon,wheelShell,[side*.18,0,0],[0,0,Math.PI/2]);
   tag(center,'__wheel__',wheel.id);
 
   const assembly=new THREE.Group();
