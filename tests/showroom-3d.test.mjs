@@ -36,7 +36,7 @@ test('showroom replaces Gemini UI, keeps fallback, and loads pinned Three.js mod
  assert.match(seo,/type="importmap"/);
  assert.match(seo,/three@0\.181\.2/);
  assert.match(seo,/showroom-3d-data\.js/);
- assert.ok(seo.includes("showroom-3d.js?v=2"));
+ assert.ok(seo.includes("showroom-3d.js?v=3"));
  assert.match(page,/edm3dShowroom/);
  assert.match(page,/edm3dFallback/);
  assert.match(page,/edm3dWheelChoice/);
@@ -59,4 +59,22 @@ test('reference design remains a procedural model and does not embed unauthorize
  assert.match(source,/prefers-reduced-motion/);
  assert.match(source,/IntersectionObserver/);
  assert.match(source,/ResizeObserver/);
+});
+
+test('realistic licensed reference remains opt-in and mechanic interactions stay available', async () => {
+ const [page, scene, css] = await Promise.all([
+  read('showroom-3d-page.js'), read('showroom-3d.js'), read('public-site.css')
+ ]);
+ assert.match(page, /data-view="reference"/);
+ assert.match(page, /edm3dLoadReference/);
+ assert.match(page, /edm3dViewMechanics/);
+ assert.match(page, /edm3dViewReference/);
+ assert.match(page, /data-src="https:\/\/sketchfab\.com\/models\/5fd62615f72a4012a5ebc15cd4c64461\/embed/);
+ assert.doesNotMatch(page, /<iframe[^>]+\ssrc=/);
+ assert.match(page, /jasonUWU/);
+ assert.match(page, /CC BY 4\.0/);
+ assert.match(scene, /referenceFrame\.src=target/);
+ assert.match(scene, /setShowroomView\('mechanics'\)/);
+ assert.match(scene, /root\.dataset\.view=mechanics\?'mechanics':'reference'/);
+ assert.match(css, /\[data-view=mechanics\] \.edm3d-reference\{display:none\}/);
 });
