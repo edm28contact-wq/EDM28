@@ -336,7 +336,20 @@
       '',
       ...(basket.requires_parts ? [
         'PI\u00c8CES PR\u00c9CONIS\u00c9ES', String(basket.recommended_parts || ''), '', ...(basket.price_details ? ['PRIX INDICATIFS TTC - ' + String(basket.price_observed_at || ''), String(basket.price_details), 'Memes references disponibles chez le vendeur de votre choix. Prix et livraison selon le vendeur.', ''] : []),
-        'PANIER FOURNISSEUR (lien \u00e9galement transmis dans l\u2019email)', String(basket.supplier_url || ''), '',
+        ...(Array.isArray(basket.product_cards)&&basket.product_cards.length ? [
+          'FICHES DETAILLEES PAR PIECE :', ...basket.product_cards.flatMap((part,index)=>[
+            'PIECE '+(index+1)+' : '+String(part.name||''),
+            'Fabricant : '+String(part.brand||'')+' - Reference exacte : '+String(part.reference||'')+' - Quantite : '+String(part.quantity||''),
+            ...(part.photo_url?['Photo indicative : '+String(part.photo_url)]:[]),
+            ...(Array.isArray(part.merchants)?part.merchants.flatMap(merchant=>[
+              'Vendeur : '+String(merchant.name||'')+
+                (merchant.price_ttc!=null?' - '+Number(merchant.price_ttc).toFixed(2)+' EUR TTC indicatif':''),
+              String(merchant.url||'')
+            ]):[]),
+            ''
+          ]), ''
+        ] : []),
+        'PANIER FOURNISSEUR (lien egalement transmis dans l email)', String(basket.supplier_url || ''), '',
         'Toute autre r\u00e9f\u00e9rence doit \u00eatre valid\u00e9e par EDM28 avant le rendez-vous.',
         'Les r\u00e9f\u00e9rences apport\u00e9es sont compar\u00e9es aux pr\u00e9conisations. Une incompatibilit\u00e9 peut emp\u00eacher ou interrompre l\u2019intervention ; son origine est examin\u00e9e avec le client.'
       ] : ['Cette prestation ne pr\u00e9voit pas de pi\u00e8ces de remplacement \u00e0 acheter.']),
