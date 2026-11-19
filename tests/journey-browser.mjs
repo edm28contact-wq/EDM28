@@ -31,11 +31,19 @@ function fixture(){
 }
 try{
  for(const width of [320,390,1280]){
+  const signedActions=[];
   const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});await context.addInitScript(fixture);
   await context.route('**/*',route=>{const req=route.request(),url=new URL(req.url());
    if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js'))return route.fulfill({contentType:'text/javascript',body:'/* isolated auth fixture */'});
    if(url.hostname.endsWith('.supabase.co'))return route.fulfill({contentType:'application/json',body:'[]'});
    if(url.origin===origin&&url.pathname==='/api/submit-request-v2'&&req.method()==='POST')return route.fulfill({contentType:'application/json',body:'{"success":true,"emailSent":true}'});
+   if(url.origin===origin&&url.pathname==='/api/sign-quote'&&req.method()==='POST'){
+    assert.equal(req.headers().authorization,'Bearer fixture-only');
+    const action=req.postDataJSON();assert.equal(action.quoteId,'22222222-2222-4222-8222-222222222222');
+    assert.ok(['start','sign'].includes(action.action));signedActions.push(action.action);
+    if(action.action==='sign'){assert.equal(action.code,'12345678');assert.equal(action.consent,true);assert.equal(action.name,'Camille Martin');}
+    return route.fulfill({contentType:'application/json',body:JSON.stringify({success:true,signed_at:new Date().toISOString()})});
+   }
    if(url.origin!==origin||!['GET','HEAD'].includes(req.method()))return route.abort('blockedbyclient');return route.continue();});
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
   await page.goto(origin+'/mes-interventions?devis=22222222-2222-4222-8222-222222222222',{waitUntil:'networkidle'});
@@ -101,7 +109,13 @@ try{
   await page.goto(origin+'/mes-interventions?devis=22222222-2222-4222-8222-222222222222&action=accepter',{waitUntil:'networkidle'});
   await page.locator('[data-response="accepted"]').waitFor();assert.equal(await page.evaluate(()=>__journey.q.status),'sent');
   await page.locator('[data-response="refused"]').click();await page.getByRole('link',{name:'\u00c9crire \u00e0 EDM28'}).waitFor();assert.match(await page.getByRole('link',{name:'\u00c9crire \u00e0 EDM28'}).getAttribute('href'),/^mailto:contact@edm28.fr/);
-  await page.evaluate(()=>{__journey.q.status='sent';__journey.emit();});await page.locator('[data-response="accepted"]').click();
+  await page.evaluate(()=>{__journey.q.status='sent';__journey.emit();window.addEventListener('edm:quote-signed',()=>{__journey.q.status='accepted';__journey.q.client_signed_at=new Date().toISOString();},{once:true});});
+  await page.locator('[data-response="accepted"]').click();
+  await page.locator('[aria-label="Signer le devis EDM28"] [data-qs-name]').fill('Camille Martin');
+  await page.locator('[data-qs-send]').click();await page.locator('[data-qs-code]').fill('12345678');
+  await page.locator('[data-qs-consent]').check();await page.locator('[data-qs-confirm]').click();
+  await page.locator('[data-planning]').waitFor();
+  assert.deepEqual(signedActions,['start','sign']);
   await page.locator('[data-planning]').click();await page.locator('[data-slot]').first().click();await page.locator('[data-proof-file]').waitFor();
   await page.locator('.basket-details summary').click();assert.match(await page.locator('[data-case]').innerText(),/REF-123/);assert.match(await page.locator('[data-case]').innerText(),/25 EUR/);
   await page.screenshot({path:`${out}/hold-${width}.png`,fullPage:true});
