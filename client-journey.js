@@ -29,8 +29,35 @@
     function basket(q){
       const b=Array.isArray(q.quote_parts_baskets)?q.quote_parts_baskets[0]:q.quote_parts_baskets;
       if(!b?.requires_parts)return '';
-      let url;try{url=window.EDMSupplierBasketPolicy.safeUrl(b.supplier_url);}catch(_){return '<p>Le lien du panier est indisponible. Contactez EDM28.</p>';}
-      return `<details class="basket-details"><summary>Voir les pi\u00e8ces pr\u00e9conis\u00e9es et le panier</summary><p style="white-space:pre-wrap">${esc(b.recommended_parts)}</p>${b.price_details?`<p><strong>Prix indicatifs TTC${b.price_observed_at?' relev\u00e9s le '+esc(day(b.price_observed_at)):''}</strong></p><p style="white-space:pre-wrap">${esc(b.price_details)}</p>`:''}<p>Vous pouvez acheter ces m\u00eames r\u00e9f\u00e9rences sur un autre site. Les prix et la livraison d\u00e9pendent du vendeur. Toute autre r\u00e9f\u00e9rence doit \u00eatre valid\u00e9e par EDM28.</p><a class="primary-action as-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Ouvrir mon panier fournisseur</a></details>`;
+      const safe=value=>{try{return window.EDMSupplierBasketPolicy.safeUrl(value);}catch{return null;}};
+      const items=Array.isArray(b.product_cards)?b.product_cards:[];
+      const illustrations=items.map((piece,index)=>{
+        const picture=piece.photo_url?safe(piece.photo_url):null;
+        const merchants=Array.isArray(piece.merchants)?piece.merchants:[];
+        const shops=merchants.map(offer=>{
+          const url=safe(offer.url);
+          if(!url)return '';
+          const price=offer.price_ttc==null?'':'<span style="display:block;font-size:.86rem">Prix indicatif : '+money(Number(offer.price_ttc))+' TTC · hors livraison</span>';
+          return '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer" class="primary-action as-link" style="display:inline-block;margin:5px 8px 5px 0">'
+            +esc(offer.name||'Voir le vendeur')+price+'</a>';
+        }).join('');
+        return '<article class="card" style="padding:14px;margin:12px 0">'
+          +'<div style="display:grid;grid-template-columns:minmax(100px,175px) 1fr;gap:16px;align-items:start">'
+          +(picture?'<img loading="lazy" referrerpolicy="no-referrer" alt="Photo indicative : '+esc(piece.name)+'" src="'+esc(picture)+'" style="width:100%;height:155px;object-fit:contain;border:1px solid #ddd;border-radius:10px;background:#fff">':'<div style="display:grid;place-items:center;border:1px solid #ddd;border-radius:10px;min-height:140px;font-size:.9rem">Photo non disponible</div>')
+          +'<div><h4 style="margin:0 0 8px">'+esc(piece.name||'Pièce '+(index+1))+'</h4>'
+          +(piece.brand?'<p>Marque : <strong>'+esc(piece.brand)+'</strong></p>':'')
+          +'<p>Référence exacte : <strong>'+esc(piece.reference||'')+'</strong></p>'
+          +'<p>Quantité à acheter : <strong>'+esc(piece.quantity)+'</strong></p>'
+          +'<p><strong>Sites marchands proposés</strong></p><div>'+shops+'</div></div></div></article>';
+      }).join('');
+      const legacyLink=safe(b.supplier_url);
+      const legacy=items.length?'':'<p style="white-space:pre-wrap">'+esc(b.recommended_parts)+'</p>'
+        +(b.price_details?'<p><strong>Prix indicatifs TTC'+(b.price_observed_at?' relevés le '+esc(day(b.price_observed_at)):'')+'</strong></p><p style="white-space:pre-wrap">'+esc(b.price_details)+'</p>':'');
+      const basketLink=legacyLink?'<p><a class="secondary-action as-link" href="'+esc(legacyLink)+'" target="_blank" rel="noopener noreferrer">Ouvrir le panier fournisseur complet</a></p>':'';
+      return '<details class="basket-details" open><summary>Pièces à acheter — photos, références et vendeurs</summary>'
+        +(items.length?illustrations:legacy)
+        +'<p>Vous achetez et réglez les pièces directement auprès du vendeur choisi. Les photos sont indicatives : la référence exacte doit correspondre au devis. Prix, stock, livraison et garanties relèvent du vendeur. Toute autre référence doit être validée par EDM28.</p>'
+        +basketLink+'</details>';
     }
     function card(g,archived=false){
       const q=g.quote,r=g.reservation,p=g.progress;
