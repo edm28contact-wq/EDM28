@@ -11,6 +11,36 @@
     if(url.protocol!=='https:' || url.port || url.username || url.password || !url.hostname.includes('.') || url.hostname.endsWith('.local') || url.hostname==='127.0.0.1') throw new Error('Lien HTTPS invalide.');
     return url.href;
   };
+  // Original, generic illustrations only: never use these pictures as compatibility evidence.
+  const genericPhotos = Object.freeze([
+    {id:'disque-frein',label:'Disque de frein',group:'Freinage'},
+    {id:'plaquettes-frein',label:'Plaquettes de frein',group:'Freinage'},
+    {id:'etrier-frein',label:'Étrier de frein',group:'Freinage'},
+    {id:'flexible-frein',label:'Flexible de frein',group:'Freinage'},
+    {id:'amortisseur',label:'Amortisseur',group:'Suspension'},
+    {id:'ressort-suspension',label:'Ressort de suspension',group:'Suspension'},
+    {id:'triangle-suspension',label:'Triangle de suspension',group:'Suspension'},
+    {id:'biellette-barre-stabilisatrice',label:'Biellette de barre stabilisatrice',group:'Suspension'},
+    {id:'rotule-direction',label:'Rotule de direction',group:'Direction'},
+    {id:'rotule-suspension',label:'Rotule de suspension',group:'Suspension'},
+    {id:'roulement-roue',label:'Roulement de roue',group:'Liaison au sol'},
+    {id:'soufflet-cardan',label:'Soufflet de cardan',group:'Transmission'}
+  ]);
+  const genericPhotoUrl = id => {
+    if(!genericPhotos.some(item=>item.id===id))throw new Error('Illustration générique inconnue.');
+    return 'https://edm28.fr/images/generic-parts/'+id+'.webp';
+  };
+  function genericGallery(disabled=false) {
+    if(disabled)return '';
+    return '<details class="edm-generic-photo-picker" style="margin:10px 0">'
+      +'<summary>Choisir une illustration dans la photothèque générique (12 pièces)</summary>'
+      +'<p class="muted">Repère visuel uniquement : aucune photo ne garantit la marque ou la référence de la pièce réellement achetée.</p>'
+      +'<div class="edm-generic-gallery">'
+      +genericPhotos.map(item=>'<button type="button" class="edm-generic-photo-choice" data-generic-photo="'+h(item.id)+'" aria-label="Utiliser illustration : '+h(item.label)+'">'
+        +'<img src="'+h(genericPhotoUrl(item.id))+'" alt="" loading="lazy" width="112" height="94">'
+        +'<span>'+h(item.label)+'</span></button>').join('')
+      +'</div></details>';
+  }
   const empty = () => ({ name:'', brand:'', reference:'', quantity:1, photo_url:'', merchants:[{name:'',url:'',price_ttc:null}] });
   const positive = value => Number.isInteger(Number(value)) && Number(value)>=1 && Number(value)<=24;
   function normalize(value, strict=false) {
@@ -58,6 +88,7 @@
       +'<label>Marque fabricant<input data-part="brand" maxlength="100" value="'+h(part.brand||'')+'"'+d+'></label>'
       +'<label>Référence exacte<input data-part="reference" maxlength="100" value="'+h(part.reference||'')+'"'+d+'></label>'
       +'<label>Quantité<input data-part="quantity" type="number" min="1" max="24" step="1" value="'+h(part.quantity||1)+'"'+d+'></label></div>'
+      +genericGallery(disabled)
       +'<label>Photo de la pièce (URL HTTPS ou import)<input data-part="photo_url" type="url" maxlength="2000" value="'+h(photo)+'" placeholder="https://..."'+d+'></label>'
       +(photo?'<img data-part-preview src="'+h(photo)+'" alt="Photo indicative de la pièce" loading="lazy" style="max-width:180px;max-height:150px;object-fit:contain;margin:8px 0">':'<div data-part-preview></div>')
       +(disabled?'':'<label>Importer une photo du produit (JPG, PNG ou WebP ; 3 Mo max)<input type="file" data-part-upload accept="image/jpeg,image/png,image/webp"></label>')
@@ -123,6 +154,19 @@
         if(list.querySelectorAll('[data-part-card]').length>=12)return;
         list.insertAdjacentHTML('beforeend',partEditor());return;
       }
+      if(button.matches('[data-generic-photo]')) {
+        const part=button.closest('[data-part-card]');
+        if(!part)return;
+        const url=genericPhotoUrl(button.dataset.genericPhoto);
+        const input=part.querySelector('[data-part="photo_url"]');
+        if(!input||input.disabled)return;
+        input.value=url;
+        const preview=part.querySelector('[data-part-preview]');
+        if(preview)preview.outerHTML='<figure data-part-preview style="margin:8px 0"><img src="'+h(url)+'" alt="Illustration générique de la pièce" loading="lazy" style="max-width:180px;max-height:150px;object-fit:contain"><figcaption class="muted">Illustration générique — référence exacte à vérifier</figcaption></figure>';
+        button.closest('details')?.removeAttribute('open');
+        section.querySelector('[data-part-error]').textContent='Illustration générique sélectionnée. Complétez la référence exacte puis enregistrez le devis.';
+        return;
+      }
       if(button.matches('[data-remove-part]')){button.closest('[data-part-card]').remove();return;}
       if(button.matches('[data-add-merchant]')){
         const box=button.closest('[data-part-card]').querySelector('[data-merchant-list]');
@@ -144,7 +188,7 @@
       finally{input.disabled=false;input.value='';}
     });
   }
-  const api={empty,normalize,summary,editor,read,bind};
+  const api={empty,normalize,summary,editor,read,bind,genericPhotos,genericPhotoUrl};
   if(typeof module==='object'&&module.exports)module.exports=api;
   else root.EDMQuoteProductCards=api;
 })(globalThis);
