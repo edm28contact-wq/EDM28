@@ -726,7 +726,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <meta property="og:image:alt" content="Logo officiel EDM28, spécialiste du freinage">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<link rel="stylesheet" href="/public-site.css?v=10">
+<link rel="stylesheet" href="/public-site.css?v=11">
 ${page.path === '/transparence' ? `<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/"}}</script>` : ''}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script>
 </head>
@@ -764,7 +764,7 @@ ${page.path === '/transparence' ? `<script type="importmap">{"imports":{"three":
 <footer class="site-footer"><div class="wrap"><p><strong>${esc(business.business_name)}</strong> — Garage automobile spécialisé freinage et liaison au sol.</p>${business.email ? `<p>Email : <a class="email" href="mailto:${esc(business.email)}">${esc(business.email)}</a></p>` : ''}${business.phone ? `<p>Téléphone : <a href="tel:${esc(business.phone.replace(/\\s+/g, ''))}">${esc(business.phone)}</a></p>` : ''}<nav aria-label="Informations légales"><a href="/conditions-generales">Conditions générales</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/cookies">Cookies</a> · <a href="/pieces-economie-circulaire">Pièces de réemploi</a> · <a href="/retractation">Renoncer au contrat ici</a></nav></div></footer>
 ${`<script>window.EDM_PUBLIC_SUPABASE=${JSON.stringify({url:clientConfig?.url||'',key:clientConfig?.key||''}).replaceAll('<','\\u003c')}<\/script>${page.path === '/demande' ? '<script src="/pdf-lite.js?v=5"><\/script>' : ''}<script src="/supplier-basket-policy.js?v=1" defer><\/script><script src="/journey-model.js?v=1" defer><\/script><script src="/quote-signature.js?v=1" defer><\/script><script src="/client-journey.js?v=1" defer><\/script><script src="/public-client.js?v=6" defer><\/script>`}
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
-<script src="/public-site.js?v=2" defer></script>${page.showWithdrawalForm ? '<script src="/legal-withdrawal.js?v=1" defer><\/script>' : ''}${page.path === '/transparence' ? '<script src="/showroom-3d-data.js?v=1"><\/script><script type="module" src="/showroom-3d.js?v=2"><\/script>' : ''}</body>
+<script src="/public-site.js?v=2" defer></script>${page.showWithdrawalForm ? '<script src="/legal-withdrawal.js?v=1" defer><\/script>' : ''}${page.path === '/transparence' ? '<script src="/showroom-3d-data.js?v=1"><\/script><script type="module" src="/showroom-3d.js?v=3"><\/script>' : ''}</body>
 </html>`;
 }
 
