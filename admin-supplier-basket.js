@@ -14,12 +14,16 @@
       <h4>Panier fournisseur et pi\u00e8ces apport\u00e9es par le client</h4>
       <p>${esc(P().terms)}</p>
       <label><input type="checkbox" data-field="requiresParts" ${parts.requires_parts ? 'checked' : ''}${locked}> Des pi\u00e8ces de remplacement sont n\u00e9cessaires</label>
+      ${window.EDMQuoteProductCards?.editor(parts.product_cards || [], Boolean(locked)) || ''}
+      <details style="margin:14px 0" ${parts.product_cards?.length ? '' : 'open'}>
+        <summary>Panier classique / références texte (compatible avec les anciens devis)</summary>
+        <p class="muted">Lorsque vous renseignez les fiches produits ci-dessus, les références, le premier lien marchand et les prix indicatifs sont générés automatiquement à l’enregistrement.</p>
       <label>Lien partageable du panier fournisseur<input type="url" data-field="supplierUrl" maxlength="2000" placeholder="https://..." value="${esc(parts.supplier_url || '')}"${locked}></label>
       <label>Pi\u00e8ces pr\u00e9conis\u00e9es : marque, r\u00e9f\u00e9rence, d\u00e9signation et quantit\u00e9<textarea data-field="recommendedParts" rows="5" maxlength="6000"${locked}>${esc(parts.recommended_parts || '')}</textarea></label>
       <label>Prix indicatifs TTC par r\u00e9f\u00e9rence<textarea data-field="priceDetails" rows="4" maxlength="6000" placeholder="R\u00e9f\u00e9rence - quantit\u00e9 - prix TTC"${locked}>${esc(parts.price_details || '')}</textarea></label>
       <label>Date du relev\u00e9 de prix<input type="date" data-field="priceObservedAt" value="${esc(parts.price_observed_at || '')}"${locked}></label>
       <p class="muted">Le lien et ces r\u00e9f\u00e9rences accompagnent le devis. Aucun montant de pi\u00e8ce n\u2019est ajout\u00e9 au total EDM28. Sans pi\u00e8ces de remplacement, d\u00e9cochez la case et laissez les deux champs vides.</p>
-      ${window.EDMQuoteProductCards?.editor(parts.product_cards || [], Boolean(locked)) || ''}
+    </details>
     </section>`;
   }
 
