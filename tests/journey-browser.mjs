@@ -117,7 +117,7 @@ try{
   await page.locator('[data-planning]').waitFor();
   assert.deepEqual(signedActions,['start','sign']);
   await page.locator('[data-planning]').click();await page.locator('[data-slot]').first().click();await page.locator('[data-proof-file]').waitFor();
-  await page.locator('.basket-details summary').click();assert.match(await page.locator('[data-case]').innerText(),/REF-123/);assert.match(await page.locator('[data-case]').innerText(),/25 EUR/);
+  await page.locator('.basket-details').evaluate(element=>{if(!element.open)element.open=true;});assert.match(await page.locator('[data-case]').innerText(),/REF-123/);assert.match(await page.locator('[data-case]').innerText(),/25 EUR/);
   await page.screenshot({path:`${out}/hold-${width}.png`,fullPage:true});
   await page.locator('[data-proof-file]').setInputFiles({name:'purchase.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 isolated test proof')});
   await page.locator('[data-proof-submit]').click();await page.waitForFunction(()=>__journey.rows.booking_reservations[0].status==='review_pending');
