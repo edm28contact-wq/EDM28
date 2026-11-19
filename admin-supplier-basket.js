@@ -19,19 +19,39 @@
       <label>Prix indicatifs TTC par r\u00e9f\u00e9rence<textarea data-field="priceDetails" rows="4" maxlength="6000" placeholder="R\u00e9f\u00e9rence - quantit\u00e9 - prix TTC"${locked}>${esc(parts.price_details || '')}</textarea></label>
       <label>Date du relev\u00e9 de prix<input type="date" data-field="priceObservedAt" value="${esc(parts.price_observed_at || '')}"${locked}></label>
       <p class="muted">Le lien et ces r\u00e9f\u00e9rences accompagnent le devis. Aucun montant de pi\u00e8ce n\u2019est ajout\u00e9 au total EDM28. Sans pi\u00e8ces de remplacement, d\u00e9cochez la case et laissez les deux champs vides.</p>
+      ${window.EDMQuoteProductCards?.editor(parts.product_cards || [], Boolean(locked)) || ''}
     </section>`;
   }
 
   function read(root, complete = false) {
     if (!P() || !root?.querySelector('[data-supplier-basket]')) throw new Error('Rechargez le back-office : le formulaire de panier est indisponible.');
+    const productBox = root.querySelector('[data-product-cards]');
+    if (productBox && !window.EDMQuoteProductCards) throw new Error('Rechargez le module des fiches produits.');
+    const cards = productBox ? window.EDMQuoteProductCards.read(productBox) : [];
+    const derived = cards.length ? window.EDMQuoteProductCards.summary(cards) : null;
+    const supplierUrl = derived?.firstUrl || field(root, 'supplierUrl').value;
+    const recommendedParts = derived?.references || field(root, 'recommendedParts').value;
+    const priceDetails = derived?.prices || field(root, 'priceDetails')?.value || '';
+    const today=new Date();
+    const priceObservedAt = (derived?.prices && !field(root, 'priceObservedAt')?.value)
+      ? [today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-')
+      : field(root, 'priceObservedAt')?.value || null;
     const parts = P().basket({
       requires_parts: field(root, 'requiresParts').checked,
-      supplier_url: field(root, 'supplierUrl').value,
-      recommended_parts: field(root, 'recommendedParts').value,
-      price_details: field(root, 'priceDetails')?.value || '',
-      price_observed_at: field(root, 'priceObservedAt')?.value || null
+      supplier_url: supplierUrl,
+      recommended_parts: recommendedParts,
+      price_details: priceDetails,
+      price_observed_at: priceObservedAt,
+      ...(productBox ? {product_cards:cards} : {})
     }, complete);
-    if (complete && parts.requires_parts && (!parts.price_details || !parts.price_observed_at)) throw new Error('Indiquez les prix TTC des pi\u00e8ces et la date du relev\u00e9 avant envoi.');
+    if (complete && parts.requires_parts && !cards.length && (!parts.price_details || !parts.price_observed_at))
+      throw new Error('Indiquez les prix TTC des pi\u00e8ces et la date du relev\u00e9 avant envoi.');
+    if (derived) {
+      field(root,'supplierUrl').value=parts.supplier_url||'';
+      field(root,'recommendedParts').value=parts.recommended_parts||'';
+      field(root,'priceDetails').value=parts.price_details||'';
+      field(root,'priceObservedAt').value=parts.price_observed_at||'';
+    }
     const items = P().serviceItems([...root.querySelectorAll('[data-quote-line]')].map((line) => {
       const get = (key) => line.querySelector(`[data-line="${key}"]`)?.value;
       return { item_type: get('type'), designation: get('designation'), description: get('description'), quantity: get('quantity'), unit_price: get('unit_price'), vat_rate: get('vat_rate') };
