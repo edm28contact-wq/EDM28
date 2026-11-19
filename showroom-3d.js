@@ -394,6 +394,7 @@ el('edm3dLoadReference')?.addEventListener('click',()=>{
   const target=referenceFrame.dataset.src;
   if(!target?.startsWith('https://sketchfab.com/models/'))return;
   referenceFrame.addEventListener('load',()=>{
+    if(referenceIntro)referenceIntro.classList.add('is-loaded');
     if(referenceStatus)referenceStatus.textContent='Lecteur chargé. Utilisez la souris ou le tactile pour faire tourner la voiture.';
   },{once:true});
   referenceFrame.src=target;
