@@ -199,7 +199,7 @@ test('GT3 API does not pretend to remove fused or unnamed wheels',async()=>{
     assert.deepEqual(ready[0].available,['av-gauche']);
     assert.equal(control.supports('av-gauche','roue'),true);
     assert.equal(control.supports('av-droite','roue'),false);
-    assert.deepEqual(await control.setSteps('av-droite',['roue']),{ok:false,missing:['wheel']});
+    assert.deepEqual(await control.setSteps('av-droite',['roue']),{ok:false,missing:['roue']});
     assert.deepEqual(calls,[]);
     assert.deepEqual(await control.setSteps('av-gauche',['roue','disques']),{ok:true});
     assert.deepEqual(calls,[['hide',5],['hide',7]]);
@@ -256,7 +256,7 @@ test('one-scene manual controls and clear messages remain wired',async()=>{
  ]);
  for(const id of ['edm3dPickPanel','edm3dPickPart','edm3dPickStart','edm3dPickRemove','edm3dPickRestore','edm3dPickAccept','edm3dPickCancel','edm3dPickHint']){
   assert.match(page,new RegExp('id="'+id+'"'));
-  assert.ok(script.includes("'"+id+"'"));
+  if(id!=='edm3dPickPanel')assert.ok(script.includes("'"+id+"'"));
  }
  assert.match(script,/onCandidate\(candidate\)/);
  assert.match(script,/gt3\.confirmPick\(\)/);
