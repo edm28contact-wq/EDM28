@@ -1224,3 +1224,11 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 @media(max-width:1050px){.edm3d-workspace{grid-template-columns:minmax(0,1fr)}.edm3d-stage{min-height:480px}.edm3d-canvas{height:480px}.edm3d-sidebar{border-left:0;border-top:1px solid #2c3c50}.edm3d-stage-footer{inset:auto 14px 14px}}
 @media(max-width:580px){.edm3d-showroom{border-radius:14px;margin:22px 0 34px}.edm3d-stage{min-height:360px}.edm3d-canvas{height:360px}.edm3d-scene-top{inset:12px 12px auto}.edm3d-stage-footer{inset:auto 10px 10px}.edm3d-stage-footer p{font-size:.72rem;padding:9px}.edm3d-controls button{font-size:.77rem;padding:7px 9px}.edm3d-sidebar{padding:18px}}
 @media(prefers-reduced-motion:reduce){.edm3d-controls button,.edm3d-part-button,.edm3d-wheel-shortcuts button{transition:none}}
+
+/* Cinematic transitions inspired by premium automotive configurators, without copying their assets. */
+@keyframes edm3d-enter{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes edm3d-hero-in{from{opacity:.15;transform:scale(1.025)}to{opacity:1;transform:scale(1)}}
+.edm3d-heading{animation:edm3d-enter .68s cubic-bezier(.19,1,.22,1) both}
+.edm3d-stage{animation:edm3d-hero-in .95s cubic-bezier(.19,1,.22,1) both}
+.edm3d-sidebar{animation:edm3d-enter .78s .12s cubic-bezier(.19,1,.22,1) both}
+@media(prefers-reduced-motion:reduce){.edm3d-heading,.edm3d-stage,.edm3d-sidebar{animation:none}}
