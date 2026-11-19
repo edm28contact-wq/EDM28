@@ -1,6 +1,6 @@
 export function render3DShowroom() {
  return `<section class="edm3d-showroom" id="edm3dShowroom" aria-labelledby="edm3dHeading">
- <div class="edm3d-heading"><div class="edm3d-eyebrow">EDM28 · EXPÉRIENCE IMMERSIVE</div>
+ <div class="edm3d-heading"><div class="edm3d-eyebrow">EDM28 · COUPÉ SPORTIF GT3 RS · INTERPRÉTATION 3D</div>
  <h2 id="edm3dHeading">La mécanique, <em>sous tous les angles.</em></h2>
  <p>Explorez la voiture, retirez virtuellement une roue et découvrez les composants que nous entretenons.</p></div>
  <div class="edm3d-workspace">
@@ -31,7 +31,7 @@ export function render3DShowroom() {
   </aside>
  </div>
  <p class="edm3d-status" id="edm3dStatus" role="status" aria-live="polite">Préparation de la scène…</p>
- <div class="edm3d-note">Visualisation pédagogique générique, non contractuelle. Aucun symptôme ne suffit à établir un diagnostic. Les pièces proposées doivent être vérifiées sur le véhicule réel.</div>
+ <div class="edm3d-note">Interprétation 3D stylisée du coupé blanc aux jantes rouges montré dans les photos de référence. Ce modèle pédagogique ne reproduit pas une CAO constructeur et ne suppose aucune affiliation avec Porsche. Aucun symptôme ne constitue un diagnostic et les pièces doivent être contrôlées sur le véhicule réel.</div>
  <div id="edm3dFallback" class="edm3d-fallback"><strong>Le showroom reste accessible sans 3D</strong><p>Retrouvez les fiches détaillées et les demandes d’intervention :</p><div><a href="/freinage/plaquettes-de-frein">Plaquettes de frein</a> · <a href="/freinage/disques-de-frein">Disques</a> · <a href="/liaison-au-sol">Liaison au sol</a> · <a href="/demande">Faire une demande</a></div></div>
  </section>`;
 }
