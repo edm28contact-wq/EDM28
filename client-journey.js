@@ -43,7 +43,7 @@
         }).join('');
         return '<article class="card" style="padding:14px;margin:12px 0">'
           +'<div class="edm-product-view-grid">'
-          +(picture?'<img loading="lazy" referrerpolicy="no-referrer" alt="Photo indicative : '+esc(piece.name)+'" src="'+esc(picture)+'" style="width:100%;height:155px;object-fit:contain;border:1px solid #ddd;border-radius:10px;background:#fff">':'<div style="display:grid;place-items:center;border:1px solid #ddd;border-radius:10px;min-height:140px;font-size:.9rem">Photo non disponible</div>')
+          +(picture?'<figure style="margin:0"><img loading="lazy" referrerpolicy="no-referrer" alt="Illustration de catégorie : '+esc(piece.name)+'" src="'+esc(picture)+'" style="width:100%;height:155px;object-fit:contain;border:1px solid #ddd;border-radius:10px;background:#fff"><figcaption class="muted" style="font-size:.75rem;text-align:center">'+(picture.includes('/images/generic-parts/')?'Illustration générique · non contractuelle':'Photo indicative')+'</figcaption></figure>':'<div style="display:grid;place-items:center;border:1px solid #ddd;border-radius:10px;min-height:140px;font-size:.9rem">Photo non disponible</div>')
           +'<div><h4 style="margin:0 0 8px">'+esc(piece.name||'Pièce '+(index+1))+'</h4>'
           +(piece.brand?'<p>Marque : <strong>'+esc(piece.brand)+'</strong></p>':'')
           +'<p>Référence exacte : <strong>'+esc(piece.reference||'')+'</strong></p>'
