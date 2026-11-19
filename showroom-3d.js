@@ -295,6 +295,7 @@ function refreshPartMenu(){
   partButtons.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>setPart(btn.dataset.part)));
 }
 function showWheel(id){
+  setShowroomView('mechanics');
   const wheel=data.wheelById(id);
   if(!wheel)return;
   if(currentWheel===id){restore();return;}
@@ -376,6 +377,29 @@ renderer.domElement.addEventListener('webglcontextlost',e=>{
   live('La scène 3D a été interrompue. Les fiches d’information restent accessibles.');
 });
 renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
+const referenceFrame=el('edm3dReferenceFrame');
+const referenceIntro=el('edm3dReferenceIntro');
+const referenceStatus=el('edm3dReferenceLoadStatus');
+function setShowroomView(view){
+  const mechanics=view==='mechanics';
+  root.dataset.view=mechanics?'mechanics':'reference';
+  el('edm3dViewReference')?.setAttribute('aria-pressed',String(!mechanics));
+  el('edm3dViewMechanics')?.setAttribute('aria-pressed',String(mechanics));
+  if(mechanics)resize();
+}
+el('edm3dViewReference')?.addEventListener('click',()=>setShowroomView('reference'));
+el('edm3dViewMechanics')?.addEventListener('click',()=>setShowroomView('mechanics'));
+el('edm3dLoadReference')?.addEventListener('click',()=>{
+  if(!referenceFrame||referenceFrame.src) return;
+  const target=referenceFrame.dataset.src;
+  if(!target?.startsWith('https://sketchfab.com/models/'))return;
+  referenceFrame.addEventListener('load',()=>{
+    if(referenceStatus)referenceStatus.textContent='Lecteur chargé. Utilisez la souris ou le tactile pour faire tourner la voiture.';
+  },{once:true});
+  referenceFrame.src=target;
+  if(referenceIntro)referenceIntro.classList.add('is-loading');
+  if(referenceStatus)referenceStatus.textContent='Chargement du lecteur 3D externe…';
+});
 window.EDMShowroomSelectWheel=showWheel;
 let frameId=null;
 let running=true;
@@ -395,6 +419,7 @@ resize();
 function draw(){
   frameId=null;
   if(!running || document.hidden)return;
+  if(root.dataset.view!=='mechanics'){frameId=requestAnimationFrame(draw);return;}
   const step=reduceMotion?1:.13;
   for(const wheel of data.wheels){
     const visual=wheelVisuals.get(wheel.id);
