@@ -26,6 +26,7 @@ try {
   root.classList.add('edm3d-unavailable');
   throw new Error('WebGL indisponible');
 }
+root.classList.add('edm3d-ready');
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
