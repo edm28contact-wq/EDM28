@@ -36,7 +36,7 @@ test('showroom replaces Gemini UI, keeps fallback, and loads pinned Three.js mod
  assert.match(seo,/type="importmap"/);
  assert.match(seo,/three@0\.181\.2/);
  assert.match(seo,/showroom-3d-data\.js/);
- assert.match(seo,/showroom-3d\\.js\\?v=2/);
+ assert.ok(seo.includes("showroom-3d.js?v=2"));
  assert.match(page,/edm3dShowroom/);
  assert.match(page,/edm3dFallback/);
  assert.match(page,/edm3dWheelChoice/);
