@@ -1216,7 +1216,8 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 .edm3d-offer:hover{background:#c5dcef}
 .edm3d-status{margin:0;padding:12px 24px;color:#d1dceb;font-size:.82rem;border-top:1px solid #2d3c4f}
 .edm3d-note{padding:14px 24px 18px;color:#a9bbce;font-size:.82rem;line-height:1.5}
-.edm3d-fallback{display:none;padding:24px;border-top:1px solid #33445a}
+.edm3d-fallback{display:block;padding:24px;border-top:1px solid #33445a}
+.edm3d-ready .edm3d-fallback{display:none}
 .edm3d-unavailable .edm3d-fallback{display:block}
 .edm3d-unavailable .edm3d-canvas{display:none}
 .edm3d-fallback a{color:#b6d8ff}
