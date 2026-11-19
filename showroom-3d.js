@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createWorkshopHD } from './showroom-workshop-hd.js';
+import { createGt3Workshop } from './showroom-gt3-workshop.js';
 
 /* EDM28 virtual showroom.
    Generic procedural car and cutaway assemblies, educational—not an OEM CAD model. */
@@ -335,6 +336,8 @@ function applyExploded(){
 function updateStepPanel(){
   const panel=el('edm3dInspection');
   if(panel)panel.hidden=!currentWheel;
+  const loading=el('edm3dModelSupport');
+  if(loading&&currentWheel&&!gt3?.supports(currentWheel,'wheel'))loading.textContent='La roue sélectionnée n’est pas identifiée comme un objet indépendant dans ce modèle. Le démontage est désactivé.';
   if(!currentWheel)return;
   const steps=data.stepsForWheel(currentWheel,currentFamily);
   const max=steps.length;
@@ -379,8 +382,27 @@ function updateStepPanel(){
 function setStep(value){
   if(!currentWheel)return;
   const steps=data.stepsForWheel(currentWheel,currentFamily);
+  const previousStep=currentStep;
   currentStep=Math.max(0,Math.min(Math.trunc(Number(value)||0),steps.length));
-  applyExploded();
+  if(gt3?.ready){
+    const targetStep=currentStep;
+    const expected=data.stepsForWheel(currentWheel,currentFamily).slice(0,targetStep).map(item=>item.id);
+    const wheelId=currentWheel;
+    gt3.setSteps(wheelId,expected).then(result=>{
+      if(wheelId!==currentWheel)return;
+      if(!result.ok){
+        currentStep=previousStep;
+        updateStepPanel();
+        return;
+      }
+      updateStepPanel();
+    });
+  }
+  else{
+    currentStep=previousStep;
+    const support=el('edm3dModelSupport');
+    if(support)support.textContent='Chargez d’abord le modèle GT3 RS pour explorer ses composants.';
+  }
   updateStepPanel();
   const wheel=data.wheelById(currentWheel);
   const step=steps[currentStep-1];
@@ -395,10 +417,9 @@ function setFamily(family){
   if(family==='liaison' && !data.wheelById(currentWheel)?.front)return;
   if(!['freinage','liaison'].includes(family))return;
   currentFamily=family;
-  currentStep=1;
+  currentStep=0;
   refreshPartMenu();
   setStep(1);
-  focusOnWheel(currentWheel);
 }
 const chosenWheel=()=>data.wheelById(currentWheel);
 const availableServices=()=>Array.isArray(window.EDMShowroomActiveServices)?window.EDMShowroomActiveServices:null;
@@ -417,7 +438,7 @@ function setPart(id,syncStep=true){
     }
     const steps=data.stepsForWheel(currentWheel,currentFamily);
     const stepIndex=steps.findIndex(item=>item.id===id);
-    if(stepIndex>=0){
+    if(stepIndex>=0 && root.dataset.view==='mechanics'){
       currentStep=stepIndex+1;
       applyExploded();
       updateStepPanel();
@@ -463,31 +484,33 @@ function refreshPartMenu(){
   partButtons.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>setPart(btn.dataset.part)));
 }
 function showWheel(id){
-  setShowroomView('mechanics');
   const wheel=data.wheelById(id);
   if(!wheel)return;
-  if(currentWheel===id){
-    focusOnWheel(id);
-    return;
-  }
-  if(currentWheel){
-    const previous=wheelVisuals.get(currentWheel);
-    previous.userData.targetX=0;
-    wheelParts.get(currentWheel).visible=false;
-  }
-  currentWheel=id;currentPart=null;
-  currentFamily='freinage';currentStep=1;
+  if(currentWheel===id){if(gt3?.ready)setStep(1);return;}
+  gt3?.restore();
+  currentWheel=id;currentPart=null;currentFamily='freinage';currentStep=0;
   root.dataset.wheel=id;
   const choice=el('edm3dWheelChoice');
   if(choice)choice.value=id;
-  el('edm3dReset').disabled=false;
+  const reset=el('edm3dReset');
+  if(reset)reset.disabled=false;
   refreshPartMenu();
-  applyExploded();
   updateStepPanel();
-  focusOnWheel(id);
+  const support=el('edm3dModelSupport');
+  if(!gt3?.ready){
+    if(support)support.textContent='Cliquez sur « Afficher la GT3 RS en 3D » pour accéder aux pièces de la voiture.';
+    live('Chargez d’abord la Porsche GT3 RS. Les pièces sont contrôlées dans son modèle original.');
+    return;
+  }
+  if(!gt3.supports(id,'wheel')){
+    if(support)support.textContent='Cette roue n’est pas une pièce indépendante identifiable dans le modèle. Aucune disparition fictive.';
+    live('Démontage indisponible pour '+wheel.label.toLowerCase()+'.');
+    return;
+  }
+  if(support)support.textContent='Roue reconnue dans la GT3 RS. Utilisez les étapes pour masquer les pièces réelles du modèle.';
   setStep(1);
-
 }
+
 function restore(){
   currentWheel=null;currentPart=null;currentFamily='freinage';currentStep=0;
   cameraAnimation={
@@ -501,7 +524,7 @@ function restore(){
     mesh.userData.targetX=0;
     wheelParts.get(wheel.id).visible=false;
   }
-  applyExploded();
+  gt3?.restore();
   workshopHD.nodes.get('roue').visible=false;
   const selector=el('edm3dWheelChoice');
   if(selector)selector.value='';
@@ -574,26 +597,52 @@ renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload(
 const referenceFrame=el('edm3dReferenceFrame');
 const referenceIntro=el('edm3dReferenceIntro');
 const referenceStatus=el('edm3dReferenceLoadStatus');
-function setShowroomView(view){
-  const mechanics=view==='mechanics';
-  root.dataset.view=mechanics?'mechanics':'reference';
-  el('edm3dViewReference')?.setAttribute('aria-pressed',String(!mechanics));
-  el('edm3dViewMechanics')?.setAttribute('aria-pressed',String(mechanics));
-  if(mechanics)resize();
-}
-el('edm3dViewReference')?.addEventListener('click',()=>setShowroomView('reference'));
-el('edm3dViewMechanics')?.addEventListener('click',()=>setShowroomView('mechanics'));
-el('edm3dLoadReference')?.addEventListener('click',()=>{
-  if(!referenceFrame||referenceFrame.src) return;
-  const target=referenceFrame.dataset.src;
-  if(!target?.startsWith('https://sketchfab.com/models/'))return;
-  referenceFrame.addEventListener('load',()=>{
+const showSupport=message=>{
+  const target=el('edm3dModelSupport');
+  if(target)target.textContent=message;
+  live(message);
+};
+const gt3=createGt3Workshop({
+  iframe:referenceFrame,
+  onWarning:showSupport,
+  onReady({available}){
     if(referenceIntro)referenceIntro.classList.add('is-loaded');
-    if(referenceStatus)referenceStatus.textContent='Lecteur chargé. Utilisez la souris ou le tactile pour faire tourner la voiture.';
-  },{once:true});
-  referenceFrame.src=target;
+    const msg=available.length
+      ? 'GT3 RS prête. Roues identifiables : '+available.map(id=>data.wheelById(id)?.label||id).join(', ')+'.'
+      : 'GT3 RS prête à tourner. Le fichier ne fournit aucune roue séparée clairement identifiable : le démontage sur ce modèle reste indisponible.';
+    if(referenceStatus)referenceStatus.textContent=msg;
+    showSupport(msg);
+    if(currentWheel)showWheel(currentWheel);
+  },
+  onClick({wheel,part}){
+    if(!data.wheelById(wheel))return;
+    if(currentWheel!==wheel)showWheel(wheel);
+    if(part==='wheel'){if(gt3.supports(wheel,'wheel'))setStep(1);return;}
+    const current=data.byId(part);
+    if(current){setPart(current.id,false);return;}
+    const labels={etrier:['Étrier de frein','L’étrier serre les plaquettes sur le disque pour ralentir la roue.'],moyeu:['Moyeu de roue','Le moyeu porte la roue et transmet sa rotation.']};
+    const selected=labels[part];
+    if(selected){
+      const title=el('edm3dPartTitle'),body=el('edm3dPartBody');
+      if(title)title.textContent=selected[0];
+      if(body)body.textContent=selected[1];
+    }
+  }
+});
+el('edm3dLoadReference')?.addEventListener('click',()=>{
   if(referenceIntro)referenceIntro.classList.add('is-loading');
-  if(referenceStatus)referenceStatus.textContent='Chargement du lecteur 3D externe…';
+  if(referenceStatus)referenceStatus.textContent='Chargement du lecteur GT3 RS…';
+  gt3.init().catch(error=>{
+    referenceIntro?.classList.remove('is-loading');
+    showSupport('Interaction avancée indisponible : '+error.message+'. La rotation 360° reste accessible.');
+    const fallback=referenceFrame?.dataset.src;
+    if(referenceFrame&&fallback?.startsWith('https://sketchfab.com/models/')){
+      referenceFrame.addEventListener('load',()=>{
+        referenceIntro?.classList.add('is-loaded');
+      },{once:true});
+      referenceFrame.src=fallback;
+    }
+  });
 });
 window.EDMShowroomSelectWheel=showWheel;
 let frameId=null;

@@ -1278,3 +1278,14 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 #edm3dRebuild{background:transparent}
 @media(max-width:580px){.edm3d-step-actions{grid-template-columns:1fr}.edm3d-step-panel{padding:12px}}
 @media(prefers-reduced-motion:reduce){.edm3d-progress-track span{transition:none}}
+
+
+/* A single GT3 RS model is shown; no second procedural vehicle viewer. */
+.edm3d-scene-title{position:absolute;z-index:6;top:13px;left:14px;max-width:calc(100% - 28px);font-size:.7rem;letter-spacing:.14em;font-weight:800;color:#f3f7fc;background:#14202ccc;padding:8px 12px;border-radius:8px;pointer-events:none}
+.edm3d-model-support{font-size:.79rem;line-height:1.5;padding:11px 12px;margin:12px 0 18px;border:1px solid #607086;border-radius:9px;color:#d8e5f3;background:#1c2b3b}
+.edm3d-showroom[data-view=reference] .edm3d-reference{display:block}
+.edm3d-showroom[data-view=reference] .edm3d-scene-top,.edm3d-showroom[data-view=reference] .edm3d-stage-footer,.edm3d-showroom[data-view=reference] .edm3d-canvas{display:none}
+.edm3d-showroom[data-view=reference] .edm3d-sidebar .edm3d-info{display:block}
+.edm3d-showroom[data-view=reference] .edm3d-reference iframe{min-height:340px}
+.edm3d-showroom[data-view=reference] .edm3d-stage{min-height:540px}
+@media(max-width:580px){.edm3d-showroom[data-view=reference] .edm3d-stage{min-height:400px}.edm3d-reference iframe{min-height:325px}.edm3d-scene-title{font-size:.62rem;top:8px;left:9px}}

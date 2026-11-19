@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import data from '../showroom-3d-data.js';
+import {classifyNodeName,mapModelNodes,createGt3Workshop} from '../showroom-gt3-workshop.js';
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
 test('showroom represents 7 educational components while linking only active EDM28 services', () => {
@@ -38,7 +39,7 @@ test('showroom replaces Gemini UI, keeps fallback, and loads pinned Three.js mod
  assert.match(seo,/type="importmap"/);
  assert.match(seo,/three@0\.181\.2/);
  assert.match(seo,/showroom-3d-data\.js/);
- assert.ok(seo.includes("showroom-3d.js?v=5"));
+ assert.ok(seo.includes("showroom-3d.js?v=6"));
  assert.match(page,/edm3dShowroom/);
  assert.match(page,/edm3dFallback/);
  assert.match(page,/edm3dWheelChoice/);
@@ -69,16 +70,16 @@ test('realistic licensed reference remains opt-in and mechanic interactions stay
  ]);
  assert.match(page, /data-view="reference"/);
  assert.match(page, /edm3dLoadReference/);
- assert.match(page, /edm3dViewMechanics/);
- assert.match(page, /edm3dViewReference/);
+ assert.doesNotMatch(page, /edm3dViewMechanics/);
+ assert.match(page, /edm3dModelSupport/);
  assert.match(page, /data-src="https:\/\/sketchfab\.com\/models\/5fd62615f72a4012a5ebc15cd4c64461\/embed/);
  assert.doesNotMatch(page, /<iframe[^>]+\ssrc=/);
  assert.match(page, /jasonUWU/);
  assert.match(page, /CC BY 4\.0/);
- assert.match(scene, /referenceFrame\.src=target/);
- assert.match(scene, /setShowroomView\('mechanics'\)/);
- assert.match(scene, /root\.dataset\.view=mechanics\?'mechanics':'reference'/);
- assert.match(css, /\[data-view=mechanics\] \.edm3d-reference\{display:none\}/);
+ assert.match(scene, /gt3\.init\(\)/);
+ assert.doesNotMatch(scene, /setShowroomView\('mechanics'\)/);
+ assert.match(scene, /gt3\.setSteps\(wheelId,expected\)/);
+ assert.match(css, /A single GT3 RS model is shown/);
 });
 
 test('four-wheel guided disassembly is reversible and respects axle families', async()=>{
@@ -109,8 +110,8 @@ test('four-wheel guided disassembly is reversible and respects axle families', a
  assert.match(scene,/currentStep=Math\.max\(0,Math\.min\(/);
  assert.match(css,/\.edm3d-inspection\[hidden\]\{display:none\}/);
  assert.match(seo,/showroom-3d-data\.js\?v=2/);
- assert.match(seo,/showroom-3d\.js\?v=5/);
- assert.match(seo,/public-site\.css\?v=12/);
+ assert.match(seo,/showroom-3d\.js\?v=6/);
+ assert.match(seo,/public-site\.css\?v=13/);
 });
 
 test('workshop HD renders an independent detailed brake and suspension assembly in production', async ()=>{
@@ -140,7 +141,73 @@ test('workshop HD renders an independent detailed brake and suspension assembly 
  assert.match(detail,/function setState\(/);
  assert.match(detail,/const brakeOrder=\['roue','etrier','plaquettes','disques','moyeu'\]/);
  assert.match(detail,/const suspensionOrder=\['roue','triangles','rotules','stabilisation','amortisseur'\]/);
- assert.match(page,/Atelier HD/);
- assert.match(seo,/showroom-3d\.js\?v=5/);
+ assert.match(page,/GT3 RS · EXPLORATION INTERACTIVE/);
+ assert.match(seo,/showroom-3d\.js\?v=6/);
  assert.doesNotMatch(detail,/sketchfab\.com/);
+});
+
+test('GT3 workshop names must identify both axle and side before removing any object',()=>{
+  assert.deepEqual(classifyNodeName('Wheel_FL'),{wheel:'av-gauche',part:'wheel'});
+  assert.deepEqual(classifyNodeName('tyre - front right'),{wheel:'av-droite',part:'wheel'});
+  assert.deepEqual(classifyNodeName('Rotor Rear Left'),{wheel:'ar-gauche',part:'disques'});
+  assert.deepEqual(classifyNodeName('Caliper RR'),{wheel:'ar-droite',part:'etrier'});
+  assert.equal(classifyNodeName('Bodywork'),null);
+  assert.equal(classifyNodeName('Wheel_001'),null);
+  assert.equal(classifyNodeName('wheel front'),null);
+  const map=mapModelNodes({
+    1:{name:'Wheel_FL',instanceID:31},
+    2:{name:'Wheel_FR',instanceID:32},
+    3:{name:'Rotor Front Left',instanceID:44},
+    4:{name:'Chassis',instanceID:45}
+  });
+  assert.deepEqual(map.available,['av-gauche','av-droite']);
+  assert.deepEqual(map.wheels.get('av-gauche').get('wheel'),[31]);
+  assert.deepEqual(map.wheels.get('av-gauche').get('disques'),[44]);
+  assert.equal(map.names.has(45),false);
+});
+test('GT3 API does not pretend to remove fused or unnamed wheels',async()=>{
+  const oldWindow=globalThis.window;
+  const callbacks={},calls=[];
+  try{
+    globalThis.window={
+      Sketchfab:class {
+        constructor(version,iframe){assert.equal(version,'1.12.1');assert.equal(iframe.id,'viewer');}
+        init(uid,{success}){
+          assert.equal(uid,'5fd62615f72a4012a5ebc15cd4c64461');
+          const api={
+            addEventListener(name,listener){callbacks[name]=listener;},
+            getNodeMap(done){done(null,[
+              {name:'Wheel_FL',instanceID:5},
+              {name:'Rotor Front Left',instanceID:7},
+              {name:'Car body',instanceID:80}
+            ]);},
+            hide(id,done){calls.push(['hide',id]);done(null);},
+            show(id,done){calls.push(['show',id]);done(null);}
+          };
+          success(api);
+          queueMicrotask(()=>callbacks.viewerready());
+        }
+      }
+    };
+    const warnings=[],ready=[];
+    const control=createGt3Workshop({
+      iframe:{id:'viewer'},
+      onReady:event=>ready.push(event),
+      onWarning:message=>warnings.push(message)
+    });
+    await control.init();
+    assert.deepEqual(ready[0].available,['av-gauche']);
+    assert.equal(control.supports('av-gauche','wheel'),true);
+    assert.equal(control.supports('av-droite','wheel'),false);
+    assert.deepEqual(await control.setSteps('av-droite',['wheel']),{ok:false,missing:['wheel']});
+    assert.deepEqual(calls,[]);
+    assert.deepEqual(await control.setSteps('av-gauche',['wheel','disques']),{ok:true});
+    assert.deepEqual(calls,[['hide',5],['hide',7]]);
+    await control.restore();
+    assert.deepEqual(calls.slice(-2),[['show',5],['show',7]]);
+    assert.equal(warnings.some(message=>message.includes('pas séparée')),true);
+  }finally{
+    if(oldWindow===undefined)delete globalThis.window;
+    else globalThis.window=oldWindow;
+  }
 });
