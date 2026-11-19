@@ -15,6 +15,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Validate showroom code
+        run: |
+          node --check showroom-3d.js
+          node --check showroom-gt3-workshop.js
+          npm run test:showroom
       - name: Install isolated browser
         run: |
           npm install --prefix "$RUNNER_TEMP/gt3-tools" --ignore-scripts --no-audit --no-fund playwright@1.58.2
