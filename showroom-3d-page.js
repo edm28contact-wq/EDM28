@@ -1,14 +1,29 @@
 export function render3DShowroom() {
- return `<section class="edm3d-showroom" id="edm3dShowroom" aria-labelledby="edm3dHeading">
- <div class="edm3d-heading"><div class="edm3d-eyebrow">EDM28 · COUPÉ SPORTIF GT3 RS · INTERPRÉTATION 3D</div>
+ return `<section class="edm3d-showroom" id="edm3dShowroom" data-view="reference" aria-labelledby="edm3dHeading">
+ <div class="edm3d-heading"><div class="edm3d-eyebrow">EDM28 · PORSCHE 911 GT3 RS · SHOWROOM 3D INDÉPENDANT</div>
  <h2 id="edm3dHeading">La mécanique, <em>sous tous les angles.</em></h2>
- <p>Explorez la voiture, retirez virtuellement une roue et découvrez les composants que nous entretenons.</p></div>
+ <p>Découvrez une modélisation réaliste de la GT3 RS, puis passez en mode atelier pour démonter virtuellement une roue et comprendre son fonctionnement.</p></div>
  <div class="edm3d-workspace">
   <div class="edm3d-stage">
+   <div class="edm3d-view-switch" role="group" aria-label="Mode de visualisation">
+    <button type="button" id="edm3dViewReference" aria-pressed="true">GT3 RS réaliste</button>
+    <button type="button" id="edm3dViewMechanics" aria-pressed="false">Vue atelier · pièces</button>
+   </div>
+   <div id="edm3dReference" class="edm3d-reference">
+    <div id="edm3dReferenceIntro" class="edm3d-reference-intro">
+     <span class="edm3d-reference-kicker">PORSCHE 911 GT3 RS · 992</span>
+     <h3>Une silhouette réelle.<br>Une exploration à 360°.</h3>
+     <p>Chargez un modèle 3D détaillé de la GT3 RS. Le lecteur externe Sketchfab peut utiliser des cookies et contacte ses propres serveurs uniquement après votre clic.</p>
+     <button id="edm3dLoadReference" type="button">Afficher la GT3 RS en 3D</button>
+     <p id="edm3dReferenceLoadStatus" role="status">Vous pouvez aussi choisir une roue pour ouvrir directement le mode atelier EDM28.</p>
+    </div>
+    <iframe id="edm3dReferenceFrame" title="Modèle 3D externe de Porsche 911 GT3 RS, rotation interactive fournie par Sketchfab" data-src="https://sketchfab.com/models/5fd62615f72a4012a5ebc15cd4c64461/embed?autostart=1&amp;ui_hint=2&amp;ui_theme=dark" loading="lazy" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <div class="edm3d-reference-credit">Modèle indépendant par <a href="https://sketchfab.com/3d-models/porsche-911-gt3-rs-semester-2-5fd62615f72a4012a5ebc15cd4c64461" target="_blank" rel="noopener noreferrer">jasonUWU / Sketchfab</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Pas d'affiliation avec Porsche.</div>
+   </div>
    <div id="edm3dCanvas" class="edm3d-canvas"><div class="edm3d-loading">Chargement du modèle 3D…</div></div>
    <div class="edm3d-scene-top"><span class="edm3d-live-indicator">● VOITURE 3D</span><span>EDM28 · 360°</span></div>
    <div class="edm3d-stage-footer">
-    <p id="edm3dWheelPrompt">Faites tourner la voiture, puis cliquez sur une roue pour la démonter virtuellement.</p>
+    <p id="edm3dWheelPrompt">Mode atelier : faites tourner le schéma technique et sélectionnez une roue.</p>
     <div class="edm3d-controls">
      <button type="button" id="edm3dRotate" aria-pressed="false">Faire tourner la voiture</button>
      <button type="button" id="edm3dZoomIn" aria-label="Zoom avant">＋</button>
@@ -31,7 +46,7 @@ export function render3DShowroom() {
   </aside>
  </div>
  <p class="edm3d-status" id="edm3dStatus" role="status" aria-live="polite">Préparation de la scène…</p>
- <div class="edm3d-note">Interprétation 3D stylisée du coupé blanc aux jantes rouges montré dans les photos de référence. Ce modèle pédagogique ne reproduit pas une CAO constructeur et ne suppose aucune affiliation avec Porsche. Aucun symptôme ne constitue un diagnostic et les pièces doivent être contrôlées sur le véhicule réel.</div>
+ <div class="edm3d-note">La vue réaliste utilise un modèle 3D indépendant sous licence CC BY 4.0, hébergé par Sketchfab. La vue atelier est un schéma pédagogique générique : ses pièces ne correspondent pas nécessairement à celles d’une GT3 RS. Aucun lien commercial avec Porsche ni diagnostic à distance.</div>
  <div id="edm3dFallback" class="edm3d-fallback"><strong>Le showroom reste accessible sans 3D</strong><p>Retrouvez les fiches détaillées et les demandes d’intervention :</p><div><a href="/freinage/plaquettes-de-frein">Plaquettes de frein</a> · <a href="/freinage/disques-de-frein">Disques</a> · <a href="/liaison-au-sol">Liaison au sol</a> · <a href="/demande">Faire une demande</a></div></div>
  </section>`;
 }
