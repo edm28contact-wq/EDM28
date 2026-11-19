@@ -105,7 +105,7 @@
       const requests=[
         ['vehicles','id,plate,brand,model,year,energy,mileage,created_at'],
         ['service_requests','id,vehicle_id,status,services,notes,submitted_at,created_at'],
-        ['quotes','id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,client_signed_pdf_path,client_signed_at,created_at,valid_until,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts,price_details,price_observed_at)'],
+        ['quotes','id,vehicle_id,service_request_id,quote_number,status,title,total,pdf_path,client_signed_pdf_path,client_signed_at,created_at,valid_until,commercial_model,quote_parts_baskets(requires_parts,supplier_url,recommended_parts,price_details,price_observed_at,product_cards)'],
         ['appointments','id,vehicle_id,service_request_id,starts_at,ends_at,status,created_at'],
         ['repair_orders','id,vehicle_id,service_request_id,quote_id,appointment_id,order_number,status,pdf_path,signed_at,client_signature_name,created_at,updated_at,completed_at'],
         ['inspection_reports','id,vehicle_id,repair_order_id,report_number,observations,pdf_path,photo_paths,completed_at,created_at'],
