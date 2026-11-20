@@ -220,12 +220,12 @@ test('Gemini FAQ rejects cross-origin browser calls', async () => {
 test('public educational showroom replaces the Gemini interface without removing API security tests', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../public-seo.js', import.meta.url), 'utf8');
-  const page = await readFile(new URL('../showroom-3d-page.js', import.meta.url), 'utf8');
+  const page = await readFile(new URL('../showroom-gt3-native-page.js', import.meta.url), 'utf8');
   const client = await readFile(new URL('../public-faq-ai.js', import.meta.url), 'utf8');
   assert.match(source, /showroomHtml = page\.path === '\/transparence'/);
   assert.match(source, /render3DShowroom/);
   assert.match(source, /geminiFaqConfigured = false/);
-  assert.match(source, /showroom-3d\.js/);
+  assert.match(source, /showroom-gt3-native-viewer\.js/);
   assert.match(page, /edm3dShowroom/);
   assert.match(client, /fetch\('\/api\/faq-ai'/);
   assert.doesNotMatch(client, /GEMINI_API_KEY|x-goog-api-key|generativelanguage\.googleapis\.com/);
