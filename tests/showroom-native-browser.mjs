@@ -26,6 +26,7 @@ const allowed=new Set([
   '/showroom-gt3-native-viewer.js','/showroom-gt3-native-model.js',
   '/showroom-workshop-hd.js',
   '/node_modules/three/build/three.module.js',
+  '/node_modules/three/build/three.core.js',
   '/node_modules/three/examples/jsm/controls/OrbitControls.js'
 ]);
 const server=createServer(async(req,res)=>{
