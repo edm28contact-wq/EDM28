@@ -15,7 +15,7 @@
     "test:supplier-basket": "node --test tests/supplier-basket.test.mjs tests/supplier-basket-email.test.mjs tests/supplier-basket-admin.test.mjs tests/quote-product-cards.test.mjs",
     "test:security": "node --test tests/security-hardening.test.mjs tests/identity-security.test.mjs tests/quote-signature-security.test.mjs tests/consumer-legal.test.mjs tests/consumer-readiness.test.mjs tests/consumer-official-legal.test.mjs tests/about-legal-hub.test.mjs",
     "test:gemini-faq": "node --test tests/gemini-faq.test.mjs",
-    "test:showroom": "node --test tests/showroom-3d.test.mjs"
+    "test:showroom": "node --test tests/showroom-3d.test.mjs tests/showroom-3d-native.test.mjs"
   },
   "engines": {
     "node": "24.x"

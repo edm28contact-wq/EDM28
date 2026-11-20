@@ -1302,3 +1302,32 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 #edm3dPickConfirm[hidden]{display:none}
 #edm3dPickCandidate{font-size:.79rem;line-height:1.5;margin:0;color:#e2eefb;overflow-wrap:anywhere}
 #edm3dPickCancel{background:transparent;border-color:#71829a;color:#e2eaf4}
+
+
+/* GT3 EDM28 — native, continuously interactive showroom, no embedded 3D iframe. */
+.edm3d-native .edm3d-heading{background:radial-gradient(ellipse at 85% -30%,#5b2937,#0c111b 66%)}
+.edm3d-native .edm3d-stage{background:radial-gradient(ellipse at 52% 42%,#273a50,#101824 75%)}
+.edm3d-native .edm3d-sidebar{background:#111d2b}
+.edm3d-native .edm3d-live-indicator{color:#ffccd3}
+.edm3d-native .edm3d-part-button[aria-pressed=true]{color:#201820;border-color:#f4bbc3;background:#ffd9df}
+.edm3d-native .edm3d-step-actions #edm3dNextStep{background:#f4d5d9;border-color:#f4d5d9}
+.edm3d-native .edm3d-status{font-variant-numeric:tabular-nums}
+.edm3d-native .edm3d-note{padding:14px 22px;color:#b7c6d9;line-height:1.55;border-top:1px solid #34445a;font-size:.76rem}
+.edm3d-native-helper{font-size:.8rem;line-height:1.6;color:#aebfd4;margin:-3px 0 13px}
+.edm3d-native .edm3d-info h3{margin:8px 0 13px;color:#fff;font-size:1.15rem}
+.edm3d-native .edm3d-info p{color:#d9e4f1;line-height:1.65;font-size:.88rem}
+.edm3d-native .edm3d-info h4{color:#bcdaf0;font-size:.86rem;margin:18px 0 7px}
+.edm3d-native .edm3d-info ul{padding-left:21px;color:#dae7f5;font-size:.85rem;line-height:1.55}
+.edm3d-native .edm3d-info li{margin-bottom:7px}
+.edm3d-native .edm3d-controls{max-width:100%}
+.edm3d-native .edm3d-controls button{backdrop-filter:blur(8px);background:#253345d9}
+.edm3d-native .edm3d-family-switch button[aria-pressed=true]{border-color:#f4d9e0;color:#23202a;background:#f4d9e0}
+.edm3d-native .edm3d-part-button{font-size:.78rem}
+.edm3d-native .edm3d-canvas canvas{cursor:grab;touch-action:pan-y}
+.edm3d-native .edm3d-canvas canvas:active{cursor:grabbing}
+@media(max-width:580px){
+ .edm3d-native .edm3d-stage{min-height:400px}
+ .edm3d-native .edm3d-canvas{height:400px}
+ .edm3d-native .edm3d-controls button{font-size:.71rem;padding:7px}
+ .edm3d-native .edm3d-note{padding:11px 16px}
+}
