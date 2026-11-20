@@ -55,10 +55,13 @@ try{
   for(const viewport of [{width:1280,height:860},{width:390,height:844}]){
     const page=await browser.newPage({viewport,deviceScaleFactor:1});
     const errors=[];
-    page.on('pageerror',e=>errors.push(e.message));
+    page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE_ERROR',e.message);});
+    page.on('console',msg=>{if(msg.type()==='error')console.error('CONSOLE_ERROR',msg.text().slice(0,800));});
+    page.on('requestfailed',req=>console.error('REQUEST_FAILED',req.url(),req.failure()?.errorText));
     page.on('response',r=>{if(r.status()>=400)errors.push('HTTP '+r.status()+' '+r.url());});
     await page.goto('http://127.0.0.1:'+port,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForSelector('#edm3dShowroom.edm3d-ready',{timeout:45000});
+    try{await page.waitForSelector('#edm3dShowroom.edm3d-ready',{timeout:18000});}
+    catch(error){console.error('READY_TIMEOUT',JSON.stringify({errors,status:await page.locator('#edm3dStatus').textContent().catch(()=>null),visible:await page.locator('#edm3dShowroom').count(),html:(await page.locator('body').innerHTML().catch(()=>''))?.slice(0,750)}));throw error;}
     const canvas=page.locator('#edm3dCanvas canvas');
     assert.equal(await canvas.count(),1);
     await page.waitForTimeout(1100);
