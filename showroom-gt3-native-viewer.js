@@ -1,4 +1,4 @@
-/* EDM28 original single-scene GT3 showroom. No Sketchfab viewer or model required. */
+/* EDM28 original single-scene GT3 showroom: all visible model geometry is created locally. */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createGt3NativeModel } from './showroom-gt3-native-model.js';
