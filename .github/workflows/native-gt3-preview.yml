@@ -23,3 +23,17 @@ jobs:
         run: npm install --no-save --ignore-scripts --no-audit --no-fund three@0.181.2
       - name: Execute actual wheel geometry and assembly/removal tests
         run: EDM_NATIVE_RUNTIME_TEST=1 npm run test:showroom
+      - name: Install browser and native Three.js runtime
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund three@0.181.2 playwright@1.58.2
+          npx playwright install chromium
+      - name: Verify actual 3D WebGL rendering and interaction at desktop and mobile sizes
+        run: node tests/showroom-native-browser.mjs
+      - name: Save rendered showroom screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-gt3-screenshots
+          path: artifacts/gt3-native/*.png
+          if-no-files-found: ignore
+
