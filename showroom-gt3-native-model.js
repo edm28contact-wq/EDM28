@@ -209,7 +209,10 @@ export function createGt3NativeModel(THREE) {
       : ['roue','etrier','plaquettes','disques','moyeu'];
     const stage=Math.min(order.length,Math.max(0,Math.trunc(Number(step)||0)));
     for(const [id,unit] of wheels){
+      const exposed=id===wheelId&&stage>0;
       for(const [name,node] of unit.nodes){
+        const frontOnly=['triangles','rotules','stabilisation','amortisseur'].includes(name);
+        node.visible=name==='roue'||(exposed&&(!frontOnly||unit.front));
         node.userData.target.set(0,0,0);
         if(id!==wheelId||!Object.hasOwn(GT3_REMOVAL_OFFSETS,name))continue;
         const pos=order.indexOf(name);
