@@ -86,6 +86,7 @@ try{
 }
 const model=createGt3NativeModel(THREE);
 scene.add(model.root);
+model.setDisassembly(null,'freinage',0);
 const partButtons=el('edm3dParts');
 const supplemental={
   roue:{
