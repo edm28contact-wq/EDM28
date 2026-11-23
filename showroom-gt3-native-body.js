@@ -10,7 +10,7 @@ export function createGt3Body(THREE) {
   const edgePaint=material({color:'#c8cece',metalness:.28,roughness:.3,clearcoat:.8});
   const black=material({color:'#0b1118',metalness:.15,roughness:.52});
   const seal=material({color:'#080c11',metalness:0,roughness:.76});
-  const glass=material({color:'#101b27',metalness:.24,roughness:.11,clearcoat:1,clearcoatRoughness:.07,side:THREE.DoubleSide});
+  const glass=material({color:'#101b27',metalness:.24,roughness:.11,envMapIntensity:.35,clearcoat:1,clearcoatRoughness:.07,side:THREE.DoubleSide});
   const lens=material({color:'#253442',metalness:.2,roughness:.10,clearcoat:1});
   const steel=material({color:'#8e9aa5',metalness:.92,roughness:.25});
   const red=material({color:'#b71530',metalness:.46,roughness:.29,clearcoat:.8});
@@ -92,15 +92,26 @@ export function createGt3Body(THREE) {
     -Math.sign(z)*(z>0?.18:.17)*fraction*fraction*endWeight(z)**2;
   const endRoll=z=>{
     const t=THREE.MathUtils.clamp((Math.abs(z)-2.18)/.37,0,1);
-    return (z>0?.14:.10)*(1-Math.sqrt(Math.max(0,1-t*t)));
+    return (z>0?.14:.10)*(1-Math.sqrt(Math.max(0,1-.98*t*t)))/(1-Math.sqrt(.02));
   };
   const shoulderRadius=.43,sideTuck=.12;
-  const upper=(fraction,z,lift=0)=>{
+  const crown=(fraction,z)=>{
     const [width,shoulder,center]=section(z),t=THREE.MathUtils.clamp(fraction,-1,1);
-    return [t*width,center+(shoulder-.025-center+shoulderRadius)*t**4-shoulderRadius*(1-Math.sqrt(Math.max(0,1-t*t)))-endRoll(z)+lift,endProfile(z,t)];
+    return [t*width,center+(shoulder-.025-center+shoulderRadius)*t**4-shoulderRadius*(1-Math.sqrt(Math.max(0,1-t*t)))-endRoll(z),endProfile(z,t)];
+  };
+  const lampHeight=crown(.80/section(2.16)[0],2.16)[1];
+  const upper=(fraction,z,lift=0)=>{
+    const p=crown(fraction,z),dx=Math.abs(p[0])-.80,dz=z-2.16,distance=(dx/.30)**2+(dz/.36)**2;
+    if(distance<1){
+      const t=1-distance,edge=THREE.MathUtils.clamp((1-fraction*fraction)/.18,0,1);
+      const blend=t*t*(3-2*t)*edge*edge*(3-2*edge);
+      p[1]=THREE.MathUtils.lerp(p[1],lampHeight-.55*dz-.10*(dx*dx+dz*dz),blend);
+    }
+    p[1]+=lift;return p;
   };
   const flank=(side,z,y)=>{
-    const [w,h]=section(z),height=h-.025-endRoll(z),depth=height-y;
+    const [w,h]=section(z),height=h-.025-endRoll(z);
+    const depth=(h-.025-.315)*(1-(y-.315)/(height-.315));
     const x=w-sideTuck*(1-Math.exp(-w*depth*depth/(2*sideTuck*shoulderRadius**2)));
     const v=THREE.MathUtils.clamp((y-.315)/(height-.315),0,1);
     return [side*x,y,endProfile(z,x/w)+Math.sign(z)*(z>0?.12:.105)*endWeight(z)**2*Math.sin(v*Math.PI)**2];
