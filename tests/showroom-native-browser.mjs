@@ -90,22 +90,34 @@ try{
     assert.equal(await canvas.count(),1);
     assert.equal(await page.locator('.edm3d-loading').count(),0,'ready must follow the completed asynchronous import');
     const renderFrame=async()=>{
-      await canvas.scrollIntoViewIfNeeded();
-      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));
+      await canvas.evaluate(element=>{
+        element.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+        window.__showroomCaptureSample=null;
+      });
+      await page.waitForFunction(()=>{
+        const {camera,renderer}=window.__showroomFrame;
+        const sample=JSON.stringify([scrollX,scrollY,renderer.info.render.frame,...camera.matrixWorld.elements]);
+        const stable=sample===window.__showroomCaptureSample;
+        window.__showroomCaptureSample=sample;
+        return stable;
+      },null,{polling:'raf',timeout:30000});
     };
     const capture=async(name,target=canvas)=>{
       console.log('SHOT_BEGIN '+viewport.width+' '+name);
       const bounds=await target.boundingBox();
       assert.ok(bounds&&bounds.width>0&&bounds.height>0,'screenshot target must have visible bounds');
       const state=await page.evaluate(()=>{
-        const {renderer}=window.__showroomFrame;
+        const {renderer,camera}=window.__showroomFrame;
         return {scrollX,scrollY,wheel:document.getElementById('edm3dWheelChoice').value,
           step:document.getElementById('edm3dStepLabel').textContent,
+          frame:renderer.info.render.frame,camera:camera.position.toArray(),
           calls:renderer.info.render.calls,triangles:renderer.info.render.triangles};
       });
-      const clip={x:bounds.x+state.scrollX,y:bounds.y+state.scrollY,width:bounds.width,height:bounds.height};
-      console.log('SHOT_STATE '+viewport.width+' '+name+' '+JSON.stringify({...state,clip}));
-      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage:true,clip,timeout:60000});
+      const fullPage=target!==canvas;
+      if(!fullPage)assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height,'canvas capture must fit entirely inside the viewport');
+      const clip={x:bounds.x+(fullPage?state.scrollX:0),y:bounds.y+(fullPage?state.scrollY:0),width:bounds.width,height:bounds.height};
+      console.log('SHOT_STATE '+viewport.width+' '+name+' '+JSON.stringify({...state,fullPage,clip}));
+      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage,clip,timeout:60000});
       console.log('SHOT_PASS '+viewport.width+' '+name);
     };
     await renderFrame();

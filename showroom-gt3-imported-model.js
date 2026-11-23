@@ -7,7 +7,7 @@ export const IMPORTED_PART_ORDER=Object.freeze({
 });
 const wheelIds=['av-gauche','av-droite','ar-gauche','ar-droite'];
 const offsets={
-  roue:[1.05,.05,.65],etrier:[1.30,.75,.10],plaquettes:[1.40,.90,-.35],
+  roue:[1.05,.05,.65],etrier:[2.00,.20,.50],plaquettes:[1.40,.90,-.35],
   disques:[1.45,.18,-.60],moyeu:[1.30,.12,-1.20],triangles:[1.25,.10,-.50],
   rotules:[1.20,.48,-.95],stabilisation:[1.00,.60,-1.25],amortisseur:[1.30,.25,-.40]
 };

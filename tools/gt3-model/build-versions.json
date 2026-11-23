@@ -1,0 +1,11 @@
+{
+  "blender": "4.3.2",
+  "pythonTextureOptimizer": "3.12.14",
+  "pillow": "13.0.0",
+  "libwebp": "1.6.0",
+  "node": "24.22.3",
+  "gltfTransformCore": "4.2.1",
+  "gltfTransformExtensions": "4.2.1",
+  "gltfTransformFunctions": "4.2.1",
+  "draco3d": "1.5.7"
+}

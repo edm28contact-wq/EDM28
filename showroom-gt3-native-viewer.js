@@ -22,6 +22,7 @@ try{
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=.96;
   renderer.shadowMap.enabled=true;
+  renderer.shadowMap.autoUpdate=false;
   renderer.shadowMap.type=THREE.PCFShadowMap;
   renderer.domElement.setAttribute('role','img');
   renderer.domElement.setAttribute('aria-label','Porsche 911 GT3 RS en 3D. Cliquez sur une roue pour explorer les pièces détaillées.');
@@ -61,6 +62,8 @@ const fill=new THREE.DirectionalLight('#cadcf3',.85);
 fill.position.set(6,3,4);scene.add(fill);
 const back=new THREE.DirectionalLight('#edf4ff',1.45);
 back.position.set(2,5,-6);scene.add(back);
+const inspectionLight=new THREE.DirectionalLight('#f4f7ff',0);
+scene.add(inspectionLight,inspectionLight.target);
 const floorMaterial=new THREE.MeshStandardMaterial({color:'#17202a',metalness:.08,roughness:.76});
 const floorGeo=new THREE.PlaneGeometry(55,55);
 const floor=new THREE.Mesh(floorGeo,floorMaterial);
@@ -133,6 +136,7 @@ try{
 loading.remove();
 loadingControls.forEach(({control,disabled})=>{control.disabled=disabled;});
 scene.add(model.root);
+renderer.shadowMap.needsUpdate=true;
 model.setDisassembly(null,'freinage',0);
 const partButtons=el('edm3dParts');
 const supplemental={
@@ -395,6 +399,7 @@ function draw(){
   if(disposed||!running||document.hidden)return;
   const t=reduceMotion?1:.105;
   const modelChanged=model.animate(t);
+  if(modelChanged)renderer.shadowMap.needsUpdate=true;
   const cameraMoving=cameraGoal!==null;
   if(cameraGoal){
     controls.target.lerp(cameraGoal.target,reduceMotion?1:.13);
@@ -402,6 +407,11 @@ function draw(){
     if(controls.target.distanceTo(cameraGoal.target)<.025&&camera.position.distanceTo(cameraGoal.position)<.025)cameraGoal=null;
   }
   const controlsChanged=controls.update();
+  inspectionLight.intensity=chosenWheel?1.3:0;
+  if(chosenWheel){
+    inspectionLight.position.copy(camera.position);
+    inspectionLight.target.position.copy(controls.target);
+  }
   if(renderNeeded||modelChanged||cameraMoving||controlsChanged){
     renderer.render(scene,camera);
     renderNeeded=false;

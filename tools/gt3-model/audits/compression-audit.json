@@ -1,0 +1,262 @@
+{
+  "inputBytes": 30688996,
+  "outputBytes": 8866416,
+  "sha256": "fd946e047ea4610aed34722a428c2403d8051d58ec846055f200c277acd30825",
+  "nodeCount": 244,
+  "meshCount": 211,
+  "materialCount": 78,
+  "textureCount": 42,
+  "triangleCount": 817548,
+  "groupCount": 30,
+  "groups": [
+    {
+      "name": "ar-droite__amortisseur",
+      "extras": {
+        "wheelId": "ar-droite",
+        "partId": "amortisseur",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-droite__disques",
+      "extras": {
+        "wheelId": "ar-droite",
+        "partId": "disques",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-droite__etrier",
+      "extras": {
+        "wheelId": "ar-droite",
+        "partId": "etrier",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-droite__moyeu",
+      "extras": {
+        "wheelId": "ar-droite",
+        "partId": "moyeu",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-droite__roue",
+      "extras": {
+        "wheelId": "ar-droite",
+        "partId": "roue",
+        "sourceAsset": "red-weissach"
+      }
+    },
+    {
+      "name": "ar-droite__stabilisation",
+      "extras": {
+        "wheelId": "ar-droite",
+        "partId": "stabilisation",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-droite__triangles",
+      "extras": {
+        "wheelId": "ar-droite",
+        "partId": "triangles",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-gauche__amortisseur",
+      "extras": {
+        "wheelId": "ar-gauche",
+        "partId": "amortisseur",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-gauche__disques",
+      "extras": {
+        "wheelId": "ar-gauche",
+        "partId": "disques",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-gauche__etrier",
+      "extras": {
+        "wheelId": "ar-gauche",
+        "partId": "etrier",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-gauche__moyeu",
+      "extras": {
+        "wheelId": "ar-gauche",
+        "partId": "moyeu",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-gauche__roue",
+      "extras": {
+        "wheelId": "ar-gauche",
+        "partId": "roue",
+        "sourceAsset": "red-weissach"
+      }
+    },
+    {
+      "name": "ar-gauche__stabilisation",
+      "extras": {
+        "wheelId": "ar-gauche",
+        "partId": "stabilisation",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "ar-gauche__triangles",
+      "extras": {
+        "wheelId": "ar-gauche",
+        "partId": "triangles",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-droite__amortisseur",
+      "extras": {
+        "wheelId": "av-droite",
+        "partId": "amortisseur",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-droite__disques",
+      "extras": {
+        "wheelId": "av-droite",
+        "partId": "disques",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-droite__etrier",
+      "extras": {
+        "wheelId": "av-droite",
+        "partId": "etrier",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-droite__moyeu",
+      "extras": {
+        "wheelId": "av-droite",
+        "partId": "moyeu",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-droite__rotules",
+      "extras": {
+        "wheelId": "av-droite",
+        "partId": "rotules",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-droite__roue",
+      "extras": {
+        "wheelId": "av-droite",
+        "partId": "roue",
+        "sourceAsset": "red-weissach"
+      }
+    },
+    {
+      "name": "av-droite__stabilisation",
+      "extras": {
+        "wheelId": "av-droite",
+        "partId": "stabilisation",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-droite__triangles",
+      "extras": {
+        "wheelId": "av-droite",
+        "partId": "triangles",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-gauche__amortisseur",
+      "extras": {
+        "wheelId": "av-gauche",
+        "partId": "amortisseur",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-gauche__disques",
+      "extras": {
+        "wheelId": "av-gauche",
+        "partId": "disques",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-gauche__etrier",
+      "extras": {
+        "wheelId": "av-gauche",
+        "partId": "etrier",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-gauche__moyeu",
+      "extras": {
+        "wheelId": "av-gauche",
+        "partId": "moyeu",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-gauche__rotules",
+      "extras": {
+        "wheelId": "av-gauche",
+        "partId": "rotules",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-gauche__roue",
+      "extras": {
+        "wheelId": "av-gauche",
+        "partId": "roue",
+        "sourceAsset": "red-weissach"
+      }
+    },
+    {
+      "name": "av-gauche__stabilisation",
+      "extras": {
+        "wheelId": "av-gauche",
+        "partId": "stabilisation",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    },
+    {
+      "name": "av-gauche__triangles",
+      "extras": {
+        "wheelId": "av-gauche",
+        "partId": "triangles",
+        "sourceAsset": "gray-gt3-rs"
+      }
+    }
+  ],
+  "extensions": [
+    "EXT_texture_webp",
+    "KHR_draco_mesh_compression",
+    "KHR_materials_clearcoat",
+    "KHR_materials_emissive_strength",
+    "KHR_materials_specular",
+    "KHR_texture_transform"
+  ],
+  "losslessWebpTextures": 41
+}
