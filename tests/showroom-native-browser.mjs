@@ -90,7 +90,7 @@ try{
       });
       const clip={x:bounds.x+state.scrollX,y:bounds.y+state.scrollY,width:bounds.width,height:bounds.height};
       console.log('SHOT_STATE '+viewport.width+' '+name+' '+JSON.stringify({...state,clip}));
-      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage:true,clip});
+      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage:true,clip,timeout:60000});
       console.log('SHOT_PASS '+viewport.width+' '+name);
     };
     await renderFrame();
@@ -146,7 +146,7 @@ try{
     const start={x:bounds.x+bounds.width*.18,y:bounds.y+bounds.height*.43};
     await page.mouse.move(start.x,start.y);
     await page.mouse.down();
-    await page.mouse.move(start.x+bounds.height/2,start.y,{steps:12});
+    await page.mouse.move(start.x+bounds.height/2,start.y,{steps:4});
     await page.mouse.up();
     await renderFrame();
     await capture('rear');
@@ -161,7 +161,7 @@ try{
       const profileStart={x:profileBounds.x+profileBounds.width/2,y:profileBounds.y+profileBounds.height*.43};
       await page.mouse.move(profileStart.x,profileStart.y);
       await page.mouse.down();
-      await page.mouse.move(profileStart.x-rotation*profileBounds.height/(Math.PI*2),profileStart.y,{steps:12});
+      await page.mouse.move(profileStart.x-rotation*profileBounds.height/(Math.PI*2),profileStart.y,{steps:4});
       await page.mouse.up();
       await renderFrame();
       await capture('profile');
