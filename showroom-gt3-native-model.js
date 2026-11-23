@@ -2,7 +2,7 @@
    All geometry is authored here and in showroom-workshop-hd.js; no third-party 3D asset.
    This educational representation is not manufacturer CAD or a repair procedure. */
 import { createWorkshopHD } from './showroom-workshop-hd.js';
-import { createGt3Body } from './showroom-gt3-native-body.js';
+import { createGt3Body } from './showroom-gt3-native-body.js?v=2';
 import { createGt3Wheel } from './showroom-gt3-native-wheels.js';
 import { compactGt3Mechanics } from './showroom-gt3-native-mechanics.js';
 
