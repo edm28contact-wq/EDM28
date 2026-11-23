@@ -1,7 +1,7 @@
-/* EDM28 original single-scene GT3 showroom: all visible model geometry is created locally. */
+/* EDM28 single-scene showroom using the supplied Porsche models. */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createGt3NativeModel } from './showroom-gt3-native-model.js?v=3';
+import { createGt3ImportedModel } from './showroom-gt3-imported-model.js?v=1';
 const el=id=>document.getElementById(id);
 const root=el('edm3dShowroom'),host=el('edm3dCanvas');
 const data=window.EDMShowroomData;
@@ -22,9 +22,10 @@ try{
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=.96;
   renderer.shadowMap.enabled=true;
+  renderer.shadowMap.autoUpdate=false;
   renderer.shadowMap.type=THREE.PCFShadowMap;
   renderer.domElement.setAttribute('role','img');
-  renderer.domElement.setAttribute('aria-label','GT3 3D originale entièrement démontable. Cliquez sur une roue pour explorer ses composants.');
+  renderer.domElement.setAttribute('aria-label','Porsche 911 GT3 RS en 3D. Cliquez sur une roue pour explorer les pièces détaillées.');
   host.replaceChildren(renderer.domElement);
 }catch(error){
   root.classList.add('edm3d-unavailable');
@@ -61,6 +62,8 @@ const fill=new THREE.DirectionalLight('#cadcf3',.85);
 fill.position.set(6,3,4);scene.add(fill);
 const back=new THREE.DirectionalLight('#edf4ff',1.45);
 back.position.set(2,5,-6);scene.add(back);
+const inspectionLight=new THREE.DirectionalLight('#f4f7ff',0);
+scene.add(inspectionLight,inspectionLight.target);
 const floorMaterial=new THREE.MeshStandardMaterial({color:'#17202a',metalness:.08,roughness:.76});
 const floorGeo=new THREE.PlaneGeometry(55,55);
 const floor=new THREE.Mesh(floorGeo,floorMaterial);
@@ -109,8 +112,31 @@ try{
   environmentGeometries.forEach(geometry=>geometry.dispose());
   environmentMaterials.forEach(material=>material.dispose());
 }
-const model=createGt3NativeModel(THREE);
+const loading=document.createElement('div');
+loading.className='edm3d-loading';loading.textContent='Chargement de la Porsche et de ses textures…';
+host.appendChild(loading);
+const loadingControls=Array.from(root.querySelectorAll('button,select'),control=>({control,disabled:control.disabled}));
+loadingControls.forEach(({control})=>{control.disabled=true;});
+renderer.render(scene,camera);
+let model;
+try{
+  model=await createGt3ImportedModel(THREE,{onProgress:event=>{
+    const progress=event.total>0?' '+Math.round(event.loaded/event.total*100)+' %':'';
+    loading.textContent='Chargement de la Porsche et de ses textures…'+progress;
+    live(loading.textContent);
+  }});
+}catch(error){
+  root.classList.add('edm3d-unavailable');
+  live('Le modèle 3D n’a pas pu être chargé. Rechargez la page pour réessayer ; les liens vers les prestations restent disponibles.');
+  contactGeometry.dispose();contactMaterial.dispose();contactTexture.dispose();
+  floorGeo.dispose();floorMaterial.dispose();
+  controls.dispose();renderer.dispose();envTarget?.dispose();
+  throw error;
+}
+loading.remove();
+loadingControls.forEach(({control,disabled})=>{control.disabled=disabled;});
 scene.add(model.root);
+renderer.shadowMap.needsUpdate=true;
 model.setDisassembly(null,'freinage',0);
 const partButtons=el('edm3dParts');
 const supplemental={
@@ -142,13 +168,11 @@ let cameraGoal=null;
 let viewIsManual=false;
 controls.addEventListener('start',()=>{cameraGoal=null;viewIsManual=true;});
 function carView(){
-  const target=new THREE.Vector3(0,.84,0);
+  const target=model.bounds.getCenter(new THREE.Vector3());
   const direction=new THREE.Vector3(1,.42,1.2).normalize();
   const right=new THREE.Vector3().crossVectors(camera.up,direction).normalize();
   const up=new THREE.Vector3().crossVectors(direction,right);
-  const bounds=new THREE.Box3().setFromObject(model.body);
-  bounds.expandByPoint(new THREE.Vector3(-1.4,.1,-2.65));
-  bounds.expandByPoint(new THREE.Vector3(1.4,1.65,2.65));
+  const bounds=model.bounds.clone();
   const tangent=Math.tan(THREE.MathUtils.degToRad(camera.fov*.5));
   let distance=6;
   for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
@@ -159,10 +183,16 @@ function carView(){
   return {target,position:target.clone().addScaledVector(direction,Math.min(distance,controls.maxDistance))};
 }
 function steps(){
-  return chosenWheel?data.stepsForWheel(chosenWheel,family):[];
+  if(!chosenWheel)return [];
+  return model.stepIds(chosenWheel,family).map(id=>{
+    const original=data.disassembly[family].find(stage=>stage.id===id);
+    if(id==='etrier')return {...original,description:'L’étrier détaillé est écarté du disque dans cette vue pédagogique. Les éléments qui ne sont pas séparés dans le fichier restent solidaires de leur ensemble.'};
+    if(id==='roue'&&family==='liaison')return {...original,description:'La roue s’écarte pour dévoiler les organes de suspension du train sélectionné.'};
+    return original;
+  });
 }
 function focusWheel(id){
-  const wheel=data.wheelById(id);
+  const wheel=model.wheels.get(id);
   if(!wheel)return;
   viewIsManual=false;
   const target=model.focusCenter(id).add(new THREE.Vector3(wheel.side*.83,.10,wheel.front?-.05:.05));
@@ -189,7 +219,7 @@ function updatePartMenu(){
   const order=family==='freinage'
     ? ['roue','etrier','plaquettes','disques','moyeu','liquide']
     : ['roue','triangles','rotules','stabilisation','amortisseur'];
-  const menu=order.filter(id=>id==='roue'||data.forWheel(chosenWheel).some(part=>part.id===id)||id==='etrier'||id==='moyeu');
+  const menu=order.filter(id=>partFor(id));
   partButtons.innerHTML=menu.map(id=>{
     const part=partFor(id);
     if(!part)return '';
@@ -205,7 +235,9 @@ function showPart(id){
   if(title)title.textContent=part.label;
   const offered=part.choices.filter(choice=>!Array.isArray(window.EDMShowroomActiveServices)||window.EDMShowroomActiveServices.includes(choice.slug));
   if(body){
+    const available=model.availableParts(chosenWheel).includes(id);
     body.innerHTML='<p class="edm3d-category">'+escapeHtml(part.category)+'</p>'
+      +(!available?'<p class="edm3d-native-helper">Fiche explicative : cet élément n’est pas isolé dans le modèle 3D et ne possède pas d’étape de démontage.</p>':'')
       +'<p>'+escapeHtml(part.description)+'</p>'
       +'<h4>Signes à surveiller</h4><ul>'+part.signs.map(v=>'<li>'+escapeHtml(v)+'</li>').join('')+'</ul>'
       +'<h4>Quand contrôler ?</h4><p>'+escapeHtml(part.check)+'</p>'
@@ -231,9 +263,8 @@ function updateStepPanel(){
   if(previous)previous.disabled=step<=0;
   if(next)next.disabled=!chosenWheel||step>=count;
   if(rebuild)rebuild.disabled=step===0;
-  const familyFront=data.wheelById(chosenWheel)?.front;
   const liaison=el('edm3dFamilyLiaison');
-  if(liaison)liaison.disabled=!familyFront;
+  if(liaison)liaison.disabled=!model.stepIds(chosenWheel,'liaison').length;
   el('edm3dFamilyFreinage')?.setAttribute('aria-pressed',String(family==='freinage'));
   liaison?.setAttribute('aria-pressed',String(family==='liaison'));
 }
@@ -268,7 +299,7 @@ function selectWheel(id){
   showPart('roue');
   const prompt=el('edm3dWheelPrompt');
   if(prompt)prompt.textContent=descriptor.label+' · choisissez « Démonter la pièce suivante » pour retirer la roue.';
-  live(descriptor.label+' sélectionnée. Les pièces sont indépendantes et démontables sur cette GT3.');
+  live(descriptor.label+' sélectionnée. Les commandes déplacent les pièces séparées de ce modèle.');
 }
 function showCar(){
   model.setDisassembly(null,'freinage',0);
@@ -287,7 +318,7 @@ function showCar(){
 }
 function setFamily(nextFamily){
   if(!chosenWheel||!['freinage','liaison'].includes(nextFamily))return;
-  if(nextFamily==='liaison'&&!data.wheelById(chosenWheel)?.front)return;
+  if(!model.stepIds(chosenWheel,nextFamily).length)return;
   family=nextFamily;step=0;selectedPart=null;
   model.setDisassembly(chosenWheel,family,0);
   updatePartMenu();updateStepPanel();
@@ -328,14 +359,14 @@ renderer.domElement.addEventListener('pointerup',event=>{
   if(!rect.width||!rect.height)return;
   pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
   raycaster.setFromCamera(pointer,camera);
-  const hits=raycaster.intersectObjects(model.pickables,false);
+  const hits=raycaster.intersectObjects(model.raycastTargets,false);
   for(const hit of hits){
     if(!hit.object.visible)continue;
     let visible=true;
     for(let parent=hit.object.parent;parent;parent=parent.parent){if(!parent.visible){visible=false;break;}}
     if(!visible)continue;
     const picked=model.toDataPart(hit.object);
-    if(!picked)continue;
+    if(!picked)return;
     if(chosenWheel!==picked.wheelId)selectWheel(picked.wheelId);
     showPart(picked.part);
     return;
@@ -368,6 +399,7 @@ function draw(){
   if(disposed||!running||document.hidden)return;
   const t=reduceMotion?1:.105;
   const modelChanged=model.animate(t);
+  if(modelChanged)renderer.shadowMap.needsUpdate=true;
   const cameraMoving=cameraGoal!==null;
   if(cameraGoal){
     controls.target.lerp(cameraGoal.target,reduceMotion?1:.13);
@@ -375,6 +407,11 @@ function draw(){
     if(controls.target.distanceTo(cameraGoal.target)<.025&&camera.position.distanceTo(cameraGoal.position)<.025)cameraGoal=null;
   }
   const controlsChanged=controls.update();
+  inspectionLight.intensity=chosenWheel?1.3:0;
+  if(chosenWheel){
+    inspectionLight.position.copy(camera.position);
+    inspectionLight.target.position.copy(controls.target);
+  }
   if(renderNeeded||modelChanged||cameraMoving||controlsChanged){
     renderer.render(scene,camera);
     renderNeeded=false;
@@ -392,7 +429,13 @@ document.addEventListener('visibilitychange',()=>{
   if(!document.hidden)renderNeeded=true;
   if(!document.hidden&&running&&!frameId)frameId=requestAnimationFrame(draw);
 });
-window.addEventListener('pagehide',()=>{
+window.addEventListener('pageshow',event=>{
+  if(!event.persisted||disposed)return;
+  renderNeeded=true;
+  if(running&&!frameId)frameId=requestAnimationFrame(draw);
+});
+window.addEventListener('pagehide',event=>{
+  if(event.persisted)return;
   if(disposed)return;
   disposed=true;
   if(frameId)cancelAnimationFrame(frameId);
@@ -400,11 +443,11 @@ window.addEventListener('pagehide',()=>{
   controls.dispose();model.dispose();
   contactGeometry.dispose();contactMaterial.dispose();contactTexture.dispose();
   floorGeo.dispose();floorMaterial.dispose();envTarget?.dispose();renderer.dispose();
-},{once:true});
+});
 window.EDMShowroomSelectWheel=selectWheel;
 renderer.render(scene,camera);
 renderNeeded=false;
 root.classList.add('edm3d-ready');
 updatePartMenu();updateStepPanel();
 if(!frameId)frameId=requestAnimationFrame(draw);
-live('GT3 originale chargée : 4 roues et leurs composants démontables. Faites tourner la voiture ou choisissez une roue.');
+live('Porsche chargée : quatre roues et leurs pièces mécaniques à explorer. Faites tourner la voiture ou choisissez une roue.');

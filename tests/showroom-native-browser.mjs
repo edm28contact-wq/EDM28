@@ -4,8 +4,16 @@ import {readFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium} from 'playwright';
 import {render3DShowroom} from '../showroom-gt3-native-page.js';
+import data from '../showroom-3d-data.js';
 
 const cwd=process.cwd();
+const manifest=JSON.parse(await readFile(resolve(cwd,'assets/models/edm28-gt3-hybrid-v1.json'),'utf8'));
+const expectedParts=Object.fromEntries(Object.entries(manifest.wheels).map(([id,wheel])=>[id,wheel.parts]));
+const familyOrder=Object.fromEntries(Object.entries(data.disassembly).map(([id,steps])=>[id,steps.map(step=>step.id)]));
+const expectedSteps=(id,family)=>{
+  const parts=familyOrder[family].filter(part=>expectedParts[id].includes(part));
+  return parts.length>1?parts:[];
+};
 const imports={
   imports:{
     'three':'/node_modules/three/build/three.module.js',
@@ -23,14 +31,20 @@ const html='<!doctype html><html lang="fr"><head><meta charset="utf-8">'
   +'</body></html>';
 const allowed=new Set([
   '/public-site.css','/showroom-3d-data.js',
-  '/showroom-gt3-native-viewer.js','/showroom-gt3-native-model.js',
-  '/showroom-gt3-native-body.js','/showroom-gt3-native-wheels.js',
-  '/showroom-gt3-native-mechanics.js',
-  '/showroom-workshop-hd.js',
+  '/showroom-gt3-native-viewer.js','/showroom-gt3-imported-model.js',
+  '/assets/models/edm28-gt3-hybrid-v1.glb',
+  '/assets/models/edm28-gt3-hybrid-v1.json',
+  '/assets/vendor/draco/draco_wasm_wrapper.js',
+  '/assets/vendor/draco/draco_decoder.wasm',
   '/node_modules/three/build/three.module.js',
   '/node_modules/three/build/three.core.js',
-  '/node_modules/three/examples/jsm/controls/OrbitControls.js'
+  '/node_modules/three/examples/jsm/controls/OrbitControls.js',
+  '/node_modules/three/examples/jsm/loaders/GLTFLoader.js',
+  '/node_modules/three/examples/jsm/loaders/DRACOLoader.js',
+  '/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js'
 ]);
+const contentTypes={'.css':'text/css','.js':'text/javascript','.json':'application/json',
+  '.glb':'model/gltf-binary','.wasm':'application/wasm'};
 const server=createServer(async(req,res)=>{
   const path=new URL(req.url||'/', 'http://localhost').pathname;
   if(path==='/'){
@@ -44,9 +58,9 @@ const server=createServer(async(req,res)=>{
       const marker='scene.add(model.root);';
       const source=content.toString('utf8');
       assert.equal(source.split(marker).length,2,'viewer fixture must instrument exactly one scene attachment');
-      content=source.replace(marker,marker+'\nwindow.__showroomFrame={scene,camera,renderer,THREE};');
+      content=source.replace(marker,marker+'\nwindow.__showroomFrame={scene,camera,renderer,THREE,model};');
     }
-    res.writeHead(200,{'Content-Type':extname(path)==='.css'?'text/css':'text/javascript'});
+    res.writeHead(200,{'Content-Type':contentTypes[extname(path)],'Content-Length':Buffer.byteLength(content)});
     res.end(content);
   }catch(error){res.writeHead(500);res.end(String(error.message));}
 });
@@ -70,78 +84,217 @@ try{
     page.on('requestfailed',req=>{errors.push('REQUEST_FAILED '+req.url());console.error('REQUEST_FAILED',req.url(),req.failure()?.errorText);});
     page.on('response',r=>{if(r.status()>=400)errors.push('HTTP '+r.status()+' '+r.url());});
     await page.goto('http://127.0.0.1:'+port,{waitUntil:'domcontentloaded',timeout:30000});
-    try{await page.waitForSelector('#edm3dShowroom.edm3d-ready',{timeout:18000});}
+    try{await page.waitForSelector('#edm3dShowroom.edm3d-ready',{timeout:60000});}
     catch(error){console.error('READY_TIMEOUT',JSON.stringify({errors,status:await page.locator('#edm3dStatus').textContent().catch(()=>null),visible:await page.locator('#edm3dShowroom').count(),html:(await page.locator('body').innerHTML().catch(()=>''))?.slice(0,750)}));throw error;}
     const canvas=page.locator('#edm3dCanvas canvas');
     assert.equal(await canvas.count(),1);
+    assert.equal(await page.locator('.edm3d-loading').count(),0,'ready must follow the completed asynchronous import');
     const renderFrame=async()=>{
-      await canvas.scrollIntoViewIfNeeded();
-      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));
+      await canvas.evaluate(element=>{
+        element.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+        window.__showroomCaptureSample=null;
+      });
+      await page.waitForFunction(()=>{
+        const {camera,renderer}=window.__showroomFrame;
+        const sample=JSON.stringify([scrollX,scrollY,renderer.info.render.frame,...camera.matrixWorld.elements]);
+        const stable=sample===window.__showroomCaptureSample;
+        window.__showroomCaptureSample=sample;
+        return stable;
+      },null,{polling:'raf',timeout:30000});
     };
     const capture=async(name,target=canvas)=>{
       console.log('SHOT_BEGIN '+viewport.width+' '+name);
       const bounds=await target.boundingBox();
       assert.ok(bounds&&bounds.width>0&&bounds.height>0,'screenshot target must have visible bounds');
       const state=await page.evaluate(()=>{
-        const {renderer}=window.__showroomFrame;
+        const {renderer,camera}=window.__showroomFrame;
         return {scrollX,scrollY,wheel:document.getElementById('edm3dWheelChoice').value,
           step:document.getElementById('edm3dStepLabel').textContent,
+          frame:renderer.info.render.frame,camera:camera.position.toArray(),
           calls:renderer.info.render.calls,triangles:renderer.info.render.triangles};
       });
-      const clip={x:bounds.x+state.scrollX,y:bounds.y+state.scrollY,width:bounds.width,height:bounds.height};
-      console.log('SHOT_STATE '+viewport.width+' '+name+' '+JSON.stringify({...state,clip}));
-      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage:true,clip,timeout:60000});
+      const fullPage=target!==canvas;
+      if(!fullPage)assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height,'canvas capture must fit entirely inside the viewport');
+      const clip={x:bounds.x+(fullPage?state.scrollX:0),y:bounds.y+(fullPage?state.scrollY:0),width:bounds.width,height:bounds.height};
+      console.log('SHOT_STATE '+viewport.width+' '+name+' '+JSON.stringify({...state,fullPage,clip}));
+      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage,clip,timeout:60000});
       console.log('SHOT_PASS '+viewport.width+' '+name);
     };
     await renderFrame();
+    const rigReport=await page.evaluate(({expectedParts,familyOrder,wheelAudit})=>{
+      const {model,THREE}=window.__showroomFrame;
+      const check=(condition,message)=>{if(!condition)throw new Error(message);};
+      const same=(actual,expected)=>JSON.stringify(actual)===JSON.stringify(expected);
+      check(same([...model.wheels.keys()].sort(),Object.keys(expectedParts).sort()),'Imported wheel inventory differs from the manifest');
+      const snapshots=[],partNodes=new Set(),geometries=new Set(),body=[];
+      const orders={};
+      model.root.updateMatrixWorld(true);
+      for(const [id,wheel] of model.wheels){
+        check(same([...model.availableParts(id)].sort(),[...expectedParts[id]].sort()),id+' available parts differ from the audited asset');
+        check(wheel.side===wheelAudit[id].side&&wheel.front===wheelAudit[id].front,id+' uses the wrong source orientation');
+        check(wheel.center.toArray().every(Number.isFinite),id+' has an invalid center');
+        const wheelCenter=new THREE.Box3().setFromObject(wheel.nodes.get('roue')).getCenter(new THREE.Vector3());
+        check(wheel.center.equals(wheelCenter),id+' center does not match its imported geometry');
+        orders[id]={};
+        for(const [family,order] of Object.entries(familyOrder)){
+          const present=order.filter(part=>expectedParts[id].includes(part));
+          orders[id][family]=present.length>1?present:[];
+          check(same(model.stepIds(id,family),orders[id][family]),id+'/'+family+' exposes a missing or unordered part');
+        }
+        for(const [part,node] of wheel.nodes){
+          partNodes.add(node);
+          snapshots.push({id,part,node,position:node.position.clone(),quaternion:node.quaternion.clone(),scale:node.scale.clone()});
+          node.traverse(mesh=>{
+            if(!mesh.isMesh)return;
+            check(model.pickables.includes(mesh)&&model.raycastTargets.includes(mesh),id+'/'+part+' contains an unselectable mesh');
+            const picked=model.toDataPart(mesh);
+            check(picked?.wheelId===id&&picked.part===part,id+'/'+part+' maps to the wrong information sheet');
+          });
+        }
+      }
+      model.root.traverse(mesh=>{
+        if(!mesh.isMesh||mesh.name==='wheel-selection-halo')return;
+        geometries.add(mesh.geometry);
+        for(let parent=mesh;parent;parent=parent.parent)if(partNodes.has(parent))return;
+        body.push({mesh,matrix:mesh.matrixWorld.clone()});
+        check(model.raycastTargets.includes(mesh),'Body meshes must occlude wheel picking');
+      });
+      check(body.length>0,'No fixed body geometry was imported');
+      for(const geometry of geometries)for(const name of ['position','normal']){
+        const attribute=geometry.getAttribute(name);
+        if(!attribute){check(name!=='position','Imported geometry has no positions');continue;}
+        const values=attribute.array||attribute.data?.array;
+        check(values&&values.every(Number.isFinite),'Imported geometry has non-finite '+name+' values');
+      }
+      const verifyPose=(id,family,stage)=>{
+        const removed=new Set(orders[id]?.[family]?.slice(0,stage)||[]);
+        model.root.updateMatrixWorld(true);
+        for(const state of snapshots){
+          const moved=!state.node.position.equals(state.position);
+          check(moved===(state.id===id&&removed.has(state.part)),state.id+'/'+state.part+' has the wrong disassembly position at '+id+'/'+family+'/'+stage);
+          check(state.node.quaternion.equals(state.quaternion)&&state.node.scale.equals(state.scale),state.id+'/'+state.part+' lost its original orientation or scale');
+        }
+        for(const state of body)check(state.mesh.matrixWorld.equals(state.matrix),'Fixed body geometry moved: '+state.mesh.name);
+        return true;
+      };
+      window.__checkShowroomPose=verifyPose;
+      let poseCases=0;
+      for(const [id,families] of Object.entries(orders))for(const [family,order] of Object.entries(families)){
+        for(let stage=0;stage<=order.length;stage++){
+          model.setDisassembly(id,family,stage);
+          model.animate(1);
+          verifyPose(id,family,stage);
+          check(model.animate(.15)===false,id+'/'+family+' keeps animating after reaching its target');
+          poseCases++;
+        }
+        model.setDisassembly(id,family,0);
+        model.animate(1);
+        verifyPose(id,family,0);
+      }
+      const id=model.wheels.keys().next().value;
+      const wheel=model.wheels.get(id).nodes.get('roue');
+      const start=wheel.position.clone();
+      model.setDisassembly(id,'freinage',1);
+      check(model.animate(.15)===true,'A regular-motion disassembly must report a changed frame');
+      const intermediate=wheel.position.clone();
+      model.animate(1);
+      check(intermediate.distanceTo(start)>0&&intermediate.distanceTo(start)<wheel.position.distanceTo(start),'Regular animation must interpolate before reaching the final position');
+      model.setDisassembly(null,'freinage',0);
+      model.animate(1);
+      verifyPose(null,'freinage',0);
+      return {wheels:model.wheels.size,parts:snapshots.length,bodyMeshes:body.length,geometries:geometries.size,poseCases};
+    },{expectedParts,familyOrder,wheelAudit:manifest.wheels});
+    console.log('RIG_PASS '+viewport.width+' '+JSON.stringify(rigReport));
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'showroom overflows the viewport');
     await capture('page',page.locator('#edm3dShowroom'));
     await renderFrame();
     await capture('full');
     const wheelPoint=await page.evaluate(()=>{
-      const {scene,camera,renderer,THREE}=window.__showroomFrame;
-      let lock;
-      scene.traverse(mesh=>{if(mesh.name==='wheel-center-lock'&&mesh.userData.wheelId==='av-droite')lock=mesh;});
-      if(!lock)throw new Error('Front-right wheel center lock is missing');
-      const projected=lock.getWorldPosition(new THREE.Vector3()).project(camera);
+      const {model,camera,renderer,THREE}=window.__showroomFrame;
+      model.root.updateMatrixWorld(true);
+      camera.updateMatrixWorld(true);
       const rect=renderer.domElement.getBoundingClientRect();
-      return {x:rect.left+(projected.x+1)*rect.width/2,y:rect.top+(1-projected.y)*rect.height/2};
+      const raycaster=new THREE.Raycaster();
+      const visible=object=>{
+        for(let node=object;node;node=node.parent)if(!node.visible)return false;
+        return true;
+      };
+      const wheels=[...model.wheels.values()].filter(wheel=>wheel.front)
+        .sort((a,b)=>camera.position.distanceTo(a.center)-camera.position.distanceTo(b.center));
+      for(const wheel of wheels){
+        const bounds=new THREE.Box3().setFromObject(wheel.nodes.get('roue'));
+        const outerX=wheel.side>0?bounds.max.x:bounds.min.x;
+        const samples=[[0,0]];
+        for(const radius of [.45,.75])for(let i=0;i<12;i++)samples.push([Math.sin(i*Math.PI/6)*radius,Math.cos(i*Math.PI/6)*radius]);
+        for(const [dy,dz] of samples){
+          const point=new THREE.Vector3(outerX,wheel.center.y+dy*wheel.radius,wheel.center.z+dz*wheel.radius).project(camera);
+          if(Math.abs(point.x)>=1||Math.abs(point.y)>=1||Math.abs(point.z)>=1)continue;
+          const x=rect.left+(point.x+1)*rect.width/2,y=rect.top+(1-point.y)*rect.height/2;
+          if(document.elementFromPoint(x,y)!==renderer.domElement)continue;
+          raycaster.setFromCamera(new THREE.Vector2(point.x,point.y),camera);
+          const hit=raycaster.intersectObjects(model.raycastTargets,false).find(hit=>visible(hit.object));
+          const picked=hit&&model.toDataPart(hit.object);
+          if(picked?.wheelId===wheel.id&&picked.part==='roue')return {id:wheel.id,x,y,mesh:hit.object.name};
+        }
+      }
+      throw new Error('No unobscured front-wheel surface can be clicked in the initial view');
     });
+    console.log('CANVAS_PICK '+viewport.width+' '+JSON.stringify(wheelPoint));
     await page.mouse.click(wheelPoint.x,wheelPoint.y);
-    assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),'av-droite','actual canvas click must select its wheel');
-    assert.match(await page.locator('#edm3dStepLabel').innerText(),/^0 \/ 5/);
-    await page.locator('#edm3dNextStep').click();
-    assert.match(await page.locator('#edm3dStepLabel').innerText(),/^1 \/ 5/);
-    await renderFrame();
-    await capture('wheel-removed');
-    for(let i=2;i<=5;i++)await page.locator('#edm3dNextStep').click();
-    assert.match(await page.locator('#edm3dStepLabel').innerText(),/^5 \/ 5/);
-    await renderFrame();
-    await capture('brakes-exploded');
-    await page.locator('#edm3dRebuild').click();
-    assert.match(await page.locator('#edm3dStepLabel').innerText(),/^0 \/ 5/);
-    await page.locator('#edm3dFamilyLiaison').click();
-    assert.equal(await page.locator('#edm3dFamilyLiaison').getAttribute('aria-pressed'),'true');
-    for(let i=1;i<=5;i++)await page.locator('#edm3dNextStep').click();
-    assert.match(await page.locator('#edm3dStepLabel').innerText(),/^5 \/ 5/);
-    await renderFrame();
-    await capture('suspension-exploded');
-    for(const id of ['av-gauche','ar-gauche','ar-droite']){
-      await page.locator('#edm3dWheelChoice').selectOption(id);
-      assert.match(await page.locator('#edm3dStepLabel').innerText(),/^0 \/ 5/);
-      assert.equal(await page.locator('#edm3dFamilyLiaison').isDisabled(),id.startsWith('ar-'));
+    assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),wheelPoint.id,'actual canvas click must select the visible imported wheel');
+    const checkStep=async(stage,count)=>{
+      assert.match(await page.locator('#edm3dStepLabel').innerText(),new RegExp('^'+stage+' / '+count+' · '));
+      assert.equal(await page.locator('#edm3dPrevStep').isDisabled(),stage===0);
+      assert.equal(await page.locator('#edm3dNextStep').isDisabled(),stage===count);
+      assert.equal(await page.locator('#edm3dRebuild').isDisabled(),stage===0);
+    };
+    const checkPose=async(id,family,stage)=>{
+      await renderFrame();
+      await page.evaluate(({id,family,stage})=>window.__checkShowroomPose(id,family,stage),{id,family,stage});
+    };
+    const wheelIds=[wheelPoint.id,...data.wheels.map(wheel=>wheel.id).filter(id=>id!==wheelPoint.id)];
+    for(const id of wheelIds){
+      if(id!==wheelPoint.id)await page.locator('#edm3dWheelChoice').selectOption(id);
+      assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),id);
       assert.equal(await page.locator('#edm3dFamilyFreinage').getAttribute('aria-pressed'),'true');
-      await page.locator('#edm3dNextStep').click();
-      assert.match(await page.locator('#edm3dStepLabel').innerText(),/^1 \/ 5/);
-      await page.locator('#edm3dRebuild').click();
-      assert.match(await page.locator('#edm3dStepLabel').innerText(),/^0 \/ 5/);
+      assert.equal(await page.locator('#edm3dFamilyLiaison').isDisabled(),expectedSteps(id,'liaison').length===0);
+      for(const family of ['freinage','liaison']){
+        const order=expectedSteps(id,family);
+        if(!order.length)continue;
+        if(family==='liaison')await page.locator('#edm3dFamilyLiaison').click();
+        await checkStep(0,order.length);
+        await checkPose(id,family,0);
+        const lastStage=id===wheelPoint.id?order.length:1;
+        for(let stage=1;stage<=lastStage;stage++){
+          await page.locator('#edm3dNextStep').click();
+          await checkStep(stage,order.length);
+          assert.equal(await page.locator('[data-part="'+order[stage-1]+'"]').getAttribute('aria-pressed'),'true');
+          if(id===wheelPoint.id&&family==='freinage'&&stage===1){
+            await checkPose(id,family,stage);
+            await capture('wheel-removed');
+          }
+        }
+        await checkPose(id,family,lastStage);
+        if(id===wheelPoint.id)await capture(family==='freinage'?'brakes-exploded':'suspension-exploded');
+        await page.locator('#edm3dPrevStep').click();
+        await checkStep(lastStage-1,order.length);
+        await checkPose(id,family,lastStage-1);
+        if(lastStage>1)await page.locator('#edm3dRebuild').click();
+        await checkStep(0,order.length);
+        await checkPose(id,family,0);
+      }
+      console.log('WHEEL_UI_PASS '+viewport.width+' '+id+' '+JSON.stringify({freinage:expectedSteps(id,'freinage'),liaison:expectedSteps(id,'liaison')}));
     }
+    await page.locator('#edm3dFamilyFreinage').click();
     await page.locator('[data-part="disques"]').click();
     assert.equal(await page.locator('#edm3dPartTitle').innerText(),'Disques de frein');
+    await page.locator('[data-part="plaquettes"]').click();
+    assert.match(await page.locator('#edm3dPartBody').innerText(),/n’est pas isolé dans le modèle 3D/);
+    await checkPose(wheelIds.at(-1),'freinage',0);
     await page.locator('#edm3dReset').click();
     assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),'');
     assert.equal(await page.locator('#edm3dInspection').isHidden(),true);
-    await renderFrame();
+    await checkPose(null,'freinage',0);
     const bounds=await canvas.boundingBox();
     const start={x:bounds.x+bounds.width*.18,y:bounds.y+bounds.height*.43};
     await page.mouse.move(start.x,start.y);

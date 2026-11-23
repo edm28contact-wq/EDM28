@@ -1,0 +1,46 @@
+{
+  "asset": "assets/models/edm28-gt3-hybrid-v1.glb",
+  "sha256": "fd946e047ea4610aed34722a428c2403d8051d58ec846055f200c277acd30825",
+  "bytes": 8866416,
+  "retainedRedMeshes": 162,
+  "maxRedBoundsErrorAfterFloorShift": 4.1246414184126223e-07,
+  "redTriangleCountsEqual": true,
+  "removedRedMeshes": [
+    "EXT_SHOCKWORKS_CALIPER_LF",
+    "EXT_SHOCKWORKS_CALIPER_LF.001",
+    "EXT_SHOCKWORKS_CALIPER_LF.002",
+    "EXT_SHOCKWORKS_CALIPER_RF",
+    "GEO_discLF",
+    "GEO_discLR",
+    "GEO_discRF",
+    "GEO_discRR"
+  ],
+  "uniqueGraySourceFaces": 27408,
+  "duplicatedGrayFaces": [],
+  "overallBoundsBlender": {
+    "min": [
+      -1.0125670433044434,
+      -2.2989025115966797,
+      0.13000008463859558
+    ],
+    "max": [
+      1.0125670433044434,
+      2.309736490249634,
+      1.4089237451553345
+    ],
+    "dimensions": [
+      2.0251340866088867,
+      4.6086390018463135,
+      1.278923660516739
+    ]
+  },
+  "wheelBrakeHubIntersections": 0,
+  "frontBrakeClearanceMetres": {
+    "av-gauche": 0.0007397140763019839,
+    "av-droite": 0.0006825812865248074
+  },
+  "mechanicalMeshesWithBadWinding": 0,
+  "materialSemanticDifferences": 0,
+  "texturePixelDifferences": 0,
+  "note": "CPU render uses revision-2 uncompressed. Final Draco independently decoded and compared; exact texture pixels/material definitions preserved; max geometric quantization displacement <= 0.000061 m."
+}
