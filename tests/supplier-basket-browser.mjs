@@ -38,8 +38,9 @@ try {
     }
     await page.goto(origin+'/mes-interventions',{waitUntil:'networkidle'});
     await page.locator('[data-response="accepted"]').waitFor();
-    await page.locator('.basket-details summary').click();
-    const link=page.getByRole('link',{name:'Ouvrir mon panier fournisseur'});
+    const basket=page.locator('.basket-details');
+    if(!await basket.evaluate(element=>element.open))await basket.locator('summary').click();
+    const link=basket.getByRole('link',{name:'Ouvrir le panier fournisseur complet',exact:true});
     assert.equal(await link.getAttribute('href'),'https://supplier.example/basket/client-1');
     assert.match(await page.locator('#edmInterventionsApp').innerText(),/REF-123/);
     assert.doesNotMatch(await page.locator('#edmInterventionsApp').innerText(),/d[ée]bours|60\s*%/i);

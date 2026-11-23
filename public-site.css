@@ -1307,6 +1307,7 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 /* GT3 EDM28 — native, continuously interactive showroom, no embedded 3D iframe. */
 .content .edm3d-showroom.edm3d-native{padding:0;background:#0c111b;border:1px solid #273344;border-radius:24px;box-shadow:0 24px 60px #0b131d24}
 .edm3d-native .edm3d-status,.edm3d-native .edm3d-empty,.edm3d-native .edm3d-native-helper{color:#b9c9dc}
+.edm3d-native .edm3d-stage-footer{position:relative;inset:auto;padding:0 18px 18px}
 .edm3d-native .edm3d-stage-footer p{color:#e1e9f3}
 .edm3d-native .edm3d-step-panel p{color:#c3d0df}
 .edm3d-native .edm3d-scene-top{align-items:flex-start}

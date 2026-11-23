@@ -726,7 +726,7 @@ function renderPage(page, origin, services = [], clientConfig = null, business =
 <meta property="og:image:alt" content="Logo officiel EDM28, spécialiste du freinage">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<link rel="stylesheet" href="/public-site.css?v=16">
+<link rel="stylesheet" href="/public-site.css?v=17">
 ${page.path === '/transparence' ? `<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/"}}</script>` : ''}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script>
 </head>

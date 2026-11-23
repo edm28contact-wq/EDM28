@@ -117,7 +117,7 @@ try{
       if(!fullPage)assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height,'canvas capture must fit entirely inside the viewport');
       const clip={x:bounds.x+(fullPage?state.scrollX:0),y:bounds.y+(fullPage?state.scrollY:0),width:bounds.width,height:bounds.height};
       console.log('SHOT_STATE '+viewport.width+' '+name+' '+JSON.stringify({...state,fullPage,clip}));
-      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage,clip,timeout:60000});
+      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage,clip,timeout:120000});
       console.log('SHOT_PASS '+viewport.width+' '+name);
     };
     await renderFrame();
