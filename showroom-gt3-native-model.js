@@ -84,7 +84,8 @@ export function createGt3NativeModel(THREE) {
       const exposed=id===wheelId&&stage>0;
       for(const [name,node] of unit.nodes){
         const frontOnly=['triangles','rotules','stabilisation','amortisseur'].includes(name);
-        node.visible=['roue','disques','etrier','plaquettes','moyeu'].includes(name)||(exposed&&(!frontOnly||unit.front));
+        node.visible=['roue','disques','etrier','plaquettes','moyeu'].includes(name)
+          ||(exposed&&(name==='porte-fusee'||(family==='liaison'&&unit.front&&frontOnly)));
         node.userData.target.set(0,0,0);
         if(id!==wheelId||!Object.hasOwn(GT3_REMOVAL_OFFSETS,name))continue;
         const pos=order.indexOf(name);
@@ -101,9 +102,17 @@ export function createGt3NativeModel(THREE) {
     return part&&wheelId?{wheelId,part}:null;
   };
   function animate(amount=.15){
+    let changed=false;
     for(const unit of wheels.values()){
-      for(const node of unit.nodes.values())node.position.lerp(node.userData.target,amount);
+      for(const node of unit.nodes.values()){
+        const target=node.userData.target;
+        if(node.position.equals(target))continue;
+        node.position.lerp(target,amount);
+        if(node.position.distanceToSquared(target)<1e-8)node.position.copy(target);
+        changed=true;
+      }
     }
+    return changed;
   }
   function focusCenter(id){
     const unit=wheels.get(id);

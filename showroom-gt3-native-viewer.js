@@ -10,6 +10,10 @@ const status=el('edm3dStatus');
 const live=text=>{if(status)status.textContent=text;};
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderNeeded=true;
+const requestRender=()=>{renderNeeded=true;};
+root.addEventListener('click',requestRender);
+root.addEventListener('change',requestRender);
 let renderer;
 try{
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -33,6 +37,7 @@ scene.fog=new THREE.Fog('#171e27',17,29);
 const camera=new THREE.PerspectiveCamera(36,1,.075,65);
 camera.position.set(7.2,3.4,8.6);
 const controls=new OrbitControls(camera,renderer.domElement);
+controls.addEventListener('change',requestRender);
 controls.target.set(0,.84,0);
 controls.enableDamping=true;
 controls.dampingFactor=.07;
@@ -346,6 +351,7 @@ const resize=()=>{
   const width=host.clientWidth||650,height=host.clientHeight||590;
   camera.aspect=width/height;camera.updateProjectionMatrix();
   renderer.setSize(width,height,false);
+  renderNeeded=true;
   if(firstSize){
     const frame=carView();
     controls.target.copy(frame.target);camera.position.copy(frame.position);controls.update();
@@ -361,23 +367,29 @@ function draw(){
   frameId=null;
   if(disposed||!running||document.hidden)return;
   const t=reduceMotion?1:.105;
-  model.animate(t);
+  const modelChanged=model.animate(t);
+  const cameraMoving=cameraGoal!==null;
   if(cameraGoal){
     controls.target.lerp(cameraGoal.target,reduceMotion?1:.13);
     camera.position.lerp(cameraGoal.position,reduceMotion?1:.13);
     if(controls.target.distanceTo(cameraGoal.target)<.025&&camera.position.distanceTo(cameraGoal.position)<.025)cameraGoal=null;
   }
-  controls.update();
-  renderer.render(scene,camera);
+  const controlsChanged=controls.update();
+  if(renderNeeded||modelChanged||cameraMoving||controlsChanged){
+    renderer.render(scene,camera);
+    renderNeeded=false;
+  }
   frameId=requestAnimationFrame(draw);
 }
 const view=new IntersectionObserver(entries=>{
   running=entries.some(entry=>entry.isIntersecting);
+  if(running)renderNeeded=true;
   if(running&&!frameId)frameId=requestAnimationFrame(draw);
   if(!running&&frameId){cancelAnimationFrame(frameId);frameId=null;}
 },{threshold:.01});
 view.observe(root);
 document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)renderNeeded=true;
   if(!document.hidden&&running&&!frameId)frameId=requestAnimationFrame(draw);
 });
 window.addEventListener('pagehide',()=>{
@@ -391,6 +403,7 @@ window.addEventListener('pagehide',()=>{
 },{once:true});
 window.EDMShowroomSelectWheel=selectWheel;
 renderer.render(scene,camera);
+renderNeeded=false;
 root.classList.add('edm3d-ready');
 updatePartMenu();updateStepPanel();
 if(!frameId)frameId=requestAnimationFrame(draw);

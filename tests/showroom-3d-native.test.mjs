@@ -105,6 +105,11 @@ test('dynamic native model has four independent wheel and brake assemblies (real
         for(const part of order)assert.equal(wheel.nodes.get(part).position.length(),0,id+' '+part+' not rebuilt');
       }
     }
+    assert.equal(model.animate(.15),false,'settled geometry must not request another GPU render');
+    model.setDisassembly('av-droite','freinage',1);
+    assert.equal(model.animate(.15),true,'moving geometry must request a render');
+    model.animate(1);
+    assert.equal(model.animate(.15),false,'completed movement must stop requesting renders');
     const picked=model.pickables.find(mesh=>mesh.userData.wheelId==='av-droite'&&mesh.userData.partId==='disques');
     assert.deepEqual(model.toDataPart(picked),{wheelId:'av-droite',part:'disques'});
   }finally{
