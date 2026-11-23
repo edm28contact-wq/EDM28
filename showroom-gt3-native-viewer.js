@@ -1,7 +1,7 @@
 /* EDM28 original single-scene GT3 showroom: all visible model geometry is created locally. */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createGt3NativeModel } from './showroom-gt3-native-model.js?v=2';
+import { createGt3NativeModel } from './showroom-gt3-native-model.js?v=3';
 const el=id=>document.getElementById(id);
 const root=el('edm3dShowroom'),host=el('edm3dCanvas');
 const data=window.EDMShowroomData;

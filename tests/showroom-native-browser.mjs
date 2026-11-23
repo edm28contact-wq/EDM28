@@ -150,6 +150,22 @@ try{
     await page.mouse.up();
     await renderFrame();
     await capture('rear');
+    if(viewport.width===1280){
+      const rotation=await page.evaluate(()=>{
+        const {camera,THREE}=window.__showroomFrame;
+        const direction=camera.getWorldDirection(new THREE.Vector3());
+        const difference=Math.PI/2-Math.atan2(-direction.x,-direction.z);
+        return Math.atan2(Math.sin(difference),Math.cos(difference));
+      });
+      const profileBounds=await canvas.boundingBox();
+      const profileStart={x:profileBounds.x+profileBounds.width/2,y:profileBounds.y+profileBounds.height*.43};
+      await page.mouse.move(profileStart.x,profileStart.y);
+      await page.mouse.down();
+      await page.mouse.move(profileStart.x-rotation*profileBounds.height/(Math.PI*2),profileStart.y,{steps:12});
+      await page.mouse.up();
+      await renderFrame();
+      await capture('profile');
+    }
     assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),'','orbit drag must not select a wheel');
     const metrics=await page.evaluate(()=>{
       const {renderer}=window.__showroomFrame;
