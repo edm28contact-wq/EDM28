@@ -1,7 +1,7 @@
 /* EDM28 original single-scene GT3 showroom: all visible model geometry is created locally. */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createGt3NativeModel } from './showroom-gt3-native-model.js';
+import { createGt3NativeModel } from './showroom-gt3-native-model.js?v=2';
 const el=id=>document.getElementById(id);
 const root=el('edm3dShowroom'),host=el('edm3dCanvas');
 const data=window.EDMShowroomData;
@@ -10,15 +10,19 @@ const status=el('edm3dStatus');
 const live=text=>{if(status)status.textContent=text;};
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderNeeded=true;
+const requestRender=()=>{renderNeeded=true;};
+root.addEventListener('click',requestRender);
+root.addEventListener('change',requestRender);
 let renderer;
 try{
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure=1.18;
+  renderer.toneMappingExposure=.96;
   renderer.shadowMap.enabled=true;
-  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type=THREE.PCFShadowMap;
   renderer.domElement.setAttribute('role','img');
   renderer.domElement.setAttribute('aria-label','GT3 3D originale entièrement démontable. Cliquez sur une roue pour explorer ses composants.');
   host.replaceChildren(renderer.domElement);
@@ -28,61 +32,82 @@ try{
   throw error;
 }
 const scene=new THREE.Scene();
-scene.background=new THREE.Color('#15202e');
-const camera=new THREE.PerspectiveCamera(43,1,.075,80);
-camera.position.set(6.55,3.42,6.90);
+scene.background=new THREE.Color('#171e27');
+scene.fog=new THREE.Fog('#171e27',17,29);
+const camera=new THREE.PerspectiveCamera(36,1,.075,65);
+camera.position.set(7.2,3.4,8.6);
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,.86,0);
-controls.enableDamping=true;
+controls.addEventListener('change',requestRender);
+controls.target.set(0,.84,0);
+controls.enableDamping=!reduceMotion;
 controls.dampingFactor=.07;
 controls.minDistance=1.9;
 controls.maxDistance=17;
-controls.maxPolarAngle=Math.PI*.51;
+controls.maxPolarAngle=Math.PI*.485;
 controls.autoRotate=false;
 controls.autoRotateSpeed=.52;
 controls.update();
-scene.add(new THREE.HemisphereLight('#ffffff','#354152',2.05));
-const key=new THREE.DirectionalLight('#fff6ee',3.2);
-key.position.set(6,11,8);key.castShadow=true;
-key.shadow.mapSize.set(1024,1024);
-key.shadow.camera.left=-8;key.shadow.camera.right=8;key.shadow.camera.top=8;key.shadow.camera.bottom=-8;
-key.shadow.normalBias=.035;key.shadow.bias=-.0001;
+scene.add(new THREE.HemisphereLight('#eef3fa','#252a33',.7));
+const key=new THREE.DirectionalLight('#fff5e9',1.8);
+key.position.set(-3.5,8,5);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.left=-4.5;key.shadow.camera.right=4.5;key.shadow.camera.top=4.5;key.shadow.camera.bottom=-4.5;
+key.shadow.camera.near=.5;key.shadow.camera.far=22;
+key.shadow.normalBias=.018;key.shadow.bias=-.00005;
+key.shadow.radius=3.5;
+key.shadow.intensity=.76;
 scene.add(key);
-const fill=new THREE.DirectionalLight('#add7ff',1.75);
-fill.position.set(-6,4,-4);scene.add(fill);
-const back=new THREE.DirectionalLight('#ffffff',1.25);
-back.position.set(2,5,-7);scene.add(back);
-const floorMaterial=new THREE.MeshStandardMaterial({color:'#2e3e50',metalness:.15,roughness:.72});
+const fill=new THREE.DirectionalLight('#cadcf3',.85);
+fill.position.set(6,3,4);scene.add(fill);
+const back=new THREE.DirectionalLight('#edf4ff',1.45);
+back.position.set(2,5,-6);scene.add(back);
+const floorMaterial=new THREE.MeshStandardMaterial({color:'#17202a',metalness:.08,roughness:.76});
 const floorGeo=new THREE.PlaneGeometry(55,55);
 const floor=new THREE.Mesh(floorGeo,floorMaterial);
 floor.rotation.x=-Math.PI/2;
-floor.position.y=.13;
+floor.position.y=.125;
 floor.receiveShadow=true;scene.add(floor);
+const contactCanvas=document.createElement('canvas');
+contactCanvas.width=contactCanvas.height=128;
+const contactContext=contactCanvas.getContext('2d');
+const contactGradient=contactContext.createRadialGradient(64,64,10,64,64,64);
+contactGradient.addColorStop(0,'rgba(0,0,0,.62)');
+contactGradient.addColorStop(.5,'rgba(0,0,0,.42)');
+contactGradient.addColorStop(1,'rgba(0,0,0,0)');
+contactContext.fillStyle=contactGradient;contactContext.fillRect(0,0,128,128);
+const contactTexture=new THREE.CanvasTexture(contactCanvas);
+const contactGeometry=new THREE.PlaneGeometry(3.35,5.7);
+const contactMaterial=new THREE.MeshBasicMaterial({map:contactTexture,transparent:true,depthWrite:false,toneMapped:false});
+const contactShadow=new THREE.Mesh(contactGeometry,contactMaterial);
+contactShadow.rotation.x=-Math.PI/2;contactShadow.position.set(0,.128,0);
+scene.add(contactShadow);
 let envTarget=null;
+const environmentGeometries=[],environmentMaterials=[];
+let pmrem=null;
 try{
   const environment=new THREE.Scene();
-  environment.background=new THREE.Color('#778593');
-  const white=new THREE.MeshBasicMaterial({color:'#ffffff',side:THREE.DoubleSide});
-  const cool=new THREE.MeshBasicMaterial({color:'#c7e1ff',side:THREE.DoubleSide});
-  const rect=(x,y,z,rotationY,w,h,material)=>{
+  environment.background=new THREE.Color('#202630');
+  const softbox=(position,target,w,h,color,intensity)=>{
+    const material=new THREE.MeshBasicMaterial({color:new THREE.Color(color).multiplyScalar(intensity),side:THREE.DoubleSide,toneMapped:false});
     const geometry=new THREE.PlaneGeometry(w,h);
     const plane=new THREE.Mesh(geometry,material);
-    plane.position.set(x,y,z);plane.rotation.y=rotationY;environment.add(plane);
-    return geometry;
+    plane.position.set(...position);plane.lookAt(...target);environment.add(plane);
+    environmentGeometries.push(geometry);environmentMaterials.push(material);
   };
-  const envGeo=[
-    rect(-6,6,2,Math.PI/5,7,5,white),
-    rect(6,5,-3,-Math.PI/6,7,6,cool),
-    rect(0,9,-4,0,10,3,white)
-  ];
-  const pmrem=new THREE.PMREMGenerator(renderer);
-  envTarget=pmrem.fromScene(environment,.02);
-  pmrem.dispose();
+  softbox([-3,7,1],[0,0,0],2.4,7,'#fff5e9',4);
+  softbox([5,2,0],[0,1,0],1.5,7,'#e2edff',2.7);
+  softbox([-5,2,-2],[0,1,0],1.3,6,'#ffffff',2);
+  softbox([0,5,-6],[0,0,0],7,1.5,'#e8f0ff',4.5);
+  pmrem=new THREE.PMREMGenerator(renderer);
+  envTarget=pmrem.fromScene(environment,.015);
   scene.environment=envTarget.texture;
-  envGeo.forEach(geometry=>geometry.dispose());
-  white.dispose();cool.dispose();
+  scene.environmentIntensity=.8;
 }catch{
   scene.environment=null;
+}finally{
+  pmrem?.dispose();
+  environmentGeometries.forEach(geometry=>geometry.dispose());
+  environmentMaterials.forEach(material=>material.dispose());
 }
 const model=createGt3NativeModel(THREE);
 scene.add(model.root);
@@ -114,22 +139,46 @@ const supplemental={
 const partFor=id=>data.byId(id)||supplemental[id]||null;
 let chosenWheel=null,family='freinage',step=0,selectedPart=null;
 let cameraGoal=null;
+let viewIsManual=false;
+controls.addEventListener('start',()=>{cameraGoal=null;viewIsManual=true;});
+function carView(){
+  const target=new THREE.Vector3(0,.84,0);
+  const direction=new THREE.Vector3(1,.42,1.2).normalize();
+  const right=new THREE.Vector3().crossVectors(camera.up,direction).normalize();
+  const up=new THREE.Vector3().crossVectors(direction,right);
+  const bounds=new THREE.Box3().setFromObject(model.body);
+  bounds.expandByPoint(new THREE.Vector3(-1.4,.1,-2.65));
+  bounds.expandByPoint(new THREE.Vector3(1.4,1.65,2.65));
+  const tangent=Math.tan(THREE.MathUtils.degToRad(camera.fov*.5));
+  let distance=6;
+  for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
+    const offset=new THREE.Vector3(x,y,z).sub(target);
+    const depth=offset.dot(direction);
+    distance=Math.max(distance,depth+Math.abs(offset.dot(right))/(tangent*camera.aspect*.87),depth+Math.abs(offset.dot(up))/(tangent*.66));
+  }
+  return {target,position:target.clone().addScaledVector(direction,Math.min(distance,controls.maxDistance))};
+}
 function steps(){
   return chosenWheel?data.stepsForWheel(chosenWheel,family):[];
 }
 function focusWheel(id){
   const wheel=data.wheelById(id);
   if(!wheel)return;
+  viewIsManual=false;
+  const target=model.focusCenter(id).add(new THREE.Vector3(wheel.side*.83,.10,wheel.front?-.05:.05));
+  const offset=new THREE.Vector3(wheel.side*4.2,1.8,wheel.front?2.35:-2.35);
+  offset.multiplyScalar(Math.max(1,1.05/camera.aspect));
   cameraGoal={
-    target:model.focusCenter(id),
-    position:new THREE.Vector3(wheel.side*3.3,2.00,wheel.front?wheel.side*.18+3.05:-.30).add(new THREE.Vector3(0,0,wheel.front?-.85:-1.35))
+    target,
+    position:target.clone().add(offset)
   };
   controls.autoRotate=false;
   const rotate=el('edm3dRotate');
   if(rotate){rotate.setAttribute('aria-pressed','false');rotate.textContent='Rotation automatique';}
 }
 function focusAll(){
-  cameraGoal={target:new THREE.Vector3(0,.86,0),position:new THREE.Vector3(6.55,3.42,6.90)};
+  viewIsManual=false;
+  cameraGoal=carView();
 }
 function updatePartMenu(){
   if(!partButtons)return;
@@ -264,7 +313,7 @@ for(const [buttonId,factor] of [['edm3dZoomIn',.8],['edm3dZoomOut',1.25]]){
     const distance=vector.length();
     vector.setLength(Math.max(controls.minDistance,Math.min(controls.maxDistance,distance)));
     camera.position.copy(controls.target).add(vector);
-    cameraGoal=null;controls.update();
+    cameraGoal=null;viewIsManual=true;controls.update();
   });
 }
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
@@ -297,10 +346,19 @@ renderer.domElement.addEventListener('webglcontextlost',event=>{
   live('La scène a perdu le contexte WebGL. Les fiches restent consultables.');
 });
 renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
+let firstSize=true;
 const resize=()=>{
   const width=host.clientWidth||650,height=host.clientHeight||590;
   camera.aspect=width/height;camera.updateProjectionMatrix();
   renderer.setSize(width,height,false);
+  renderNeeded=true;
+  if(firstSize){
+    const frame=carView();
+    controls.target.copy(frame.target);camera.position.copy(frame.position);controls.update();
+    firstSize=false;
+  }else if(!viewIsManual){
+    if(chosenWheel)focusWheel(chosenWheel);else focusAll();
+  }
 };
 const observer=new ResizeObserver(resize);
 observer.observe(host);resize();
@@ -309,23 +367,29 @@ function draw(){
   frameId=null;
   if(disposed||!running||document.hidden)return;
   const t=reduceMotion?1:.105;
-  model.animate(t);
+  const modelChanged=model.animate(t);
+  const cameraMoving=cameraGoal!==null;
   if(cameraGoal){
     controls.target.lerp(cameraGoal.target,reduceMotion?1:.13);
     camera.position.lerp(cameraGoal.position,reduceMotion?1:.13);
     if(controls.target.distanceTo(cameraGoal.target)<.025&&camera.position.distanceTo(cameraGoal.position)<.025)cameraGoal=null;
   }
-  controls.update();
-  renderer.render(scene,camera);
+  const controlsChanged=controls.update();
+  if(renderNeeded||modelChanged||cameraMoving||controlsChanged){
+    renderer.render(scene,camera);
+    renderNeeded=false;
+  }
   frameId=requestAnimationFrame(draw);
 }
 const view=new IntersectionObserver(entries=>{
   running=entries.some(entry=>entry.isIntersecting);
+  if(running)renderNeeded=true;
   if(running&&!frameId)frameId=requestAnimationFrame(draw);
   if(!running&&frameId){cancelAnimationFrame(frameId);frameId=null;}
 },{threshold:.01});
 view.observe(root);
 document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)renderNeeded=true;
   if(!document.hidden&&running&&!frameId)frameId=requestAnimationFrame(draw);
 });
 window.addEventListener('pagehide',()=>{
@@ -334,9 +398,12 @@ window.addEventListener('pagehide',()=>{
   if(frameId)cancelAnimationFrame(frameId);
   view.disconnect();observer.disconnect();
   controls.dispose();model.dispose();
+  contactGeometry.dispose();contactMaterial.dispose();contactTexture.dispose();
   floorGeo.dispose();floorMaterial.dispose();envTarget?.dispose();renderer.dispose();
 },{once:true});
 window.EDMShowroomSelectWheel=selectWheel;
+renderer.render(scene,camera);
+renderNeeded=false;
 root.classList.add('edm3d-ready');
 updatePartMenu();updateStepPanel();
 if(!frameId)frameId=requestAnimationFrame(draw);

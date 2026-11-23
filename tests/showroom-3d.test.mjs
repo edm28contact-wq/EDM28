@@ -36,7 +36,7 @@ test('production showroom no longer loads the non-dismantlable external model',a
   read('public-seo.js'),read('showroom-gt3-native-page.js'),read('showroom-gt3-native-viewer.js')
  ]);
  assert.match(seo,/showroom-gt3-native-page\.js/);
- assert.match(seo,/showroom-gt3-native-viewer\.js\?v=1/);
+  assert.match(seo,/showroom-gt3-native-viewer\.js\?v=\d+/);
  assert.doesNotMatch(seo,/src="\/showroom-3d\.js/);
  assert.match(page,/data-view=/);
  assert.match(viewer,/createGt3NativeModel/);

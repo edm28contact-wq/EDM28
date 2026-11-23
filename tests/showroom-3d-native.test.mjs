@@ -13,7 +13,7 @@ test('native GT3 showroom is a single original and fully editable Three.js scene
     source('public-site.css')
   ]);
   assert.match(seo,/from '\.\/showroom-gt3-native-page\.js'/);
-  assert.match(seo,/showroom-gt3-native-viewer\.js\?v=1/);
+  assert.match(seo,/showroom-gt3-native-viewer\.js\?v=[\w.-]+/);
   assert.match(html,/data-view="native"/);
   assert.match(html,/id="edm3dCanvas"/);
   assert.doesNotMatch(html,/<iframe|sketchfab\.com/i);
@@ -69,26 +69,47 @@ test('dynamic native model has four independent wheel and brake assemblies (real
       allWheelNodes.push(wheel.nodes.get('roue'));
     }
     assert.equal(new Set(allWheelNodes).size,4,'wheels must be independently manipulable');
-    assert.ok(model.body.children.length>20,'body should include a roof, aero package, lights and unique body geometry');
-    const front=model.wheels.get('av-gauche').nodes.get('roue');
-    const rear=model.wheels.get('ar-gauche').nodes.get('roue');
-    model.setDisassembly('av-gauche','freinage',1);
-    assert.ok(front.userData.target.length()>0);
-    assert.equal(rear.userData.target.length(),0);
+    const bodyBounds=new THREE.Box3().setFromObject(model.body);
+    const bodySize=bodyBounds.getSize(new THREE.Vector3());
+    assert.ok(bodySize.x>1.5&&bodySize.x<3,'body width must match its wheel assemblies');
+    assert.ok(bodySize.y>.9&&bodySize.y<2.5,'body height must stay within the camera framing');
+    assert.ok(bodySize.z>4&&bodySize.z<6.5,'body length must stay within the camera framing');
+    const checkedGeometry=new Set();
+    model.root.traverse(mesh=>{
+      if(!mesh.isMesh||checkedGeometry.has(mesh.geometry))return;
+      checkedGeometry.add(mesh.geometry);
+      for(const attribute of ['position','normal']){
+        const values=mesh.geometry.getAttribute(attribute)?.array;
+        assert.ok(values?.length,mesh.name+' is missing '+attribute);
+        assert.ok(values.every(Number.isFinite),mesh.name+' contains non-finite '+attribute);
+      }
+    });
+    model.setDisassembly(null,'freinage',0);
+    for(const [id,wheel] of model.wheels){
+      for(const part of ['roue','disques','etrier'])
+        assert.equal(wheel.nodes.get(part).visible,true,id+' '+part+' must remain visible through the open rim');
+      for(const family of wheel.front?['freinage','liaison']:['freinage']){
+        const order=data.stepsForWheel(id,family).map(stage=>stage.id);
+        for(let stage=1;stage<=order.length;stage++){
+          model.setDisassembly(id,family,stage);
+          model.animate(1);
+          for(const [otherId,other] of model.wheels){
+            for(const part of order){
+              const moved=other.nodes.get(part).position.length()>0;
+              assert.equal(moved,otherId===id&&order.indexOf(part)<stage,otherId+' '+part+' moved at the wrong stage');
+            }
+          }
+        }
+        model.setDisassembly(id,family,0);
+        model.animate(1);
+        for(const part of order)assert.equal(wheel.nodes.get(part).position.length(),0,id+' '+part+' not rebuilt');
+      }
+    }
+    assert.equal(model.animate(.15),false,'settled geometry must not request another GPU render');
+    model.setDisassembly('av-droite','freinage',1);
+    assert.equal(model.animate(.15),true,'moving geometry must request a render');
     model.animate(1);
-    assert.ok(front.position.length()>0);
-    model.setDisassembly('av-gauche','freinage',5);
-    model.animate(1);
-    for(const part of ['roue','etrier','plaquettes','disques','moyeu'])
-      assert.ok(model.wheels.get('av-gauche').nodes.get(part).position.length()>0,part+' not removed');
-    model.setDisassembly('av-gauche','freinage',0);
-    model.animate(1);
-    for(const part of ['roue','etrier','plaquettes','disques','moyeu'])
-      assert.equal(model.wheels.get('av-gauche').nodes.get(part).position.length(),0,part+' not rebuilt');
-    model.setDisassembly('av-droite','liaison',5);
-    model.animate(1);
-    for(const part of ['triangles','rotules','stabilisation','amortisseur'])
-      assert.ok(model.wheels.get('av-droite').nodes.get(part).position.length()>0,part+' cannot be removed');
+    assert.equal(model.animate(.15),false,'completed movement must stop requesting renders');
     const picked=model.pickables.find(mesh=>mesh.userData.wheelId==='av-droite'&&mesh.userData.partId==='disques');
     assert.deepEqual(model.toDataPart(picked),{wheelId:'av-droite',part:'disques'});
   }finally{
