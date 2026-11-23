@@ -58,7 +58,7 @@ const server=createServer(async(req,res)=>{
       const marker='scene.add(model.root);';
       const source=content.toString('utf8');
       assert.equal(source.split(marker).length,2,'viewer fixture must instrument exactly one scene attachment');
-      content=source.replace(marker,marker+'\nwindow.__showroomFrame={scene,camera,renderer,THREE,model};');
+      content=source.replace(marker,marker+'\nwindow.__showroomFrame={scene,camera,renderer,THREE,model,getCameraState:()=>({autoRotate:controls.autoRotate,target:controls.target.toArray(),goal:cameraGoal&&{target:cameraGoal.target.toArray(),position:cameraGoal.position.toArray()}})};');
     }
     res.writeHead(200,{'Content-Type':contentTypes[extname(path)],'Content-Length':Buffer.byteLength(content)});
     res.end(content);
@@ -75,9 +75,11 @@ try{
   ]});
   const folder=resolve(cwd,process.env.EDM_SCREENSHOT_DIR||'artifacts/gt3-native');
   await mkdir(folder,{recursive:true});
-  for(const viewport of [{width:390,height:844},{width:1280,height:860}]){
+  const requestedWidth=process.env.EDM_SHOWROOM_WIDTH;
+  assert.ok(!requestedWidth||['390','1280'].includes(requestedWidth),'unsupported showroom viewport');
+  for(const viewport of [{width:1280,height:860},{width:390,height:844}].filter(viewport=>!requestedWidth||String(viewport.width)===requestedWidth)){
     console.log('VIEWPORT_START '+viewport.width+'x'+viewport.height);
-    const page=await browser.newPage({viewport,deviceScaleFactor:1,reducedMotion:'reduce'});
+    const page=await browser.newPage({viewport,deviceScaleFactor:1,reducedMotion:'reduce',hasTouch:true});
     const errors=[];
     page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE_ERROR',e.message);});
     page.on('console',msg=>{if(msg.type()==='error'){errors.push(msg.text());console.error('CONSOLE_ERROR',msg.text().slice(0,800));}});
@@ -89,18 +91,35 @@ try{
     const canvas=page.locator('#edm3dCanvas canvas');
     assert.equal(await canvas.count(),1);
     assert.equal(await page.locator('.edm3d-loading').count(),0,'ready must follow the completed asynchronous import');
-    const renderFrame=async()=>{
+    const renderFrame=async(timeout=30000)=>{
       await canvas.evaluate(element=>{
         element.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
         window.__showroomCaptureSample=null;
+        window.__showroomCaptureTicks=0;
+        window.__showroomCaptureStartTime=performance.now();
+        window.__showroomCaptureStartFrame=window.__showroomFrame.renderer.info.render.frame;
       });
-      await page.waitForFunction(()=>{
-        const {camera,renderer}=window.__showroomFrame;
-        const sample=JSON.stringify([scrollX,scrollY,renderer.info.render.frame,...camera.matrixWorld.elements]);
-        const stable=sample===window.__showroomCaptureSample;
-        window.__showroomCaptureSample=sample;
-        return stable;
-      },null,{polling:'raf',timeout:30000});
+      try{
+        await page.waitForFunction(()=>{
+          const {camera,renderer}=window.__showroomFrame;
+          const sample={x:scrollX,y:scrollY,frame:renderer.info.render.frame,matrix:[...camera.matrixWorld.elements]};
+          const previous=window.__showroomCaptureSample;
+          const delta=previous?Math.max(...sample.matrix.map((value,index)=>Math.abs(value-previous.matrix[index]))):Infinity;
+          const stable=previous&&sample.x===previous.x&&sample.y===previous.y&&sample.frame===previous.frame&&delta===0;
+          window.__showroomCaptureTicks++;
+          window.__showroomCaptureDelta=delta;
+          window.__showroomCaptureSample=sample;
+          return stable;
+        },null,{polling:'raf',timeout});
+      }catch(error){
+        console.error('SETTLE_TIMEOUT',JSON.stringify(await page.evaluate(()=>{
+          const {camera,renderer,getCameraState}=window.__showroomFrame;
+          return {camera:camera.position.toArray(),...getCameraState(),ticks:window.__showroomCaptureTicks,
+            renderedFrames:renderer.info.render.frame-window.__showroomCaptureStartFrame,
+            elapsedMs:performance.now()-window.__showroomCaptureStartTime,matrixDelta:window.__showroomCaptureDelta};
+        }).catch(()=>null)));
+        throw error;
+      }
     };
     const capture=async(name,target=canvas)=>{
       console.log('SHOT_BEGIN '+viewport.width+' '+name);
@@ -117,7 +136,7 @@ try{
       if(!fullPage)assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height,'canvas capture must fit entirely inside the viewport');
       const clip={x:bounds.x+(fullPage?state.scrollX:0),y:bounds.y+(fullPage?state.scrollY:0),width:bounds.width,height:bounds.height};
       console.log('SHOT_STATE '+viewport.width+' '+name+' '+JSON.stringify({...state,fullPage,clip}));
-      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage,clip,timeout:60000});
+      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage,clip,timeout:120000});
       console.log('SHOT_PASS '+viewport.width+' '+name);
     };
     await renderFrame();
@@ -209,7 +228,7 @@ try{
     await capture('page',page.locator('#edm3dShowroom'));
     await renderFrame();
     await capture('full');
-    const wheelPoint=await page.evaluate(()=>{
+    const findWheelPoint=()=>page.evaluate(()=>{
       const {model,camera,renderer,THREE}=window.__showroomFrame;
       model.root.updateMatrixWorld(true);
       camera.updateMatrixWorld(true);
@@ -239,7 +258,59 @@ try{
       }
       throw new Error('No unobscured front-wheel surface can be clicked in the initial view');
     });
+    let wheelPoint=await findWheelPoint();
     console.log('CANVAS_PICK '+viewport.width+' '+JSON.stringify(wheelPoint));
+    const unselected=async message=>assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),'',message);
+    for(const button of ['right','middle']){
+      await page.mouse.click(wheelPoint.x,wheelPoint.y,{button});
+      await unselected(button+' mouse button must not select a wheel');
+    }
+    for(const key of ['Control','Shift','Alt','Meta']){
+      await page.keyboard.down(key);
+      await page.mouse.click(wheelPoint.x,wheelPoint.y);
+      await page.keyboard.up(key);
+      await unselected(key+' navigation must not select a wheel');
+    }
+    await page.mouse.move(wheelPoint.x,wheelPoint.y);
+    await page.mouse.down();
+    await page.mouse.move(wheelPoint.x+24,wheelPoint.y,{steps:3});
+    await page.mouse.move(wheelPoint.x,wheelPoint.y,{steps:3});
+    await page.mouse.up();
+    await unselected('an orbit gesture returning to its start must not select a wheel');
+    assert.equal(await page.locator('#edm3dReset').isEnabled(),true,'manual navigation must enable the home view');
+    await page.locator('#edm3dReset').click();
+    await renderFrame();
+    const homeCamera=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
+    for(const button of ['edm3dZoomIn','edm3dZoomOut']){
+      await page.locator('#'+button).click();
+      await renderFrame();
+      const changed=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
+      assert.ok(changed.some((value,index)=>Math.abs(value-homeCamera[index])>.01),'zoom must move the camera');
+      await unselected('zoom must leave the complete car selected');
+      assert.equal(await page.locator('#edm3dReset').isEnabled(),true,'zoom must enable the home view');
+      await page.locator('#edm3dReset').click();
+      await renderFrame();
+      const restored=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
+      assert.ok(restored.every((value,index)=>Math.abs(value-homeCamera[index])<1e-6),'home view must restore the camera after zoom');
+    }
+    wheelPoint=await findWheelPoint();
+    const touchSession=await page.context().newCDPSession(page);
+    const firstTouch={id:1,x:wheelPoint.x,y:wheelPoint.y};
+    const secondTouch={id:2,x:wheelPoint.x+2,y:wheelPoint.y+2};
+    await touchSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[firstTouch]});
+    await touchSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[firstTouch,secondTouch]});
+    await touchSession.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    await unselected('a two-contact gesture must not select a wheel');
+    await touchSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[firstTouch]});
+    await touchSession.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+    await unselected('a cancelled touch must not select a wheel');
+    await touchSession.detach();
+    await page.touchscreen.tap(wheelPoint.x,wheelPoint.y);
+    assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),wheelPoint.id,'a valid tap must still work after cancelled gestures');
+    await page.locator('#edm3dReset').click();
+    await renderFrame();
+    wheelPoint=await findWheelPoint();
+    console.log('INPUT_PASS '+viewport.width+' (primary tap, secondary buttons, modifiers, return drag, multitouch, cancellation, zoom reset)');
     await page.mouse.click(wheelPoint.x,wheelPoint.y);
     assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),wheelPoint.id,'actual canvas click must select the visible imported wheel');
     const checkStep=async(stage,count)=>{
@@ -325,10 +396,48 @@ try{
       return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};
     });
     console.log('RENDER_METRICS '+viewport.width+' '+JSON.stringify(metrics));
+    if(viewport.width===1280){
+      await page.emulateMedia({reducedMotion:'no-preference'});
+      await page.reload({waitUntil:'domcontentloaded'});
+      await page.waitForSelector('#edm3dShowroom.edm3d-ready',{timeout:60000});
+      await renderFrame();
+      const home=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
+      await page.locator('#edm3dRotate').click();
+      assert.equal(await page.locator('#edm3dRotate').getAttribute('aria-pressed'),'true');
+      assert.equal(await page.locator('#edm3dReset').isEnabled(),true,'automatic rotation must enable the home view');
+      await page.waitForFunction(home=>window.__showroomFrame.camera.position.toArray().some((value,index)=>Math.abs(value-home[index])>.05),home,{timeout:30000});
+      await page.locator('#edm3dReset').click();
+      assert.equal(await page.locator('#edm3dRotate').getAttribute('aria-pressed'),'false','home view must stop automatic rotation');
+      await renderFrame(120000);
+      const reset=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
+      assert.ok(reset.every((value,index)=>Math.abs(value-home[index])<1e-6),'animated home view must return precisely to the initial camera');
+      console.log('ROTATION_RESET_PASS '+JSON.stringify({home,reset}));
+    }
     assert.deepEqual(errors,[],'Browser runtime errors detected');
     console.log('VIEWPORT_PASS '+viewport.width+'x'+viewport.height+' (canvas selection, all four wheels, brakes, suspension, rebuild, part info, orbit, page layout)');
     await page.close();
   }
+  const unavailable=await browser.newPage({viewport:{width:1280,height:860}});
+  const assetRequests=[];
+  unavailable.on('request',request=>{if(request.url().includes('/assets/models/'))assetRequests.push(request.url());});
+  await unavailable.addInitScript(()=>{
+    const getContext=HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext=function(type,...args){
+      return ['webgl','webgl2','experimental-webgl'].includes(type)?null:getContext.call(this,type,...args);
+    };
+  });
+  await unavailable.goto('http://127.0.0.1:'+port,{waitUntil:'domcontentloaded'});
+  await unavailable.waitForSelector('#edm3dShowroom.edm3d-unavailable');
+  assert.equal(await unavailable.locator('#edm3dFallback').isVisible(),true);
+  assert.equal(await unavailable.locator('#edm3dShowroom button:enabled,#edm3dShowroom select:enabled').count(),0,'unavailable WebGL must not leave inactive controls enabled');
+  const failureStatus=await unavailable.locator('#edm3dStatus').innerText();
+  assert.match(failureStatus,/La 3D est indisponible dans ce navigateur/);
+  assert.doesNotMatch(failureStatus,/error is not a function|TypeError|WebGLRenderer/);
+  assert.equal(await unavailable.locator('#edm3dFallback a[href="/demande"]').isVisible(),true);
+  assert.deepEqual(assetRequests,[],'unavailable WebGL must not download the model');
+  await unavailable.screenshot({path:resolve(folder,'gt3-webgl-unavailable.png'),fullPage:true});
+  console.log('WEBGL_FALLBACK_PASS (clear message, disabled controls, service links, no model download)');
+  await unavailable.close();
 }finally{
   await browser?.close();
   await new Promise(resolve=>server.close(resolve));

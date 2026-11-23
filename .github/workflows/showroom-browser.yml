@@ -1,0 +1,64 @@
+name: Showroom Browser
+on:
+  pull_request:
+    branches: [pwa-edm28]
+    paths:
+      - 'showroom-*'
+      - 'assets/models/**'
+      - 'assets/vendor/draco/**'
+      - 'public-site.css'
+      - 'public-seo.js'
+      - 'tests/showroom*'
+      - '.github/workflows/showroom-browser.yml'
+  push:
+    branches: [pwa-edm28]
+    paths:
+      - 'showroom-*'
+      - 'assets/models/**'
+      - 'assets/vendor/draco/**'
+      - 'public-site.css'
+      - 'public-seo.js'
+      - 'tests/showroom*'
+      - '.github/workflows/showroom-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  showroom:
+    name: Showroom ${{ matrix.width }}px
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        width: [390, 1280]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - name: Validate showroom source and model
+        run: npm run test:showroom
+      - name: Install isolated browser tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/showroom-tools" --ignore-scripts --no-audit --no-fund three@0.181.2 playwright@1.58.2
+          ln -s "$RUNNER_TEMP/showroom-tools/node_modules" node_modules
+          "$RUNNER_TEMP/showroom-tools/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Validate the WebGL showroom on mobile and desktop
+        timeout-minutes: 10
+        env:
+          EDM_SCREENSHOT_DIR: artifacts/gt3-native
+          EDM_SHOWROOM_WIDTH: ${{ matrix.width }}
+        run: node tests/showroom-native-browser.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: showroom-browser-${{ matrix.width }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/gt3-native
+          if-no-files-found: ignore
+          retention-days: 5
