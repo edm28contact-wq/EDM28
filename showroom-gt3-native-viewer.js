@@ -173,6 +173,14 @@ function markManualView(){
 }
 function stopRotation(){
   controls.autoRotate=false;
+  const position=camera.position.clone(),target=controls.target.clone();
+  const damping=controls.enableDamping;
+  // Drain the previous gesture's inertia without moving the visible camera.
+  controls.enableDamping=false;
+  controls.update();
+  camera.position.copy(position);controls.target.copy(target);
+  controls.enableDamping=damping;
+  controls.update();
   const rotate=el('edm3dRotate');
   if(rotate){rotate.setAttribute('aria-pressed','false');rotate.textContent='Rotation automatique';}
 }
@@ -432,7 +440,10 @@ function draw(){
   if(cameraGoal){
     controls.target.lerp(cameraGoal.target,reduceMotion?1:.13);
     camera.position.lerp(cameraGoal.position,reduceMotion?1:.13);
-    if(controls.target.distanceTo(cameraGoal.target)<.025&&camera.position.distanceTo(cameraGoal.position)<.025)cameraGoal=null;
+    if(controls.target.distanceTo(cameraGoal.target)<.025&&camera.position.distanceTo(cameraGoal.position)<.025){
+      controls.target.copy(cameraGoal.target);camera.position.copy(cameraGoal.position);
+      cameraGoal=null;
+    }
   }
   const controlsChanged=controls.update();
   inspectionLight.intensity=chosenWheel?1.3:0;

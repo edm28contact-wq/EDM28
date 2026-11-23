@@ -391,7 +391,7 @@ try{
       assert.equal(await page.locator('#edm3dRotate').getAttribute('aria-pressed'),'false','home view must stop automatic rotation');
       await renderFrame();
       const reset=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
-      assert.ok(reset.every((value,index)=>Math.abs(value-home[index])<.05),'animated home view must converge to the initial camera');
+      assert.ok(reset.every((value,index)=>Math.abs(value-home[index])<1e-6),'animated home view must return precisely to the initial camera');
       console.log('ROTATION_RESET_PASS (normal motion, automatic orbit, home view, stable rendering)');
     }
     assert.deepEqual(errors,[],'Browser runtime errors detected');
