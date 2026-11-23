@@ -14,6 +14,8 @@ let renderNeeded=true;
 const requestRender=()=>{renderNeeded=true;};
 root.addEventListener('click',requestRender);
 root.addEventListener('change',requestRender);
+const loadingControls=Array.from(root.querySelectorAll('button,select'),control=>({control,disabled:control.disabled}));
+loadingControls.forEach(({control})=>{control.disabled=true;});
 let renderer;
 try{
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -29,7 +31,7 @@ try{
   host.replaceChildren(renderer.domElement);
 }catch(error){
   root.classList.add('edm3d-unavailable');
-  live('Rendu 3D indisponible : '+error.message);
+  live('La 3D est indisponible dans ce navigateur. Les fiches et les prestations restent accessibles via les liens ci-dessous.');
   throw error;
 }
 const scene=new THREE.Scene();
@@ -115,8 +117,6 @@ try{
 const loading=document.createElement('div');
 loading.className='edm3d-loading';loading.textContent='Chargement de la Porsche et de ses textures…';
 host.appendChild(loading);
-const loadingControls=Array.from(root.querySelectorAll('button,select'),control=>({control,disabled:control.disabled}));
-loadingControls.forEach(({control})=>{control.disabled=true;});
 renderer.render(scene,camera);
 let model;
 try{
@@ -166,7 +166,17 @@ const partFor=id=>data.byId(id)||supplemental[id]||null;
 let chosenWheel=null,family='freinage',step=0,selectedPart=null;
 let cameraGoal=null;
 let viewIsManual=false;
-controls.addEventListener('start',()=>{cameraGoal=null;viewIsManual=true;});
+function markManualView(){
+  cameraGoal=null;viewIsManual=true;
+  const reset=el('edm3dReset');
+  if(reset)reset.disabled=false;
+}
+function stopRotation(){
+  controls.autoRotate=false;
+  const rotate=el('edm3dRotate');
+  if(rotate){rotate.setAttribute('aria-pressed','false');rotate.textContent='Rotation automatique';}
+}
+controls.addEventListener('start',markManualView);
 function carView(){
   const target=model.bounds.getCenter(new THREE.Vector3());
   const direction=new THREE.Vector3(1,.42,1.2).normalize();
@@ -202,11 +212,10 @@ function focusWheel(id){
     target,
     position:target.clone().add(offset)
   };
-  controls.autoRotate=false;
-  const rotate=el('edm3dRotate');
-  if(rotate){rotate.setAttribute('aria-pressed','false');rotate.textContent='Rotation automatique';}
+  stopRotation();
 }
 function focusAll(){
+  stopRotation();
   viewIsManual=false;
   cameraGoal=carView();
 }
@@ -335,6 +344,7 @@ el('edm3dRebuild')?.addEventListener('click',()=>setStep(0));
 el('edm3dReset')?.addEventListener('click',showCar);
 el('edm3dRotate')?.addEventListener('click',event=>{
   controls.autoRotate=!controls.autoRotate&&!reduceMotion;
+  if(controls.autoRotate)markManualView();
   event.currentTarget.setAttribute('aria-pressed',String(controls.autoRotate));
   event.currentTarget.textContent=controls.autoRotate?'Arrêter la rotation':'Rotation automatique';
 });
@@ -344,17 +354,35 @@ for(const [buttonId,factor] of [['edm3dZoomIn',.8],['edm3dZoomOut',1.25]]){
     const distance=vector.length();
     vector.setLength(Math.max(controls.minDistance,Math.min(controls.maxDistance,distance)));
     camera.position.copy(controls.target).add(vector);
-    cameraGoal=null;viewIsManual=true;controls.update();
+    markManualView();controls.update();
   });
 }
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+const activePointers=new Set();
+const hasModifier=event=>event.altKey||event.ctrlKey||event.metaKey||event.shiftKey;
+const plainPrimaryPointer=event=>event.isPrimary&&event.button===0&&!hasModifier(event);
 let pressPoint=null;
-renderer.domElement.addEventListener('pointerdown',event=>{pressPoint={x:event.clientX,y:event.clientY};});
+renderer.domElement.addEventListener('pointerdown',event=>{
+  activePointers.add(event.pointerId);
+  pressPoint=activePointers.size===1&&plainPrimaryPointer(event)
+    ? {pointerId:event.pointerId,x:event.clientX,y:event.clientY}:null;
+},{capture:true});
+renderer.domElement.addEventListener('pointermove',event=>{
+  if(pressPoint?.pointerId!==event.pointerId)return;
+  const moved=(event.getCoalescedEvents?.()||[]).concat(event)
+    .some(point=>Math.hypot(point.clientX-pressPoint.x,point.clientY-pressPoint.y)>8);
+  if(moved||event.buttons!==1||hasModifier(event))pressPoint=null;
+},{capture:true});
+const cancelPick=event=>{activePointers.delete(event.pointerId);pressPoint=null;};
+renderer.domElement.addEventListener('pointercancel',cancelPick,{capture:true});
+renderer.domElement.addEventListener('lostpointercapture',cancelPick);
+// Handle the release before OrbitControls relinquishes pointer capture.
 renderer.domElement.addEventListener('pointerup',event=>{
-  if(!pressPoint)return;
-  const distance=Math.hypot(event.clientX-pressPoint.x,event.clientY-pressPoint.y);
+  const started=pressPoint;
+  activePointers.delete(event.pointerId);
   pressPoint=null;
-  if(distance>8)return;
+  if(!started||started.pointerId!==event.pointerId||activePointers.size||!plainPrimaryPointer(event))return;
+  if(Math.hypot(event.clientX-started.x,event.clientY-started.y)>8)return;
   const rect=renderer.domElement.getBoundingClientRect();
   if(!rect.width||!rect.height)return;
   pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
@@ -371,7 +399,7 @@ renderer.domElement.addEventListener('pointerup',event=>{
     showPart(picked.part);
     return;
   }
-});
+},{capture:true});
 renderer.domElement.addEventListener('webglcontextlost',event=>{
   event.preventDefault();root.classList.add('edm3d-unavailable');
   live('La scène a perdu le contexte WebGL. Les fiches restent consultables.');
