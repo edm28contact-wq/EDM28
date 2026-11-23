@@ -58,7 +58,7 @@ const server=createServer(async(req,res)=>{
       const marker='scene.add(model.root);';
       const source=content.toString('utf8');
       assert.equal(source.split(marker).length,2,'viewer fixture must instrument exactly one scene attachment');
-      content=source.replace(marker,marker+'\nwindow.__showroomFrame={scene,camera,renderer,THREE,model};');
+      content=source.replace(marker,marker+'\nwindow.__showroomFrame={scene,camera,renderer,THREE,model,getCameraState:()=>({autoRotate:controls.autoRotate,target:controls.target.toArray(),goal:cameraGoal&&{target:cameraGoal.target.toArray(),position:cameraGoal.position.toArray()}})};');
     }
     res.writeHead(200,{'Content-Type':contentTypes[extname(path)],'Content-Length':Buffer.byteLength(content)});
     res.end(content);
@@ -75,7 +75,9 @@ try{
   ]});
   const folder=resolve(cwd,process.env.EDM_SCREENSHOT_DIR||'artifacts/gt3-native');
   await mkdir(folder,{recursive:true});
-  for(const viewport of [{width:390,height:844},{width:1280,height:860}]){
+  const requestedWidth=process.env.EDM_SHOWROOM_WIDTH;
+  assert.ok(!requestedWidth||['390','1280'].includes(requestedWidth),'unsupported showroom viewport');
+  for(const viewport of [{width:1280,height:860},{width:390,height:844}].filter(viewport=>!requestedWidth||String(viewport.width)===requestedWidth)){
     console.log('VIEWPORT_START '+viewport.width+'x'+viewport.height);
     const page=await browser.newPage({viewport,deviceScaleFactor:1,reducedMotion:'reduce',hasTouch:true});
     const errors=[];
@@ -93,14 +95,31 @@ try{
       await canvas.evaluate(element=>{
         element.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
         window.__showroomCaptureSample=null;
+        window.__showroomCaptureTicks=0;
+        window.__showroomCaptureStartTime=performance.now();
+        window.__showroomCaptureStartFrame=window.__showroomFrame.renderer.info.render.frame;
       });
-      await page.waitForFunction(()=>{
-        const {camera,renderer}=window.__showroomFrame;
-        const sample=JSON.stringify([scrollX,scrollY,renderer.info.render.frame,...camera.matrixWorld.elements]);
-        const stable=sample===window.__showroomCaptureSample;
-        window.__showroomCaptureSample=sample;
-        return stable;
-      },null,{polling:'raf',timeout:30000});
+      try{
+        await page.waitForFunction(()=>{
+          const {camera,renderer}=window.__showroomFrame;
+          const sample={x:scrollX,y:scrollY,frame:renderer.info.render.frame,matrix:[...camera.matrixWorld.elements]};
+          const previous=window.__showroomCaptureSample;
+          const delta=previous?Math.max(...sample.matrix.map((value,index)=>Math.abs(value-previous.matrix[index]))):Infinity;
+          const stable=previous&&sample.x===previous.x&&sample.y===previous.y&&sample.frame===previous.frame&&delta===0;
+          window.__showroomCaptureTicks++;
+          window.__showroomCaptureDelta=delta;
+          window.__showroomCaptureSample=sample;
+          return stable;
+        },null,{polling:'raf',timeout:30000});
+      }catch(error){
+        console.error('SETTLE_TIMEOUT',JSON.stringify(await page.evaluate(()=>{
+          const {camera,renderer,getCameraState}=window.__showroomFrame;
+          return {camera:camera.position.toArray(),...getCameraState(),ticks:window.__showroomCaptureTicks,
+            renderedFrames:renderer.info.render.frame-window.__showroomCaptureStartFrame,
+            elapsedMs:performance.now()-window.__showroomCaptureStartTime,matrixDelta:window.__showroomCaptureDelta};
+        }).catch(()=>null)));
+        throw error;
+      }
     };
     const capture=async(name,target=canvas)=>{
       console.log('SHOT_BEGIN '+viewport.width+' '+name);
@@ -120,6 +139,26 @@ try{
       await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage,clip,timeout:120000});
       console.log('SHOT_PASS '+viewport.width+' '+name);
     };
+    if(viewport.width===1280){
+      await page.emulateMedia({reducedMotion:'no-preference'});
+      await page.reload({waitUntil:'domcontentloaded'});
+      await page.waitForSelector('#edm3dShowroom.edm3d-ready',{timeout:60000});
+      await renderFrame();
+      const home=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
+      await page.locator('#edm3dRotate').click();
+      assert.equal(await page.locator('#edm3dRotate').getAttribute('aria-pressed'),'true');
+      assert.equal(await page.locator('#edm3dReset').isEnabled(),true,'automatic rotation must enable the home view');
+      await page.waitForFunction(home=>window.__showroomFrame.camera.position.toArray().some((value,index)=>Math.abs(value-home[index])>.05),home,{timeout:30000});
+      await page.locator('#edm3dReset').click();
+      assert.equal(await page.locator('#edm3dRotate').getAttribute('aria-pressed'),'false','home view must stop automatic rotation');
+      await renderFrame();
+      const reset=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
+      assert.ok(reset.every((value,index)=>Math.abs(value-home[index])<1e-6),'animated home view must return precisely to the initial camera');
+      console.log('ROTATION_RESET_PASS '+JSON.stringify({home,reset}));
+      await page.emulateMedia({reducedMotion:'reduce'});
+      await page.reload({waitUntil:'domcontentloaded'});
+      await page.waitForSelector('#edm3dShowroom.edm3d-ready',{timeout:60000});
+    }
     await renderFrame();
     const rigReport=await page.evaluate(({expectedParts,familyOrder,wheelAudit})=>{
       const {model,THREE}=window.__showroomFrame;
@@ -377,23 +416,6 @@ try{
       return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};
     });
     console.log('RENDER_METRICS '+viewport.width+' '+JSON.stringify(metrics));
-    if(viewport.width===1280){
-      await page.emulateMedia({reducedMotion:'no-preference'});
-      await page.reload({waitUntil:'domcontentloaded'});
-      await page.waitForSelector('#edm3dShowroom.edm3d-ready',{timeout:60000});
-      await renderFrame();
-      const home=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
-      await page.locator('#edm3dRotate').click();
-      assert.equal(await page.locator('#edm3dRotate').getAttribute('aria-pressed'),'true');
-      assert.equal(await page.locator('#edm3dReset').isEnabled(),true,'automatic rotation must enable the home view');
-      await page.waitForFunction(home=>window.__showroomFrame.camera.position.toArray().some((value,index)=>Math.abs(value-home[index])>.05),home,{timeout:30000});
-      await page.locator('#edm3dReset').click();
-      assert.equal(await page.locator('#edm3dRotate').getAttribute('aria-pressed'),'false','home view must stop automatic rotation');
-      await renderFrame();
-      const reset=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
-      assert.ok(reset.every((value,index)=>Math.abs(value-home[index])<1e-6),'animated home view must return precisely to the initial camera');
-      console.log('ROTATION_RESET_PASS (normal motion, automatic orbit, home view, stable rendering)');
-    }
     assert.deepEqual(errors,[],'Browser runtime errors detected');
     console.log('VIEWPORT_PASS '+viewport.width+'x'+viewport.height+' (canvas selection, all four wheels, brakes, suspension, rebuild, part info, orbit, page layout)');
     await page.close();
