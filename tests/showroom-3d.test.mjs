@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import data from '../showroom-3d-data.js';
-import {classifyNodeName,mapModelNodes,createGt3Workshop} from '../showroom-gt3-workshop.js';
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
 test('showroom represents 7 educational components while linking only active EDM28 services', () => {
@@ -31,7 +30,7 @@ test('showroom represents 7 educational components while linking only active EDM
 });
 
 
-test('production showroom no longer loads the non-dismantlable external model',async()=>{
+test('production showroom uses the imported model in its native viewer',async()=>{
  const [seo,page,viewer]=await Promise.all([
   read('public-seo.js'),read('showroom-gt3-native-page.js'),read('showroom-gt3-native-viewer.js')
  ]);
@@ -39,7 +38,7 @@ test('production showroom no longer loads the non-dismantlable external model',a
   assert.match(seo,/showroom-gt3-native-viewer\.js\?v=\d+/);
  assert.doesNotMatch(seo,/src="\/showroom-3d\.js/);
  assert.match(page,/data-view=/);
- assert.match(viewer,/createGt3NativeModel/);
- assert.match(viewer,/const model=createGt3NativeModel\(THREE\)/);
- assert.doesNotMatch(viewer,/Sketchfab/);
+ assert.match(viewer,/showroom-gt3-imported-model\.js/);
+ assert.match(viewer,/await createGt3ImportedModel\(THREE[,)]/);
+ assert.doesNotMatch(page,/<iframe/i);
 });
