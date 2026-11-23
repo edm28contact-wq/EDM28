@@ -39,7 +39,7 @@ camera.position.set(7.2,3.4,8.6);
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.addEventListener('change',requestRender);
 controls.target.set(0,.84,0);
-controls.enableDamping=true;
+controls.enableDamping=!reduceMotion;
 controls.dampingFactor=.07;
 controls.minDistance=1.9;
 controls.maxDistance=17;
@@ -165,8 +165,8 @@ function focusWheel(id){
   const wheel=data.wheelById(id);
   if(!wheel)return;
   viewIsManual=false;
-  const target=model.focusCenter(id).add(new THREE.Vector3(wheel.side*.38,.03,0));
-  const offset=new THREE.Vector3(wheel.side*3.5,1.4,wheel.front?1.65:-1.65);
+  const target=model.focusCenter(id).add(new THREE.Vector3(wheel.side*.83,.10,wheel.front?-.05:.05));
+  const offset=new THREE.Vector3(wheel.side*4.2,1.8,wheel.front?2.35:-2.35);
   offset.multiplyScalar(Math.max(1,1.05/camera.aspect));
   cameraGoal={
     target,

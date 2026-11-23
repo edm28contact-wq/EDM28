@@ -61,7 +61,8 @@ try{
   ]});
   const folder=resolve(cwd,process.env.EDM_SCREENSHOT_DIR||'artifacts/gt3-native');
   await mkdir(folder,{recursive:true});
-  for(const viewport of [{width:1280,height:860},{width:390,height:844}]){
+  for(const viewport of [{width:390,height:844},{width:1280,height:860}]){
+    console.log('VIEWPORT_START '+viewport.width+'x'+viewport.height);
     const page=await browser.newPage({viewport,deviceScaleFactor:1,reducedMotion:'reduce'});
     const errors=[];
     page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE_ERROR',e.message);});
@@ -77,11 +78,26 @@ try{
       await canvas.scrollIntoViewIfNeeded();
       await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));
     };
+    const capture=async(name,target=canvas)=>{
+      console.log('SHOT_BEGIN '+viewport.width+' '+name);
+      const bounds=await target.boundingBox();
+      assert.ok(bounds&&bounds.width>0&&bounds.height>0,'screenshot target must have visible bounds');
+      const state=await page.evaluate(()=>{
+        const {renderer}=window.__showroomFrame;
+        return {scrollX,scrollY,wheel:document.getElementById('edm3dWheelChoice').value,
+          step:document.getElementById('edm3dStepLabel').textContent,
+          calls:renderer.info.render.calls,triangles:renderer.info.render.triangles};
+      });
+      const clip={x:bounds.x+state.scrollX,y:bounds.y+state.scrollY,width:bounds.width,height:bounds.height};
+      console.log('SHOT_STATE '+viewport.width+' '+name+' '+JSON.stringify({...state,clip}));
+      await page.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-'+name+'.png'),fullPage:true,clip});
+      console.log('SHOT_PASS '+viewport.width+' '+name);
+    };
     await renderFrame();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'showroom overflows the viewport');
-    await page.locator('#edm3dShowroom').screenshot({path:resolve(folder,'gt3-'+viewport.width+'-page.png')});
+    await capture('page',page.locator('#edm3dShowroom'));
     await renderFrame();
-    await canvas.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-full.png')});
+    await capture('full');
     const wheelPoint=await page.evaluate(()=>{
       const {scene,camera,renderer,THREE}=window.__showroomFrame;
       let lock;
@@ -97,11 +113,11 @@ try{
     await page.locator('#edm3dNextStep').click();
     assert.match(await page.locator('#edm3dStepLabel').innerText(),/^1 \/ 5/);
     await renderFrame();
-    await canvas.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-wheel-removed.png')});
+    await capture('wheel-removed');
     for(let i=2;i<=5;i++)await page.locator('#edm3dNextStep').click();
     assert.match(await page.locator('#edm3dStepLabel').innerText(),/^5 \/ 5/);
     await renderFrame();
-    await canvas.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-brakes-exploded.png')});
+    await capture('brakes-exploded');
     await page.locator('#edm3dRebuild').click();
     assert.match(await page.locator('#edm3dStepLabel').innerText(),/^0 \/ 5/);
     await page.locator('#edm3dFamilyLiaison').click();
@@ -109,7 +125,7 @@ try{
     for(let i=1;i<=5;i++)await page.locator('#edm3dNextStep').click();
     assert.match(await page.locator('#edm3dStepLabel').innerText(),/^5 \/ 5/);
     await renderFrame();
-    await canvas.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-suspension-exploded.png')});
+    await capture('suspension-exploded');
     for(const id of ['av-gauche','ar-gauche','ar-droite']){
       await page.locator('#edm3dWheelChoice').selectOption(id);
       assert.match(await page.locator('#edm3dStepLabel').innerText(),/^0 \/ 5/);
@@ -133,7 +149,7 @@ try{
     await page.mouse.move(start.x+bounds.height/2,start.y,{steps:12});
     await page.mouse.up();
     await renderFrame();
-    await canvas.screenshot({path:resolve(folder,'gt3-'+viewport.width+'-rear.png')});
+    await capture('rear');
     assert.equal(await page.locator('#edm3dWheelChoice').inputValue(),'','orbit drag must not select a wheel');
     const metrics=await page.evaluate(()=>{
       const {renderer}=window.__showroomFrame;

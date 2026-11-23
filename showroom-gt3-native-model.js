@@ -13,15 +13,15 @@ export const GT3_WHEEL_POSITIONS=Object.freeze([
   {id:'ar-droite',side:1,front:false,z:-1.51}
 ]);
 export const GT3_REMOVAL_OFFSETS=Object.freeze({
-  roue:[2.55,.08,.22],
-  etrier:[1.18,.26,-.30],
-  plaquettes:[1.75,.08,-.28],
-  disques:[1.30,0,.06],
-  moyeu:[1.05,-.13,.2],
-  triangles:[-.95,-.24,-.38],
-  rotules:[-1.15,.06,.5],
-  stabilisation:[-.8,.30,-.28],
-  amortisseur:[-.82,.37,.32]
+  roue:[2.65,.08,1.60],
+  etrier:[3.20,1.45,.30],
+  plaquettes:[3.40,1.70,-1.10],
+  disques:[3.35,0,-.85],
+  moyeu:[3.00,-.13,-2.65],
+  triangles:[4.00,0,-1.20],
+  rotules:[3.80,.50,-2.60],
+  stabilisation:[3.40,.40,-3.50],
+  amortisseur:[3.20,.20,-1.20]
 });
 export function createGt3NativeModel(THREE) {
   const root=new THREE.Group();root.name='EDM28_GT3_Custom';
@@ -33,6 +33,10 @@ export function createGt3NativeModel(THREE) {
   };
   const hd=createWorkshopHD(THREE);
   const compactMechanics=compactGt3Mechanics(THREE,hd);
+  const strutMount=new THREE.Group();
+  strutMount.scale.y=.86;strutMount.position.y=1.40*(1-.86);
+  const strut=hd.nodes.get('amortisseur');
+  strutMount.add(...strut.children);strut.add(strutMount);
   const detailedWheel=createGt3Wheel(THREE);
   const wheelTemplate=hd.nodes.get('roue');
   wheelTemplate.clear();wheelTemplate.add(...detailedWheel.root.children);
@@ -91,7 +95,7 @@ export function createGt3NativeModel(THREE) {
         const pos=order.indexOf(name);
         if(pos<0||stage<=pos)continue;
         const [x,y,z]=GT3_REMOVAL_OFFSETS[name];
-        node.userData.target.set(x,y,z);
+        node.userData.target.set(x,y,z*(unit.front?1:-1));
       }
     }
     selectWheel(wheelId);
