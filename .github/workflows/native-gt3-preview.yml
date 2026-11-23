@@ -1,0 +1,40 @@
+name: Validate native GT3 model before production
+on:
+  push:
+    branches: [feat/showroom-sculpted-gt3]
+permissions:
+  contents: read
+jobs:
+  native-gt3:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - name: Syntax and showroom data tests
+        run: |
+          npm run check:syntax
+          npm run test:showroom
+      - name: Install isolated Three.js runtime for actual mesh interaction tests
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund three@0.181.2
+      - name: Execute actual wheel geometry and assembly/removal tests
+        run: EDM_NATIVE_RUNTIME_TEST=1 npm run test:showroom
+      - name: Install browser and native Three.js runtime
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund three@0.181.2 playwright@1.58.2
+          npx playwright install chromium
+      - name: Verify actual 3D WebGL rendering and interaction at desktop and mobile sizes
+        run: node tests/showroom-native-browser.mjs
+      - name: Save rendered showroom screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-gt3-screenshots
+          path: artifacts/gt3-native/*.png
+          if-no-files-found: ignore
+
+
