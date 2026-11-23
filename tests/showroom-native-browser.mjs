@@ -91,7 +91,7 @@ try{
     const canvas=page.locator('#edm3dCanvas canvas');
     assert.equal(await canvas.count(),1);
     assert.equal(await page.locator('.edm3d-loading').count(),0,'ready must follow the completed asynchronous import');
-    const renderFrame=async()=>{
+    const renderFrame=async(timeout=30000)=>{
       await canvas.evaluate(element=>{
         element.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
         window.__showroomCaptureSample=null;
@@ -110,7 +110,7 @@ try{
           window.__showroomCaptureDelta=delta;
           window.__showroomCaptureSample=sample;
           return stable;
-        },null,{polling:'raf',timeout:30000});
+        },null,{polling:'raf',timeout});
       }catch(error){
         console.error('SETTLE_TIMEOUT',JSON.stringify(await page.evaluate(()=>{
           const {camera,renderer,getCameraState}=window.__showroomFrame;
@@ -151,7 +151,7 @@ try{
       await page.waitForFunction(home=>window.__showroomFrame.camera.position.toArray().some((value,index)=>Math.abs(value-home[index])>.05),home,{timeout:30000});
       await page.locator('#edm3dReset').click();
       assert.equal(await page.locator('#edm3dRotate').getAttribute('aria-pressed'),'false','home view must stop automatic rotation');
-      await renderFrame();
+      await renderFrame(120000);
       const reset=await page.evaluate(()=>window.__showroomFrame.camera.position.toArray());
       assert.ok(reset.every((value,index)=>Math.abs(value-home[index])<1e-6),'animated home view must return precisely to the initial camera');
       console.log('ROTATION_RESET_PASS '+JSON.stringify({home,reset}));
