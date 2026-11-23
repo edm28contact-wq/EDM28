@@ -77,9 +77,12 @@ export function createGt3Body(THREE) {
       return (2*t**3-3*t*t+1)*a[k]+(t**3-2*t*t+t)*m0+(-2*t**3+3*t*t)*b[k]+(t**3-t*t)*m1;
     });
   };
+  const endProfile=(z,fraction)=>z
+    -.13*fraction*fraction*THREE.MathUtils.clamp((z-2.06)/.49,0,1)**2
+    +.15*fraction*fraction*THREE.MathUtils.clamp((-z-2.28)/.27,0,1)**2;
   const upper=(fraction,z,lift=0)=>{
     const [width,shoulder,center]=section(z),t=Math.abs(fraction);
-    return [fraction*width,center+(shoulder-center)*Math.sin(t*Math.PI/2)**3-.022*t**16+lift,z];
+    return [fraction*width,center+(shoulder-center)*Math.sin(t*Math.PI/2)**3-.022*t**16+lift,endProfile(z,fraction)];
   };
   surface('sculpted-upper-body',64,144,(u,v)=>upper(u*2-1,-2.55+5.10*v));
   for(const side of [-1,1]){
@@ -87,7 +90,7 @@ export function createGt3Body(THREE) {
       surface('curved-flank',48,16,(u,v)=>{
         const z=start+(end-start)*u,[w,h]=section(z);
         const lower=axle===null?.315:.642+Math.sqrt(Math.max(0,.57**2-(z-axle)**2));
-        return [side*w*(.955+.045*Math.sin(v*Math.PI/2)),lower+(h-.022-lower)*v,z];
+        return [side*w*(.955+.045*Math.sin(v*Math.PI/2)),lower+(h-.022-lower)*v,endProfile(z,1)];
       },paint,side<0);
     }
     for(const z of [-1.51,1.46]){
@@ -115,23 +118,23 @@ export function createGt3Body(THREE) {
     oval('mirror-glass',steel,[side*1.251,1.283,.514],[.125,.044,.011]);
   }
   surface('front-bumper',64,24,(u,v)=>{
-    const x=(u*2-1)*(1.055-.165*v),a=x/1.055;
-    return [x,.31+.51*v+.045*(1-a*a)*Math.sin(v*Math.PI),2.55-.18*a*a+.045*Math.sin(v*Math.PI)];
+    const a=u*2-1,top=upper(a,2.55),x=a*.89*(.955+.045*Math.sin(v*Math.PI/2));
+    return [x,.315+(top[1]-.315)*v,endProfile(2.55,a)+.065*Math.sin(v*Math.PI)*(1-a*a)];
   },paint,true);
   surface('rear-bumper',64,18,(u,v)=>{
-    const x=(u*2-1)*(1.10-.22*v),a=x/1.10;
-    return [x,.31+.61*v,-2.55+.15*a*a-.035*Math.sin(v*Math.PI)];
+    const a=u*2-1,top=upper(a,-2.55),x=a*.88*(.955+.045*Math.sin(v*Math.PI/2));
+    return [x,.315+(top[1]-.315)*v,endProfile(-2.55,a)-.035*Math.sin(v*Math.PI)*(1-a*a)];
   },paint,false);
   const intake=(side)=>{
-    const group=new THREE.Group();group.position.set(side*.775,.57,2.46);group.rotation.y=side*.16;root.add(group);
+    const group=new THREE.Group();group.position.set(side*.60,.55,2.56);group.rotation.y=side*.20;root.add(group);
     shapeMesh('front-air-inlet',[[-.24,-.16],[.20,-.13],[.23,.12],[-.21,.15]],.035,black,[0,0,0],[0,0,0],group);
     for(let i=0;i<5;i++)box('intake-grille-slat',[.39,.011,.022],carbon,[0,-.095+i*.047,.038],[0,0,0],group);
-    box('inlet-air-guide',[.025,.27,.095],carbon,[side*.10,-.005,.07],[0,side*.1,side*.13],group);
+    box('inlet-air-guide',[.018,.23,.055],carbon,[side*.10,-.005,.045],[0,side*.1,side*.13],group);
     box('front-running-light',[.30,.018,.025],led,[0,.184,.045],[0,0,0],group);
   };
   intake(-1);intake(1);
-  shapeMesh('central-grille',[[-.39,-.12],[.39,-.12],[.35,.12],[-.35,.12]],.025,black,[0,.56,2.594]);
-  for(let i=-7;i<=7;i++)box('grille-mesh',[.012,.20,.012],carbon,[i*.046,.56,2.625]);
+  shapeMesh('central-grille',[[-.35,-.10],[.35,-.10],[.32,.10],[-.32,.10]],.025,black,[0,.55,2.627]);
+  for(let i=-6;i<=6;i++)box('grille-mesh',[.012,.18,.012],carbon,[i*.046,.55,2.658]);
   surface('front-splitter',64,8,(u,v)=>{
     const x=(u*2-1)*1.14;
     return [x,.279+.012*Math.sin(v*Math.PI),2.20+.43*v-.11*(x/1.14)**2];

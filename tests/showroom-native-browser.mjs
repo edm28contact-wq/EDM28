@@ -19,15 +19,7 @@ const html='<!doctype html><html lang="fr"><head><meta charset="utf-8">'
   +'<main class="wrap content">'+render3DShowroom()+'</main>'
   +'<script type="importmap">'+JSON.stringify(imports)+'</script>'
   +'<script src="/showroom-3d-data.js"></script>'
-  +'<script type="module">'
-  +'import * as THREE from "three";'
-  +'const render=THREE.WebGLRenderer.prototype.render;'
-  +'THREE.WebGLRenderer.prototype.render=function(scene,camera){'
-  +'const result=render.call(this,scene,camera);'
-  +'if(scene.getObjectByName("EDM28_GT3_Custom"))window.__showroomFrame={scene,camera,renderer:this,THREE};'
-  +'return result;};'
-  +'await import("/showroom-gt3-native-viewer.js");'
-  +'</script>'
+  +'<script type="module" src="/showroom-gt3-native-viewer.js"></script>'
   +'</body></html>';
 const allowed=new Set([
   '/public-site.css','/showroom-3d-data.js',
@@ -47,7 +39,13 @@ const server=createServer(async(req,res)=>{
   }
   if(!allowed.has(path)){res.writeHead(404);res.end('not-found');return;}
   try{
-    const content=await readFile(resolve(cwd,'.'+path));
+    let content=await readFile(resolve(cwd,'.'+path));
+    if(path==='/showroom-gt3-native-viewer.js'){
+      const marker='scene.add(model.root);';
+      const source=content.toString('utf8');
+      assert.equal(source.split(marker).length,2,'viewer fixture must instrument exactly one scene attachment');
+      content=source.replace(marker,marker+'\nwindow.__showroomFrame={scene,camera,renderer,THREE};');
+    }
     res.writeHead(200,{'Content-Type':extname(path)==='.css'?'text/css':'text/javascript'});
     res.end(content);
   }catch(error){res.writeHead(500);res.end(String(error.message));}
