@@ -55,7 +55,7 @@ test('native showroom loads the credited local GLB asynchronously without an ext
   assert.match(seo,/from '\.\/showroom-gt3-native-page\.js'/);
   assert.match(seo,/showroom-gt3-native-viewer\.js\?v=[\w.-]+/);
   assert.match(html,/data-view="native"/);
-  assert.match(html,/id="edm3dCanvas"/);
+  assert.match(html,/id="edm3dCanvas"[^>]*aria-busy="true"/);\n  assert.match(html,/edm3d-wheel-shortcuts[^>]*role="group"/);
   assert.doesNotMatch(html,/<iframe/i);
   for(const credit of ['VTDAT23','musiss','549c25c48c474274be5373f1f2fe20a8','73a595bff7d5498fa1891c4a78787d26'])
     assert.ok(html.includes(credit),'missing source credit '+credit);
