@@ -1280,7 +1280,7 @@ h2{font-size:1.5rem;letter-spacing:-.025em}
 @media(prefers-reduced-motion:reduce){.edm3d-progress-track span{transition:none}}
 
 
-/* A single GT3 RS model is shown; no second procedural vehicle viewer. */
+.edm3d-native .edm3d-wheel-shortcuts button[aria-pressed=true]{color:#172438;background:#e6effb;border-color:#f4d9e0}\n.edm3d-native .edm3d-part-info-tag{font-size:.66rem;font-weight:800;color:#d0dfed;border:1px solid #5c7692;border-radius:4px;padding:1px 5px;white-space:nowrap}\n.edm3d-native .edm3d-part-button[aria-pressed=true] .edm3d-part-info-tag{color:#253044;border-color:#73889f}\n\n/* A single GT3 RS model is shown; no second procedural vehicle viewer. */
 .edm3d-scene-title{position:absolute;z-index:6;top:13px;left:14px;max-width:calc(100% - 28px);font-size:.7rem;letter-spacing:.14em;font-weight:800;color:#f3f7fc;background:#14202ccc;padding:8px 12px;border-radius:8px;pointer-events:none}
 .edm3d-model-support{font-size:.79rem;line-height:1.5;padding:11px 12px;margin:12px 0 18px;border:1px solid #607086;border-radius:9px;color:#d8e5f3;background:#1c2b3b}
 .edm3d-showroom[data-view=reference] .edm3d-reference{display:block}
