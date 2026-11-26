@@ -10,16 +10,22 @@ const status=el('edm3dStatus');
 const live=text=>{if(status)status.textContent=text;};
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-let renderNeeded=true;
-const requestRender=()=>{renderNeeded=true;};
+let renderNeeded=true,frameId=null,running=true,disposed=false,drawReady=false,drawing=false,contextLost=false;
+function scheduleFrame(){
+  if(!drawReady||disposed||contextLost||!running||document.hidden||drawing||frameId!==null)return;
+  frameId=requestAnimationFrame(draw);
+}
+const requestRender=()=>{renderNeeded=true;scheduleFrame();};
+const pixelRatioFor=width=>Math.min(window.devicePixelRatio||1,width<=580?1.25:width<=1050?1.5:1.75);
 root.addEventListener('click',requestRender);
 root.addEventListener('change',requestRender);
 const loadingControls=Array.from(root.querySelectorAll('button,select'),control=>({control,disabled:control.disabled}));
 loadingControls.forEach(({control})=>{control.disabled=true;});
-let renderer;
+let renderer,pixelRatio=1;
 try{
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
+  pixelRatio=pixelRatioFor(window.innerWidth);
+  renderer.setPixelRatio(pixelRatio);
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=.96;
@@ -118,12 +124,16 @@ const loading=document.createElement('div');
 loading.className='edm3d-loading';loading.textContent='Chargement de la Porsche et de ses textures…';
 host.appendChild(loading);
 renderer.render(scene,camera);
-let model;
+let model,lastAnnouncedProgress=-1;
 try{
   model=await createGt3ImportedModel(THREE,{onProgress:event=>{
-    const progress=event.total>0?' '+Math.round(event.loaded/event.total*100)+' %':'';
-    loading.textContent='Chargement de la Porsche et de ses textures…'+progress;
-    live(loading.textContent);
+    const percent=event.total>0?Math.min(100,Math.round(event.loaded/event.total*100)):null;
+    loading.textContent='Chargement de la Porsche et de ses textures…'+(percent===null?'':' '+percent+' %');
+    const bucket=percent===null?0:Math.floor(percent/25);
+    if(bucket!==lastAnnouncedProgress){
+      lastAnnouncedProgress=bucket;
+      live(loading.textContent);
+    }
   }});
 }catch(error){
   root.classList.add('edm3d-unavailable');
@@ -134,7 +144,15 @@ try{
   throw error;
 }
 loading.remove();
+host.removeAttribute('aria-busy');
 loadingControls.forEach(({control,disabled})=>{control.disabled=disabled;});
+if(reduceMotion){
+  const rotate=el('edm3dRotate');
+  if(rotate){
+    rotate.disabled=true;
+    rotate.title='Rotation automatique désactivée par vos préférences de réduction des animations.';
+  }
+}
 scene.add(model.root);
 renderer.shadowMap.needsUpdate=true;
 model.setDisassembly(null,'freinage',0);
@@ -164,12 +182,18 @@ const supplemental={
 };
 const partFor=id=>data.byId(id)||supplemental[id]||null;
 let chosenWheel=null,family='freinage',step=0,selectedPart=null;
+function updateWheelShortcuts(){
+  root.querySelectorAll('[data-edm-wheel]').forEach(button=>{
+    button.setAttribute('aria-pressed',String(button.dataset.edmWheel===chosenWheel));
+  });
+}
 let cameraGoal=null;
 let viewIsManual=false;
 function markManualView(){
   cameraGoal=null;viewIsManual=true;
   const reset=el('edm3dReset');
   if(reset)reset.disabled=false;
+  requestRender();
 }
 function stopRotation(){
   controls.autoRotate=false;
@@ -221,11 +245,13 @@ function focusWheel(id){
     position:target.clone().add(offset)
   };
   stopRotation();
+  requestRender();
 }
 function focusAll(){
   stopRotation();
   viewIsManual=false;
   cameraGoal=carView();
+  requestRender();
 }
 function updatePartMenu(){
   if(!partButtons)return;
@@ -237,10 +263,11 @@ function updatePartMenu(){
     ? ['roue','etrier','plaquettes','disques','moyeu','liquide']
     : ['roue','triangles','rotules','stabilisation','amortisseur'];
   const menu=order.filter(id=>partFor(id));
+  const modeled=new Set(model.availableParts(chosenWheel));
   partButtons.innerHTML=menu.map(id=>{
     const part=partFor(id);
     if(!part)return '';
-    return '<button type="button" data-part="'+escapeHtml(id)+'" class="edm3d-part-button" aria-pressed="'+String(selectedPart===id)+'">'+escapeHtml(part.label)+'</button>';
+    return '<button type="button" data-part="'+escapeHtml(id)+'" class="edm3d-part-button" aria-pressed="'+String(selectedPart===id)+'">'+escapeHtml(part.label)+(modeled.has(id)?'':'<span class="edm3d-part-info-tag">Fiche</span>')+'</button>';
   }).join('');
   partButtons.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>showPart(button.dataset.part)));
 }
@@ -290,6 +317,7 @@ function setStep(value){
   const list=steps();
   step=Math.max(0,Math.min(list.length,Math.trunc(Number(value)||0)));
   model.setDisassembly(chosenWheel,family,step);
+  requestRender();
   updateStepPanel();
   const last=list[step-1];
   if(last)showPart(last.id);
@@ -307,6 +335,7 @@ function selectWheel(id){
   chosenWheel=id;family='freinage';step=0;selectedPart=null;
   const select=el('edm3dWheelChoice');
   if(select)select.value=id;
+  updateWheelShortcuts();
   const reset=el('edm3dReset');
   if(reset)reset.disabled=false;
   model.setDisassembly(id,family,0);
@@ -324,6 +353,7 @@ function showCar(){
   chosenWheel=null;step=0;selectedPart=null;family='freinage';
   const select=el('edm3dWheelChoice');
   if(select)select.value='';
+  updateWheelShortcuts();
   const reset=el('edm3dReset');
   if(reset)reset.disabled=true;
   const title=el('edm3dPartTitle'),body=el('edm3dPartBody');
@@ -409,16 +439,23 @@ renderer.domElement.addEventListener('pointerup',event=>{
   }
 },{capture:true});
 renderer.domElement.addEventListener('webglcontextlost',event=>{
-  event.preventDefault();root.classList.add('edm3d-unavailable');
-  live('La scène a perdu le contexte WebGL. Les fiches restent consultables.');
+  event.preventDefault();
+  contextLost=true;
+  if(frameId!==null){cancelAnimationFrame(frameId);frameId=null;}
+  controls.autoRotate=false;
+  root.querySelectorAll('button,select').forEach(control=>{control.disabled=true;});
+  root.classList.add('edm3d-unavailable');
+  live('La scène a perdu le contexte WebGL. Les fiches restent consultables via les liens ci-dessous.');
 });
 renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
 let firstSize=true;
 const resize=()=>{
   const width=host.clientWidth||650,height=host.clientHeight||590;
   camera.aspect=width/height;camera.updateProjectionMatrix();
+  const nextRatio=pixelRatioFor(window.innerWidth);
+  if(nextRatio!==pixelRatio){pixelRatio=nextRatio;renderer.setPixelRatio(pixelRatio);}
   renderer.setSize(width,height,false);
-  renderNeeded=true;
+  requestRender();
   if(firstSize){
     const frame=carView();
     controls.target.copy(frame.target);camera.position.copy(frame.position);controls.update();
@@ -429,10 +466,12 @@ const resize=()=>{
 };
 const observer=new ResizeObserver(resize);
 observer.observe(host);resize();
-let running=true,frameId=null,disposed=false;
 function draw(){
   frameId=null;
-  if(disposed||!running||document.hidden)return;
+  if(disposed||contextLost||!running||document.hidden)return;
+  drawing=true;
+  let animationActive=false;
+  try{
   const t=reduceMotion?1:.105;
   const modelChanged=model.animate(t);
   if(modelChanged)renderer.shadowMap.needsUpdate=true;
@@ -451,27 +490,28 @@ function draw(){
     inspectionLight.position.copy(camera.position);
     inspectionLight.target.position.copy(controls.target);
   }
-  if(renderNeeded||modelChanged||cameraMoving||controlsChanged){
-    renderer.render(scene,camera);
-    renderNeeded=false;
+    animationActive=modelChanged||cameraMoving||controlsChanged||controls.autoRotate;
+    if(renderNeeded||animationActive){
+      renderer.render(scene,camera);
+      renderNeeded=false;
+    }
+  }finally{
+    drawing=false;
   }
-  frameId=requestAnimationFrame(draw);
+  if(animationActive||renderNeeded)scheduleFrame();
 }
 const view=new IntersectionObserver(entries=>{
   running=entries.some(entry=>entry.isIntersecting);
-  if(running)renderNeeded=true;
-  if(running&&!frameId)frameId=requestAnimationFrame(draw);
-  if(!running&&frameId){cancelAnimationFrame(frameId);frameId=null;}
+  if(running)requestRender();
+  if(!running&&frameId!==null){cancelAnimationFrame(frameId);frameId=null;}
 },{threshold:.01});
 view.observe(root);
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden)renderNeeded=true;
-  if(!document.hidden&&running&&!frameId)frameId=requestAnimationFrame(draw);
+  if(!document.hidden)requestRender();
+  else if(frameId!==null){cancelAnimationFrame(frameId);frameId=null;}
 });
 window.addEventListener('pageshow',event=>{
-  if(!event.persisted||disposed)return;
-  renderNeeded=true;
-  if(running&&!frameId)frameId=requestAnimationFrame(draw);
+  if(event.persisted&&!disposed)requestRender();
 });
 window.addEventListener('pagehide',event=>{
   if(event.persisted)return;
@@ -488,5 +528,6 @@ renderer.render(scene,camera);
 renderNeeded=false;
 root.classList.add('edm3d-ready');
 updatePartMenu();updateStepPanel();
-if(!frameId)frameId=requestAnimationFrame(draw);
+drawReady=true;
+requestRender();
 live('Porsche chargée : quatre roues et leurs pièces mécaniques à explorer. Faites tourner la voiture ou choisissez une roue.');
